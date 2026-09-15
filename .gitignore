@@ -1,0 +1,52 @@
+# Root .gitignore for Fullstack CĐS National Digital Transformation Task Tracking System (.NET 9 + Vue 3)
+
+# ==========================================
+# 1. Node.js & Frontend (Vue 3 / Vite)
+# ==========================================
+node_modules/
+frontend/node_modules/
+frontend/dist/
+frontend/.output/
+frontend/.vite/
+frontend/*.log
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
+frontend/.env.local
+frontend/.env.*.local
+
+# ==========================================
+# 2. .NET / C# Backend
+# ==========================================
+bin/
+obj/
+backend/bin/
+backend/obj/
+backend/out/
+*.user
+*.userosscache
+*.suo
+*.userprefs
+appsettings.Production.json
+backend/appsettings.Production.json
+
+# Uploaded document attachments (keep directory structure via .gitkeep)
+backend/wwwroot/uploads/*
+!backend/wwwroot/uploads/.gitkeep
+!backend/wwwroot/uploads/**/.gitkeep
+
+# ==========================================
+# 3. IDEs & Editors
+# ==========================================
+.vs/
+.vscode/
+.idea/
+*.sln.docstates
+
+# ==========================================
+# 4. OS / System Junk Files
+# ==========================================
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
