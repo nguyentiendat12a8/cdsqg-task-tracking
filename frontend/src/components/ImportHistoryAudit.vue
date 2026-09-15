@@ -227,6 +227,7 @@ import { ref, onMounted } from 'vue';
 import { toast } from 'vue3-toastify';
 import * as XLSX from 'xlsx';
 import LoadingSpinner from './LoadingSpinner.vue';
+import { getApiUrl } from '../config/api';
 
 const STORAGE_KEY = 'cdsqg_import_history_query';
 
@@ -267,11 +268,11 @@ function parseCleanFileList(log) {
       url = p;
     } else if (p.startsWith('/uploads/') || p.startsWith('uploads/')) {
       const cleanPath = p.startsWith('/') ? p : '/' + p;
-      url = `http://localhost:5000${cleanPath}`;
+      url = getApiUrl(cleanPath);
     } else {
       const cat = log?.category || log?.fileType || '';
       const folder = (cat.includes('tiến độ') || cat === 'File Minh chứng tiến độ') ? 'evidence' : 'documents';
-      url = `http://localhost:5000/uploads/${folder}/${rawFileName}`;
+      url = getApiUrl(`/uploads/${folder}/${rawFileName}`);
     }
 
     result.push({
@@ -447,7 +448,7 @@ function formatDate(dateStr) {
 async function loadImportHistory() {
   isLoading.value = true;
   try {
-    const url = new URL('http://localhost:5000/api/documents/import-history');
+    const url = new URL(getApiUrl('/api/documents/import-history'));
     url.searchParams.append('pageNumber', currentPage.value);
     url.searchParams.append('pageSize', pageSize.value);
     if (appliedSearchQuery.value.trim()) {

@@ -179,7 +179,7 @@
                 <div class="flex items-center justify-between gap-3 pt-1">
                   <a 
                     v-if="doc.attachmentPath" 
-                    :href="`http://localhost:5000${doc.attachmentPath}`" 
+                    :href="getApiUrl(doc.attachmentPath)" 
                     target="_blank"
                     @click.stop
                     class="text-xs font-bold text-purple-700 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-3 py-1.5 rounded-xl transition flex items-center gap-1"
@@ -247,6 +247,7 @@ import DecisionFormModal from '../components/DecisionFormModal.vue';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
 import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
+import { getApiUrl } from '../config/api';
 
 const emit = defineEmits(['selectDocument', 'openLlmImport']);
 
@@ -342,7 +343,7 @@ function formatDate(dateStr) {
 async function fetchDocuments() {
   isLoading.value = true;
   try {
-    const url = new URL('http://localhost:5000/api/documents');
+    const url = new URL(getApiUrl('/api/documents'));
     url.searchParams.append('pageNumber', pageNumber.value);
     url.searchParams.append('pageSize', pageSize.value);
     if (searchQuery.value.trim()) {
@@ -378,7 +379,7 @@ function onDocumentCreated(newDoc) {
 async function deleteDoc(doc) {
   if (!confirm(`Bạn có chắc chắn muốn xóa văn bản ${doc.documentNumber}? Tất cả mục tiêu và nhiệm vụ liên quan sẽ bị xóa.`)) return;
   try {
-    const res = await fetch(`http://localhost:5000/api/documents/${doc.id}`, { method: 'DELETE' });
+    const res = await fetch(getApiUrl(`/api/documents/${doc.id}`), { method: 'DELETE' });
     if (res.ok) {
       toast.success(`Đã xóa văn bản ${doc.documentNumber}`);
       fetchDocuments();

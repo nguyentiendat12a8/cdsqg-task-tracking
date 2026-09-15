@@ -1,8 +1,9 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import axios from 'axios';
+import { getApiUrl } from '../config/api';
 
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = getApiUrl('/api');
 
 export const useTrackingStore = defineStore('tracking', () => {
   // State

@@ -255,6 +255,7 @@ import { toast } from 'vue3-toastify';
 import * as XLSX from 'xlsx';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
 import UrgeDetailModal from '../components/UrgeDetailModal.vue';
+import { getApiUrl } from '../config/api';
 
 const STORAGE_KEY = 'cdsqg_urge_history_query';
 
@@ -312,7 +313,7 @@ function loadSavedQuery() {
 
 async function loadAgencies() {
   try {
-    const res = await fetch('http://localhost:5000/api/agencies');
+    const res = await fetch(getApiUrl('/api/agencies'));
     if (res.ok) {
       agencies.value = await res.json();
     }
@@ -444,7 +445,7 @@ async function checkAndOpenLogFromHash() {
     if (match && match[1]) {
       const targetLogId = match[1];
       try {
-        const res = await fetch(`http://localhost:5000/api/execution/urge-logs/${targetLogId}`);
+        const res = await fetch(getApiUrl(`/api/execution/urge-logs/${targetLogId}`));
         if (res.ok) {
           const logData = await res.json();
           if (logData) {
@@ -461,7 +462,7 @@ async function checkAndOpenLogFromHash() {
 async function loadLogs() {
   isLoading.value = true;
   try {
-    const url = new URL('http://localhost:5000/api/execution/urge-logs');
+    const url = new URL(getApiUrl('/api/execution/urge-logs'));
     url.searchParams.append('pageNumber', currentPage.value);
     url.searchParams.append('pageSize', pageSize.value);
     

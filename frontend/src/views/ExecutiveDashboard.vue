@@ -385,6 +385,7 @@ import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
 import * as XLSX from 'xlsx';
 import UrgeTaskModal from '../components/UrgeTaskModal.vue';
+import { getApiUrl } from '../config/api';
 
 ChartJS.register(Title, Tooltip, Legend, ArcElement, BarElement, CategoryScale, LinearScale);
 
@@ -444,7 +445,7 @@ const paginatedLaggingTasks = computed(() => {
 
 async function loadDocuments() {
   try {
-    const res = await fetch('http://localhost:5000/api/documents?pageSize=100');
+    const res = await fetch(getApiUrl('/api/documents?pageSize=100'));
     if (res.ok) {
       const data = await res.json();
       documents.value = Array.isArray(data) ? data : (data.items || []);
@@ -456,7 +457,7 @@ async function loadDocuments() {
 
 async function loadDashboardMetrics() {
   try {
-    let url = `http://localhost:5000/api/dashboard/metrics?year=${selectedYear.value}`;
+    let url = getApiUrl(`/api/dashboard/metrics?year=${selectedYear.value}`);
     if (selectedDocumentId.value) url += `&documentId=${selectedDocumentId.value}`;
     const res = await fetch(url);
     if (res.ok) metrics.value = await res.json();

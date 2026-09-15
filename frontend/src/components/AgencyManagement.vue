@@ -172,6 +172,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { toast } from 'vue3-toastify';
 import LoadingSpinner from './LoadingSpinner.vue';
+import { getApiUrl } from '../config/api';
 
 const agencies = ref([]);
 const isLoading = ref(true);
@@ -253,7 +254,7 @@ function openEditModal(agency) {
 async function fetchAgencies() {
   isLoading.value = true;
   try {
-    const url = new URL('http://localhost:5000/api/agencies');
+    const url = new URL(getApiUrl('/api/agencies'));
     url.searchParams.append('pageNumber', pageNumber.value);
     url.searchParams.append('pageSize', pageSize.value);
     if (appliedSearch.value.trim()) {
@@ -293,13 +294,13 @@ async function saveAgency() {
 
     let res;
     if (isEditing.value && editingId.value) {
-      res = await fetch(`http://localhost:5000/api/agencies/${editingId.value}`, {
+      res = await fetch(getApiUrl(`/api/agencies/${editingId.value}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
     } else {
-      res = await fetch('http://localhost:5000/api/agencies', {
+      res = await fetch(getApiUrl('/api/agencies'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -327,7 +328,7 @@ async function deleteAgency(agency) {
 
   if (confirm(`Bạn có chắc chắn muốn xóa cơ quan "${agency.name}"?`)) {
     try {
-      const res = await fetch(`http://localhost:5000/api/agencies/${agency.id}`, { method: 'DELETE' });
+      const res = await fetch(getApiUrl(`/api/agencies/${agency.id}`), { method: 'DELETE' });
       if (res.ok) {
         toast.success('Đã xóa cơ quan thành công!');
         await fetchAgencies();

@@ -642,7 +642,7 @@
             
             <div v-if="documentDetails?.attachmentPath && !isReplacingEditFile" class="p-3 bg-purple-50 rounded-xl border border-purple-200 flex items-center justify-between">
               <a 
-                :href="`http://localhost:5000${documentDetails.attachmentPath}`" 
+                :href="getApiUrl(documentDetails.attachmentPath)" 
                 target="_blank" 
                 class="text-xs font-extrabold text-purple-800 hover:text-purple-950 hover:underline flex items-center gap-1.5"
               >
@@ -732,6 +732,7 @@ import DynamicPlanningGrid from '../components/DynamicPlanningGrid.vue';
 import CreateItemModal from '../components/CreateItemModal.vue';
 import ProgressUpdateModal from '../components/ProgressUpdateModal.vue';
 import UrgeTaskModal from '../components/UrgeTaskModal.vue';
+import { getApiUrl } from '../config/api';
 
 const props = defineProps({
   documentId: { type: String, required: true }
@@ -1067,7 +1068,7 @@ function formatDate(dateStr) {
 
 async function loadDocumentDetails() {
   try {
-    const res = await fetch(`http://localhost:5000/api/documents/${props.documentId}`);
+    const res = await fetch(getApiUrl(`/api/documents/${props.documentId}`));
     if (res.ok) {
       documentDetails.value = await res.json();
     }
@@ -1078,7 +1079,7 @@ async function loadDocumentDetails() {
 
 async function loadAgencies() {
   try {
-    const res = await fetch('http://localhost:5000/api/agencies');
+    const res = await fetch(getApiUrl('/api/agencies'));
     if (res.ok) agencies.value = await res.json();
   } catch (e) {}
 }
@@ -1112,7 +1113,7 @@ async function handleUpdateDocument() {
       formData.append('AttachmentFile', editFileInput.value.files[0]);
     }
 
-    const res = await fetch(`http://localhost:5000/api/documents/${props.documentId}`, {
+    const res = await fetch(getApiUrl(`/api/documents/${props.documentId}`), {
       method: 'PUT',
       body: formData
     });
@@ -1164,7 +1165,7 @@ function onUrgeSubmitted() {
 async function deleteItem(item) {
   if (!confirm(`Bạn có chắc muốn xóa ${item.code}: ${item.title}?`)) return;
   try {
-    const res = await fetch(`http://localhost:5000/api/planning/items/${item.id}`, { method: 'DELETE' });
+    const res = await fetch(getApiUrl(`/api/planning/items/${item.id}`), { method: 'DELETE' });
     if (res.ok) {
       toast.success(`Đã xóa thành công ${item.code}`);
       refreshAllData();
@@ -1183,9 +1184,7 @@ function splitAttachmentPaths(pathString) {
 
 function getFileUrl(path) {
   if (!path) return '#';
-  const clean = path.trim();
-  if (clean.startsWith('http://') || clean.startsWith('https://')) return clean;
-  return `http://localhost:5000${clean.startsWith('/') ? '' : '/'}${clean}`;
+  return getApiUrl(path.trim());
 }
 
 function formatFileName(fullPath) {

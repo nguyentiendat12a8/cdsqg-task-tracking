@@ -61,6 +61,7 @@
 
 <script setup>
 import { ref, watch } from 'vue';
+import { getApiUrl } from '../config/api';
 
 const props = defineProps({
   isOpen: { type: Boolean, default: false },
@@ -86,8 +87,8 @@ async function loadLogs() {
   isLoading.value = true;
   try {
     const url = props.taskId 
-      ? `http://localhost:5000/api/execution/tasks/${props.taskId}/urge-history`
-      : 'http://localhost:5000/api/execution/urge-logs';
+      ? getApiUrl(`/api/execution/tasks/${props.taskId}/urge-history`)
+      : getApiUrl('/api/execution/urge-logs');
       
     const res = await fetch(url);
     if (res.ok) {

@@ -347,6 +347,7 @@ import { ref, onMounted } from 'vue';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
 import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
+import { getApiUrl } from '../config/api';
 
 const users = ref([]);
 const agencies = ref([]);
@@ -399,7 +400,7 @@ function formatDate(dateStr) {
 
 async function loadAgencies() {
   try {
-    const res = await fetch('http://localhost:5000/api/agency');
+    const res = await fetch(getApiUrl('/api/agency'));
     if (res.ok) {
       agencies.value = await res.json();
     }
@@ -411,7 +412,7 @@ async function loadAgencies() {
 async function fetchUsers() {
   isLoading.value = true;
   try {
-    const url = new URL('http://localhost:5000/api/user');
+    const url = new URL(getApiUrl('/api/user'));
     url.searchParams.append('pageNumber', pageNumber.value);
     url.searchParams.append('pageSize', pageSize.value);
     if (searchQuery.value.trim()) url.searchParams.append('search', searchQuery.value.trim());
@@ -467,7 +468,7 @@ function openAddModal() {
 
 async function saveNewUser() {
   try {
-    const res = await fetch('http://localhost:5000/api/user', {
+    const res = await fetch(getApiUrl('/api/user'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newUserForm.value)
@@ -501,7 +502,7 @@ function openEditModal(user) {
 
 async function saveEditUser() {
   try {
-    const res = await fetch(`http://localhost:5000/api/user/${editUserForm.value.id}`, {
+    const res = await fetch(getApiUrl(`/api/user/${editUserForm.value.id}`), {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(editUserForm.value)
@@ -528,7 +529,7 @@ function openResetPasswordModal(user) {
 async function saveResetPassword() {
   if (!selectedUserForReset.value) return;
   try {
-    const res = await fetch(`http://localhost:5000/api/user/${selectedUserForReset.value.id}/reset-password`, {
+    const res = await fetch(getApiUrl(`/api/user/${selectedUserForReset.value.id}/reset-password`), {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ newPassword: newPasswordInput.value })
@@ -548,7 +549,7 @@ async function saveResetPassword() {
 async function deleteAccount(user) {
   if (!confirm(`Bạn có chắc chắn muốn xóa tài khoản '${user.username}'?`)) return;
   try {
-    const res = await fetch(`http://localhost:5000/api/user/${user.id}`, { method: 'DELETE' });
+    const res = await fetch(getApiUrl(`/api/user/${user.id}`), { method: 'DELETE' });
     if (res.ok) {
       toast.success(`Đã xóa tài khoản '${user.username}'.`);
       fetchUsers();

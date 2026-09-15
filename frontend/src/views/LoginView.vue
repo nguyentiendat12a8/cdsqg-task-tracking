@@ -149,6 +149,7 @@
 <script setup>
 import { ref } from 'vue';
 import { login } from '../services/auth';
+import { getApiUrl } from '../config/api';
 
 const emit = defineEmits(['loggedIn']);
 
@@ -198,7 +199,7 @@ async function handleForgotPassword() {
 
   isForgotSubmitting.value = true;
   try {
-    const res = await fetch('http://localhost:5000/api/auth/forgot-password', {
+    const res = await fetch(getApiUrl('/api/auth/forgot-password'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ emailOrUsername: forgotInput.value.trim() })

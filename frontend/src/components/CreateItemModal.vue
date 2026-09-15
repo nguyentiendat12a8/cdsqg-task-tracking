@@ -93,6 +93,7 @@
 
 <script setup>
 import { ref, watch, onMounted } from 'vue';
+import { getApiUrl } from '../config/api';
 
 const props = defineProps({
   isOpen: { type: Boolean, default: false },
@@ -186,8 +187,8 @@ watch(() => props.documentId, (newVal) => {
 async function loadCatalogs() {
   try {
     const [agencyRes, unitRes] = await Promise.all([
-      fetch('http://localhost:5000/api/agencies'),
-      fetch('http://localhost:5000/api/units')
+      fetch(getApiUrl('/api/agencies')),
+      fetch(getApiUrl('/api/units'))
     ]);
     if (agencyRes.ok) agencies.value = await agencyRes.json();
     if (unitRes.ok) units.value = await unitRes.json();
@@ -214,7 +215,7 @@ async function submitItem() {
   errorMessage.value = null;
 
   try {
-    const response = await fetch('http://localhost:5000/api/planning/items', {
+    const response = await fetch(getApiUrl('/api/planning/items'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form.value)

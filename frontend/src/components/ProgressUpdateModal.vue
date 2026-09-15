@@ -219,6 +219,7 @@
 import { ref, computed, watch } from 'vue';
 import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
+import { getApiUrl } from '../config/api';
 
 const props = defineProps({
   isOpen: { type: Boolean, default: false },
@@ -307,8 +308,7 @@ function formatFileName(fullPath) {
 
 function getFileUrl(path) {
   if (!path) return '#';
-  if (path.startsWith('http://') || path.startsWith('https://')) return path;
-  return `http://localhost:5000${path.startsWith('/') ? '' : '/'}${path}`;
+  return getApiUrl(path.trim());
 }
 
 async function fetchExistingProgress() {
@@ -316,7 +316,7 @@ async function fetchExistingProgress() {
   isLoadingExisting.value = true;
   try {
     const qParam = periodType.value === 'quarterly' ? form.value.periodQuarter : (periodType.value === 'monthly' ? form.value.periodMonth : 0);
-    const res = await fetch(`http://localhost:5000/api/execution/tasks/${props.taskId}/progress?year=${form.value.periodYear}&period=${qParam}`);
+    const res = await fetch(getApiUrl(`/api/execution/tasks/${props.taskId}/progress?year=${form.value.periodYear}&period=${qParam}`));
     if (res.ok) {
       const data = await res.json();
       if (data) {
@@ -390,7 +390,7 @@ async function submitProgress() {
       }
     }
 
-    const response = await fetch(`http://localhost:5000/api/execution/tasks/${props.taskId}/progress`, {
+    const response = await fetch(getApiUrl(`/api/execution/tasks/${props.taskId}/progress`), {
       method: 'POST',
       body: formData
     });

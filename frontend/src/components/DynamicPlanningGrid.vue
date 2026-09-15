@@ -392,6 +392,7 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import BaselineOverrideModal from './BaselineOverrideModal.vue';
 import LoadingSpinner from './LoadingSpinner.vue';
+import { getApiUrl } from '../config/api';
 
 const props = defineProps({
   documentId: { type: String, required: true },
@@ -502,7 +503,7 @@ function showToast(msg) {
 
 async function loadAgencies() {
   try {
-    const res = await fetch('http://localhost:5000/api/planning/agencies');
+    const res = await fetch(getApiUrl('/api/planning/agencies'));
     if (res.ok) {
       agencies.value = await res.json();
     }
@@ -632,7 +633,7 @@ async function saveYearlyTarget(item, year, val) {
   };
 
   try {
-    const res = await fetch(`http://localhost:5000/api/planning/tasks/${item.taskId}/yearly-target`, {
+    const res = await fetch(getApiUrl(`/api/planning/tasks/${item.taskId}/yearly-target`), {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -652,7 +653,7 @@ async function loadGridData() {
   if (!props.documentId) return;
   isLoading.value = true;
   try {
-    const res = await fetch(`http://localhost:5000/api/planning/documents/${props.documentId}/grid`);
+    const res = await fetch(getApiUrl(`/api/planning/documents/${props.documentId}/grid`));
     if (res.ok) {
       const data = await res.json();
       gridData.value = {

@@ -173,6 +173,7 @@
 import { ref, computed, onMounted } from 'vue';
 import { toast } from 'vue3-toastify';
 import LoadingSpinner from './LoadingSpinner.vue';
+import { getApiUrl } from '../config/api';
 
 const units = ref([]);
 const isLoading = ref(true);
@@ -244,7 +245,7 @@ function openEditModal(unit) {
 async function fetchUnits() {
   isLoading.value = true;
   try {
-    const url = new URL('http://localhost:5000/api/units');
+    const url = new URL(getApiUrl('/api/units'));
     url.searchParams.append('pageNumber', pageNumber.value);
     url.searchParams.append('pageSize', pageSize.value);
     if (appliedSearch.value.trim()) {
@@ -283,13 +284,13 @@ async function saveUnit() {
 
     let res;
     if (isEditing.value && editingId.value) {
-      res = await fetch(`http://localhost:5000/api/units/${editingId.value}`, {
+      res = await fetch(getApiUrl(`/api/units/${editingId.value}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
     } else {
-      res = await fetch('http://localhost:5000/api/units', {
+      res = await fetch(getApiUrl('/api/units'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -317,7 +318,7 @@ async function deleteUnit(unit) {
 
   if (confirm(`Xóa đơn vị tính "${unit.name}"?`)) {
     try {
-      const res = await fetch(`http://localhost:5000/api/units/${unit.id}`, { method: 'DELETE' });
+      const res = await fetch(getApiUrl(`/api/units/${unit.id}`), { method: 'DELETE' });
       if (res.ok) {
         toast.success('Đã xóa đơn vị tính thành công!');
         await fetchUnits();

@@ -116,6 +116,7 @@ import { ref, watch } from 'vue';
 import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
 import RichTextEditor from './RichTextEditor.vue';
+import { getApiUrl } from '../config/api';
 
 const props = defineProps({
   isOpen: { type: Boolean, default: false },
@@ -155,7 +156,7 @@ function generateDraftText() {
 async function loadTaskUrgeHistory() {
   if (!props.taskId) return;
   try {
-    const res = await fetch(`http://localhost:5000/api/execution/tasks/${props.taskId}/urge-history`);
+    const res = await fetch(getApiUrl(`/api/execution/tasks/${props.taskId}/urge-history`));
     if (res.ok) {
       historyLogs.value = await res.json();
     }
@@ -219,7 +220,7 @@ async function submitUrge() {
       CreatedBy: 'Chuyên viên chỉ đạo CĐS'
     };
 
-    const res = await fetch(`http://localhost:5000/api/execution/tasks/${props.taskId}/urge`, {
+    const res = await fetch(getApiUrl(`/api/execution/tasks/${props.taskId}/urge`), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)

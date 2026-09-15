@@ -120,6 +120,7 @@
 import { ref, computed, watch } from 'vue';
 import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
+import { getApiUrl } from '../config/api';
 
 const props = defineProps({
   isOpen: { type: Boolean, default: false },
@@ -228,8 +229,8 @@ async function submitDocument() {
     }
 
     const url = isEditing.value 
-      ? `http://localhost:5000/api/documents/${props.documentToEdit.id}`
-      : 'http://localhost:5000/api/documents';
+      ? getApiUrl(`/api/documents/${props.documentToEdit.id}`)
+      : getApiUrl('/api/documents');
 
     const method = isEditing.value ? 'PUT' : 'POST';
 
