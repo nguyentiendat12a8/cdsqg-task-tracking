@@ -38,12 +38,18 @@ builder.Services.AddControllers().AddJsonOptions(options =>
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Read PostgreSQL flag from appsettings.json
-bool usePostgreSql = builder.Configuration.GetValue<bool>("UsePostgreSQL");
+// Read PostgreSQL flag from appsettings.json or environment variables
+bool usePostgreSql = builder.Configuration.GetValue<bool>("UsePostgreSQL") || 
+                     !string.IsNullOrEmpty(builder.Configuration.GetConnectionString("DefaultConnection"));
 
-if (usePostgreSql)
+string connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
+                         ?? builder.Configuration["DATABASE_URL"] 
+                         ?? string.Empty;
+
+connectionString = ConvertPostgresConnectionString(connectionString);
+
+if (usePostgreSql && !string.IsNullOrWhiteSpace(connectionString))
 {
-    string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
     builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseNpgsql(connectionString));
 }
@@ -51,6 +57,31 @@ else
 {
     builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseInMemoryDatabase("CdsqgTaskTrackingDb"));
+}
+
+// Helper to convert postgres:// URI format to Npgsql connection string format
+static string ConvertPostgresConnectionString(string connStr)
+{
+    if (string.IsNullOrWhiteSpace(connStr)) return connStr;
+    if (connStr.StartsWith("postgres://") || connStr.StartsWith("postgresql://"))
+    {
+        try
+        {
+            var uri = new Uri(connStr);
+            var userInfo = uri.UserInfo.Split(':');
+            var user = userInfo[0];
+            var password = userInfo.Length > 1 ? Uri.UnescapeDataString(userInfo[1]) : "";
+            var host = uri.Host;
+            var port = uri.Port > 0 ? uri.Port : 5432;
+            var database = uri.AbsolutePath.TrimStart('/');
+            return $"Host={host};Port={port};Database={database};Username={user};Password={password};SSL Mode=Require;Trust Server Certificate=true;";
+        }
+        catch
+        {
+            return connStr;
+        }
+    }
+    return connStr;
 }
 
 // Register Application & Auth Services
@@ -95,18 +126,32 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
-// Ensure Database Clean Recreation & Seed Initial Data
+// Ensure Database Clean Recreation & Seed Initial Data (Fail-safe wrapper)
 using (var scope = app.Services.CreateScope())
 {
-    var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
-    if (usePostgreSql)
+    try
     {
-        context.Database.EnsureCreated();
-        EnsureUsersTableExists(context);
+        var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+        var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
+        if (usePostgreSql && !string.IsNullOrWhiteSpace(connectionString))
+        {
+            try
+            {
+                context.Database.EnsureCreated();
+                EnsureUsersTableExists(context);
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"[WARN] PostgreSQL EnsureCreated notice: {ex.Message}");
+            }
+        }
+        SeedInitialData(context, hasher);
+        NormalizeGoalTaskItemCodes(context);
     }
-    SeedInitialData(context, hasher);
-    NormalizeGoalTaskItemCodes(context);
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[WARN] Database Initialization notice: {ex.Message}");
+    }
 }
 
 void EnsureUsersTableExists(AppDbContext db)
