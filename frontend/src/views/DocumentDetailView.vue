@@ -104,18 +104,18 @@
             />
           </div>
 
-          <div class="flex items-center gap-1.5">
+          <div class="flex items-center gap-1.5 col-span-1 xl:col-start-7 ml-auto w-full justify-end">
             <button 
               type="button" 
               @click="execFilterSearch" 
-              class="w-full py-1.5 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition min-h-[34px] cursor-pointer"
+              class="w-full sm:w-auto px-5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition min-h-[34px] cursor-pointer whitespace-nowrap"
             >
               Tìm Kiếm
             </button>
             <button 
               type="button" 
               @click="resetFilterSearch" 
-              class="px-3 py-1.5 bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition min-h-[34px] cursor-pointer"
+              class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition min-h-[34px] cursor-pointer shrink-0"
               title="Đặt lại bộ lọc"
             >
               ↺
@@ -124,7 +124,8 @@
         </div>
 
         <!-- MAIN DATA TABLE WITH STICKY HEADER & FROZEN FIRST 3 COLUMNS -->
-        <div class="overflow-x-auto overflow-y-auto max-h-[calc(100vh-320px)] custom-scrollbar w-full">
+        <LoadingSpinner v-if="isLoading" text="Đang tải dữ liệu danh sách từ máy chủ..." />
+        <div v-else class="overflow-x-auto overflow-y-auto max-h-[calc(100vh-320px)] custom-scrollbar w-full">
           <table class="w-full min-w-[1050px] text-left text-sm text-slate-700 border-collapse">
             <thead class="bg-slate-100 text-xs text-slate-600 uppercase font-bold border-b border-slate-200 sticky top-0 z-30 shadow-xs">
               <tr>
@@ -493,6 +494,7 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { toast } from 'vue3-toastify';
 import DynamicPlanningGrid from '../components/DynamicPlanningGrid.vue';
 import SearchableSelect from '../components/SearchableSelect.vue';
+import LoadingSpinner from '../components/LoadingSpinner.vue';
 import ProgressUpdateModal from '../components/ProgressUpdateModal.vue';
 import SendNotificationModal from '../components/SendNotificationModal.vue';
 import ItemDetailModal from '../components/ItemDetailModal.vue';
@@ -503,6 +505,8 @@ const props = defineProps({
   filterItemType: { type: String, default: 'Task' },
   subTab: { type: String, default: 'list' }
 });
+
+const isLoading = ref(false);
 
 const activeSubTab = ref(props.subTab || 'list');
 
@@ -756,6 +760,7 @@ const paginatedPrimaryList = computed(() => {
 });
 
 async function loadData() {
+  isLoading.value = true;
   try {
     const docId = '12660000-0000-0000-0000-000000001266';
     const res = await fetch(getApiUrl(`/api/planning/documents/${docId}/grid`));
@@ -779,6 +784,8 @@ async function loadData() {
     }
   } catch (e) {
     console.error('Lỗi tải dữ liệu:', e);
+  } finally {
+    isLoading.value = false;
   }
 }
 

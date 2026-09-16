@@ -101,18 +101,18 @@
         </div>
       </div>
 
-      <div class="flex items-center gap-1.5 col-span-1">
+      <div class="flex items-center gap-1.5 col-span-1 xl:col-start-7 ml-auto w-full justify-end">
         <button 
           type="button" 
           @click="loadDashboardMetrics" 
-          class="w-full py-1.5 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition min-h-[34px] cursor-pointer"
+          class="w-full sm:w-auto px-5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition min-h-[34px] cursor-pointer whitespace-nowrap"
         >
           Tìm Kiếm
         </button>
         <button 
           type="button" 
           @click="resetDashboardFilters" 
-          class="px-3 py-1.5 bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition min-h-[34px] cursor-pointer"
+          class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition min-h-[34px] cursor-pointer shrink-0"
           title="Đặt lại bộ lọc"
         >
           ↺
@@ -120,7 +120,11 @@
       </div>
     </div>
 
+    <!-- Loading Spinner -->
+    <LoadingSpinner v-if="isLoading" text="Đang tải dữ liệu tổng quan bảng điều khiển..." />
+
     <!-- 6 Execution Status Grid Cards (Filtered by Goal / Task / All) -->
+    <div v-else class="space-y-3.5 w-full">
     <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 w-full">
       <!-- 1. Chưa thực hiện -->
       <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs space-y-0.5">
@@ -295,6 +299,7 @@
         </div>
       </div>
     </div>
+    </div>
 
   </div>
 </template>
@@ -302,11 +307,13 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import SearchableSelect from '../components/SearchableSelect.vue';
+import LoadingSpinner from '../components/LoadingSpinner.vue';
 import { getApiUrl } from '../config/api';
 import { authState } from '../services/auth';
 import { GOAL_SECTIONS, GOAL_GROUPS, TASK_SECTIONS, TASK_GROUPS } from '../config/planningStructureConfig';
 
 const dashboardFilter = ref('all'); // 'all', 'goals', 'tasks'
+const isLoading = ref(false);
 
 const selectedAgencyIds = ref([]);
 const selectedSections = ref([]);
@@ -377,6 +384,7 @@ async function loadAgencies() {
 }
 
 async function loadDashboardMetrics() {
+  isLoading.value = true;
   try {
     const params = new URLSearchParams();
     if (dashboardFilter.value && dashboardFilter.value !== 'all') {
@@ -406,6 +414,8 @@ async function loadDashboardMetrics() {
     }
   } catch (e) {
     // Silent catch
+  } finally {
+    isLoading.value = false;
   }
 }
 
@@ -437,9 +447,9 @@ async function drilldownAgency(agency) {
   } catch (e) {}
 }
 
-watch([dashboardFilter, selectedAgencyIds, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly], () => {
+watch(dashboardFilter, () => {
   loadDashboardMetrics();
-}, { deep: true });
+});
 
 onMounted(() => {
   loadAgencies();

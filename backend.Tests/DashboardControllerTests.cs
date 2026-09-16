@@ -57,7 +57,7 @@ namespace Cdsqg.Tests
                 ItemType = ItemTypeEnum.Goal,
                 LeadAgencyId = _bcaId,
                 Section = "Mục I",
-                Group = "Nhóm A",
+                Group = "Nhóm I: Phát triển Chính phủ số, nâng cao hiệu quả, hiệu lực hoạt động",
                 StartDate = new DateTime(2026, 1, 1),
                 DueDate = new DateTime(2027, 12, 31),
                 IsOngoing = false
@@ -72,7 +72,7 @@ namespace Cdsqg.Tests
                 ItemType = ItemTypeEnum.Task,
                 LeadAgencyId = _bcaId,
                 Section = "Mục I",
-                Group = "Nhóm B",
+                Group = "Nhóm I: Hoàn thiện thể chế số",
                 StartDate = new DateTime(2028, 1, 1),
                 DueDate = new DateTime(2029, 12, 31),
                 IsOngoing = false
@@ -87,7 +87,7 @@ namespace Cdsqg.Tests
                 ItemType = ItemTypeEnum.Goal,
                 LeadAgencyId = _bttttId,
                 Section = "Mục II",
-                Group = "Nhóm A",
+                Group = "Nhóm II: Phát triển Kinh tế số, nâng cao năng lực cạnh tranh của nền kinh tế",
                 StartDate = new DateTime(2026, 1, 1),
                 DueDate = new DateTime(2030, 12, 31),
                 IsOngoing = false
@@ -102,7 +102,7 @@ namespace Cdsqg.Tests
                 ItemType = ItemTypeEnum.Task,
                 LeadAgencyId = _tphcmId,
                 Section = "Mục II",
-                Group = "Nhóm B",
+                Group = "Nhóm II: Phát triển hạ tầng số",
                 IsOngoing = true
             });
 
@@ -192,10 +192,10 @@ namespace Cdsqg.Tests
             using var context = GetInMemoryDbContext();
             var controller = new DashboardController(context);
 
-            var result = await controller.GetDashboardMetrics(group: new[] { "Nhóm A" });
+            var result = await controller.GetDashboardMetrics(group: new[] { "Nhóm I: Phát triển Chính phủ số, nâng cao hiệu quả, hiệu lực hoạt động" });
             var data = GetResponseDto(result);
 
-            Assert.Equal(2, data.TotalGoals); // GOAL-BCA-01 and GOAL-BTTTT-01
+            Assert.Equal(1, data.TotalGoals);
             Assert.Equal(0, data.TotalTasks);
         }
 

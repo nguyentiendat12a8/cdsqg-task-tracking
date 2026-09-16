@@ -14,7 +14,11 @@
       <form @submit.prevent="submitProgress" class="space-y-4">
         
         <!-- Period Selection Bar (Yearly default, Quarterly, Monthly) -->
-        <div class="space-y-2 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+        <div class="space-y-2 bg-slate-50 p-3.5 rounded-xl border border-slate-200 relative">
+          <div v-if="isLoadingExisting" class="absolute inset-0 bg-white/80 backdrop-blur-2xs rounded-xl flex items-center justify-center gap-2 z-10 text-xs font-bold text-blue-700">
+            <span class="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
+            <span>Đang tải dữ liệu kỳ báo cáo...</span>
+          </div>
           <label class="text-xs font-bold text-slate-700 uppercase block">Tần Suất & Kỳ Báo Cáo <span class="text-rose-500">*</span></label>
           
           <div class="flex items-center gap-1.5 bg-slate-200/80 p-1 rounded-xl">

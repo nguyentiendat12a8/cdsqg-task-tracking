@@ -12,9 +12,7 @@
       </div>
 
       <!-- History Content -->
-      <div v-if="isLoading" class="p-8 text-center text-slate-400 text-xs font-semibold">
-        Đang tải lịch sử thông báo...
-      </div>
+      <LoadingSpinner v-if="isLoading" text="Đang tải lịch sử thông báo từ máy chủ..." padding="py-8" />
 
       <div v-else-if="logs.length === 0" class="p-8 text-center bg-slate-50 rounded-xl border border-slate-200 text-slate-400 text-xs font-semibold italic">
         Chưa có nhật ký thông báo nào được lưu.
@@ -61,6 +59,7 @@
 
 <script setup>
 import { ref, watch } from 'vue';
+import LoadingSpinner from './LoadingSpinner.vue';
 import { getApiUrl } from '../config/api';
 
 const props = defineProps({

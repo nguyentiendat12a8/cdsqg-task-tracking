@@ -98,11 +98,11 @@
       </div>
 
       <!-- Filter Action Buttons -->
-      <div class="flex items-center gap-1.5">
+      <div class="flex items-center gap-1.5 col-span-1 xl:col-start-7 ml-auto w-full justify-end">
         <button 
           type="button" 
           @click="execGridFilterSearch" 
-          class="w-full py-1.5 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-1 min-h-[34px]"
+          class="w-full sm:w-auto px-5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-1 min-h-[34px] cursor-pointer whitespace-nowrap"
         >
           <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
           <span>Tìm Kiếm</span>
@@ -111,7 +111,7 @@
         <button 
           type="button" 
           @click="resetGridFilterSearch" 
-          class="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition shrink-0 min-h-[34px]"
+          class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition shrink-0 min-h-[34px] cursor-pointer"
           title="Đặt lại bộ lọc"
         >
           ↺

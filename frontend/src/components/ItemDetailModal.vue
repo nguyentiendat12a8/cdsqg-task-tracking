@@ -113,10 +113,7 @@
 
         <!-- TAB 2: Report History -->
         <div v-if="activeTab === 'reports'" class="space-y-3">
-          <div v-if="isLoadingReports" class="py-8 text-center text-slate-400 text-xs font-semibold flex items-center justify-center gap-2">
-            <span class="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
-            <span>Đang tải lịch sử báo cáo...</span>
-          </div>
+          <LoadingSpinner v-if="isLoadingReports" text="Đang tải lịch sử báo cáo..." padding="py-6" />
 
           <div v-else-if="reportHistory.length === 0" class="py-10 text-center bg-slate-50 rounded-2xl border border-slate-200 text-slate-400 text-xs font-semibold italic">
             📭 Chưa có lượt báo cáo tiến độ nào được ghi nhận cho nhiệm vụ này.
@@ -174,10 +171,7 @@
 
         <!-- TAB 3: Notifications / Urge History -->
         <div v-if="activeTab === 'notifications'" class="space-y-3">
-          <div v-if="isLoadingNotifications" class="py-8 text-center text-slate-400 text-xs font-semibold flex items-center justify-center gap-2">
-            <span class="w-4 h-4 border-2 border-amber-600 border-t-transparent rounded-full animate-spin"></span>
-            <span>Đang tải lịch sử gửi thông báo...</span>
-          </div>
+          <LoadingSpinner v-if="isLoadingNotifications" text="Đang tải lịch sử gửi thông báo..." padding="py-6" />
 
           <div v-else-if="notificationHistory.length === 0" class="py-10 text-center bg-slate-50 rounded-2xl border border-slate-200 text-slate-400 text-xs font-semibold italic">
             🔕 Chưa có đợt gửi thông báo nào đối với nhiệm vụ này.
@@ -227,6 +221,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue';
+import LoadingSpinner from './LoadingSpinner.vue';
 import { getApiUrl } from '../config/api';
 
 const props = defineProps({

@@ -6,22 +6,22 @@ export const GOAL_SECTIONS = [
 ];
 
 export const GOAL_GROUPS = [
-  { value: 'Nhóm I', section: 'Mục A', label: 'Nhóm I: Phát triển Chính phủ số, nâng cao hiệu quả, hiệu lực hoạt động' },
-  { value: 'Nhóm II', section: 'Mục A', label: 'Nhóm II: Phát triển Kinh tế số, nâng cao năng lực cạnh tranh của nền kinh tế' },
-  { value: 'Nhóm III', section: 'Mục A', label: 'Nhóm III: Phát triển Xã hội số, thu hẹp khoảng cách số, nâng cao chất lượng cuộc sống' },
-  { value: 'Nhóm I (2045)', section: 'Mục B', label: 'Nhóm I: Chuyển đổi số toàn diện và bền vững' }
+  { value: 'Nhóm I: Phát triển Chính phủ số, nâng cao hiệu quả, hiệu lực hoạt động', section: 'Mục A', label: 'Nhóm I: Phát triển Chính phủ số, nâng cao hiệu quả, hiệu lực hoạt động' },
+  { value: 'Nhóm II: Phát triển Kinh tế số, nâng cao năng lực cạnh tranh của nền kinh tế', section: 'Mục A', label: 'Nhóm II: Phát triển Kinh tế số, nâng cao năng lực cạnh tranh của nền kinh tế' },
+  { value: 'Nhóm III: Phát triển Xã hội số, thu hẹp khoảng cách số, nâng cao chất lượng cuộc sống', section: 'Mục A', label: 'Nhóm III: Phát triển Xã hội số, thu hẹp khoảng cách số, nâng cao chất lượng cuộc sống' },
+  { value: 'Nhóm I (2045): Chuyển đổi số toàn diện và bền vững', section: 'Mục B', label: 'Nhóm I: Chuyển đổi số toàn diện và bền vững' }
 ];
 
 export const TASK_SECTIONS = [];
 
 export const TASK_GROUPS = [
-  { value: 'Nhóm I', label: 'Nhóm I: Hoàn thiện thể chế số' },
-  { value: 'Nhóm II', label: 'Nhóm II: Phát triển hạ tầng số' },
-  { value: 'Nhóm III', label: 'Nhóm III: Phát triển dữ liệu số, nền tảng số dùng chung' },
-  { value: 'Nhóm IV', label: 'Nhóm IV: Phát triển nhân lực số' },
-  { value: 'Nhóm V', label: 'Nhóm V: Phát triển doanh nghiệp công nghệ số' },
-  { value: 'Nhóm VI', label: 'Nhóm VI: Tăng cường hợp tác quốc tế' },
-  { value: 'Nhóm Thường Xuyên', label: 'Nhóm Thường Xuyên: Công tác truyền thông, chỉ đạo điều hành hàng năm' }
+  { value: 'Nhóm I: Hoàn thiện thể chế số', label: 'Nhóm I: Hoàn thiện thể chế số' },
+  { value: 'Nhóm II: Phát triển hạ tầng số', label: 'Nhóm II: Phát triển hạ tầng số' },
+  { value: 'Nhóm III: Phát triển dữ liệu số, nền tảng số dùng chung', label: 'Nhóm III: Phát triển dữ liệu số, nền tảng số dùng chung' },
+  { value: 'Nhóm IV: Phát triển nhân lực số', label: 'Nhóm IV: Phát triển nhân lực số' },
+  { value: 'Nhóm V: Phát triển doanh nghiệp công nghệ số', label: 'Nhóm V: Phát triển doanh nghiệp công nghệ số' },
+  { value: 'Nhóm VI: Tăng cường hợp tác quốc tế', label: 'Nhóm VI: Tăng cường hợp tác quốc tế' },
+  { value: 'Nhóm Thường Xuyên: Công tác truyền thông, chỉ đạo điều hành hàng năm', label: 'Nhóm Thường Xuyên: Công tác truyền thông, chỉ đạo điều hành hàng năm' }
 ];
 
 export const YEAR_LIST = [

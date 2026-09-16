@@ -146,14 +146,16 @@
         />
       </div>
 
-      <div class="flex items-center gap-1.5">
-        <button @click="loadReportData" class="w-full py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition min-h-[34px]">Lọc Báo Cáo</button>
-        <button @click="resetReportFilters" class="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition shrink-0 min-h-[34px]" title="Đặt lại bộ lọc">↺</button>
+      <div class="flex items-center gap-1.5 col-span-1 xl:col-start-7 ml-auto w-full justify-end">
+        <button @click="loadReportData" class="w-full sm:w-auto px-5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition min-h-[34px] cursor-pointer whitespace-nowrap">Lọc Báo Cáo</button>
+        <button @click="resetReportFilters" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition shrink-0 min-h-[34px] cursor-pointer" title="Đặt lại bộ lọc">↺</button>
       </div>
     </div>
 
     <!-- REPORT TABLE VIEW CONTAINER -->
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden w-full">
+      <LoadingSpinner v-if="isLoading" text="Đang tải dữ liệu báo cáo từ máy chủ..." />
+      <template v-else>
       
       <!-- BÁO CÁO 1: TỔNG HỢP TIẾN ĐỘ THEO BỘ / ĐỊA PHƯƠNG -->
       <div v-if="activeReportType === 'summary'" class="overflow-x-auto">
@@ -341,6 +343,7 @@
         </div>
       </div>
 
+      </template>
     </div>
 
   </div>
@@ -349,10 +352,12 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import SearchableSelect from '../components/SearchableSelect.vue';
+import LoadingSpinner from '../components/LoadingSpinner.vue';
 import { getApiUrl } from '../config/api';
 import { GOAL_SECTIONS, GOAL_GROUPS, TASK_SECTIONS, TASK_GROUPS } from '../config/planningStructureConfig';
 
 const activeReportType = ref('summary');
+const isLoading = ref(false);
 const agencies = ref([]);
 const allItems = ref([]);
 const metrics = ref({});
@@ -517,6 +522,7 @@ watch([activeReportType, searchQuery, selectedAgencyIds, selectedItemTypes, sele
 });
 
 async function loadReportData() {
+  isLoading.value = true;
   try {
     const agRes = await fetch(getApiUrl('/api/agencies'));
     if (agRes.ok) agencies.value = await agRes.json();
@@ -546,6 +552,8 @@ async function loadReportData() {
     }
   } catch (e) {
     console.error('Lỗi tải dữ liệu báo cáo:', e);
+  } finally {
+    isLoading.value = false;
   }
 }
 
