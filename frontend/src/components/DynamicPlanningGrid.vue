@@ -10,77 +10,108 @@
     </transition>
 
     <!-- ADVANCED FILTER BAR WITH SEARCH BUTTON & LOCALSTORAGE PERSISTENCE -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 bg-slate-50 p-4 rounded-2xl border border-slate-200 w-full items-end">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-200 w-full items-end">
       <!-- Search Query -->
       <div>
-        <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1">Tìm Kiếm Từ Khóa</label>
+        <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1">Từ Khóa</label>
         <div class="relative">
-          <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
           <input 
             v-model="filterDraft.searchQuery" 
             @keyup.enter="execGridFilterSearch"
-            placeholder="Mã, tên, phân nhóm..." 
-            class="w-full text-xs font-semibold pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            placeholder="Mã, tên..." 
+            class="w-full text-xs font-semibold pl-8 pr-2.5 py-1.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none min-h-[34px]"
           />
         </div>
       </div>
 
       <!-- Agency Filter -->
       <div>
-        <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1">Cơ Quan Chủ Trì</label>
-        <select 
-          v-model="filterDraft.selectedAgencyId" 
-          class="w-full text-xs font-bold bg-white border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-        >
-          <option value="all">Tất cả cơ quan / Bộ ngành</option>
-          <option v-for="ag in agencies" :key="ag.id" :value="ag.id">
-            {{ ag.code }} - {{ ag.name }}
-          </option>
-        </select>
+        <SearchableSelect 
+          v-model="filterDraft.selectedAgencyIds" 
+          :options="agencyOptions" 
+          :isMulti="true" 
+          label="Cơ Quan Chủ Trì" 
+          placeholder="Tất cả cơ quan"
+        />
+      </div>
+
+      <!-- Section Filter -->
+      <div v-if="filterItemType === 'Goal' || (!filterItemType && activeSubTab === 'goals')">
+        <SearchableSelect 
+          v-model="filterDraft.selectedSections" 
+          :options="sectionFilterOptions" 
+          :isMulti="true" 
+          label="Mục (Phụ lục)" 
+          placeholder="Tất cả mục"
+        />
+      </div>
+
+      <!-- Group Filter -->
+      <div>
+        <SearchableSelect 
+          v-model="filterDraft.selectedGroups" 
+          :options="groupFilterOptions" 
+          :isMulti="true" 
+          label="Nhóm Trọng Tâm" 
+          placeholder="Tất cả nhóm"
+        />
+      </div>
+
+      <!-- Year Range Filter -->
+      <div>
+        <div class="flex items-center justify-between mb-1">
+          <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block">Giai Đoạn</label>
+          <label class="inline-flex items-center gap-1 cursor-pointer text-[10px] font-extrabold text-blue-700">
+            <input type="checkbox" v-model="filterDraft.onlyOngoing" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3 h-3">
+            Thường xuyên
+          </label>
+        </div>
+        <div class="flex items-center gap-1">
+          <SearchableSelect 
+            v-model="filterDraft.fromYear" 
+            :options="yearRangeOptions" 
+            :isMulti="false" 
+            placeholder="Từ năm" 
+            class="w-full"
+          />
+          <span class="text-xs font-bold text-slate-400">➔</span>
+          <SearchableSelect 
+            v-model="filterDraft.toYear" 
+            :options="yearRangeOptions" 
+            :isMulti="false" 
+            placeholder="Đến năm" 
+            class="w-full"
+          />
+        </div>
       </div>
 
       <!-- Progress/Alert Status Filter -->
       <div>
-        <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1">Trạng Thái Tiến Độ</label>
-        <select 
-          v-model="filterDraft.selectedStatusFilter" 
-          class="w-full text-xs font-bold bg-white border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-        >
-          <option value="all">Tất cả trạng thái</option>
-          <option value="Completed">Hoàn thành (≥100%)</option>
-          <option value="OnTrack">Đạt kế hoạch (≥80%)</option>
-          <option value="Lagging">Chậm tiến độ (<80%)</option>
-          <option value="NoReport">Chưa có Báo cáo</option>
-        </select>
-      </div>
-
-      <!-- Year Filter -->
-      <div>
-        <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1">Năm Chỉ Tiêu</label>
-        <select 
-          v-model="filterDraft.selectedYearFilter" 
-          class="w-full text-xs font-bold bg-white border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none"
-        >
-          <option value="all">Tất cả các năm (2026-2030)</option>
-          <option v-for="y in [2026, 2027, 2028, 2029, 2030]" :key="y" :value="y">Năm {{ y }}</option>
-        </select>
+        <SearchableSelect 
+          v-model="filterDraft.selectedStatuses" 
+          :options="gridStatusOptions" 
+          :isMulti="true" 
+          label="Trạng Thái Tiến Độ" 
+          placeholder="Tất cả trạng thái"
+        />
       </div>
 
       <!-- Filter Action Buttons -->
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-1.5">
         <button 
           type="button" 
           @click="execGridFilterSearch" 
-          class="w-full py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-1.5"
+          class="w-full py-1.5 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-1 min-h-[34px]"
         >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
           <span>Tìm Kiếm</span>
         </button>
 
         <button 
           type="button" 
           @click="resetGridFilterSearch" 
-          class="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition shrink-0"
+          class="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition shrink-0 min-h-[34px]"
           title="Đặt lại bộ lọc"
         >
           ↺
@@ -98,13 +129,13 @@
           <thead class="bg-slate-100 text-xs text-slate-600 uppercase font-bold border-b border-slate-200">
             <tr>
               <!-- STICKY FROZEN COLUMNS 1, 2, 3 -->
-              <th class="px-3 py-3 border-r border-slate-200 min-w-[85px] w-[85px] max-w-[85px] sticky left-0 z-30 bg-slate-100 shadow-[1px_0_0_0_#e2e8f0]">Mã</th>
-              <th class="px-4 py-3 border-r border-slate-200 min-w-[295px] w-[295px] max-w-[295px] sticky left-[85px] z-30 bg-slate-100 shadow-[1px_0_0_0_#e2e8f0]">Tên Mục Tiêu / Nhiệm Vụ</th>
-              <th class="px-4 py-3 border-r border-slate-200 min-w-[130px] w-[130px] max-w-[130px] sticky left-[380px] z-30 bg-slate-100 shadow-[3px_0_6px_-1px_rgba(0,0,0,0.15)]">Đơn Vị Chủ Trì</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 min-w-[75px] w-[75px] max-w-[75px] sticky left-0 z-30 bg-slate-100 shadow-[1px_0_0_0_#e2e8f0]">Mã</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 min-w-[280px] w-[280px] max-w-[280px] sticky left-[75px] z-30 bg-slate-100 shadow-[1px_0_0_0_#e2e8f0]">
+                {{ filterItemType === 'Goal' ? 'Tên Mục Tiêu' : (filterItemType === 'Task' ? 'Tên Nhiệm Vụ' : (activeSubTab === 'goals' ? 'Tên Mục Tiêu' : 'Tên Nhiệm Vụ')) }}
+              </th>
+              <th class="px-3 py-2.5 border-r border-slate-200 min-w-[130px] w-[130px] max-w-[130px] sticky left-[355px] z-30 bg-slate-100 shadow-[3px_0_6px_-1px_rgba(0,0,0,0.15)]">Đơn Vị Chủ Trì</th>
               
               <!-- SCROLLABLE COLUMNS -->
-              <th class="px-4 py-3 border-r border-slate-200 min-w-[140px] bg-purple-50/50 text-purple-900 font-extrabold">Cơ Quan Phối Hợp</th>
-              <th class="px-4 py-3 border-r border-slate-200 min-w-[110px]">Loại Đánh Giá</th>
               
               <!-- Dynamic Year Columns -->
               <th 
@@ -123,11 +154,11 @@
             <template v-if="activeSubTab === 'goals'">
               <tr v-for="(item, itemIdx) in paginatedGridList" :key="item.taskId" class="hover:bg-purple-50/40 transition group">
                 <!-- STICKY FROZEN CELLS -->
-                <td class="px-3 py-3 border-r border-slate-200 font-extrabold text-purple-900 whitespace-nowrap min-w-[85px] w-[85px] max-w-[85px] sticky left-0 z-20 bg-white group-hover:bg-[#FAF5FF] shadow-[1px_0_0_0_#e2e8f0]">
+                <td class="px-3 py-3 border-r border-slate-200 font-extrabold text-purple-900 whitespace-nowrap min-w-[75px] w-[75px] max-w-[75px] sticky left-0 z-20 bg-white group-hover:bg-[#FAF5FF] shadow-[1px_0_0_0_#e2e8f0]">
                   {{ item.code }}
                 </td>
 
-                <td class="px-4 py-3 border-r border-slate-200 sticky left-[85px] z-20 bg-white group-hover:bg-[#FAF5FF] shadow-[1px_0_0_0_#e2e8f0] min-w-[295px] w-[295px] max-w-[295px]">
+                <td class="px-4 py-3 border-r border-slate-200 sticky left-[75px] z-20 bg-white group-hover:bg-[#FAF5FF] shadow-[1px_0_0_0_#e2e8f0] min-w-[280px] w-[280px] max-w-[280px]">
                   <VTooltip 
                     v-if="item.title && item.title.length > 40"
                     theme="custom-dark"
@@ -150,25 +181,11 @@
                   </div>
                 </td>
 
-                <td class="px-4 py-3 border-r border-slate-200 font-bold text-slate-700 min-w-[130px] w-[130px] max-w-[130px] sticky left-[380px] z-20 bg-white group-hover:bg-[#FAF5FF] shadow-[3px_0_6px_-1px_rgba(0,0,0,0.15)]">
+                <td class="px-4 py-3 border-r border-slate-200 font-bold text-slate-700 min-w-[130px] w-[130px] max-w-[130px] sticky left-[355px] z-20 bg-white group-hover:bg-[#FAF5FF] shadow-[3px_0_6px_-1px_rgba(0,0,0,0.15)]">
                   {{ item.leadAgencyCode || 'N/A' }}
                 </td>
 
                 <!-- SCROLLABLE CELLS -->
-                <td class="px-4 py-3 border-r border-slate-200">
-                  <div class="flex flex-wrap gap-1">
-                    <span v-for="coord in item.coordinatingAgencyCodes" :key="coord" class="px-2 py-0.5 bg-purple-100 text-purple-800 rounded font-extrabold text-[10px]">
-                      {{ coord }}
-                    </span>
-                    <span v-if="!item.coordinatingAgencyCodes || item.coordinatingAgencyCodes.length === 0" class="text-slate-400 italic text-xs">—</span>
-                  </div>
-                </td>
-
-                <td class="px-4 py-3 border-r border-slate-200">
-                  <span :class="['px-2 py-0.5 rounded text-[11px] font-semibold', isQuantitative(item) ? 'bg-emerald-50 text-emerald-700' : 'bg-indigo-50 text-indigo-700']">
-                    {{ isQuantitative(item) ? 'Định lượng' : 'Định tính' }}
-                  </span>
-                </td>
 
                 <!-- Dynamic Year Target Cells with INLINE AUTO-SAVE -->
                 <td v-for="year in gridData.dynamicYears" :key="year" class="px-3 py-2 border-r border-slate-200 text-center">
@@ -184,16 +201,14 @@
                     </div>
                   </template>
                   <template v-else>
-                    <select 
+                    <SearchableSelect 
                       v-model="item.yearlyTargets[year]" 
-                      @change="saveYearlyTarget(item, year, $event.target.value)"
-                      class="w-full text-xs font-bold bg-white border border-slate-300 rounded-lg py-1 px-1 focus:ring-2 focus:ring-blue-500 transition hover:border-blue-400"
-                    >
-                      <option value="NotStarted">Chưa thực hiện</option>
-                      <option value="Drafting">Đang soạn thảo</option>
-                      <option value="Reviewing">Đang xin ý kiến</option>
-                      <option value="Completed">Hoàn thành</option>
-                    </select>
+                      :options="gridStatusCellOptions" 
+                      :isMulti="false" 
+                      :clearable="false"
+                      @change="val => saveYearlyTarget(item, year, val)" 
+                      class="w-full text-xs"
+                    />
                   </template>
                 </td>
 
@@ -221,7 +236,7 @@
               </tr>
 
               <tr v-if="filteredGoalsList.length === 0">
-                <td :colspan="6 + gridData.dynamicYears.length" class="px-4 py-8 text-center text-slate-400 italic text-xs bg-slate-50/50">
+                <td :colspan="4 + gridData.dynamicYears.length" class="px-4 py-8 text-center text-slate-400 italic text-xs bg-slate-50/50">
                   Chưa có Mục tiêu (1A) nào trong văn bản này.
                 </td>
               </tr>
@@ -231,11 +246,11 @@
             <template v-else-if="activeSubTab === 'tasks'">
               <tr v-for="(item, itemIdx) in paginatedGridList" :key="item.taskId" class="hover:bg-blue-50/40 transition group">
                 <!-- STICKY FROZEN CELLS -->
-                <td class="px-3 py-3 border-r border-slate-200 font-extrabold text-blue-900 whitespace-nowrap min-w-[85px] w-[85px] max-w-[85px] sticky left-0 z-20 bg-white group-hover:bg-[#EFF6FF] shadow-[1px_0_0_0_#e2e8f0]">
+                <td class="px-3 py-3 border-r border-slate-200 font-extrabold text-blue-900 whitespace-nowrap min-w-[75px] w-[75px] max-w-[75px] sticky left-0 z-20 bg-white group-hover:bg-[#EFF6FF] shadow-[1px_0_0_0_#e2e8f0]">
                   {{ item.code }}
                 </td>
 
-                <td class="px-4 py-3 border-r border-slate-200 sticky left-[85px] z-20 bg-white group-hover:bg-[#EFF6FF] shadow-[1px_0_0_0_#e2e8f0] min-w-[295px] w-[295px] max-w-[295px]">
+                <td class="px-4 py-3 border-r border-slate-200 sticky left-[75px] z-20 bg-white group-hover:bg-[#EFF6FF] shadow-[1px_0_0_0_#e2e8f0] min-w-[280px] w-[280px] max-w-[280px]">
                   <VTooltip 
                     v-if="item.title && item.title.length > 40"
                     theme="custom-dark"
@@ -258,25 +273,11 @@
                   </div>
                 </td>
 
-                <td class="px-4 py-3 border-r border-slate-200 font-bold text-slate-700 min-w-[130px] w-[130px] max-w-[130px] sticky left-[380px] z-20 bg-white group-hover:bg-[#EFF6FF] shadow-[3px_0_6px_-1px_rgba(0,0,0,0.15)]">
+                <td class="px-4 py-3 border-r border-slate-200 font-bold text-slate-700 min-w-[130px] w-[130px] max-w-[130px] sticky left-[355px] z-20 bg-white group-hover:bg-[#EFF6FF] shadow-[3px_0_6px_-1px_rgba(0,0,0,0.15)]">
                   {{ item.leadAgencyCode || 'N/A' }}
                 </td>
 
                 <!-- SCROLLABLE CELLS -->
-                <td class="px-4 py-3 border-r border-slate-200">
-                  <div class="flex flex-wrap gap-1">
-                    <span v-for="coord in item.coordinatingAgencyCodes" :key="coord" class="px-2 py-0.5 bg-purple-100 text-purple-800 rounded font-extrabold text-[10px]">
-                      {{ coord }}
-                    </span>
-                    <span v-if="!item.coordinatingAgencyCodes || item.coordinatingAgencyCodes.length === 0" class="text-slate-400 italic text-xs">—</span>
-                  </div>
-                </td>
-
-                <td class="px-4 py-3 border-r border-slate-200">
-                  <span :class="['px-2 py-0.5 rounded text-[11px] font-semibold', isQuantitative(item) ? 'bg-emerald-50 text-emerald-700' : 'bg-indigo-50 text-indigo-700']">
-                    {{ isQuantitative(item) ? 'Định lượng' : 'Định tính' }}
-                  </span>
-                </td>
 
                 <!-- Dynamic Year Target Cells with INLINE AUTO-SAVE -->
                 <td v-for="year in gridData.dynamicYears" :key="year" class="px-3 py-2 border-r border-slate-200 text-center">
@@ -292,16 +293,14 @@
                     </div>
                   </template>
                   <template v-else>
-                    <select 
+                    <SearchableSelect 
                       v-model="item.yearlyTargets[year]" 
-                      @change="saveYearlyTarget(item, year, $event.target.value)"
-                      class="w-full text-xs font-bold bg-white border border-slate-300 rounded-lg py-1 px-1 focus:ring-2 focus:ring-blue-500 transition hover:border-blue-400"
-                    >
-                      <option value="NotStarted">Chưa thực hiện</option>
-                      <option value="Drafting">Đang soạn thảo</option>
-                      <option value="Reviewing">Đang xin ý kiến</option>
-                      <option value="Completed">Hoàn thành</option>
-                    </select>
+                      :options="gridStatusCellOptions" 
+                      :isMulti="false" 
+                      :clearable="false"
+                      @change="val => saveYearlyTarget(item, year, val)" 
+                      class="w-full text-xs"
+                    />
                   </template>
                 </td>
 
@@ -329,7 +328,7 @@
               </tr>
 
               <tr v-if="filteredTasksList.length === 0">
-                <td :colspan="6 + gridData.dynamicYears.length" class="px-4 py-8 text-center text-slate-400 italic text-xs bg-slate-50/50">
+                <td :colspan="4 + gridData.dynamicYears.length" class="px-4 py-8 text-center text-slate-400 italic text-xs bg-slate-50/50">
                   Chưa có Nhiệm vụ (1B) nào trong văn bản này.
                 </td>
               </tr>
@@ -392,7 +391,9 @@
 import { ref, computed, watch, onMounted } from 'vue';
 import BaselineOverrideModal from './BaselineOverrideModal.vue';
 import LoadingSpinner from './LoadingSpinner.vue';
+import SearchableSelect from './SearchableSelect.vue';
 import { getApiUrl } from '../config/api';
+import { GOAL_SECTIONS, GOAL_GROUPS, TASK_SECTIONS, TASK_GROUPS } from '../config/planningStructureConfig';
 
 const props = defineProps({
   documentId: { type: String, required: true },
@@ -400,15 +401,48 @@ const props = defineProps({
 });
 
 const activeSubTab = ref('goals');
+const isLoading = ref(false);
+const isBaselineModalOpen = ref(false);
+const selectedTaskForOverride = ref(null);
+const agencies = ref([]);
+const toastMessage = ref('');
+let toastTimeout = null;
 
-watch(() => props.filterItemType, (newType) => {
-  if (newType === 'Goal' || newType === 'goals' || newType === '1') {
-    activeSubTab.value = 'goals';
-  } else if (newType === 'Task' || newType === 'tasks' || newType === '2') {
-    activeSubTab.value = 'tasks';
-  }
-  loadGridData();
-}, { immediate: true });
+const agencyOptions = computed(() => {
+  return agencies.value.map(ag => ({ value: ag.id, label: `${ag.code} - ${ag.name}` }));
+});
+
+const sectionFilterOptions = computed(() => {
+  return props.filterItemType === 'Goal' ? GOAL_SECTIONS : (props.filterItemType === 'Task' ? TASK_SECTIONS : [...GOAL_SECTIONS, ...TASK_SECTIONS]);
+});
+
+const groupFilterOptions = computed(() => {
+  return props.filterItemType === 'Goal' ? GOAL_GROUPS : (props.filterItemType === 'Task' ? TASK_GROUPS : [...GOAL_GROUPS, ...TASK_GROUPS]);
+});
+
+const gridStatusOptions = ref([
+  { value: 'Completed', label: 'Hoàn thành (≥100%)' },
+  { value: 'OnTrack', label: 'Đạt kế hoạch (≥80%)' },
+  { value: 'Lagging', label: 'Chậm tiến độ (<80%)' },
+  { value: 'NoReport', label: 'Chưa có Báo cáo' }
+]);
+
+const yearRangeOptions = computed(() => [2026, 2027, 2028, 2029, 2030].map(y => ({ value: y, label: String(y) })));
+
+const gridStatusCellOptions = ref([
+  { value: 'NotStarted', label: 'Chưa thực hiện' },
+  { value: 'Drafting', label: 'Đang soạn thảo' },
+  { value: 'Reviewing', label: 'Đang xin ý kiến' },
+  { value: 'Completed', label: 'Hoàn thành' }
+]);
+
+const yearOptions = ref([
+  { value: 2026, label: 'Năm 2026' },
+  { value: 2027, label: 'Năm 2027' },
+  { value: 2028, label: 'Năm 2028' },
+  { value: 2029, label: 'Năm 2029' },
+  { value: 2030, label: 'Năm 2030' }
+]);
 
 const gridData = ref({
   documentId: props.documentId,
@@ -420,25 +454,31 @@ const gridData = ref({
   items: []
 });
 
-const isLoading = ref(false);
-const isBaselineModalOpen = ref(false);
-const selectedTaskForOverride = ref(null);
-
 // Advanced Filter States & Draft
 const STORAGE_KEY = computed(() => `cdsqg_grid_filters_${props.documentId}`);
 
 const filterDraft = ref({
   searchQuery: '',
-  selectedAgencyId: 'all',
-  selectedStatusFilter: 'all',
-  selectedYearFilter: 'all'
+  selectedAgencyIds: [],
+  selectedStatuses: [],
+  selectedYears: [],
+  selectedSections: [],
+  selectedGroups: [],
+  fromYear: null,
+  toYear: null,
+  onlyOngoing: false
 });
 
 const appliedFilters = ref({
   searchQuery: '',
-  selectedAgencyId: 'all',
-  selectedStatusFilter: 'all',
-  selectedYearFilter: 'all'
+  selectedAgencyIds: [],
+  selectedStatuses: [],
+  selectedYears: [],
+  selectedSections: [],
+  selectedGroups: [],
+  fromYear: null,
+  toYear: null,
+  onlyOngoing: false
 });
 
 // Pagination States
@@ -471,9 +511,14 @@ function execGridFilterSearch() {
 function resetGridFilterSearch() {
   filterDraft.value = {
     searchQuery: '',
-    selectedAgencyId: 'all',
-    selectedStatusFilter: 'all',
-    selectedYearFilter: 'all'
+    selectedAgencyIds: [],
+    selectedStatuses: [],
+    selectedYears: [],
+    selectedSections: [],
+    selectedGroups: [],
+    fromYear: null,
+    toYear: null,
+    onlyOngoing: false
   };
   appliedFilters.value = { ...filterDraft.value };
   gridCurrentPage.value = 1;
@@ -488,11 +533,6 @@ watch(activeSubTab, () => {
   gridCurrentPage.value = 1;
 });
 
-const agencies = ref([]);
-
-const toastMessage = ref('');
-let toastTimeout = null;
-
 function showToast(msg) {
   toastMessage.value = msg;
   if (toastTimeout) clearTimeout(toastTimeout);
@@ -503,12 +543,13 @@ function showToast(msg) {
 
 async function loadAgencies() {
   try {
-    const res = await fetch(getApiUrl('/api/planning/agencies'));
+    const res = await fetch(getApiUrl('/api/agencies'));
     if (res.ok) {
-      agencies.value = await res.json();
+      const data = await res.json();
+      agencies.value = Array.isArray(data) ? data : (data.items || []);
     }
   } catch (e) {
-    console.error('Error loading agencies:', e);
+    // Silent catch
   }
 }
 
@@ -534,52 +575,79 @@ function filterGridItem(item) {
     if (!matchQ) return false;
   }
 
-  // 2. Agency Filter
-  if (appliedFilters.value.selectedAgencyId !== 'all') {
-    const agId = appliedFilters.value.selectedAgencyId;
-    const selectedAg = agencies.value.find(a => a.id === agId);
-    if (selectedAg) {
-      const matchAg = item.leadAgencyId === selectedAg.id || 
-                      item.leadAgencyCode === selectedAg.code || 
-                      item.leadAgencyName === selectedAg.name;
-      if (!matchAg) return false;
+  // 2. Agency Filter (Multi-select)
+  if (appliedFilters.value.selectedAgencyIds && appliedFilters.value.selectedAgencyIds.length > 0) {
+    const selectedAgencies = agencies.value.filter(a => appliedFilters.value.selectedAgencyIds.includes(a.id));
+    const matchAg = selectedAgencies.some(ag => 
+      item.leadAgencyId === ag.id || 
+      item.leadAgencyCode === ag.code || 
+      item.leadAgencyName === ag.name
+    );
+    if (!matchAg) return false;
+  }
+
+  // 3. Section Filter (Multi-select)
+  if (appliedFilters.value.selectedSections && appliedFilters.value.selectedSections.length > 0) {
+    if (!appliedFilters.value.selectedSections.includes(item.section)) return false;
+  }
+
+  // 4. Group Filter (Multi-select)
+  if (appliedFilters.value.selectedGroups && appliedFilters.value.selectedGroups.length > 0) {
+    if (!appliedFilters.value.selectedGroups.includes(item.group)) return false;
+  }
+
+  // 5. Ongoing Tasks / Goals Filter
+  if (appliedFilters.value.onlyOngoing && !item.isOngoing) {
+    return false;
+  }
+
+  // 6. Year Range Filter (From Year -> To Year)
+  if (appliedFilters.value.fromYear || appliedFilters.value.toYear) {
+    const fYr = appliedFilters.value.fromYear ? Number(appliedFilters.value.fromYear) : 2026;
+    const tYr = appliedFilters.value.toYear ? Number(appliedFilters.value.toYear) : 2030;
+    if (!item.isOngoing) {
+      const startY = item.startDate ? new Date(item.startDate).getFullYear() : 2026;
+      const dueY = item.dueDate ? new Date(item.dueDate).getFullYear() : startY;
+      if (startY > tYr || dueY < fYr) return false;
     }
   }
 
-  // 3. Progress / Alert Status Filter
-  if (appliedFilters.value.selectedStatusFilter !== 'all') {
-    const statusFilter = appliedFilters.value.selectedStatusFilter;
+  // 7. Progress / Alert Status Filter (Multi-select)
+  if (appliedFilters.value.selectedStatuses && appliedFilters.value.selectedStatuses.length > 0) {
+    const selectedStatuses = appliedFilters.value.selectedStatuses;
     const latestVal = item.latestProgressValue;
     const latestStatus = item.latestProgressStatus;
-    if (statusFilter === 'Completed') {
-      if (latestVal !== null && latestVal !== undefined) {
-        if (latestVal < 100) return false;
-      } else if (latestStatus !== 'Completed') {
-        return false;
+    
+    let matchStatus = false;
+    for (const statusFilter of selectedStatuses) {
+      if (statusFilter === 'Completed') {
+        if ((latestVal !== null && latestVal !== undefined && latestVal >= 100) || latestStatus === 'Completed') {
+          matchStatus = true; break;
+        }
+      } else if (statusFilter === 'OnTrack') {
+        if ((latestVal !== null && latestVal !== undefined && latestVal >= 80 && latestVal < 100) || latestStatus === 'OnTrack' || latestStatus === 'Reviewing') {
+          matchStatus = true; break;
+        }
+      } else if (statusFilter === 'Lagging') {
+        if ((latestVal !== null && latestVal !== undefined && latestVal < 80) || latestStatus === 'Lagging' || latestStatus === 'NotStarted') {
+          matchStatus = true; break;
+        }
+      } else if (statusFilter === 'NoReport') {
+        if (latestVal === null && latestStatus === null) {
+          matchStatus = true; break;
+        }
       }
-    } else if (statusFilter === 'OnTrack') {
-      if (latestVal !== null && latestVal !== undefined) {
-        if (latestVal < 80 || latestVal >= 100) return false;
-      } else if (latestStatus !== 'OnTrack' && latestStatus !== 'Reviewing') {
-        return false;
-      }
-    } else if (statusFilter === 'Lagging') {
-      if (latestVal !== null && latestVal !== undefined) {
-        if (latestVal >= 80) return false;
-      } else if (latestStatus !== 'Lagging' && latestStatus !== 'NotStarted') {
-        return false;
-      }
-    } else if (statusFilter === 'NoReport') {
-      if (latestVal !== null || latestStatus !== null) return false;
     }
+    if (!matchStatus) return false;
   }
 
-  // 4. Year Filter
-  if (appliedFilters.value.selectedYearFilter !== 'all') {
-    const yr = Number(appliedFilters.value.selectedYearFilter);
-    if (item.yearlyTargets && (item.yearlyTargets[yr] === undefined || item.yearlyTargets[yr] === null || item.yearlyTargets[yr] === '')) {
-      return false;
-    }
+  // 8. Year Filter (Multi-select)
+  if (appliedFilters.value.selectedYears && appliedFilters.value.selectedYears.length > 0) {
+    const matchYr = appliedFilters.value.selectedYears.some(yr => {
+      const yrNum = Number(yr);
+      return item.yearlyTargets && item.yearlyTargets[yrNum] !== undefined && item.yearlyTargets[yrNum] !== null && item.yearlyTargets[yrNum] !== '';
+    });
+    if (!matchYr) return false;
   }
 
   return true;
@@ -672,6 +740,15 @@ async function loadGridData() {
     isLoading.value = false;
   }
 }
+
+watch(() => props.filterItemType, (newType) => {
+  if (newType === 'Goal' || newType === 'goals' || newType === '1') {
+    activeSubTab.value = 'goals';
+  } else if (newType === 'Task' || newType === 'tasks' || newType === '2') {
+    activeSubTab.value = 'tasks';
+  }
+  loadGridData();
+}, { immediate: true });
 
 watch(() => props.documentId, () => {
   loadGridData();

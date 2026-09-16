@@ -1,10 +1,12 @@
 using System;
+using System.Collections.Generic;
 using Cdsqg.Core.Enums;
 
 namespace Cdsqg.Core.Entities
 {
     /// <summary>
     /// Module 1: Agency Catalog (Bộ, Ngành, Địa phương, Đơn vị nội bộ)
+    /// Hỗ trợ cơ cấu phân cấp Cơ quan trực thuộc (Parent - Child Agencies)
     /// </summary>
     public class Agency
     {
@@ -25,7 +27,16 @@ namespace Cdsqg.Core.Entities
         /// </summary>
         public AgencyTypeEnum Type { get; set; } = AgencyTypeEnum.Ministry;
 
+        /// <summary>
+        /// ID Cơ quan cấp trên (nếu là cơ quan trực thuộc)
+        /// </summary>
+        public Guid? ParentId { get; set; }
+        public Agency? ParentAgency { get; set; }
+
         public bool IsActive { get; set; } = true;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+        // Tập hợp các Cơ quan trực thuộc
+        public ICollection<Agency> ChildAgencies { get; set; } = new List<Agency>();
     }
 }

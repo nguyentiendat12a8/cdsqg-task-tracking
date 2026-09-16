@@ -5,19 +5,19 @@
       <!-- Modal Header -->
       <div class="flex justify-between items-start border-b border-slate-100 pb-3 shrink-0">
         <div>
-          <span class="text-xs font-bold text-blue-600 uppercase tracking-wider block">Nhật Ký & Lịch Sử Chỉ Đạo</span>
-          <h3 class="text-lg font-extrabold text-slate-800">📜 Lịch Sử Các Văn Bản Đôn Đốc Tiến Độ</h3>
+          <span class="text-xs font-bold text-blue-600 uppercase tracking-wider block">Nhật Ký & Lịch Sử Thông Báo</span>
+          <h3 class="text-lg font-extrabold text-slate-800">📜 Lịch Sử Các Văn Bản Thông Báo</h3>
         </div>
         <button @click="close" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1">✕</button>
       </div>
 
       <!-- History Content -->
       <div v-if="isLoading" class="p-8 text-center text-slate-400 text-xs font-semibold">
-        Đang tải lịch sử đôn đốc...
+        Đang tải lịch sử thông báo...
       </div>
 
       <div v-else-if="logs.length === 0" class="p-8 text-center bg-slate-50 rounded-xl border border-slate-200 text-slate-400 text-xs font-semibold italic">
-        Chưa có nhật ký đôn đốc nào được lưu.
+        Chưa có nhật ký thông báo nào được lưu.
       </div>
 
       <div v-else class="flex-1 overflow-y-auto space-y-4 pr-1">
@@ -44,7 +44,7 @@
           </div>
 
           <div class="flex items-center justify-between text-[11px] text-slate-500 font-semibold pt-1">
-            <span>Cơ quan nhận đôn đốc: <span class="font-bold text-slate-800">{{ log.leadAgencyName || log.leadAgencyCode }}</span></span>
+            <span>Cơ quan nhận thông báo: <span class="font-bold text-slate-800">{{ log.leadAgencyName || log.leadAgencyCode }}</span></span>
             <span class="text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">Đã lưu CSDL</span>
           </div>
         </div>

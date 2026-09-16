@@ -19,6 +19,7 @@ namespace Cdsqg.Infrastructure.Data
         public DbSet<TaskUrgeLog> TaskUrgeLogs => Set<TaskUrgeLog>();
         public DbSet<DataImportLog> DataImportLogs => Set<DataImportLog>();
         public DbSet<User> Users => Set<User>();
+        public DbSet<Notification> Notifications => Set<Notification>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -40,7 +41,24 @@ namespace Cdsqg.Infrastructure.Data
             });
 
             // ----------------------------------------------------
-            // MODULE 1: AGENCY & UNIT DICTIONARY CATALOGS
+            // NOTIFICATION CONFIGURATION
+            // ----------------------------------------------------
+            modelBuilder.Entity<Notification>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasOne(e => e.User)
+                      .WithMany()
+                      .HasForeignKey(e => e.UserId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Agency)
+                      .WithMany()
+                      .HasForeignKey(e => e.AgencyId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // ----------------------------------------------------
+            // MODULE 1: AGENCY (WITH SUB-AGENCIES HIERARCHY)
             // ----------------------------------------------------
             modelBuilder.Entity<Agency>(entity =>
             {
@@ -48,6 +66,11 @@ namespace Cdsqg.Infrastructure.Data
                 entity.HasIndex(e => e.Code).IsUnique();
                 entity.Property(e => e.Name).IsRequired().HasMaxLength(250);
                 entity.Property(e => e.Type).HasConversion<string>();
+
+                entity.HasOne(e => e.ParentAgency)
+                      .WithMany(a => a.ChildAgencies)
+                      .HasForeignKey(e => e.ParentId)
+                      .OnDelete(DeleteBehavior.Restrict);
             });
 
             modelBuilder.Entity<UnitDictionary>(entity =>
@@ -75,7 +98,7 @@ namespace Cdsqg.Infrastructure.Data
             });
 
             // ----------------------------------------------------
-            // MODULE 3: GOAL/TASK ITEM WITH JSONB CUSTOM BASELINE
+            // MODULE 3: GOAL/TASK ITEM WITH SUB-TASKS HIERARCHY
             // ----------------------------------------------------
             modelBuilder.Entity<GoalTaskItem>(entity =>
             {
@@ -83,6 +106,12 @@ namespace Cdsqg.Infrastructure.Data
                 entity.Property(e => e.ItemType).HasConversion<string>();
                 entity.Property(e => e.EvaluationType).HasConversion<string>();
                 entity.Property(e => e.CalculationMethod).HasConversion<string>();
+
+                // Self-referencing relationship for Sub-tasks
+                entity.HasOne(e => e.ParentItem)
+                      .WithMany(g => g.SubItems)
+                      .HasForeignKey(e => e.ParentId)
+                      .OnDelete(DeleteBehavior.Cascade);
 
                 // Lead Agency Relationship
                 entity.HasOne(e => e.LeadAgency)
@@ -96,10 +125,6 @@ namespace Cdsqg.Infrastructure.Data
                       .HasForeignKey(e => e.UnitId)
                       .OnDelete(DeleteBehavior.SetNull);
 
-                // -----------------------------------------------------------------------
-                // CRUCIAL BRD REQUIREMENT: POSTGRESQL JSONB CONFIGURATION FOR CustomBaseline
-                // Flexible storage for manual quarterly/monthly overrides (e.g. {"Q1_2026": 10.0, "Q2_2026": 40.0})
-                // -----------------------------------------------------------------------
                 entity.Property(e => e.CustomBaseline)
                       .HasColumnType("jsonb")
                       .HasConversion(
@@ -107,7 +132,6 @@ namespace Cdsqg.Infrastructure.Data
                           v => JsonSerializer.Deserialize<Dictionary<string, string>>(v, (JsonSerializerOptions?)null) ?? new Dictionary<string, string>()
                       );
 
-                // PostgreSQL JSONB mapping for CoordinatingAgencyIds array of UUIDs
                 entity.Property(e => e.CoordinatingAgencyIds)
                       .HasColumnType("jsonb")
                       .HasConversion(
@@ -115,7 +139,6 @@ namespace Cdsqg.Infrastructure.Data
                           v => JsonSerializer.Deserialize<List<System.Guid>>(v, (JsonSerializerOptions?)null) ?? new List<System.Guid>()
                       );
 
-                // PostgreSQL JSONB mapping for DynamicKPIs flexible attributes
                 entity.Property(e => e.DynamicKPIs)
                       .HasColumnType("jsonb")
                       .HasConversion(
@@ -148,7 +171,6 @@ namespace Cdsqg.Infrastructure.Data
                 entity.Property(e => e.QualitativeStatus).HasConversion<string>();
                 entity.Property(e => e.CalculatedAlert).HasConversion<string>();
 
-                // PostgreSQL JSONB mapping for AttachmentFileUrls list
                 entity.Property(e => e.AttachmentFileUrls)
                       .HasColumnType("jsonb")
                       .HasConversion(

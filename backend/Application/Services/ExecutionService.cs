@@ -14,6 +14,7 @@ namespace Cdsqg.Application.Services
     {
         Task<SubmitProgressResponseDto> SubmitProgressAsync(Guid taskId, SubmitProgressRequestDto dto);
         Task<GetProgressLogResponseDto?> GetProgressLogAsync(Guid taskId, int year, int quarter);
+        Task<List<GetProgressLogResponseDto>> GetTaskProgressHistoryAsync(Guid taskId);
         Task<TaskUrgeLogResponseDto> CreateUrgeLogAsync(CreateTaskUrgeLogDto dto);
         Task<List<TaskUrgeLogResponseDto>> GetTaskUrgeHistoryAsync(Guid taskId);
         Task<List<TaskUrgeLogResponseDto>> GetAllUrgeLogsAsync();
@@ -138,6 +139,18 @@ namespace Cdsqg.Application.Services
             // 4. Evidence File Storage
             List<string> uploadedUrls = new List<string>();
 
+            // Retain existing files passed from client
+            if (dto.ExistingFiles != null && dto.ExistingFiles.Count > 0)
+            {
+                foreach (var existingUrl in dto.ExistingFiles)
+                {
+                    if (!string.IsNullOrWhiteSpace(existingUrl) && !uploadedUrls.Contains(existingUrl.Trim()))
+                    {
+                        uploadedUrls.Add(existingUrl.Trim());
+                    }
+                }
+            }
+
             if (dto.EvidenceFiles != null && dto.EvidenceFiles.Count > 0)
             {
                 foreach (var file in dto.EvidenceFiles)
@@ -145,7 +158,7 @@ namespace Cdsqg.Application.Services
                     if (file != null && file.Length > 0)
                     {
                         var url = await _fileStorageService.SaveEvidenceFileAsync(file);
-                        if (!string.IsNullOrEmpty(url))
+                        if (!string.IsNullOrEmpty(url) && !uploadedUrls.Contains(url))
                         {
                             uploadedUrls.Add(url);
                         }
@@ -241,6 +254,28 @@ namespace Cdsqg.Application.Services
                 LogDate = log.LogDate,
                 CalculatedAlert = log.CalculatedAlert
             };
+        }
+
+        public async Task<List<GetProgressLogResponseDto>> GetTaskProgressHistoryAsync(Guid taskId)
+        {
+            var logs = await _context.ProgressLogs
+                .Where(p => p.GoalTaskId == taskId)
+                .OrderByDescending(p => p.LogDate)
+                .ToListAsync();
+
+            return logs.Select(log => new GetProgressLogResponseDto
+            {
+                Id = log.Id,
+                TaskId = log.GoalTaskId,
+                PeriodYear = log.PeriodYear,
+                PeriodQuarter = log.PeriodQuarter,
+                ActualValue = log.QuantitativeValue,
+                Status = log.QualitativeStatus?.ToString(),
+                SummaryNotes = log.SummaryNotes,
+                AttachmentFileUrls = log.AttachmentFileUrls ?? new List<string>(),
+                LogDate = log.LogDate,
+                CalculatedAlert = log.CalculatedAlert
+            }).ToList();
         }
 
         public async Task<TaskUrgeLogResponseDto> CreateUrgeLogAsync(CreateTaskUrgeLogDto dto)

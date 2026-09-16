@@ -13,6 +13,7 @@ namespace Cdsqg.Application.Services
     public interface IPlanningService
     {
         Task<PlanningGridResponseDto> GetDocumentPlanningGridAsync(Guid documentId);
+        Task<GoalTaskItem> CreateGoalTaskItemAsync(CreateGoalTaskItemDto dto);
         Task<bool> UpdateTaskCustomBaselineAsync(Guid taskId, UpdateCustomBaselineDto dto);
         Task<bool> UpdateYearlyTargetAsync(Guid taskId, UpdateYearlyTargetDto dto);
     }
@@ -29,14 +30,24 @@ namespace Cdsqg.Application.Services
         public async Task<PlanningGridResponseDto> GetDocumentPlanningGridAsync(Guid documentId)
         {
             var doc = await _context.Documents
-                .FirstOrDefaultAsync(d => d.Id == documentId);
+                .FirstOrDefaultAsync(d => d.Id == documentId)
+                ?? await _context.Documents.FirstOrDefaultAsync();
 
             if (doc == null)
             {
-                throw new KeyNotFoundException($"Không tìm thấy Quyết định/Văn bản với ID: {documentId}");
+                doc = new Document
+                {
+                    Id = Guid.Parse("12660000-0000-0000-0000-000000001266"),
+                    DocumentNumber = "1266/QĐ-TTg",
+                    Name = "Quyết định số 1266/QĐ-TTg ngày 14/07/2026 của Thủ tướng Chính phủ",
+                    StartYear = 2026,
+                    EndYear = 2030,
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.Documents.Add(doc);
+                await _context.SaveChangesAsync();
             }
 
-            // Build dynamic year range
             int startYear = doc.StartYear ?? 2026;
             int endYear = doc.EndYear ?? 2030;
             var dynamicYears = new List<int>();
@@ -46,18 +57,27 @@ namespace Cdsqg.Application.Services
             }
 
             var agenciesMap = await _context.Agencies.ToDictionaryAsync(a => a.Id);
-            var items = await _context.GoalTaskItems
+            var query = _context.GoalTaskItems
                 .Include(i => i.LeadAgency)
                 .Include(i => i.Unit)
                 .Include(i => i.Baselines)
                 .Include(i => i.ProgressLogs)
-                .Where(i => i.DocumentId == documentId)
-                .ToListAsync();
+                .Include(i => i.SubItems)
+                .AsQueryable();
+
+            var items = await query.Where(i => i.DocumentId == doc.Id).ToListAsync();
+            if (!items.Any())
+            {
+                items = await query.ToListAsync();
+            }
 
             int gCount = 1;
             int tCount = 1;
 
-            var gridItems = items.OrderBy(i => i.CreatedAt).Select(item =>
+            var itemsMap = items.ToDictionary(i => i.Id);
+            var rootItems = items.Where(i => !i.ParentId.HasValue || !itemsMap.ContainsKey(i.ParentId.Value)).OrderBy(i => i.CreatedAt).ToList();
+
+            PlanningGridItemDto MapItemDto(GoalTaskItem item)
             {
                 string safeCode = item.Code?.Trim() ?? string.Empty;
                 if (string.IsNullOrWhiteSpace(safeCode) || safeCode == "MT-" || safeCode == "NV-" || safeCode.EndsWith("-") || safeCode.Length <= 3)
@@ -67,9 +87,9 @@ namespace Cdsqg.Application.Services
                 if (item.ItemType == ItemTypeEnum.Goal) gCount++;
                 else tCount++;
 
-                var coordAgencyCodes = item.CoordinatingAgencyIds
+                var coordAgencies = item.CoordinatingAgencyIds
                     .Where(id => agenciesMap.ContainsKey(id))
-                    .Select(id => agenciesMap[id].Code)
+                    .Select(id => agenciesMap[id])
                     .ToList();
 
                 var yearlyTargets = new Dictionary<int, object?>();
@@ -87,27 +107,47 @@ namespace Cdsqg.Application.Services
                 }
 
                 var latestLog = item.ProgressLogs.OrderByDescending(l => l.LogDate).FirstOrDefault();
+                var status = CalculateExecutionStatus(item, latestLog);
+
+                var childDtos = item.SubItems != null && item.SubItems.Any()
+                    ? item.SubItems.OrderBy(s => s.CreatedAt).Select(s => MapItemDto(s)).ToList()
+                    : new List<PlanningGridItemDto>();
 
                 return new PlanningGridItemDto
                 {
                     TaskId = item.Id,
+                    ParentId = item.ParentId,
                     ItemType = item.ItemType.ToString(),
                     Code = safeCode,
                     Title = item.Title,
                     Category = item.Category,
+                    Section = item.Section ?? string.Empty,
+                    Group = item.Group ?? string.Empty,
+                    IsOngoing = item.IsOngoing,
+                    IsGeneralTask = item.IsGeneralTask,
+                    StartDate = item.StartDate,
+                    DueDate = item.DueDate,
+                    LeadAgencyId = item.LeadAgencyId,
                     LeadAgencyCode = item.LeadAgency?.Code ?? string.Empty,
                     LeadAgencyName = item.LeadAgency?.Name ?? string.Empty,
-                    CoordinatingAgencyCodes = coordAgencyCodes,
+                    CoordinatingAgencyIds = item.CoordinatingAgencyIds,
+                    CoordinatingAgencyCodes = coordAgencies.Select(a => a.Code).ToList(),
+                    CoordinatingAgencyNames = coordAgencies.Select(a => a.Name).ToList(),
+                    UnitId = item.UnitId,
                     EvaluationType = item.EvaluationType.ToString(),
                     UnitName = item.Unit?.Name ?? "%",
                     CalculationMethod = item.CalculationMethod.ToString(),
                     LatestProgressValue = latestLog?.QuantitativeValue,
                     LatestProgressStatus = latestLog?.QualitativeStatus?.ToString(),
                     LastUpdated = latestLog?.LogDate,
+                    CalculatedStatus = status.ToString(),
                     CustomBaseline = item.CustomBaseline ?? new Dictionary<string, string>(),
-                    YearlyTargets = yearlyTargets
+                    YearlyTargets = yearlyTargets,
+                    SubItems = childDtos
                 };
-            }).ToList();
+            }
+
+            var gridItems = rootItems.Select(MapItemDto).ToList();
 
             return new PlanningGridResponseDto
             {
@@ -122,6 +162,85 @@ namespace Cdsqg.Application.Services
             };
         }
 
+        public async Task<GoalTaskItem> CreateGoalTaskItemAsync(CreateGoalTaskItemDto dto)
+        {
+            // Sub-task date range validation
+            if (dto.ParentId.HasValue && dto.ParentId.Value != Guid.Empty)
+            {
+                var parent = await _context.GoalTaskItems.FirstOrDefaultAsync(p => p.Id == dto.ParentId.Value);
+                if (parent == null)
+                {
+                    throw new KeyNotFoundException("Không tìm thấy Mục tiêu / Nhiệm vụ cha.");
+                }
+
+                if (dto.StartDate.HasValue && parent.StartDate.HasValue && dto.StartDate.Value < parent.StartDate.Value)
+                {
+                    throw new InvalidOperationException($"Ngày bắt đầu của nhiệm vụ con ({dto.StartDate.Value:dd/MM/yyyy}) không được trước ngày bắt đầu của nhiệm vụ cha ({parent.StartDate.Value:dd/MM/yyyy}).");
+                }
+
+                if (dto.DueDate.HasValue && parent.DueDate.HasValue && dto.DueDate.Value > parent.DueDate.Value)
+                {
+                    throw new InvalidOperationException($"Ngày hoàn thành của nhiệm vụ con ({dto.DueDate.Value:dd/MM/yyyy}) không được sau ngày hạn chót của nhiệm vụ cha ({parent.DueDate.Value:dd/MM/yyyy}).");
+                }
+            }
+
+            Enum.TryParse<ItemTypeEnum>(dto.ItemType, true, out var itemType);
+            Enum.TryParse<EvaluationTypeEnum>(dto.EvaluationType, true, out var evalType);
+            Enum.TryParse<CalculationMethodEnum>(dto.CalculationMethod, true, out var calcMethod);
+
+            // Auto-increment code generation logic
+            string code = dto.Code?.Trim() ?? string.Empty;
+            if (string.IsNullOrWhiteSpace(code) || code.StartsWith("MT-") || code.StartsWith("NV-") || code.Length <= 4)
+            {
+                if (dto.ParentId.HasValue && dto.ParentId.Value != Guid.Empty)
+                {
+                    var parent = await _context.GoalTaskItems.FirstOrDefaultAsync(p => p.Id == dto.ParentId.Value);
+                    if (parent != null)
+                    {
+                        int subCount = await _context.GoalTaskItems.CountAsync(i => i.ParentId == parent.Id) + 1;
+                        code = $"{parent.Code}.{subCount:D2}";
+                    }
+                }
+                else if (itemType == ItemTypeEnum.Goal)
+                {
+                    int goalCount = await _context.GoalTaskItems.CountAsync(i => i.ItemType == ItemTypeEnum.Goal && !i.ParentId.HasValue) + 1;
+                    code = $"MT-{goalCount:D2}";
+                }
+                else
+                {
+                    int taskCount = await _context.GoalTaskItems.CountAsync(i => i.ItemType == ItemTypeEnum.Task && !i.ParentId.HasValue) + 1;
+                    code = $"NV-{taskCount:D2}";
+                }
+            }
+
+            var item = new GoalTaskItem
+            {
+                Id = Guid.NewGuid(),
+                DocumentId = dto.DocumentId,
+                ParentId = (dto.ParentId.HasValue && dto.ParentId.Value != Guid.Empty) ? dto.ParentId : null,
+                ItemType = itemType,
+                Code = code,
+                Title = dto.Title,
+                Category = dto.Category ?? "Chính phủ số",
+                Section = dto.Section ?? string.Empty,
+                Group = dto.Group ?? string.Empty,
+                IsOngoing = dto.IsOngoing,
+                IsGeneralTask = dto.IsGeneralTask,
+                StartDate = dto.StartDate,
+                DueDate = dto.DueDate,
+                LeadAgencyId = dto.LeadAgencyId,
+                CoordinatingAgencyIds = dto.CoordinatingAgencyIds ?? new List<Guid>(),
+                UnitId = dto.UnitId,
+                EvaluationType = evalType,
+                CalculationMethod = calcMethod,
+                CreatedAt = DateTime.UtcNow
+            };
+
+            _context.GoalTaskItems.Add(item);
+            await _context.SaveChangesAsync();
+            return item;
+        }
+
         public async Task<bool> UpdateTaskCustomBaselineAsync(Guid taskId, UpdateCustomBaselineDto dto)
         {
             var task = await _context.GoalTaskItems
@@ -132,9 +251,7 @@ namespace Cdsqg.Application.Services
                 throw new KeyNotFoundException($"Không tìm thấy Nhiệm vụ/Mục tiêu với ID: {taskId}");
             }
 
-            // Update CustomBaseline JSONB Dictionary
             task.CustomBaseline = dto.Milestones ?? new Dictionary<string, string>();
-            
             await _context.SaveChangesAsync();
             return true;
         }
@@ -178,6 +295,72 @@ namespace Cdsqg.Application.Services
 
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        public static ExecutionStatusEnum CalculateExecutionStatus(GoalTaskItem item, ProgressLog? latestLog)
+        {
+            var now = DateTime.UtcNow;
+
+            bool isCompleted = false;
+            if (item.EvaluationType == EvaluationTypeEnum.Quantitative)
+            {
+                decimal targetVal = 100m;
+                if (item.Baselines != null && item.Baselines.Any())
+                {
+                    var b = item.Baselines.OrderByDescending(x => x.Year).FirstOrDefault();
+                    if (b?.TargetQuantity > 0) targetVal = b.TargetQuantity.Value;
+                }
+                if (latestLog?.QuantitativeValue >= targetVal) isCompleted = true;
+            }
+            else
+            {
+                if (latestLog?.QualitativeStatus == TextStatusEnum.Completed)
+                {
+                    isCompleted = true;
+                }
+            }
+
+            if (isCompleted)
+            {
+                if (item.DueDate.HasValue && latestLog != null && latestLog.LogDate > item.DueDate.Value)
+                {
+                    return ExecutionStatusEnum.CompletedOverdue;
+                }
+                return ExecutionStatusEnum.CompletedOnTime;
+            }
+
+            if (latestLog == null || (latestLog.QuantitativeValue == 0 && (latestLog.QualitativeStatus == null || latestLog.QualitativeStatus == TextStatusEnum.NotStarted)))
+            {
+                if (item.DueDate.HasValue && now > item.DueDate.Value) return ExecutionStatusEnum.InProgressOverdue;
+                return ExecutionStatusEnum.NotStarted;
+            }
+
+            if (item.DueDate.HasValue && now > item.DueDate.Value)
+            {
+                return ExecutionStatusEnum.InProgressOverdue;
+            }
+
+            if (item.DueDate.HasValue && now <= item.DueDate.Value)
+            {
+                var remainingDays = (item.DueDate.Value - now).TotalDays;
+                if (item.ParentId.HasValue && item.StartDate.HasValue)
+                {
+                    var totalDuration = (item.DueDate.Value - item.StartDate.Value).TotalDays;
+                    if (totalDuration > 0 && (remainingDays / totalDuration) <= 0.10)
+                    {
+                        return ExecutionStatusEnum.ExpiringSoon;
+                    }
+                }
+                else
+                {
+                    if (remainingDays <= 30)
+                    {
+                        return ExecutionStatusEnum.ExpiringSoon;
+                    }
+                }
+            }
+
+            return ExecutionStatusEnum.InProgressOnTime;
         }
     }
 }

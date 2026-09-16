@@ -36,6 +36,7 @@ namespace Cdsqg.Application.DTOs
         public string? SummaryNotes { get; set; } = string.Empty;
         public IFormFile? EvidenceFile { get; set; }
         public List<IFormFile>? EvidenceFiles { get; set; }
+        public List<string>? ExistingFiles { get; set; }
         public string? CreatedBy { get; set; } = "Chuyên viên theo dõi";
     }
 

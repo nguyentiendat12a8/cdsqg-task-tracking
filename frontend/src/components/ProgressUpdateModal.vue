@@ -45,73 +45,67 @@
             </button>
           </div>
 
-          <div class="grid grid-cols-2 gap-3 pt-1">
+          <div :class="['grid gap-3 pt-1', periodType === 'yearly' ? 'grid-cols-1' : 'grid-cols-2']">
             <div class="space-y-1">
-              <label class="text-[11px] font-bold text-slate-600">Năm Báo Cáo</label>
-              <select v-model.number="form.periodYear" class="w-full text-xs font-bold bg-white border border-slate-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500">
-                <option :value="2026">Năm 2026</option>
-                <option :value="2027">Năm 2027</option>
-                <option :value="2028">Năm 2028</option>
-                <option :value="2029">Năm 2029</option>
-                <option :value="2030">Năm 2030</option>
-              </select>
+              <label class="text-[11px] font-bold text-slate-600">Năm Báo Cáo <span class="text-rose-500">*</span></label>
+              <SearchableSelect 
+                v-model="form.periodYear" 
+                :options="yearOptions" 
+                :isMulti="false" 
+                :clearable="false"
+                placeholder="Chọn năm"
+              />
             </div>
 
             <!-- Dynamic Sub-Period Selection -->
             <div v-if="periodType === 'quarterly'" class="space-y-1">
-              <label class="text-[11px] font-bold text-slate-600">Chọn Quý Báo Cáo</label>
-              <select v-model.number="form.periodQuarter" class="w-full text-xs font-bold bg-white border border-slate-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500">
-                <option :value="1">Quý I (Q1)</option>
-                <option :value="2">Quý II (Q2)</option>
-                <option :value="3">Quý III (Q3)</option>
-                <option :value="4">Quý IV (Q4)</option>
-              </select>
+              <label class="text-[11px] font-bold text-slate-600">Chọn Quý Báo Cáo <span class="text-rose-500">*</span></label>
+              <SearchableSelect 
+                v-model="form.periodQuarter" 
+                :options="quarterOptions" 
+                :isMulti="false" 
+                :clearable="false"
+                placeholder="Chọn quý"
+              />
             </div>
 
             <div v-else-if="periodType === 'monthly'" class="space-y-1">
-              <label class="text-[11px] font-bold text-slate-600">Chọn Tháng Báo Cáo</label>
-              <select v-model.number="form.periodMonth" class="w-full text-xs font-bold bg-white border border-slate-300 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500">
-                <option v-for="m in 12" :key="m" :value="m">Tháng {{ m }} (T{{ m }})</option>
-              </select>
-            </div>
-
-            <div v-else class="space-y-1">
-              <label class="text-[11px] font-bold text-slate-600">Kỳ Tổng Hợp</label>
-              <div class="text-xs font-bold text-slate-700 bg-white border border-slate-200 rounded-xl px-3 py-2 text-center">
-                Báo cáo Cả Năm {{ form.periodYear }}
-              </div>
+              <label class="text-[11px] font-bold text-slate-600">Chọn Tháng Báo Cáo <span class="text-rose-500">*</span></label>
+              <SearchableSelect 
+                v-model="form.periodMonth" 
+                :options="monthOptions" 
+                :isMulti="false" 
+                :clearable="false"
+                placeholder="Chọn tháng"
+              />
             </div>
           </div>
         </div>
 
-        <!-- Quantitative vs Qualitative Inputs -->
+        <!-- Quantitative vs Qualitative Progress Inputs -->
         <div v-if="evaluationType === 'Quantitative'" class="space-y-1">
-          <label class="text-xs font-bold text-slate-700 uppercase">Giá Trị Thực Tế Đạt Được <span class="text-rose-500">*</span></label>
+          <label class="text-xs font-bold text-slate-700 uppercase">GIÁ TRỊ ĐẠT ĐƯỢC <span class="text-rose-500">*</span></label>
           <div class="relative">
             <input 
               type="number" 
-              step="0.1" 
+              step="0.01"
               v-model.number="form.value" 
               required 
               placeholder="Nhập con số thực tế..." 
-              class="w-full text-base font-bold text-slate-800 bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              class="w-full text-base font-bold text-slate-800 bg-slate-50 border border-slate-300 rounded-xl pl-3.5 pr-10 py-2.5 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
             />
-            <span class="absolute right-3.5 top-3 text-sm font-bold text-slate-400">{{ unitName || '%' }}</span>
+            <span class="absolute right-3.5 top-3 text-sm font-bold text-slate-400 pointer-events-none">{{ unitName || '%' }}</span>
           </div>
         </div>
 
         <div v-else class="space-y-1">
           <label class="text-xs font-bold text-slate-700 uppercase">Trạng Thái Thực Tế Văn Bản <span class="text-rose-500">*</span></label>
-          <select 
+          <SearchableSelect 
             v-model="form.status" 
-            required 
-            class="w-full text-sm font-bold text-slate-800 bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
-          >
-            <option value="NotStarted">Chưa thực hiện</option>
-            <option value="Drafting">Đang xây dựng / Soạn thảo</option>
-            <option value="Reviewing">Đang xin ý kiến / Đánh giá</option>
-            <option value="Completed">Đã hoàn thành ban hành</option>
-          </select>
+            :options="qualitativeStatusOptions" 
+            :isMulti="false" 
+            placeholder="Chọn trạng thái"
+          />
         </div>
 
         <!-- Evidence Multi-File Picker (IFormFile Array) -->
@@ -157,30 +151,45 @@
         <!-- Existing Attached Files Section -->
         <div v-if="existingFiles.length > 0" class="space-y-1.5 p-3 bg-purple-50/80 rounded-xl border border-purple-200">
           <label class="text-[11px] font-bold text-purple-900 uppercase block">
-            📄 File Minh Chứng Đã Đính Kèm Trước Đó ({{ existingFiles.length }} file)
+            📄 File Minh Chứng Đã Đính Kèm ({{ existingFiles.length }} file)
           </label>
           <div class="space-y-1.5">
-            <div v-for="(fileUrl, idx) in existingFiles" :key="idx" class="flex items-center justify-between text-xs gap-2 bg-white/60 p-1.5 rounded-lg border border-purple-100">
+            <div v-for="(fileUrl, idx) in existingFiles" :key="idx" class="flex items-center justify-between text-xs gap-2 bg-white p-2 rounded-xl border border-purple-100 shadow-2xs">
               <a 
                 :href="getFileUrl(fileUrl)" 
                 target="_blank" 
-                class="text-purple-700 hover:text-purple-900 hover:underline font-semibold truncate flex items-center gap-1.5 min-w-0"
+                class="text-purple-700 hover:text-purple-900 hover:underline font-semibold truncate flex items-center gap-1.5 min-w-0 flex-1"
               >
                 <span class="shrink-0">📎</span>
                 <span class="truncate">{{ formatFileName(fileUrl) }}</span>
               </a>
-              <a 
-                :href="getFileUrl(fileUrl)" 
-                target="_blank" 
-                download
-                class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-purple-700 hover:text-white bg-purple-100 hover:bg-purple-600 rounded-lg transition-all shadow-2xs shrink-0 cursor-pointer"
-                title="Tải file minh chứng về máy"
-              >
-                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-                <span>Tải xuống</span>
-              </a>
+
+              <div class="flex items-center gap-1.5 shrink-0">
+                <a 
+                  :href="getFileUrl(fileUrl)" 
+                  target="_blank" 
+                  download
+                  class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-purple-700 hover:text-white bg-purple-100 hover:bg-purple-600 rounded-lg transition-all cursor-pointer"
+                  title="Tải file minh chứng về máy"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  <span>Tải về</span>
+                </a>
+
+                <button 
+                  type="button" 
+                  @click="removeExistingFile(idx)" 
+                  class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-rose-600 hover:text-white bg-rose-50 hover:bg-rose-600 rounded-lg transition-all border border-rose-200 cursor-pointer"
+                  title="Xóa file đính kèm này"
+                >
+                  <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                  <span>Xóa</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -219,6 +228,7 @@
 import { ref, computed, watch } from 'vue';
 import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
+import SearchableSelect from './SearchableSelect.vue';
 import { getApiUrl } from '../config/api';
 
 const props = defineProps({
@@ -232,6 +242,33 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['close', 'submitted']);
+
+const yearOptions = [
+  { value: 2026, label: 'Năm 2026' },
+  { value: 2027, label: 'Năm 2027' },
+  { value: 2028, label: 'Năm 2028' },
+  { value: 2029, label: 'Năm 2029' },
+  { value: 2030, label: 'Năm 2030' }
+];
+
+const quarterOptions = [
+  { value: 1, label: 'Quý I (Q1)' },
+  { value: 2, label: 'Quý II (Q2)' },
+  { value: 3, label: 'Quý III (Q3)' },
+  { value: 4, label: 'Quý IV (Q4)' }
+];
+
+const monthOptions = Array.from({ length: 12 }, (_, i) => ({
+  value: i + 1,
+  label: `Tháng ${i + 1} (T${i + 1})`
+}));
+
+const qualitativeStatusOptions = [
+  { value: 'NotStarted', label: 'Chưa thực hiện' },
+  { value: 'Drafting', label: 'Đang xây dựng / Soạn thảo' },
+  { value: 'Reviewing', label: 'Đang xin ý kiến / Báo cáo' },
+  { value: 'Completed', label: 'Đã hoàn thành ban hành' }
+];
 
 const showQuarterOption = computed(() => {
   const cb = props.customBaseline || {};
@@ -290,6 +327,10 @@ function removeFile(index) {
   selectedFiles.value.splice(index, 1);
 }
 
+function removeExistingFile(index) {
+  existingFiles.value.splice(index, 1);
+}
+
 function resetFormFields() {
   form.value.value = null;
   form.value.status = 'Drafting';
@@ -317,15 +358,18 @@ async function fetchExistingProgress() {
   try {
     const qParam = periodType.value === 'quarterly' ? form.value.periodQuarter : (periodType.value === 'monthly' ? form.value.periodMonth : 0);
     const res = await fetch(getApiUrl(`/api/execution/tasks/${props.taskId}/progress?year=${form.value.periodYear}&period=${qParam}`));
-    if (res.ok) {
-      const data = await res.json();
-      if (data) {
-        form.value.value = data.actualValue !== undefined ? data.actualValue : null;
-        form.value.status = data.status || 'Drafting';
-        form.value.notes = data.summaryNotes || '';
-        existingFiles.value = data.attachmentFileUrls || [];
-        selectedFiles.value = [];
-        return;
+    if (res.ok && res.status !== 204) {
+      const text = await res.text();
+      if (text && text.trim().length > 0) {
+        const data = JSON.parse(text);
+        if (data) {
+          form.value.value = data.actualValue !== undefined ? data.actualValue : (data.value !== undefined ? data.value : null);
+          form.value.status = data.status || 'Drafting';
+          form.value.notes = data.summaryNotes || '';
+          existingFiles.value = data.attachmentFileUrls || [];
+          selectedFiles.value = [];
+          return;
+        }
       }
     }
     resetFormFields();
@@ -361,6 +405,30 @@ function close() {
 }
 
 async function submitProgress() {
+  if (!form.value.periodYear) {
+    toast.error("Vui lòng chọn Năm Báo Cáo!");
+    return;
+  }
+  if (periodType.value === 'quarterly' && !form.value.periodQuarter) {
+    toast.error("Vui lòng chọn Quý Báo Cáo!");
+    return;
+  }
+  if (periodType.value === 'monthly' && !form.value.periodMonth) {
+    toast.error("Vui lòng chọn Tháng Báo Cáo!");
+    return;
+  }
+  if (props.evaluationType === 'Quantitative') {
+    if (form.value.value === null || form.value.value === '' || isNaN(form.value.value)) {
+      toast.error("Vui lòng nhập con số giá trị đạt được!");
+      return;
+    }
+  } else {
+    if (!form.value.status) {
+      toast.error("Vui lòng chọn trạng thái thực tế văn bản!");
+      return;
+    }
+  }
+
   isSubmitting.value = true;
   try {
     const formData = new FormData();
@@ -370,18 +438,20 @@ async function submitProgress() {
     formData.append('PeriodMonth', periodType.value === 'monthly' ? form.value.periodMonth : 0);
     
     if (props.evaluationType === 'Quantitative') {
-      if (form.value.value !== null && form.value.value !== '') {
-        formData.append('Value', form.value.value);
-        formData.append('ActualValue', form.value.value);
-      }
+      formData.append('Value', form.value.value);
+      formData.append('ActualValue', form.value.value);
     } else {
-      if (form.value.status) {
-        formData.append('Status', form.value.status);
-      }
+      formData.append('Status', form.value.status);
     }
     
     if (form.value.notes) {
       formData.append('SummaryNotes', form.value.notes);
+    }
+
+    if (existingFiles.value.length > 0) {
+      for (const fileUrl of existingFiles.value) {
+        formData.append('ExistingFiles', fileUrl);
+      }
     }
 
     if (selectedFiles.value.length > 0) {

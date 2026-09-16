@@ -35,20 +35,15 @@
       
       <!-- 1. Top Header: Search & Filter Bar -->
       <div class="p-4 border-b border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-white">
-        <!-- Category Filter Dropdown -->
-        <div class="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 shrink-0 shadow-xs">
-          <span class="text-xs font-extrabold text-blue-900 mr-2 shrink-0">Phân loại:</span>
-          <select 
+        <div>
+          <SearchableSelect 
             v-model="selectedCategoryDraft" 
-            @change="execSearch" 
-            class="bg-transparent text-xs font-bold text-slate-800 focus:outline-none cursor-pointer"
-          >
-            <option value="">-- Tất Cả Phân Loại Dữ Liệu --</option>
-            <option value="Minh chứng quyết định">Minh chứng quyết định</option>
-            <option value="Minh chứng báo cáo tiến độ">Minh chứng báo cáo tiến độ</option>
-            <option value="Nhập liệu AI LLM JSON">Nhập liệu AI LLM JSON</option>
-            <option value="Khác">Khác</option>
-          </select>
+            :options="importCategoryOptions" 
+            :isMulti="false" 
+            label="Phân Loại Dữ Liệu" 
+            placeholder="Tất Cả Phân Loại Dữ Liệu"
+            class="min-w-[200px]"
+          />
         </div>
 
         <!-- Keyword Search Input -->
@@ -224,10 +219,18 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import SearchableSelect from './SearchableSelect.vue';
 import { toast } from 'vue3-toastify';
 import * as XLSX from 'xlsx';
 import LoadingSpinner from './LoadingSpinner.vue';
 import { getApiUrl } from '../config/api';
+
+const importCategoryOptions = ref([
+  { value: 'Minh chứng quyết định', label: 'Minh chứng quyết định' },
+  { value: 'Minh chứng báo cáo tiến độ', label: 'Minh chứng báo cáo tiến độ' },
+  { value: 'Nhập liệu AI LLM JSON', label: 'Nhập liệu AI LLM JSON' },
+  { value: 'Khác', label: 'Khác' }
+]);
 
 const STORAGE_KEY = 'cdsqg_import_history_query';
 

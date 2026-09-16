@@ -1,707 +1,448 @@
 <template>
-  <div class="w-full space-y-6 font-sans">
+  <div class="w-full space-y-3.5 font-sans">
     
     <!-- Top Header -->
-    <header class="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 w-full">
+    <header class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200/80 w-full">
       <div>
         <div class="flex items-center gap-2.5">
           <span class="p-2 bg-blue-600 text-white rounded-xl shadow-sm">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
           </span>
           <div>
-            <h1 class="text-xl font-extrabold tracking-tight text-slate-800">Dashboard Lãnh Đạo - Chỉ Đạo Chuyển Đổi Số Quốc Gia</h1>
-            <p class="text-xs text-slate-500 mt-0.5">Tổng hợp chỉ số theo dõi tiến độ và đôn đốc thực hiện nhiệm vụ các Bộ, Ngành, Địa phương</p>
+            <h2 class="text-sm sm:text-base font-extrabold tracking-tight text-slate-800">
+              Trang chủ theo dõi tiến độ
+            </h2>
           </div>
         </div>
       </div>
 
-      <!-- Filters & Action Bar -->
-      <div class="flex flex-wrap items-center gap-3">
-        <!-- DOCUMENT SELECTOR DROPDOWN -->
-        <div class="flex items-center bg-blue-50 border border-blue-200 rounded-xl px-3 py-1.5">
-          <span class="text-xs font-extrabold text-blue-900 mr-2 shrink-0">Văn bản:</span>
-          <select 
-            v-model="selectedDocumentId" 
-            @change="loadDashboardMetrics" 
-            class="bg-transparent text-xs font-bold text-blue-950 focus:outline-none max-w-[320px] truncate cursor-pointer"
+      <!-- Overview Goal vs Task Badges & View Mode Selector -->
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="bg-slate-100 p-1 rounded-xl border border-slate-200/80 flex items-center text-xs font-extrabold">
+          <button 
+            @click="dashboardFilter = 'all'" 
+            :class="['px-3 py-1 rounded-lg transition', dashboardFilter === 'all' ? 'bg-white text-slate-900 shadow-xs' : 'text-slate-500 hover:text-slate-800']"
           >
-            <option value="">-- Tất Cả Văn Bản Chỉ Đạo --</option>
-            <option v-for="doc in documents" :key="doc.id" :value="doc.id">
-              {{ doc.documentNumber || doc.code }} - {{ doc.name || doc.title }}
-            </option>
-          </select>
+            Tất cả
+          </button>
+          <button 
+            @click="dashboardFilter = 'goals'" 
+            :class="['px-3 py-1 rounded-lg transition flex items-center gap-1', dashboardFilter === 'goals' ? 'bg-purple-600 text-white shadow-xs' : 'text-purple-700 hover:bg-purple-50']"
+          >
+            🎯 Mục tiêu ({{ metrics.totalGoals ?? 0 }})
+          </button>
+          <button 
+            @click="dashboardFilter = 'tasks'" 
+            :class="['px-3 py-1 rounded-lg transition flex items-center gap-1', dashboardFilter === 'tasks' ? 'bg-blue-600 text-white shadow-xs' : 'text-blue-700 hover:bg-blue-50']"
+          >
+            📋 Nhiệm vụ ({{ metrics.totalTasks ?? 0 }})
+          </button>
         </div>
       </div>
     </header>
 
-    <!-- 3 Core Summary KPI Cards (Executive Navy Theme) -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-      
-      <!-- Card 1: Completed Goals -->
-      <div class="bg-white p-6 rounded-2xl shadow-xs border border-slate-200/90 flex flex-col justify-between space-y-3">
-        <div class="flex justify-between items-center text-slate-500">
-          <span class="text-xs font-extrabold uppercase tracking-wider text-slate-700">🎯 Tổng Số Mục Tiêu Hoàn Thành</span>
-          <span class="p-2 bg-blue-50 text-blue-900 rounded-xl font-bold">📊</span>
-        </div>
-        <div class="flex items-baseline gap-2">
-          <span class="text-4xl font-black text-slate-900">{{ completedGoalsDisplay }}</span>
-          <span class="text-lg font-extrabold text-slate-400">/ {{ totalGoalsDisplay }}</span>
-          <span class="ml-auto text-xs font-black bg-blue-900 px-3 py-1 rounded-xl text-white shadow-2xs">
-            {{ goalCompletionPct }}%
-          </span>
-        </div>
-        <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200/60">
-          <div class="bg-blue-900 h-full rounded-full transition-all duration-500" :style="{ width: `${goalCompletionPct}%` }"></div>
-        </div>
-        <p class="text-[11px] text-slate-500 font-medium">Mục tiêu chiến lược đã đạt mốc kế hoạch</p>
+    <!-- UNIFIED ADVANCED FILTER BAR -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-2 bg-slate-50/60 p-3 rounded-2xl border border-slate-200/80 items-end w-full shadow-sm">
+      <div class="sm:col-span-2 xl:col-span-2">
+        <SearchableSelect 
+          v-model="selectedAgencyIds" 
+          :options="agencyOptions" 
+          :isMulti="true" 
+          label="Cơ Quan / Đơn Vị" 
+          placeholder="Tất cả cơ quan / đơn vị"
+        />
       </div>
 
-      <!-- Card 2: Completed Tasks -->
-      <div class="bg-white p-6 rounded-2xl shadow-xs border border-slate-200/90 flex flex-col justify-between space-y-3">
-        <div class="flex justify-between items-center text-slate-500">
-          <span class="text-xs font-extrabold uppercase tracking-wider text-slate-700">📋 Tổng Số Nhiệm Vụ Hoàn Thành</span>
-          <span class="p-2 bg-emerald-50 text-emerald-700 rounded-xl font-bold">✅</span>
-        </div>
-        <div class="flex items-baseline gap-2">
-          <span class="text-4xl font-black text-slate-900">{{ completedTasksDisplay }}</span>
-          <span class="text-lg font-extrabold text-slate-400">/ {{ totalTasksDisplay }}</span>
-          <span class="ml-auto text-xs font-black bg-emerald-600 px-3 py-1 rounded-xl text-white shadow-2xs">
-            {{ taskCompletionPct }}%
-          </span>
-        </div>
-        <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden border border-slate-200/60">
-          <div class="bg-emerald-600 h-full rounded-full transition-all duration-500" :style="{ width: `${taskCompletionPct}%` }"></div>
-        </div>
-        <p class="text-[11px] text-slate-500 font-medium">Nhiệm vụ cụ thể giao Bộ/Ngành hoàn thành</p>
+      <div>
+        <SearchableSelect 
+          v-model="selectedSections" 
+          :options="sectionOptions" 
+          :isMulti="true" 
+          label="Mục (Phụ lục)" 
+          placeholder="Tất cả mục"
+        />
       </div>
 
-      <!-- Card 3: Overdue / Lagging / At Risk Summary Card -->
-      <div class="bg-white p-6 rounded-2xl shadow-xs border border-slate-200/90 flex flex-col justify-between space-y-3">
-        <div class="flex justify-between items-center text-slate-700">
-          <span class="text-xs font-extrabold uppercase tracking-wider text-rose-800 flex items-center gap-1.5">
-            <span class="w-2.5 h-2.5 rounded-full bg-rose-600 animate-ping"></span>
-            ⚠️ Mục Tiêu & Nhiệm Vụ Cần Đôn Đốc
-          </span>
-          <span class="text-xs font-extrabold text-rose-700 bg-rose-50 border border-rose-200 px-2.5 py-1 rounded-lg">
-            {{ (metrics.overdueCount ?? 0) + (metrics.laggingCount ?? 0) + (metrics.atRiskCount ?? 0) }} Mục
-          </span>
-        </div>
-        
-        <!-- 3 Category Counter Badges Grid -->
-        <div class="grid grid-cols-3 gap-2 py-1">
-          <!-- Overdue Counter -->
-          <div 
-            @click="activeViewTab = 'Overdue'"
-            class="bg-rose-50 hover:bg-rose-100 border border-rose-200 rounded-xl p-2.5 flex flex-col items-center justify-center cursor-pointer transition shadow-2xs"
-            title="Bấm để lọc danh sách Quá hạn"
-          >
-            <span class="text-[11px] font-bold text-rose-800">⛔ Quá Hạn</span>
-            <span class="text-2xl font-black text-rose-900 mt-0.5">{{ metrics.overdueCount ?? 0 }}</span>
-          </div>
-
-          <!-- Lagging Counter -->
-          <div 
-            @click="activeViewTab = 'Lagging'"
-            class="bg-red-50 hover:bg-red-100 border border-red-200 rounded-xl p-2.5 flex flex-col items-center justify-center cursor-pointer transition shadow-2xs"
-            title="Bấm để lọc danh sách Chậm tiến độ"
-          >
-            <span class="text-[11px] font-bold text-red-800">🚨 Chậm Tiến Độ</span>
-            <span class="text-2xl font-black text-red-900 mt-0.5">{{ metrics.laggingCount ?? 0 }}</span>
-          </div>
-
-          <!-- At Risk Counter -->
-          <div 
-            @click="activeViewTab = 'AtRisk'"
-            class="bg-amber-50 hover:bg-amber-100 border border-amber-200 rounded-xl p-2.5 flex flex-col items-center justify-center cursor-pointer transition shadow-2xs"
-            title="Bấm để lọc danh sách Nguy cơ chậm"
-          >
-            <span class="text-[11px] font-bold text-amber-800">⚠️ Nguy Cơ</span>
-            <span class="text-2xl font-black text-amber-900 mt-0.5">{{ metrics.atRiskCount ?? 0 }}</span>
-          </div>
-        </div>
-
-        <p class="text-[11px] text-slate-500 font-medium">Bấm vào từng ô để lọc danh sách đôn đốc tương ứng</p>
+      <div>
+        <SearchableSelect 
+          v-model="selectedGroups" 
+          :options="groupOptions" 
+          :isMulti="true" 
+          label="Nhóm Trọng Tâm" 
+          placeholder="Tất cả nhóm"
+        />
       </div>
 
-    </div>
-
-    <!-- Chart.js Visualization Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 w-full">
-      
-      <!-- Chart 1: Doughnut Chart (Overall Completion) -->
-      <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col justify-between">
-        <div>
-          <h3 class="text-base font-extrabold text-slate-800">1. Tỉ Lệ Hoàn Thành Chỉ Tiêu Tổng Thể</h3>
-          <p class="text-xs text-slate-400 mt-0.5">% Thực tế đạt được so với chỉ tiêu kế hoạch</p>
+      <!-- Từ năm ➔ Đến năm -->
+      <div>
+        <div class="flex items-center justify-between mb-1">
+          <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block">Giai Đoạn</label>
+          <label class="inline-flex items-center gap-1 cursor-pointer text-[10px] font-extrabold text-blue-700">
+            <input type="checkbox" v-model="isOngoingOnly" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3 h-3">
+            Thường xuyên
+          </label>
         </div>
-
-        <div class="h-60 relative my-2 flex items-center justify-center">
-          <Doughnut :data="doughnutChartData" :options="doughnutOptions" :plugins="[centerTextPlugin]" />
+        <div class="flex items-center gap-1">
+          <SearchableSelect 
+            v-model="fromYear" 
+            :options="yearOptions" 
+            :isMulti="false" 
+            placeholder="Từ năm" 
+            class="w-full"
+          />
+          <span class="text-xs font-bold text-slate-400">➔</span>
+          <SearchableSelect 
+            v-model="toYear" 
+            :options="yearOptions" 
+            :isMulti="false" 
+            placeholder="Đến năm" 
+            class="w-full"
+          />
         </div>
       </div>
 
-      <!-- Chart 2: Stacked Bar Chart (Tasks by Agency) -->
-      <div class="lg:col-span-2 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col justify-between">
-        <div>
-          <h3 class="text-base font-extrabold text-slate-800">2. Thống Kê Nhiệm Vụ Theo Bộ, Ngành, Địa Phương</h3>
-          <p class="text-xs text-slate-400 mt-0.5">Thống kê phân loại theo 3 mức độ: Hoàn thành, Nguy cơ chậm tiến độ và Chậm tiến độ / Quá hạn</p>
-        </div>
-
-        <div class="h-64 mt-4">
-          <Bar :data="barChartData" :options="barChartOptions" :plugins="[barDataLabelsPlugin]" />
-        </div>
+      <div class="flex items-center gap-1.5 col-span-1">
+        <button 
+          type="button" 
+          @click="loadDashboardMetrics" 
+          class="w-full py-1.5 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition min-h-[34px] cursor-pointer"
+        >
+          Tìm Kiếm
+        </button>
+        <button 
+          type="button" 
+          @click="resetDashboardFilters" 
+          class="px-3 py-1.5 bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition min-h-[34px] cursor-pointer"
+          title="Đặt lại bộ lọc"
+        >
+          ↺
+        </button>
       </div>
     </div>
 
-    <!-- Lagging / Stale Tasks Action Table -->
-    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 space-y-4 w-full">
-      <div class="flex flex-col lg:flex-row lg:items-center justify-between border-b border-slate-100 pb-4 gap-4">
-        <div>
-          <h3 class="text-base font-extrabold text-rose-800 flex items-center gap-2">
-            ⚠️ Danh Sách Mục Tiêu & Nhiệm Vụ Báo Động
+    <!-- 6 Execution Status Grid Cards (Filtered by Goal / Task / All) -->
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 w-full">
+      <!-- 1. Chưa thực hiện -->
+      <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs space-y-0.5">
+        <div class="text-[10px] font-bold text-slate-500 uppercase">1. Chưa thực hiện</div>
+        <div class="text-xl font-black text-slate-700">{{ activeStatusSummary.notStarted ?? 0 }}</div>
+      </div>
+
+      <!-- 2. Đang thực hiện (trong hạn) -->
+      <div class="bg-white p-3 rounded-2xl border border-blue-200 bg-blue-50/40 shadow-2xs space-y-0.5">
+        <div class="text-[10px] font-bold text-blue-700 uppercase">2. Đang thực hiện (trong hạn)</div>
+        <div class="text-xl font-black text-blue-800">{{ activeStatusSummary.inProgressOnTime ?? 0 }}</div>
+      </div>
+
+      <!-- 3. Đang thực hiện (quá hạn) -->
+      <div class="bg-white p-3 rounded-2xl border border-rose-200 bg-rose-50/40 shadow-2xs space-y-0.5">
+        <div class="text-[10px] font-bold text-rose-700 uppercase">3. Đang thực hiện (quá hạn)</div>
+        <div class="text-xl font-black text-rose-800">{{ activeStatusSummary.inProgressOverdue ?? 0 }}</div>
+      </div>
+
+      <!-- 4. Hoàn thành (đúng hạn) -->
+      <div class="bg-white p-3 rounded-2xl border border-emerald-200 bg-emerald-50/40 shadow-2xs space-y-0.5">
+        <div class="text-[10px] font-bold text-emerald-700 uppercase">4. Hoàn thành (đúng hạn)</div>
+        <div class="text-xl font-black text-emerald-800">{{ activeStatusSummary.completedOnTime ?? 0 }}</div>
+      </div>
+
+      <!-- 5. Hoàn thành (quá hạn) -->
+      <div class="bg-white p-3 rounded-2xl border border-teal-200 bg-teal-50/40 shadow-2xs space-y-0.5">
+        <div class="text-[10px] font-bold text-teal-700 uppercase">5. Hoàn thành (quá hạn)</div>
+        <div class="text-xl font-black text-teal-800">{{ activeStatusSummary.completedOverdue ?? 0 }}</div>
+      </div>
+
+      <!-- 6. Sắp hết hạn -->
+      <div class="bg-white p-3 rounded-2xl border border-amber-200 bg-amber-50/40 shadow-2xs space-y-0.5">
+        <div class="text-[10px] font-bold text-amber-700 uppercase">6. Sắp hết hạn</div>
+        <div class="text-xl font-black text-amber-800">{{ activeStatusSummary.expiringSoon ?? 0 }}</div>
+      </div>
+    </div>
+
+    <!-- 2 Main Blocks: Khối Bộ / Ngành & Khối Địa Phương (Admin View) -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 w-full">
+      
+      <!-- Block 1: Khối Bộ / Ngành -->
+      <div class="bg-white p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200/80 space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+            🏢 Khối Các Bộ / Ngành Trung Ương
           </h3>
-          <p class="text-xs text-slate-400 mt-0.5">Theo dõi quá hạn, chậm tiến độ và nguy cơ chậm tiến độ để chỉ đạo đôn đốc</p>
-        </div>
-
-        <div class="flex flex-wrap items-center gap-3">
-          <button 
-            @click="exportLaggingTasksExcel"
-            class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 shadow-sm cursor-pointer"
-            title="Xuất danh sách đang xem ra file Excel (.xlsx)"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-            Xuất Excel
-          </button>
-        </div>
-      </div>
-
-      <!-- 4 View Mode Tabs (User Requirement) -->
-      <div class="flex flex-wrap items-center gap-2 p-1 bg-slate-100/80 rounded-xl border border-slate-200/80">
-        <button 
-          @click="changeViewTab('all')"
-          :class="[
-            'px-4 py-2 rounded-lg text-xs font-black transition cursor-pointer flex items-center gap-1.5',
-            activeViewTab === 'all' 
-              ? 'bg-white text-slate-900 shadow-sm border border-slate-200' 
-              : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/60'
-          ]"
-        >
-          📋 Tất Cả
-          <span class="px-2 py-0.5 text-[11px] rounded-full bg-slate-200 text-slate-800 font-extrabold">{{ metrics.staleTasks?.length ?? 0 }}</span>
-        </button>
-
-        <button 
-          @click="changeViewTab('Overdue')"
-          :class="[
-            'px-4 py-2 rounded-lg text-xs font-black transition cursor-pointer flex items-center gap-1.5',
-            activeViewTab === 'Overdue' 
-              ? 'bg-rose-800 text-white shadow-sm' 
-              : 'text-rose-700 hover:bg-rose-100/80'
-          ]"
-        >
-          ⛔ Quá Hạn Hoàn Thành
-          <span class="px-2 py-0.5 text-[11px] rounded-full bg-rose-950/40 text-rose-100 font-extrabold">{{ metrics.overdueCount ?? 0 }}</span>
-        </button>
-
-        <button 
-          @click="changeViewTab('Lagging')"
-          :class="[
-            'px-4 py-2 rounded-lg text-xs font-black transition cursor-pointer flex items-center gap-1.5',
-            activeViewTab === 'Lagging' 
-              ? 'bg-red-600 text-white shadow-sm' 
-              : 'text-red-700 hover:bg-red-100/80'
-          ]"
-        >
-          🚨 Chậm Tiến Độ
-          <span class="px-2 py-0.5 text-[11px] rounded-full bg-red-950/40 text-red-100 font-extrabold">{{ metrics.laggingCount ?? 0 }}</span>
-        </button>
-
-        <button 
-          @click="changeViewTab('AtRisk')"
-          :class="[
-            'px-4 py-2 rounded-lg text-xs font-black transition cursor-pointer flex items-center gap-1.5',
-            activeViewTab === 'AtRisk' 
-              ? 'bg-amber-500 text-slate-950 shadow-sm' 
-              : 'text-amber-800 hover:bg-amber-100/80'
-          ]"
-        >
-          ⚠️ Nguy Cơ Chậm Tiến Độ
-          <span class="px-2 py-0.5 text-[11px] rounded-full bg-amber-950/20 text-amber-950 font-extrabold">{{ metrics.atRiskCount ?? 0 }}</span>
-        </button>
-      </div>
-
-      <div v-if="laggingTasksList.length === 0" class="p-8 text-center text-slate-400 text-xs font-semibold italic">
-        🎉 Không có mục tiêu/nhiệm vụ nào trong danh mục này!
-      </div>
-
-      <div v-else class="border border-slate-200/80 rounded-2xl bg-white overflow-hidden shadow-sm flex flex-col w-full">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-sm text-slate-700 border-collapse">
-            <thead class="bg-slate-100 text-xs text-slate-500 uppercase font-bold border-b border-slate-200">
-              <tr>
-                <th class="px-3 py-3 border-r border-slate-200 whitespace-nowrap text-center min-w-[130px]">Trạng Thái</th>
-                <th class="px-3 py-3 border-r border-slate-200 whitespace-nowrap min-w-[85px] w-[85px]">Mã</th>
-                <th class="px-4 py-3 border-r border-slate-200 min-w-[220px]">Mục Tiêu / Nhiệm Vụ</th>
-                <th class="px-3 py-3 border-r border-slate-200 whitespace-nowrap min-w-[120px]">Cơ Quan Chủ Trì</th>
-                <th class="px-3 py-3 border-r border-slate-200 whitespace-nowrap text-center min-w-[95px]">Thực Tế</th>
-                <th class="px-3 py-3 border-r border-slate-200 whitespace-nowrap text-center min-w-[110px]">Mốc Kế Hoạch</th>
-                <th class="px-3 py-3 border-r border-slate-200 whitespace-nowrap text-center min-w-[95px]">Chênh Lệch</th>
-                <th class="px-3 py-3 text-center whitespace-nowrap min-w-[140px]">Hành Động Đôn Đốc</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-200">
-              <tr v-for="t in paginatedLaggingTasks" :key="t.id" class="hover:bg-slate-50 transition">
-                <!-- Status & Category Badge -->
-                <td class="px-3 py-3 text-center border-r border-slate-200 whitespace-nowrap min-w-[130px]">
-                  <span v-if="t.staleCategory === 'Overdue'" class="inline-block px-2.5 py-1 bg-rose-900 text-white font-extrabold text-[11px] rounded-lg shadow-2xs">
-                    ⛔ Quá hạn
-                  </span>
-                  <span v-else-if="t.staleCategory === 'Lagging'" class="inline-block px-2.5 py-1 bg-red-600 text-white font-extrabold text-[11px] rounded-lg shadow-2xs">
-                    🚨 Chậm tiến độ
-                  </span>
-                  <span v-else-if="t.staleCategory === 'AtRisk'" class="inline-block px-2.5 py-1 bg-amber-500 text-slate-950 font-extrabold text-[11px] rounded-lg shadow-2xs">
-                    ⚠️ Nguy cơ chậm
-                  </span>
-                  <span v-else class="inline-block px-2 py-0.5 bg-slate-200 text-slate-700 font-bold text-xs rounded">
-                    {{ t.staleCategoryName || 'Cảnh báo' }}
-                  </span>
-                </td>
-
-                <td class="px-3 py-3 font-extrabold text-blue-900 border-r border-slate-200 whitespace-nowrap min-w-[85px] w-[85px]">
-                  <a :href="`#documents?id=${t.documentId}`" class="hover:underline text-blue-900 hover:text-blue-600 transition cursor-pointer" title="Xem chi tiết văn bản">
-                    {{ t.code }}
-                  </a>
-                </td>
-
-                <td class="px-4 py-3 font-semibold text-slate-800 border-r border-slate-200 min-w-[220px] leading-relaxed">
-                  <div class="flex items-center gap-1.5 mb-0.5">
-                    <span class="text-[10px] uppercase font-black px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">
-                      {{ t.itemType || 'Nhiệm vụ' }}
-                    </span>
-                  </div>
-                  <a :href="`#documents?id=${t.documentId}`" class="hover:underline text-slate-800 hover:text-blue-600 transition cursor-pointer" title="Xem chi tiết văn bản">
-                    {{ t.title }}
-                  </a>
-                </td>
-
-                <td class="px-3 py-3 font-bold text-slate-700 border-r border-slate-200 whitespace-nowrap min-w-[120px]">{{ t.leadAgency }}</td>
-
-                <td class="px-3 py-3 text-center border-r border-slate-200 whitespace-nowrap min-w-[95px]">
-                  <span v-if="t.hasReport === false" class="inline-block px-2 py-0.5 text-xs font-bold text-amber-700 bg-amber-50 rounded border border-amber-200/80 shadow-2xs">
-                    Chưa báo cáo
-                  </span>
-                  <span v-else class="font-black text-rose-600">
-                    {{ t.actualProgressPct }}%
-                  </span>
-                </td>
-
-                <td class="px-3 py-3 text-center font-bold text-slate-600 border-r border-slate-200 whitespace-nowrap min-w-[110px]">
-                  <div>{{ t.expectedTargetPct }}%</div>
-                  <div v-if="t.expectedLinearProgress !== undefined && t.expectedLinearProgress !== null && t.expectedLinearProgress > 0" class="text-[10px] text-slate-400 font-medium mt-0.5">
-                    (Mốc TT: {{ t.expectedLinearProgress }}%)
-                  </div>
-                </td>
-
-                <td class="px-3 py-3 text-center font-black text-rose-700 border-r border-slate-200 whitespace-nowrap min-w-[95px]">
-                  <span v-if="t.hasReport === false" class="inline-block px-2 py-0.5 text-xs font-bold text-amber-700 bg-amber-50 rounded border border-amber-200/80 shadow-2xs">
-                    Chưa báo cáo
-                  </span>
-                  <span v-else :class="['px-2 py-0.5 rounded text-xs', t.staleCategory === 'AtRisk' ? 'bg-amber-100 text-amber-900' : 'bg-rose-100 text-rose-800']">
-                    {{ t.laggingDeltaPct }}%
-                  </span>
-                </td>
-
-                <td class="px-3 py-3 text-center whitespace-nowrap min-w-[140px]">
-                  <button 
-                    @click="openUrgeModal(t)"
-                    class="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-lg transition shadow-sm inline-flex items-center gap-1 cursor-pointer"
-                  >
-                    ⚡ Chỉ Đạo Đôn Đốc
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Pagination Controls for Lagging Tasks Table (SEAMLESSLY ATTACHED) -->
-        <div class="flex flex-col sm:flex-row items-center justify-between bg-slate-50/70 p-4 border-t border-slate-200/80 w-full gap-3 text-xs text-slate-600 font-semibold">
-          <span>
-            Hiển thị <span class="font-extrabold text-slate-900">{{ laggingTasksList.length > 0 ? (currentLaggingPage - 1) * laggingPageSize + 1 : 0 }} - {{ Math.min(currentLaggingPage * laggingPageSize, laggingTasksList.length) }}</span> trên tổng số <span class="font-extrabold text-slate-900">{{ laggingTasksList.length }}</span> mục
+          <span class="text-xs font-bold text-blue-600 bg-blue-50 px-2.5 py-1 rounded-lg">
+            {{ metrics.ministriesPerformance?.length ?? 0 }} Bộ/Ngành
           </span>
+        </div>
 
-          <div class="flex items-center gap-2">
-            <button 
-              @click="currentLaggingPage--" 
-              :disabled="currentLaggingPage <= 1"
-              class="px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl disabled:opacity-40 font-bold transition shadow-2xs cursor-pointer"
-            >
-              ‹ Trang trước
-            </button>
+        <div class="space-y-3 max-h-96 overflow-y-auto custom-scrollbar pr-1">
+          <div 
+            v-for="item in metrics.ministriesPerformance" 
+            :key="item.agencyId"
+            @click="drilldownAgency(item)"
+            class="p-3 bg-slate-50 hover:bg-slate-100/80 rounded-xl border border-slate-200/60 transition cursor-pointer space-y-2"
+          >
+            <div class="flex items-center justify-between text-xs font-bold">
+              <span class="text-slate-900">{{ item.name }} ({{ item.code }})</span>
+              <div class="flex items-center gap-1.5 text-[11px]">
+                <span class="text-purple-800 bg-purple-100 px-1.5 py-0.5 rounded">🎯 {{ item.totalGoals ?? 0 }}</span>
+                <span class="text-blue-800 bg-blue-100 px-1.5 py-0.5 rounded">📋 {{ item.totalTasks ?? 0 }}</span>
+              </div>
+            </div>
 
-            <span class="px-3 py-1.5 bg-rose-50 text-rose-800 border border-rose-200 rounded-xl font-black">
-              Trang {{ currentLaggingPage }} / {{ totalLaggingPages }}
-            </span>
+            <!-- 6-status mini progress bar -->
+            <div class="flex h-2.5 rounded-full overflow-hidden bg-slate-200">
+              <div :style="{ width: `${getPct(item.completedOnTime, item.totalItems)}%` }" class="bg-emerald-500" title="Hoàn thành (đúng hạn)"></div>
+              <div :style="{ width: `${getPct(item.completedOverdue, item.totalItems)}%` }" class="bg-teal-500" title="Hoàn thành (quá hạn)"></div>
+              <div :style="{ width: `${getPct(item.inProgressOnTime, item.totalItems)}%` }" class="bg-blue-500" title="Đang thực hiện (trong hạn)"></div>
+              <div :style="{ width: `${getPct(item.expiringSoon, item.totalItems)}%` }" class="bg-amber-500" title="Sắp hết hạn"></div>
+              <div :style="{ width: `${getPct(item.inProgressOverdue, item.totalItems)}%` }" class="bg-rose-500" title="Đang thực hiện (quá hạn)"></div>
+              <div :style="{ width: `${getPct(item.notStarted, item.totalItems)}%` }" class="bg-slate-400" title="Chưa thực hiện"></div>
+            </div>
 
-            <button 
-              @click="currentLaggingPage++" 
-              :disabled="currentLaggingPage >= totalLaggingPages"
-              class="px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl disabled:opacity-40 font-bold transition shadow-2xs cursor-pointer"
-            >
-              Trang sau ›
-            </button>
+            <div class="flex items-center justify-between text-[10px] text-slate-500 font-semibold pt-1">
+              <span>Đúng hạn: {{ item.completedOnTime + item.inProgressOnTime }}</span>
+              <span>Sắp hết hạn: {{ item.expiringSoon }}</span>
+              <span class="text-rose-600">Quá hạn: {{ item.inProgressOverdue }}</span>
+            </div>
+          </div>
+
+          <div v-if="!metrics.ministriesPerformance?.length" class="p-6 text-center text-xs text-slate-400">
+            Không có dữ liệu Bộ/Ngành.
+          </div>
+        </div>
+      </div>
+
+      <!-- Block 2: Khối Địa Phương -->
+      <div class="bg-white p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200/80 space-y-3">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+            🏛️ Khối Các Tỉnh / Thành Phố
+          </h3>
+          <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-lg">
+            {{ metrics.provincesPerformance?.length ?? 0 }} Địa phương
+          </span>
+        </div>
+
+        <div class="space-y-3 max-h-96 overflow-y-auto custom-scrollbar pr-1">
+          <div 
+            v-for="item in metrics.provincesPerformance" 
+            :key="item.agencyId"
+            @click="drilldownAgency(item)"
+            class="p-3 bg-slate-50 hover:bg-slate-100/80 rounded-xl border border-slate-200/60 transition cursor-pointer space-y-2"
+          >
+            <div class="flex items-center justify-between text-xs font-bold">
+              <span class="text-slate-900">{{ item.name }} ({{ item.code }})</span>
+              <span class="text-emerald-700 bg-emerald-100 px-2 py-0.5 rounded-md text-[11px]">
+                Tổng: {{ item.totalItems }}
+              </span>
+            </div>
+
+            <div class="flex h-2.5 rounded-full overflow-hidden bg-slate-200">
+              <div :style="{ width: `${getPct(item.completedOnTime, item.totalItems)}%` }" class="bg-emerald-500"></div>
+              <div :style="{ width: `${getPct(item.completedOverdue, item.totalItems)}%` }" class="bg-teal-500"></div>
+              <div :style="{ width: `${getPct(item.inProgressOnTime, item.totalItems)}%` }" class="bg-blue-500"></div>
+              <div :style="{ width: `${getPct(item.expiringSoon, item.totalItems)}%` }" class="bg-amber-500"></div>
+              <div :style="{ width: `${getPct(item.inProgressOverdue, item.totalItems)}%` }" class="bg-rose-500"></div>
+              <div :style="{ width: `${getPct(item.notStarted, item.totalItems)}%` }" class="bg-slate-400"></div>
+            </div>
+
+            <div class="flex items-center justify-between text-[10px] text-slate-500 font-semibold pt-1">
+              <span>Đúng hạn: {{ item.completedOnTime + item.inProgressOnTime }}</span>
+              <span>Sắp hết hạn: {{ item.expiringSoon }}</span>
+              <span class="text-rose-600">Quá hạn: {{ item.inProgressOverdue }}</span>
+            </div>
+          </div>
+
+          <div v-if="!metrics.provincesPerformance?.length" class="p-6 text-center text-xs text-slate-400">
+            Không có dữ liệu Địa phương.
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Drilldown Sub-agencies Modal -->
+    <div v-if="selectedDrilldownAgency" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-2xl w-full p-6 space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div>
+            <h3 class="text-base font-extrabold text-slate-900">
+              Chi Tiết Đơn Vị Trực Thuộc: {{ selectedDrilldownAgency.name }}
+            </h3>
+            <p class="text-xs text-slate-500">Thống kê theo 6 trạng thái thực hiện của các đơn vị trực thuộc</p>
+          </div>
+          <button @click="selectedDrilldownAgency = null" class="p-1.5 text-slate-400 hover:text-slate-700 bg-slate-100 rounded-lg">✕</button>
+        </div>
+
+        <div class="space-y-3 max-h-96 overflow-y-auto custom-scrollbar">
+          <div v-for="child in subAgenciesList" :key="child.agencyId" class="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+            <div class="flex items-center justify-between text-xs font-bold">
+              <span>{{ child.name }} ({{ child.code }})</span>
+              <span class="text-blue-700">Tổng: {{ child.totalItems }}</span>
+            </div>
+            <div class="flex h-2 rounded-full overflow-hidden bg-slate-200">
+              <div :style="{ width: `${getPct(child.completedOnTime, child.totalItems)}%` }" class="bg-emerald-500"></div>
+              <div :style="{ width: `${getPct(child.completedOverdue, child.totalItems)}%` }" class="bg-teal-500"></div>
+              <div :style="{ width: `${getPct(child.inProgressOnTime, child.totalItems)}%` }" class="bg-blue-500"></div>
+              <div :style="{ width: `${getPct(child.expiringSoon, child.totalItems)}%` }" class="bg-amber-500"></div>
+              <div :style="{ width: `${getPct(child.inProgressOverdue, child.totalItems)}%` }" class="bg-rose-500"></div>
+              <div :style="{ width: `${getPct(child.notStarted, child.totalItems)}%` }" class="bg-slate-400"></div>
+            </div>
+          </div>
+
+          <div v-if="subAgenciesList.length === 0" class="p-8 text-center text-xs text-slate-400 font-semibold">
+            Không có đơn vị trực thuộc nào.
           </div>
         </div>
       </div>
     </div>
-
-    <!-- Modals -->
-    <UrgeTaskModal 
-      v-if="selectedTaskForUrge"
-      :isOpen="isUrgeModalOpen"
-      :taskId="selectedTaskForUrge.id"
-      :taskCode="selectedTaskForUrge.code"
-      :taskTitle="selectedTaskForUrge.title"
-      :leadAgencyName="selectedTaskForUrge.leadAgency"
-      :actualProgressPct="selectedTaskForUrge.actualProgressPct"
-      :expectedTargetPct="selectedTaskForUrge.expectedTargetPct"
-      :laggingDeltaPct="selectedTaskForUrge.laggingDeltaPct"
-      :hasReport="selectedTaskForUrge.hasReport !== false"
-      @close="isUrgeModalOpen = false"
-      @submitted="onTaskUrged"
-    />
 
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { Doughnut, Bar } from 'vue-chartjs';
-import { 
-  Chart as ChartJS, Title, Tooltip, Legend, 
-  ArcElement, BarElement, CategoryScale, LinearScale 
-} from 'chart.js';
-import { toast } from 'vue3-toastify';
-import 'vue3-toastify/dist/index.css';
-import * as XLSX from 'xlsx';
-import UrgeTaskModal from '../components/UrgeTaskModal.vue';
+import { ref, computed, onMounted, watch } from 'vue';
+import SearchableSelect from '../components/SearchableSelect.vue';
 import { getApiUrl } from '../config/api';
+import { authState } from '../services/auth';
+import { GOAL_SECTIONS, GOAL_GROUPS, TASK_SECTIONS, TASK_GROUPS } from '../config/planningStructureConfig';
 
-ChartJS.register(Title, Tooltip, Legend, ArcElement, BarElement, CategoryScale, LinearScale);
+const dashboardFilter = ref('all'); // 'all', 'goals', 'tasks'
 
-const selectedYear = ref(2026);
-const selectedDocumentId = ref('');
-const documents = ref([]);
-const activeViewTab = ref('all'); // 'all', 'Overdue', 'Lagging', 'AtRisk'
+const selectedAgencyIds = ref([]);
+const selectedSections = ref([]);
+const selectedGroups = ref([]);
+const fromYear = ref(null);
+const toYear = ref(null);
+const isOngoingOnly = ref(false);
+const agencies = ref([]);
 
-const isUrgeModalOpen = ref(false);
-const selectedTaskForUrge = ref(null);
+const agencyOptions = computed(() => {
+  return agencies.value.map(ag => ({ value: ag.id, label: `${ag.code} - ${ag.name}` }));
+});
+
+const yearOptions = computed(() => [2026, 2027, 2028, 2029, 2030].map(y => ({ value: y, label: String(y) })));
+
+const sectionOptions = computed(() => [...GOAL_SECTIONS, ...TASK_SECTIONS]);
+const groupOptions = computed(() => [...GOAL_GROUPS, ...TASK_GROUPS]);
 
 const metrics = ref({
-  documentId: null,
   totalGoals: 0,
   completedGoals: 0,
   totalTasks: 0,
   completedTasks: 0,
-  overallQuantitativeCompletionPct: 0,
-  trafficLights: { greenCount: 0, yellowCount: 0, redCount: 0 },
-  overdueCount: 0,
-  laggingCount: 0,
-  atRiskCount: 0,
-  staleTasks: [],
-  agencyPerformance: []
+  statusSummary: {},
+  goalStatusSummary: {},
+  taskStatusSummary: {},
+  ministriesPerformance: [],
+  provincesPerformance: []
 });
 
-function changeViewTab(tab) {
-  activeViewTab.value = tab;
-  currentLaggingPage.value = 1;
+const activeStatusSummary = computed(() => {
+  if (dashboardFilter.value === 'goals') return metrics.value.goalStatusSummary || {};
+  if (dashboardFilter.value === 'tasks') return metrics.value.taskStatusSummary || {};
+  return metrics.value.statusSummary || {};
+});
+
+const selectedDrilldownAgency = ref(null);
+const subAgenciesList = ref([]);
+
+const userAgencyName = computed(() => {
+  return authState.user.value?.agencyName || 'Cơ quan/Bộ/Địa phương';
+});
+
+function getPct(val, total) {
+  if (!total || total <= 0) return 0;
+  return Math.round(((val || 0) / total) * 100);
 }
 
-const completedGoalsDisplay = computed(() => metrics.value?.completedGoals ?? 0);
-const totalGoalsDisplay = computed(() => metrics.value?.totalGoals ?? 0);
-const goalCompletionPct = computed(() => totalGoalsDisplay.value > 0 ? Math.min(100, (completedGoalsDisplay.value / totalGoalsDisplay.value) * 100).toFixed(1) : '0.0');
+function resetDashboardFilters() {
+  selectedAgencyIds.value = [];
+  selectedSections.value = [];
+  selectedGroups.value = [];
+  fromYear.value = null;
+  toYear.value = null;
+  isOngoingOnly.value = false;
+  dashboardFilter.value = 'all';
+  loadDashboardMetrics();
+}
 
-const completedTasksDisplay = computed(() => metrics.value?.completedTasks ?? 0);
-const totalTasksDisplay = computed(() => metrics.value?.totalTasks ?? 0);
-const taskCompletionPct = computed(() => totalTasksDisplay.value > 0 ? Math.min(100, (completedTasksDisplay.value / totalTasksDisplay.value) * 100).toFixed(1) : '0.0');
-
-const currentLaggingPage = ref(1);
-const laggingPageSize = ref(10);
-
-const filteredStaleTasks = computed(() => {
-  const list = metrics.value?.staleTasks || [];
-  if (activeViewTab.value === 'all') return list;
-  return list.filter(t => t.staleCategory === activeViewTab.value);
-});
-
-const laggingTasksList = computed(() => filteredStaleTasks.value);
-
-const totalLaggingPages = computed(() => Math.ceil(laggingTasksList.value.length / laggingPageSize.value) || 1);
-
-const paginatedLaggingTasks = computed(() => {
-  const start = (currentLaggingPage.value - 1) * laggingPageSize.value;
-  return laggingTasksList.value.slice(start, start + laggingPageSize.value);
-});
-
-async function loadDocuments() {
+async function loadAgencies() {
   try {
-    const res = await fetch(getApiUrl('/api/documents?pageSize=100'));
+    const res = await fetch(getApiUrl('/api/agencies'));
     if (res.ok) {
       const data = await res.json();
-      documents.value = Array.isArray(data) ? data : (data.items || []);
+      agencies.value = Array.isArray(data) ? data : (data.items || []);
     }
-  } catch (e) {
-    console.error('Lỗi tải danh sách văn bản:', e);
-  }
+  } catch (e) {}
 }
 
 async function loadDashboardMetrics() {
   try {
-    let url = getApiUrl(`/api/dashboard/metrics?year=${selectedYear.value}`);
-    if (selectedDocumentId.value) url += `&documentId=${selectedDocumentId.value}`;
+    const params = new URLSearchParams();
+    if (dashboardFilter.value && dashboardFilter.value !== 'all') {
+      const itemType = dashboardFilter.value === 'goals' ? 'Goal' : 'Task';
+      params.append('itemType', itemType);
+    }
+    if (selectedAgencyIds.value && selectedAgencyIds.value.length > 0) {
+      selectedAgencyIds.value.forEach(id => params.append('agencyId', id));
+    } else if (!authState.isAdmin.value && authState.user.value?.agencyId) {
+      params.append('agencyId', authState.user.value.agencyId);
+    }
+    if (selectedSections.value && selectedSections.value.length > 0) {
+      selectedSections.value.forEach(sec => params.append('section', sec));
+    }
+    if (selectedGroups.value && selectedGroups.value.length > 0) {
+      selectedGroups.value.forEach(grp => params.append('group', grp));
+    }
+    if (fromYear.value) params.append('fromYear', fromYear.value);
+    if (toYear.value) params.append('toYear', toYear.value);
+    if (isOngoingOnly.value) params.append('isOngoing', 'true');
+
+    const queryString = params.toString();
+    const url = getApiUrl(`/api/dashboard/metrics${queryString ? '?' + queryString : ''}`);
     const res = await fetch(url);
-    if (res.ok) metrics.value = await res.json();
+    if (res.ok) {
+      metrics.value = await res.json();
+    }
+  } catch (e) {
+    // Silent catch
+  }
+}
+
+async function drilldownAgency(agency) {
+  selectedDrilldownAgency.value = agency;
+  subAgenciesList.value = [];
+  try {
+    const params = new URLSearchParams();
+    params.append('parentAgencyId', agency.agencyId);
+    if (dashboardFilter.value && dashboardFilter.value !== 'all') {
+      const itemType = dashboardFilter.value === 'goals' ? 'Goal' : 'Task';
+      params.append('itemType', itemType);
+    }
+    if (selectedSections.value && selectedSections.value.length > 0) {
+      selectedSections.value.forEach(sec => params.append('section', sec));
+    }
+    if (selectedGroups.value && selectedGroups.value.length > 0) {
+      selectedGroups.value.forEach(grp => params.append('group', grp));
+    }
+    if (fromYear.value) params.append('fromYear', fromYear.value);
+    if (toYear.value) params.append('toYear', toYear.value);
+    if (isOngoingOnly.value) params.append('isOngoing', 'true');
+
+    const res = await fetch(getApiUrl(`/api/dashboard/metrics?${params.toString()}`));
+    if (res.ok) {
+      const data = await res.json();
+      subAgenciesList.value = [...(data.ministriesPerformance || []), ...(data.provincesPerformance || [])];
+    }
   } catch (e) {}
 }
 
-function openUrgeModal(task) {
-  selectedTaskForUrge.value = task;
-  isUrgeModalOpen.value = true;
-}
-
-function onTaskUrged(result) {
-  toast.success("Đã hoàn tất lưu nhật ký đôn đốc!");
+watch([dashboardFilter, selectedAgencyIds, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly], () => {
   loadDashboardMetrics();
-}
-
-function exportLaggingTasksExcel() {
-  if (!laggingTasksList.value || laggingTasksList.value.length === 0) {
-    toast.warning("Không có dữ liệu mục tiêu/nhiệm vụ trong danh mục này để xuất!");
-    return;
-  }
-
-  const now = new Date();
-  const timeStr = `${now.toLocaleDateString('vi-VN')} ${now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
-
-  const categoryTitleMap = {
-    'all': 'DANH SÁCH MỤC TIÊU & NHIỆM VỤ BÁO ĐỘNG (TẤT CẢ)',
-    'Overdue': 'DANH SÁCH MỤC TIÊU & NHIỆM VỤ QUÁ HẠN HOÀN THÀNH',
-    'Lagging': 'DANH SÁCH MỤC TIÊU & NHIỆM VỤ CHẬM TIẾN ĐỘ',
-    'AtRisk': 'DANH SÁCH MỤC TIÊU & NHIỆM VỤ NGUY CƠ CHẬM TIẾN ĐỘ'
-  };
-
-  const titleText = categoryTitleMap[activeViewTab.value] || 'DANH SÁCH MỤC TIÊU & NHIỆM VỤ BÁO ĐỘNG';
-
-  // Header rows with Report Title & Export Time
-  const data = [
-    [titleText],
-    [`Thời gian xuất báo cáo: ${timeStr}`],
-    [], // Blank separator line
-    ["STT", "Trạng Thái", "Loại", "Mã", "Mục Tiêu / Nhiệm Vụ", "Cơ Quan Chủ Trì", "Thực Tế (%)", "Mốc Kế Hoạch (%)", "Chênh Lệch (%)"]
-  ];
-
-  laggingTasksList.value.forEach((t, index) => {
-    data.push([
-      index + 1,
-      t.staleCategoryName || 'Cảnh báo',
-      t.itemType || 'Nhiệm vụ',
-      t.code || '',
-      t.title || '',
-      t.leadAgency || '',
-      t.hasReport === false ? 'Chưa báo cáo' : (t.actualProgressPct !== undefined && t.actualProgressPct !== null ? `${t.actualProgressPct}%` : '0%'),
-      t.expectedTargetPct !== undefined && t.expectedTargetPct !== null ? `${t.expectedTargetPct}%` : '0%',
-      t.hasReport === false ? 'Chưa báo cáo' : (t.laggingDeltaPct !== undefined && t.laggingDeltaPct !== null ? `${t.laggingDeltaPct}%` : '0%')
-    ]);
-  });
-
-  // Create worksheet
-  const ws = XLSX.utils.aoa_to_sheet(data);
-
-  // Auto-fit column widths dynamically based on content length
-  const colWidths = data[3].map((hdr, colIdx) => {
-    let maxLen = hdr ? hdr.toString().length : 10;
-    for (let r = 4; r < data.length; r++) {
-      const cellVal = data[r][colIdx] !== undefined && data[r][colIdx] !== null ? data[r][colIdx].toString() : '';
-      if (cellVal.length > maxLen) {
-        maxLen = cellVal.length;
-      }
-    }
-    return Math.max(maxLen + 4, 12);
-  });
-
-  // Ample width for mission/goal titles
-  if (colWidths[4] < 50) colWidths[4] = 50;
-
-  ws['!cols'] = colWidths.map(w => ({ wch: w }));
-
-  // Create workbook and download .xlsx
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Nhiệm vụ báo động");
-
-  const dateFileStr = now.toISOString().slice(0, 10);
-  XLSX.writeFile(wb, `Danh_sach_nhiem_vu_bao_dong_${dateFileStr}.xlsx`);
-
-  toast.success("Đã xuất file Excel (.xlsx) thành công!");
-}
-
-// Chart 1: Doughnut Chart Data & Center Text Plugin
-const centerTextPlugin = {
-  id: 'centerText',
-  beforeDraw(chart) {
-    const { ctx } = chart;
-    const meta = chart.getDatasetMeta(0);
-    if (!meta || !meta.data || !meta.data[0]) return;
-    const { x, y } = meta.data[0];
-
-    const val = chart.data?.datasets?.[0]?.data?.[0] ?? 0;
-
-    ctx.save();
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-
-    // Label
-    ctx.font = 'bold 11px system-ui, -apple-system, sans-serif';
-    ctx.fillStyle = '#64748b';
-    ctx.fillText('MỨC ĐỘ ĐẠT', x, y - 11);
-
-    // Percentage
-    ctx.font = '900 24px system-ui, -apple-system, sans-serif';
-    ctx.fillStyle = '#2563eb';
-    ctx.fillText(`${val}%`, x, y + 13);
-
-    ctx.restore();
-  }
-};
-
-const doughnutOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  cutout: '72%',
-  plugins: {
-    legend: {
-      position: 'bottom',
-      labels: {
-        font: { size: 11, weight: 'bold' },
-        usePointStyle: true,
-        padding: 14
-      }
-    }
-  }
-};
-
-const doughnutChartData = computed(() => {
-  const pct = metrics.value?.overallQuantitativeCompletionPct ?? 0;
-  return {
-    labels: ['Hoàn thành (%)', 'Còn lại (%)'],
-    datasets: [
-      {
-        backgroundColor: ['#2563eb', '#e2e8f0'],
-        data: [pct, Math.max(0, 100 - pct)]
-      }
-    ]
-  };
-});
-
-// Chart 2: Stacked Bar Chart Data
-// Chart 2: Stacked Bar Chart Data & Data Labels Plugin
-const barDataLabelsPlugin = {
-  id: 'barDataLabels',
-  afterDatasetsDraw(chart) {
-    const { ctx } = chart;
-    chart.data.datasets.forEach((dataset, datasetIndex) => {
-      const meta = chart.getDatasetMeta(datasetIndex);
-      if (!meta || meta.hidden) return;
-
-      meta.data.forEach((element, index) => {
-        const val = dataset.data[index];
-        if (val === null || val === undefined || val <= 0) return;
-
-        const { x, y, base } = element;
-        const centerY = (y + base) / 2;
-        const barHeight = Math.abs(base - y);
-
-        ctx.save();
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.font = '900 12px system-ui, -apple-system, sans-serif';
-
-        if (barHeight >= 16) {
-          ctx.fillStyle = '#ffffff';
-          ctx.fillText(val, x, centerY);
-        } else {
-          ctx.fillStyle = dataset.backgroundColor || '#1e293b';
-          ctx.fillText(val, x, y - 8);
-        }
-        ctx.restore();
-      });
-    });
-  }
-};
-
-const barChartData = computed(() => {
-  const agencies = metrics.value?.agencyPerformance || [];
-  return {
-    labels: agencies.map(a => a.code),
-    datasets: [
-      {
-        label: 'Hoàn thành (Đạt)',
-        backgroundColor: '#10b981',
-        data: agencies.map(a => a.completed || 0)
-      },
-      {
-        label: 'Nguy cơ chậm tiến độ',
-        backgroundColor: '#f59e0b',
-        data: agencies.map(a => a.atRisk || 0)
-      },
-      {
-        label: 'Chậm tiến độ & Quá hạn',
-        backgroundColor: '#ef4444',
-        data: agencies.map(a => a.overdue || 0)
-      }
-    ]
-  };
-});
-
-const barChartOptions = {
-  responsive: true,
-  maintainAspectRatio: false,
-  scales: {
-    x: { 
-      stacked: true,
-      ticks: {
-        font: { size: 11, weight: 'bold' }
-      },
-      grid: { display: false }
-    },
-    y: { 
-      stacked: true, 
-      beginAtZero: true,
-      ticks: { 
-        precision: 0,
-        stepSize: 1,
-        font: { size: 11, weight: 'bold' }
-      }
-    }
-  },
-  plugins: {
-    legend: {
-      position: 'top',
-      labels: {
-        font: { size: 11, weight: 'bold' },
-        usePointStyle: true,
-        padding: 12
-      }
-    }
-  }
-};
-
-const chartOptions = {
-  responsive: true,
-  maintainAspectRatio: false
-};
+}, { deep: true });
 
 onMounted(() => {
-  loadDocuments();
+  loadAgencies();
   loadDashboardMetrics();
 });
 </script>

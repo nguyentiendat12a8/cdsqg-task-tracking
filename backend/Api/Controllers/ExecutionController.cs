@@ -85,6 +85,24 @@ namespace Cdsqg.Api.Controllers
         }
 
         /// <summary>
+        /// Endpoint: GET /api/execution/tasks/{taskId}/progress-history
+        /// Lấy toàn bộ lịch sử các lượt báo cáo tiến độ đã gửi của một nhiệm vụ.
+        /// </summary>
+        [HttpGet("tasks/{taskId:guid}/progress-history")]
+        public async Task<IActionResult> GetTaskProgressHistory(Guid taskId)
+        {
+            try
+            {
+                var history = await _executionService.GetTaskProgressHistoryAsync(taskId);
+                return Ok(history);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Lỗi khi tải lịch sử báo cáo: " + ex.Message });
+            }
+        }
+
+        /// <summary>
         /// Endpoint: POST /api/execution/tasks/{taskId}/urge
         /// Tạo dự thảo và lưu nhật ký đôn đốc tiến độ (kèm chỉ số dự báo) vào CSDL
         /// </summary>

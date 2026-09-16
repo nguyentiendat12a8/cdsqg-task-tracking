@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Cdsqg.Application.DTOs;
+using Cdsqg.Application.Services;
 using Cdsqg.Core.Entities;
 using Cdsqg.Core.Enums;
 using Cdsqg.Infrastructure.Data;
@@ -22,500 +23,291 @@ namespace Cdsqg.Api.Controllers
             _context = context;
         }
 
-        private decimal? GetExpectedTargetForItem(GoalTaskItem task, int year, int quarter)
-        {
-            if (task.EvaluationType == EvaluationTypeEnum.Qualitative)
-            {
-                if (task.CustomBaseline != null && task.CustomBaseline.Count > 0)
-                {
-                    string yKey = $"{year}";
-                    if (task.CustomBaseline.TryGetValue(yKey, out var vy) && !string.IsNullOrWhiteSpace(vy) && vy != "--")
-                        return 100m;
-
-                    for (int q = 4; q >= 1; q--)
-                    {
-                        string k1 = $"Q{q}_{year}";
-                        string k2 = $"{year}_Q{q}";
-                        if ((task.CustomBaseline.TryGetValue(k1, out var val1) && !string.IsNullOrWhiteSpace(val1) && val1 != "--") ||
-                            (task.CustomBaseline.TryGetValue(k2, out var val2) && !string.IsNullOrWhiteSpace(val2) && val2 != "--"))
-                        {
-                            return 100m;
-                        }
-                    }
-                }
-
-                if (task.Baselines != null && task.Baselines.Count > 0)
-                {
-                    var b = task.Baselines.FirstOrDefault(b => b.Year == year && (b.Quarter == quarter || b.Quarter == 0 || b.Quarter == 4));
-                    if (b != null && (b.TargetQualitativeStatus.HasValue || (b.TargetQuantity.HasValue && b.TargetQuantity.Value > 0)))
-                    {
-                        return 100m;
-                    }
-                }
-
-                return null;
-            }
-
-            // 1. Check CustomBaseline JSONB dictionary for exact period or year targets
-            if (task.CustomBaseline != null && task.CustomBaseline.Count > 0)
-            {
-                string qKey1 = $"Q{quarter}_{year}";
-                string qKey2 = $"{year}_Q{quarter}";
-                string yKey = $"{year}";
-
-                if (task.CustomBaseline.TryGetValue(qKey1, out var v1) && decimal.TryParse(v1, out decimal target1) && target1 > 0)
-                    return target1;
-                if (task.CustomBaseline.TryGetValue(qKey2, out var v2) && decimal.TryParse(v2, out decimal target2) && target2 > 0)
-                    return target2;
-                if (task.CustomBaseline.TryGetValue(yKey, out var vy) && decimal.TryParse(vy, out decimal targetY) && targetY > 0)
-                    return targetY;
-
-                // Check any quarter key for specified year (Q4..Q1)
-                for (int q = 4; q >= 1; q--)
-                {
-                    string k1 = $"Q{q}_{year}";
-                    string k2 = $"{year}_Q{q}";
-                    if ((task.CustomBaseline.TryGetValue(k1, out var val) || task.CustomBaseline.TryGetValue(k2, out val)) && decimal.TryParse(val, out decimal tQ) && tQ > 0)
-                    {
-                        return tQ;
-                    }
-                }
-            }
-
-            // 2. Check Baselines table for specified year
-            if (task.Baselines != null && task.Baselines.Count > 0)
-            {
-                var qBaseline = task.Baselines.FirstOrDefault(b => b.Year == year && b.Quarter == quarter);
-                if (qBaseline?.TargetQuantity.HasValue == true && qBaseline.TargetQuantity.Value > 0)
-                {
-                    return qBaseline.TargetQuantity.Value;
-                }
-
-                var yBaseline = task.Baselines.FirstOrDefault(b => b.Year == year && (b.Quarter == 0 || b.Quarter == 4));
-                if (yBaseline?.TargetQuantity.HasValue == true && yBaseline.TargetQuantity.Value > 0)
-                {
-                    return yBaseline.TargetQuantity.Value;
-                }
-            }
-
-            // No plan/target setup for this year
-            return null;
-        }
-
-        /// <summary>
-        /// GET /api/dashboard/documents/{id}/metrics
-        /// Hoặc GET /api/dashboard/metrics?documentId={id}
-        /// Truy vấn dữ liệu thực từ PostgreSQL để tổng hợp chỉ số Dashboard báo cáo Lãnh đạo
-        /// </summary>
-        [HttpGet("documents/{id}/metrics")]
-        [HttpGet("overview")]
         [HttpGet("metrics")]
-        public async Task<IActionResult> GetDashboardMetrics([FromRoute] string? id = null, [FromQuery] string? documentId = null, [FromQuery] int? year = 2026, [FromQuery] int? quarter = null)
+        [HttpGet("overview")]
+        public async Task<IActionResult> GetDashboardMetrics(
+            [FromQuery] Guid[]? agencyId = null,
+            [FromQuery] Guid? parentAgencyId = null,
+            [FromQuery] string[]? section = null,
+            [FromQuery] string[]? group = null,
+            [FromQuery] int? fromYear = null,
+            [FromQuery] int? toYear = null,
+            [FromQuery] bool? isOngoing = null,
+            [FromQuery] string? itemType = null)
         {
             try
             {
-                // Unify documentId parameter
-                string targetDocIdStr = !string.IsNullOrEmpty(id) && id != "overview" && id != "metrics" ? id : (documentId ?? string.Empty);
-                Guid? docGuid = null;
-                if (Guid.TryParse(targetDocIdStr, out var parsedGuid))
-                {
-                    docGuid = parsedGuid;
-                }
-
-                Document? selectedDoc = null;
-                if (docGuid.HasValue)
-                {
-                    selectedDoc = await _context.Documents.FirstOrDefaultAsync(d => d.Id == docGuid.Value);
-                }
-
-                // Query GoalTaskItems
                 var query = _context.GoalTaskItems
                     .Include(i => i.LeadAgency)
+                    .Include(i => i.Unit)
                     .Include(i => i.Baselines)
                     .Include(i => i.ProgressLogs)
                     .AsQueryable();
 
-                if (docGuid.HasValue)
+                if (section != null && section.Length > 0)
                 {
-                    query = query.Where(i => i.DocumentId == docGuid.Value);
+                    var validSections = section.Where(s => !string.IsNullOrWhiteSpace(s)).ToList();
+                    if (validSections.Count > 0)
+                    {
+                        query = query.Where(i => i.Section != null && validSections.Contains(i.Section));
+                    }
                 }
 
-                var items = await query.ToListAsync();
-                var allAgencies = await _context.Agencies.ToListAsync();
+                if (group != null && group.Length > 0)
+                {
+                    var validGroups = group.Where(g => !string.IsNullOrWhiteSpace(g)).ToList();
+                    if (validGroups.Count > 0)
+                    {
+                        query = query.Where(i => i.Group != null && validGroups.Contains(i.Group));
+                    }
+                }
 
-                int targetYear = year ?? 2026;
-                int targetQuarter = quarter ?? ((DateTime.UtcNow.Month - 1) / 3 + 1);
+                if (isOngoing.HasValue && isOngoing.Value)
+                {
+                    query = query.Where(i => i.IsOngoing);
+                }
+                else if (fromYear.HasValue || toYear.HasValue)
+                {
+                    int fY = fromYear ?? 2026;
+                    int tY = toYear ?? 2030;
+                    query = query.Where(i => i.IsOngoing || ((!i.StartDate.HasValue || i.StartDate.Value.Year <= tY) && (!i.DueDate.HasValue || i.DueDate.Value.Year >= fY)));
+                }
 
-                int totalGoals = items.Count(i => i.ItemType == ItemTypeEnum.Goal);
-                int totalTasks = items.Count(i => i.ItemType == ItemTypeEnum.Task);
+                var allAgencies = await _context.Agencies.Include(a => a.ChildAgencies).ToListAsync();
+
+                // Scope to specific agency + child agencies if agencyId supplied
+                HashSet<Guid>? allowedAgencyIds = null;
+                bool isAgencyFilterActive = false;
+                if (agencyId != null && agencyId.Length > 0)
+                {
+                    var validAgencyIds = agencyId.Where(id => id != Guid.Empty).ToList();
+                    if (validAgencyIds.Count > 0)
+                    {
+                        isAgencyFilterActive = true;
+                        allowedAgencyIds = new HashSet<Guid>();
+                        foreach (var agId in validAgencyIds)
+                        {
+                            var childs = GetAgencyAndChildIds(agId, allAgencies);
+                            foreach (var c in childs) allowedAgencyIds.Add(c);
+                        }
+                        query = query.Where(i => allowedAgencyIds.Contains(i.LeadAgencyId));
+                    }
+                }
+
+                var baseItems = await query.ToListAsync();
+
+                int totalGoals = baseItems.Count(i => i.ItemType == ItemTypeEnum.Goal);
+                int totalTasks = baseItems.Count(i => i.ItemType == ItemTypeEnum.Task);
+
+                // Filter by itemType if supplied ('Goal' or 'Task')
+                var items = baseItems;
+                if (!string.IsNullOrWhiteSpace(itemType) && !itemType.Equals("all", StringComparison.OrdinalIgnoreCase))
+                {
+                    if (Enum.TryParse<ItemTypeEnum>(itemType, true, out var parsedItemType))
+                    {
+                        items = baseItems.Where(i => i.ItemType == parsedItemType).ToList();
+                    }
+                }
+
+                // 6 Execution Status counters for ALL, GOALS, and TASKS
+                int notStarted = 0, inProgressOnTime = 0, inProgressOverdue = 0, completedOnTime = 0, completedOverdue = 0, expiringSoon = 0;
+                int gNotStarted = 0, gInProgressOnTime = 0, gInProgressOverdue = 0, gCompletedOnTime = 0, gCompletedOverdue = 0, gExpiringSoon = 0;
+                int tNotStarted = 0, tInProgressOnTime = 0, tInProgressOverdue = 0, tCompletedOnTime = 0, tCompletedOverdue = 0, tExpiringSoon = 0;
 
                 int completedGoals = 0;
                 int completedTasks = 0;
 
-                int greenCount = 0;
-                int yellowCount = 0;
-                int redCount = 0;
+                var ministriesPerformance = new List<AgencyStatusSummaryDto>();
+                var provincesPerformance = new List<AgencyStatusSummaryDto>();
 
-                decimal sumCompletionPct = 0;
-                int quantCount = 0;
-
-                var staleTasks = new List<StaleTaskDto>();
-                var agencyMap = allAgencies.ToDictionary(a => a.Id, a => new AgencyPerformanceDto
+                // Build performance map grouped by Ministry vs Province
+                IEnumerable<Agency> targetAgencies;
+                if (parentAgencyId.HasValue && parentAgencyId.Value != Guid.Empty)
                 {
-                    Code = a.Code,
-                    Name = a.Name,
-                    Completed = 0,
-                    Overdue = 0,
-                    Total = 0
-                });
-
-                var qualitativeDist = new QualitativeDistributionDto
-                {
-                    NotStarted = 0,
-                    Drafting = 0,
-                    Reviewing = 0,
-                    Completed = 0
-                };
-
-                DateTime now = DateTime.UtcNow;
-
-                // Calculate time elapsed fraction of target year
-                decimal f;
-                if (now.Year > targetYear)
-                {
-                    f = 1.0m;
+                    targetAgencies = allAgencies.Where(a => a.ParentId == parentAgencyId.Value);
                 }
-                else if (now.Year < targetYear)
+                else if (isAgencyFilterActive && allowedAgencyIds != null)
                 {
-                    f = 0.0m;
+                    var selectedSet = agencyId!.Where(id => id != Guid.Empty).ToHashSet();
+                    targetAgencies = allAgencies.Where(a => selectedSet.Contains(a.Id) || (a.ParentId.HasValue && selectedSet.Contains(a.ParentId.Value)));
                 }
                 else
                 {
-                    int daysInYear = DateTime.IsLeapYear(targetYear) ? 366 : 365;
-                    f = (decimal)now.DayOfYear / daysInYear;
+                    targetAgencies = allAgencies.Where(a => !a.ParentId.HasValue);
                 }
-                f = Math.Max(0.0m, Math.Min(1.0m, f));
 
-                int overdueCount = 0;
-                int laggingCount = 0;
-                int atRiskCount = 0;
-
-                foreach (var task in items)
+                var agencySummaries = new Dictionary<Guid, AgencyStatusSummaryDto>();
+                foreach (var agency in targetAgencies)
                 {
-                    // Track agency assigned tasks count
-                    if (task.LeadAgencyId != Guid.Empty && agencyMap.ContainsKey(task.LeadAgencyId))
+                    var childIds = GetAgencyAndChildIds(agency.Id, allAgencies);
+                    var agencyItems = items.Where(i => childIds.Contains(i.LeadAgencyId)).ToList();
+
+                    int aNotStarted = 0, aInProgOnTime = 0, aInProgOverdue = 0, aCompOnTime = 0, aCompOverdue = 0, aExpSoon = 0;
+                    int aGoals = agencyItems.Count(i => i.ItemType == ItemTypeEnum.Goal);
+                    int aTasks = agencyItems.Count(i => i.ItemType == ItemTypeEnum.Task);
+
+                    foreach (var item in agencyItems)
                     {
-                        agencyMap[task.LeadAgencyId].Total++;
-                    }
+                        var latestLog = item.ProgressLogs.OrderByDescending(l => l.LogDate).FirstOrDefault();
+                        var status = PlanningService.CalculateExecutionStatus(item, latestLog);
 
-                    var latestLog = task.ProgressLogs.OrderByDescending(l => l.LogDate).FirstOrDefault();
-
-                    // Calculate staleness (in days)
-                    int daysSinceLastLog = latestLog != null ? (now - latestLog.LogDate).Days : 999;
-                    string itemTypeName = task.ItemType == ItemTypeEnum.Goal ? "Mục tiêu" : "Nhiệm vụ";
-
-                    if (task.EvaluationType == EvaluationTypeEnum.Qualitative)
-                    {
-                        int evalYear = latestLog?.PeriodYear ?? targetYear;
-                        int evalQuarter = latestLog?.PeriodQuarter ?? targetQuarter;
-
-                        decimal? qualTargetOpt = GetExpectedTargetForItem(task, evalYear, evalQuarter);
-
-                        var status = latestLog?.QualitativeStatus ?? TextStatusEnum.NotStarted;
                         switch (status)
                         {
-                            case TextStatusEnum.NotStarted:
-                                qualitativeDist.NotStarted++;
-                                break;
-                            case TextStatusEnum.Drafting:
-                                qualitativeDist.Drafting++;
-                                break;
-                            case TextStatusEnum.Reviewing:
-                                qualitativeDist.Reviewing++;
-                                break;
-                            case TextStatusEnum.Completed:
-                                qualitativeDist.Completed++;
-                                greenCount++;
-                                if (task.ItemType == ItemTypeEnum.Goal) completedGoals++;
-                                else completedTasks++;
-                                if (task.LeadAgencyId != Guid.Empty && agencyMap.ContainsKey(task.LeadAgencyId)) agencyMap[task.LeadAgencyId].Completed++;
-                                break;
-                        }
-
-                        if (status != TextStatusEnum.Completed && qualTargetOpt.HasValue)
-                        {
-                            string cat;
-                            string catName;
-                            decimal actPct = status == TextStatusEnum.Reviewing ? 75m : (status == TextStatusEnum.Drafting ? 40m : 0m);
-
-                            if (f >= 1.0m)
-                            {
-                                cat = "Overdue";
-                                catName = "Quá hạn hoàn thành";
-                                overdueCount++;
-                                redCount++;
-                                if (task.LeadAgencyId != Guid.Empty && agencyMap.ContainsKey(task.LeadAgencyId)) agencyMap[task.LeadAgencyId].Overdue++;
-                            }
-                            else if (f >= 0.5m)
-                            {
-                                if (status == TextStatusEnum.NotStarted)
-                                {
-                                    cat = "Lagging";
-                                    catName = "Chậm tiến độ";
-                                    laggingCount++;
-                                    redCount++;
-                                    if (task.LeadAgencyId != Guid.Empty && agencyMap.ContainsKey(task.LeadAgencyId)) agencyMap[task.LeadAgencyId].Overdue++;
-                                }
-                                else
-                                {
-                                    cat = "AtRisk";
-                                    catName = "Nguy cơ chậm tiến độ";
-                                    atRiskCount++;
-                                    yellowCount++;
-                                    if (task.LeadAgencyId != Guid.Empty && agencyMap.ContainsKey(task.LeadAgencyId)) agencyMap[task.LeadAgencyId].AtRisk++;
-                                }
-                            }
-                            else
-                            {
-                                cat = "AtRisk";
-                                catName = "Nguy cơ chậm tiến độ";
-                                atRiskCount++;
-                                yellowCount++;
-                                if (task.LeadAgencyId != Guid.Empty && agencyMap.ContainsKey(task.LeadAgencyId)) agencyMap[task.LeadAgencyId].AtRisk++;
-                            }
-
-                            staleTasks.Add(new StaleTaskDto
-                            {
-                                Id = task.Id,
-                                DocumentId = task.DocumentId,
-                                Code = task.Code,
-                                Title = task.Title,
-                                LeadAgency = task.LeadAgency?.Name ?? "Chưa phân công",
-                                DaysSinceLastLog = daysSinceLastLog == 999 ? 0 : daysSinceLastLog,
-                                ActualProgressPct = actPct,
-                                ExpectedTargetPct = 100m,
-                                ExpectedLinearProgress = Math.Round(f * 100m, 1),
-                                LaggingDeltaPct = Math.Round(actPct - 100m, 1),
-                                HasReport = latestLog != null,
-                                ItemType = itemTypeName,
-                                StaleCategory = cat,
-                                StaleCategoryName = catName
-                            });
+                            case ExecutionStatusEnum.NotStarted: aNotStarted++; break;
+                            case ExecutionStatusEnum.InProgressOnTime: aInProgOnTime++; break;
+                            case ExecutionStatusEnum.InProgressOverdue: aInProgOverdue++; break;
+                            case ExecutionStatusEnum.CompletedOnTime: aCompOnTime++; break;
+                            case ExecutionStatusEnum.CompletedOverdue: aCompOverdue++; break;
+                            case ExecutionStatusEnum.ExpiringSoon: aExpSoon++; break;
                         }
                     }
-                    else
+
+                    var summaryDto = new AgencyStatusSummaryDto
                     {
-                        // Quantitative task/goal
-                        int evalYear = latestLog?.PeriodYear ?? targetYear;
-                        int evalQuarter = latestLog?.PeriodQuarter ?? targetQuarter;
+                        AgencyId = agency.Id,
+                        Code = agency.Code,
+                        Name = agency.Name,
+                        Type = agency.Type.ToString(),
+                        HasChildAgencies = agency.ChildAgencies.Any(),
+                        TotalItems = agencyItems.Count,
+                        TotalGoals = aGoals,
+                        TotalTasks = aTasks,
+                        NotStarted = aNotStarted,
+                        InProgressOnTime = aInProgOnTime,
+                        InProgressOverdue = aInProgOverdue,
+                        CompletedOnTime = aCompOnTime,
+                        CompletedOverdue = aCompOverdue,
+                        ExpiringSoon = aExpSoon
+                    };
 
-                        decimal? targetValOpt = GetExpectedTargetForItem(task, evalYear, evalQuarter);
+                    agencySummaries[agency.Id] = summaryDto;
 
-                        // User requirement: If no plan has been setup for this year, do NOT display in lagging list on Dashboard
-                        if (!targetValOpt.HasValue)
-                        {
-                            continue;
-                        }
-
-                        quantCount++;
-                        decimal targetVal = targetValOpt.Value;
-                        decimal actualVal = latestLog?.QuantitativeValue ?? 0m;
-                        bool hasReport = latestLog != null && latestLog.QuantitativeValue.HasValue;
-
-                        decimal pct = targetVal > 0 ? Math.Round((actualVal / targetVal) * 100m, 1) : 0m;
-                        sumCompletionPct += Math.Min(100m, Math.Max(0m, pct));
-
-                        // Expected linear progress by elapsed time
-                        decimal expectedLinear = Math.Round(f * targetVal, 2);
-
-                        if (f >= 1.0m)
-                        {
-                            if (actualVal >= targetVal)
-                            {
-                                greenCount++;
-                                if (task.ItemType == ItemTypeEnum.Goal) completedGoals++;
-                                else completedTasks++;
-                                if (task.LeadAgencyId != Guid.Empty && agencyMap.ContainsKey(task.LeadAgencyId)) agencyMap[task.LeadAgencyId].Completed++;
-                            }
-                            else
-                            {
-                                overdueCount++;
-                                redCount++;
-                                if (task.LeadAgencyId != Guid.Empty && agencyMap.ContainsKey(task.LeadAgencyId)) agencyMap[task.LeadAgencyId].Overdue++;
-
-                                staleTasks.Add(new StaleTaskDto
-                                {
-                                    Id = task.Id,
-                                    DocumentId = task.DocumentId,
-                                    Code = task.Code,
-                                    Title = task.Title,
-                                    LeadAgency = task.LeadAgency?.Name ?? "Chưa phân công",
-                                    DaysSinceLastLog = daysSinceLastLog == 999 ? 0 : daysSinceLastLog,
-                                    ActualProgressPct = actualVal,
-                                    ExpectedTargetPct = targetVal,
-                                    ExpectedLinearProgress = expectedLinear,
-                                    LaggingDeltaPct = Math.Round(actualVal - targetVal, 1),
-                                    HasReport = hasReport,
-                                    ItemType = itemTypeName,
-                                    StaleCategory = "Overdue",
-                                    StaleCategoryName = "Quá hạn hoàn thành"
-                                });
-                            }
-                        }
-                        else
-                        {
-                            // Mid-year / within current year execution
-                            if (!hasReport)
-                            {
-                                // User rule: Unreported items within execution period are classified as AtRisk (Nguy cơ chậm tiến độ)
-                                atRiskCount++;
-                                yellowCount++;
-                                if (task.LeadAgencyId != Guid.Empty && agencyMap.ContainsKey(task.LeadAgencyId)) agencyMap[task.LeadAgencyId].AtRisk++;
-
-                                staleTasks.Add(new StaleTaskDto
-                                {
-                                    Id = task.Id,
-                                    DocumentId = task.DocumentId,
-                                    Code = task.Code,
-                                    Title = task.Title,
-                                    LeadAgency = task.LeadAgency?.Name ?? "Chưa phân công",
-                                    DaysSinceLastLog = daysSinceLastLog == 999 ? 0 : daysSinceLastLog,
-                                    ActualProgressPct = 0m,
-                                    ExpectedTargetPct = targetVal,
-                                    ExpectedLinearProgress = expectedLinear,
-                                    LaggingDeltaPct = 0m,
-                                    HasReport = false,
-                                    ItemType = itemTypeName,
-                                    StaleCategory = "AtRisk",
-                                    StaleCategoryName = "Nguy cơ chậm tiến độ"
-                                });
-                            }
-                            else
-                            {
-                                decimal thresholdLagging = Math.Round(0.7m * expectedLinear, 2);
-                                decimal thresholdAtRisk = Math.Round(0.95m * expectedLinear, 2);
-
-                                if (expectedLinear > 0m && actualVal < thresholdLagging)
-                                {
-                                    // Lagging progress (< 70% of expected linear milestone)
-                                    laggingCount++;
-                                    redCount++;
-                                    if (task.LeadAgencyId != Guid.Empty && agencyMap.ContainsKey(task.LeadAgencyId)) agencyMap[task.LeadAgencyId].Overdue++;
-
-                                    staleTasks.Add(new StaleTaskDto
-                                    {
-                                        Id = task.Id,
-                                        DocumentId = task.DocumentId,
-                                        Code = task.Code,
-                                        Title = task.Title,
-                                        LeadAgency = task.LeadAgency?.Name ?? "Chưa phân công",
-                                        DaysSinceLastLog = daysSinceLastLog == 999 ? 0 : daysSinceLastLog,
-                                        ActualProgressPct = actualVal,
-                                        ExpectedTargetPct = targetVal,
-                                        ExpectedLinearProgress = expectedLinear,
-                                        LaggingDeltaPct = Math.Round(actualVal - expectedLinear, 1),
-                                        HasReport = true,
-                                        ItemType = itemTypeName,
-                                        StaleCategory = "Lagging",
-                                        StaleCategoryName = "Chậm tiến độ"
-                                    });
-                                }
-                                else if (expectedLinear > 0m && actualVal < thresholdAtRisk)
-                                {
-                                    // At risk of lagging (70% <= actual < 95% of expected linear milestone)
-                                    atRiskCount++;
-                                    yellowCount++;
-                                    if (task.LeadAgencyId != Guid.Empty && agencyMap.ContainsKey(task.LeadAgencyId)) agencyMap[task.LeadAgencyId].AtRisk++;
-
-                                    staleTasks.Add(new StaleTaskDto
-                                    {
-                                        Id = task.Id,
-                                        DocumentId = task.DocumentId,
-                                        Code = task.Code,
-                                        Title = task.Title,
-                                        LeadAgency = task.LeadAgency?.Name ?? "Chưa phân công",
-                                        DaysSinceLastLog = daysSinceLastLog == 999 ? 0 : daysSinceLastLog,
-                                        ActualProgressPct = actualVal,
-                                        ExpectedTargetPct = targetVal,
-                                        ExpectedLinearProgress = expectedLinear,
-                                        LaggingDeltaPct = Math.Round(actualVal - expectedLinear, 1),
-                                        HasReport = true,
-                                        ItemType = itemTypeName,
-                                        StaleCategory = "AtRisk",
-                                        StaleCategoryName = "Nguy cơ chậm tiến độ"
-                                    });
-                                }
-                                else
-                                {
-                                    // On track
-                                    if (actualVal >= targetVal)
-                                    {
-                                        greenCount++;
-                                        if (task.ItemType == ItemTypeEnum.Goal) completedGoals++;
-                                        else completedTasks++;
-                                        if (task.LeadAgencyId != Guid.Empty && agencyMap.ContainsKey(task.LeadAgencyId)) agencyMap[task.LeadAgencyId].Completed++;
-                                    }
-                                    else
-                                    {
-                                        greenCount++;
-                                    }
-                                }
-                            }
-                        }
+                    if (agency.Type == AgencyTypeEnum.Ministry)
+                    {
+                        ministriesPerformance.Add(summaryDto);
+                    }
+                    else if (agency.Type == AgencyTypeEnum.Province)
+                    {
+                        provincesPerformance.Add(summaryDto);
                     }
                 }
 
-                decimal overallQuantPct = quantCount > 0 ? Math.Round(sumCompletionPct / quantCount, 1) : (totalTasks > 0 ? 75.0m : 0m);
-
-                // Filter top active agency performances
-                var agencyPerformanceList = agencyMap.Values
-                    .Where(a => a.Total > 0)
-                    .OrderByDescending(a => a.Total)
-                    .Take(6)
-                    .ToList();
-
-                if (agencyPerformanceList.Count == 0)
+                // Global Status counts with Goal vs Task breakdown
+                foreach (var item in items)
                 {
-                    agencyPerformanceList = allAgencies.Take(5).Select(a => new AgencyPerformanceDto
+                    var latestLog = item.ProgressLogs.OrderByDescending(l => l.LogDate).FirstOrDefault();
+                    var status = PlanningService.CalculateExecutionStatus(item, latestLog);
+                    bool isGoal = item.ItemType == ItemTypeEnum.Goal;
+
+                    switch (status)
                     {
-                        Code = a.Code,
-                        Name = a.Name,
-                        Completed = 0,
-                        Overdue = 0,
-                        Total = 0
-                    }).ToList();
+                        case ExecutionStatusEnum.NotStarted:
+                            notStarted++;
+                            if (isGoal) gNotStarted++; else tNotStarted++;
+                            break;
+                        case ExecutionStatusEnum.InProgressOnTime:
+                            inProgressOnTime++;
+                            if (isGoal) gInProgressOnTime++; else tInProgressOnTime++;
+                            break;
+                        case ExecutionStatusEnum.InProgressOverdue:
+                            inProgressOverdue++;
+                            if (isGoal) gInProgressOverdue++; else tInProgressOverdue++;
+                            break;
+                        case ExecutionStatusEnum.CompletedOnTime:
+                            completedOnTime++;
+                            if (isGoal) { completedGoals++; gCompletedOnTime++; } else { completedTasks++; tCompletedOnTime++; }
+                            break;
+                        case ExecutionStatusEnum.CompletedOverdue:
+                            completedOverdue++;
+                            if (isGoal) { completedGoals++; gCompletedOverdue++; } else { completedTasks++; tCompletedOverdue++; }
+                            break;
+                        case ExecutionStatusEnum.ExpiringSoon:
+                            expiringSoon++;
+                            if (isGoal) gExpiringSoon++; else tExpiringSoon++;
+                            break;
+                    }
                 }
 
-                var metrics = new ExecutiveDashboardMetricsDto
+                return Ok(new
                 {
-                    DocumentId = selectedDoc?.Id,
-                    DocumentNumber = selectedDoc?.DocumentNumber ?? "Tất cả văn bản",
-                    DocumentName = selectedDoc?.Name ?? "Toàn bộ chỉ đạo CĐS Quốc gia",
-                    TotalGoals = totalGoals,
-                    CompletedGoals = completedGoals,
-                    TotalTasks = totalTasks,
-                    CompletedTasks = completedTasks,
-                    OverallQuantitativeCompletionPct = overallQuantPct,
-                    TrafficLights = new TrafficLightCountDto
+                    totalGoals,
+                    completedGoals,
+                    totalTasks,
+                    completedTasks,
+                    statusSummary = new
                     {
-                        GreenCount = greenCount,
-                        YellowCount = yellowCount,
-                        RedCount = redCount
+                        notStarted,
+                        inProgressOnTime,
+                        inProgressOverdue,
+                        completedOnTime,
+                        completedOverdue,
+                        expiringSoon
                     },
-                    OverdueCount = overdueCount,
-                    LaggingCount = laggingCount,
-                    AtRiskCount = atRiskCount,
-                    StaleTasks = staleTasks.OrderBy(t => t.LaggingDeltaPct).ToList(),
-                    AgencyPerformance = agencyPerformanceList,
-                    QualitativeDistribution = qualitativeDist
-                };
-
-                return Ok(metrics);
+                    goalStatusSummary = new
+                    {
+                        notStarted = gNotStarted,
+                        inProgressOnTime = gInProgressOnTime,
+                        inProgressOverdue = gInProgressOverdue,
+                        completedOnTime = gCompletedOnTime,
+                        completedOverdue = gCompletedOverdue,
+                        expiringSoon = gExpiringSoon
+                    },
+                    taskStatusSummary = new
+                    {
+                        notStarted = tNotStarted,
+                        inProgressOnTime = tInProgressOnTime,
+                        inProgressOverdue = tInProgressOverdue,
+                        completedOnTime = tCompletedOnTime,
+                        completedOverdue = tCompletedOverdue,
+                        expiringSoon = tExpiringSoon
+                    },
+                    ministriesPerformance = ministriesPerformance.OrderByDescending(m => m.TotalItems).ToList(),
+                    provincesPerformance = provincesPerformance.OrderByDescending(p => p.TotalItems).ToList()
+                });
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Lỗi hệ thống khi tải metrics Dashboard", details = ex.Message });
+                return StatusCode(500, new { error = "Lỗi hệ thống khi lấy chỉ số Dashboard", details = ex.Message });
             }
         }
+
+        private HashSet<Guid> GetAgencyAndChildIds(Guid rootId, List<Agency> allAgencies)
+        {
+            var result = new HashSet<Guid> { rootId };
+            var queue = new Queue<Guid>();
+            queue.Enqueue(rootId);
+
+            while (queue.Count > 0)
+            {
+                var curr = queue.Dequeue();
+                var children = allAgencies.Where(a => a.ParentId == curr).Select(a => a.Id);
+                foreach (var childId in children)
+                {
+                    if (result.Add(childId))
+                    {
+                        queue.Enqueue(childId);
+                    }
+                }
+            }
+            return result;
+        }
+    }
+
+    public class AgencyStatusSummaryDto
+    {
+        public Guid AgencyId { get; set; }
+        public string Code { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string Type { get; set; } = "Ministry";
+        public bool HasChildAgencies { get; set; } = false;
+        public int TotalItems { get; set; }
+        public int TotalGoals { get; set; }
+        public int TotalTasks { get; set; }
+        public int NotStarted { get; set; }
+        public int InProgressOnTime { get; set; }
+        public int InProgressOverdue { get; set; }
+        public int CompletedOnTime { get; set; }
+        public int CompletedOverdue { get; set; }
+        public int ExpiringSoon { get; set; }
     }
 }

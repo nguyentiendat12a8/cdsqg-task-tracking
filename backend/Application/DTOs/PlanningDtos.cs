@@ -18,15 +18,27 @@ namespace Cdsqg.Application.DTOs
     public class PlanningGridItemDto
     {
         public Guid TaskId { get; set; }
+        public Guid? ParentId { get; set; }
         public string ItemType { get; set; } = "Task"; // Goal (1A) or Task (1B)
         public string Code { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
         public string Category { get; set; } = string.Empty;
+        public string Section { get; set; } = string.Empty;
+        public string Group { get; set; } = string.Empty;
+        public bool IsOngoing { get; set; } = false;
         
+        public bool IsGeneralTask { get; set; } = false;
+        public DateTime? StartDate { get; set; }
+        public DateTime? DueDate { get; set; }
+
+        public Guid LeadAgencyId { get; set; }
         public string LeadAgencyCode { get; set; } = string.Empty;
         public string LeadAgencyName { get; set; } = string.Empty;
+        public List<Guid> CoordinatingAgencyIds { get; set; } = new List<Guid>();
         public List<string> CoordinatingAgencyCodes { get; set; } = new List<string>();
+        public List<string> CoordinatingAgencyNames { get; set; } = new List<string>();
 
+        public Guid? UnitId { get; set; }
         public string EvaluationType { get; set; } = "Quantitative";
         public string UnitName { get; set; } = "%";
         public string CalculationMethod { get; set; } = "LatestValue";
@@ -36,21 +48,42 @@ namespace Cdsqg.Application.DTOs
         public DateTime? LastUpdated { get; set; }
 
         /// <summary>
-        /// Custom baseline milestone overrides dictionary (e.g. {"Q1_2026": "10.0", "hasQuarter": "true"})
+        /// 6-status execution evaluation status: NotStarted, InProgressOnTime, InProgressOverdue, CompletedOnTime, CompletedOverdue, ExpiringSoon
         /// </summary>
-        public Dictionary<string, string> CustomBaseline { get; set; } = new Dictionary<string, string>();
+        public string CalculatedStatus { get; set; } = "NotStarted";
 
-        /// <summary>
-        /// Computed target breakdown by year (decimal for Quantitative, string for Qualitative)
-        /// </summary>
+        public Dictionary<string, string> CustomBaseline { get; set; } = new Dictionary<string, string>();
         public Dictionary<int, object?> YearlyTargets { get; set; } = new Dictionary<int, object?>();
+
+        public List<PlanningGridItemDto> SubItems { get; set; } = new List<PlanningGridItemDto>();
+    }
+
+    public class CreateGoalTaskItemDto
+    {
+        public Guid DocumentId { get; set; }
+        public Guid? ParentId { get; set; }
+        public string ItemType { get; set; } = "Task";
+        public string Code { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public string Category { get; set; } = "Chính phủ số";
+        public string Section { get; set; } = string.Empty;
+        public string Group { get; set; } = string.Empty;
+        public bool IsOngoing { get; set; } = false;
+        public bool IsGeneralTask { get; set; } = false;
+
+        public DateTime? StartDate { get; set; }
+        public DateTime? DueDate { get; set; }
+
+        public Guid LeadAgencyId { get; set; }
+        public List<Guid> CoordinatingAgencyIds { get; set; } = new List<Guid>();
+
+        public Guid? UnitId { get; set; }
+        public string EvaluationType { get; set; } = "Quantitative";
+        public string CalculationMethod { get; set; } = "LatestValue";
     }
 
     public class UpdateCustomBaselineDto
     {
-        /// <summary>
-        /// Dictionary of period milestone keys to expected target values or statuses
-        /// </summary>
         public Dictionary<string, string> Milestones { get; set; } = new Dictionary<string, string>();
     }
 

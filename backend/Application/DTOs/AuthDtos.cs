@@ -40,6 +40,7 @@ namespace Cdsqg.Application.DTOs
         public string FullName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public UserRoleEnum Role { get; set; } = UserRoleEnum.AgencyUser;
+        public string? RoleString { get; set; }
         public Guid? AgencyId { get; set; }
     }
 
@@ -48,6 +49,7 @@ namespace Cdsqg.Application.DTOs
         public string FullName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public UserRoleEnum Role { get; set; }
+        public string? RoleString { get; set; }
         public Guid? AgencyId { get; set; }
         public bool IsActive { get; set; }
     }

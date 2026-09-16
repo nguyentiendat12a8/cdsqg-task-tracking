@@ -5,7 +5,7 @@
       <!-- Modal Header -->
       <div class="flex justify-between items-start border-b border-slate-100 pb-3 shrink-0">
         <div>
-          <span class="text-xs font-bold text-rose-600 uppercase tracking-wider block">Đôn Đốc Tiến Độ & Chỉ Đạo Thực Hiện</span>
+          <span class="text-xs font-bold text-rose-600 uppercase tracking-wider block">Thông Báo Tiến Độ Thực Hiện</span>
           <h3 class="text-base font-extrabold text-slate-800 mt-0.5">{{ taskCode }} - {{ taskTitle }}</h3>
         </div>
         <button @click="close" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1">✕</button>
@@ -44,9 +44,9 @@
         <div v-if="historyLogs.length > 0" class="bg-slate-50 border border-slate-200/90 rounded-xl p-4 space-y-3">
           <div class="flex items-center justify-between">
             <span class="text-xs font-extrabold text-slate-800 flex items-center gap-1.5 uppercase">
-              📜 Lịch Sử Đôn Đốc Trước Đây (<span class="text-rose-600 font-black">{{ historyLogs.length }}</span> lần)
+              📜 Lịch Sử Thông Báo Trước Đây (<span class="text-rose-600 font-black">{{ historyLogs.length }}</span> lần)
             </span>
-            <span class="text-[11px] text-slate-500 italic">Bấm "Xem chi tiết" để mở cửa sổ Lịch sử đôn đốc</span>
+            <span class="text-[11px] text-slate-500 italic">Bấm "Xem chi tiết" để mở cửa sổ Lịch sử thông báo</span>
           </div>
 
           <div class="space-y-2 max-h-44 overflow-y-auto pr-1 custom-scrollbar">
@@ -58,7 +58,7 @@
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 text-[11px] text-slate-500 font-semibold">
                   <span class="font-extrabold text-rose-800">🕒 {{ formatDate(log.createdAt) }}</span>
-                  <span>| Người đôn đốc: <strong class="text-slate-700">{{ log.createdBy || 'Lãnh đạo' }}</strong></span>
+                  <span>| Người gửi: <strong class="text-slate-700">{{ log.createdBy || 'Lãnh đạo' }}</strong></span>
                 </div>
                 <div class="text-xs text-slate-800 font-medium truncate mt-0.5">
                   📌 {{ formatSnippet(log.urgeContent) }}
@@ -79,7 +79,7 @@
         <!-- Section: Draft Urge Content with Rich Text Editor -->
         <div class="space-y-2">
           <label class="text-xs font-extrabold text-slate-700 uppercase flex items-center justify-between">
-            <span>Dự Thảo Văn Bản Chỉ Đạo Đôn Đốc</span>
+            <span>Dự Thảo Văn Bản Thông Báo</span>
           </label>
 
           <RichTextEditor 
@@ -103,7 +103,7 @@
           class="px-5 py-2.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 rounded-xl shadow-sm transition flex items-center gap-1.5"
         >
           <span v-if="isSubmitting" class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-          {{ isSubmitting ? 'Đang lưu...' : 'Lưu Văn Bản Đôn Đốc Vào Lịch Sử' }}
+          {{ isSubmitting ? 'Đang lưu...' : 'Lưu Văn Bản Thông Báo Vào Lịch Sử' }}
         </button>
       </div>
 
@@ -141,7 +141,7 @@ const historyLogs = ref([]);
 
 function generateDraftText() {
   const actualText = !props.hasReport ? 'Chưa báo cáo' : `${props.actualProgressPct}%`;
-  form.value.urgeContent = `<p><strong>VĂN BẢN ĐÔN ĐỐC TIẾN ĐỘ THỰC HIỆN NHIỆM VỤ</strong></p>
+  form.value.urgeContent = `<p><strong>VĂN BẢN THÔNG BÁO TIẾN ĐỘ THỰC HIỆN NHIỆM VỤ</strong></p>
 <p><strong>Kính gửi:</strong> ${props.leadAgencyName || 'Đơn vị Chủ trì'}</p>
 <p>Căn cứ theo dõi kế hoạch giao chỉ tiêu Chuyển đổi số Quốc gia:</p>
 <ul>
@@ -205,7 +205,7 @@ function close() {
 
 async function submitUrge() {
   if (!form.value.urgeContent || !stripHtml(form.value.urgeContent).trim()) {
-    toast.error("Vui lòng nhập nội dung văn bản đôn đốc!");
+    toast.error("Vui lòng nhập nội dung văn bản thông báo!");
     return;
   }
 
@@ -217,7 +217,7 @@ async function submitUrge() {
       ActualProgressPct: props.actualProgressPct,
       ExpectedTargetPct: props.expectedTargetPct,
       LaggingDeltaPct: props.laggingDeltaPct,
-      CreatedBy: 'Chuyên viên chỉ đạo CĐS'
+      CreatedBy: 'Chuyên viên CĐS'
     };
 
     const res = await fetch(getApiUrl(`/api/execution/tasks/${props.taskId}/urge`), {
@@ -228,16 +228,16 @@ async function submitUrge() {
 
     if (res.ok) {
       const result = await res.json();
-      toast.success("Đã lưu văn bản đôn đốc vào lịch sử thành công!");
+      toast.success("Đã lưu văn bản thông báo vào lịch sử thành công!");
       emit('submitted', result);
       emit('urged', result);
       close();
     } else {
       const err = await res.text();
-      toast.error("Lỗi khi lưu đôn đốc: " + err);
+      toast.error("Lỗi khi lưu thông báo: " + err);
     }
   } catch (e) {
-    toast.error("Không thể kết nối máy chủ khi lưu đôn đốc: " + e.message);
+    toast.error("Không thể kết nối máy chủ khi lưu thông báo: " + e.message);
   } finally {
     isSubmitting.value = false;
   }

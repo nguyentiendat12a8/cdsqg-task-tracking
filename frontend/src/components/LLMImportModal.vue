@@ -84,10 +84,13 @@
                   <input v-model="item.leadAgencyCode" class="w-16 font-bold uppercase bg-white border border-slate-300 rounded px-1.5 py-0.5" />
                 </td>
                 <td class="px-3 py-2 border-r border-slate-100">
-                  <select v-model="item.evaluationType" class="bg-white border border-slate-300 rounded px-1.5 py-0.5 font-bold">
-                    <option value="Quantitative">Quantitative</option>
-                    <option value="Qualitative">Qualitative</option>
-                  </select>
+                  <SearchableSelect 
+                    v-model="item.evaluationType" 
+                    :options="evaluationTypeOptions" 
+                    :isMulti="false" 
+                    :clearable="false"
+                    class="w-32"
+                  />
                 </td>
                 <td class="px-3 py-2 border-r border-slate-100 text-center">
                   <input 
@@ -133,8 +136,14 @@
 
 <script setup>
 import { ref } from 'vue';
+import SearchableSelect from './SearchableSelect.vue';
 import { toast } from 'vue3-toastify';
 import { useTrackingStore } from '../stores/useTrackingStore';
+
+const evaluationTypeOptions = ref([
+  { value: 'Quantitative', label: 'Quantitative' },
+  { value: 'Qualitative', label: 'Qualitative' }
+]);
 
 const props = defineProps({
   isOpen: { type: Boolean, default: false }

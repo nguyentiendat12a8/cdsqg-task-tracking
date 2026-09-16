@@ -55,4 +55,17 @@ namespace Cdsqg.Core.Enums
         Yellow = 2, // Warning (Cảnh báo tiến độ)
         Red = 3     // Overdue / Failing (Chậm tiến độ)
     }
+
+    /// <summary>
+    /// 6 Trạng thái chuẩn đánh giá tiến độ thực hiện Mục tiêu / Nhiệm vụ theo QĐ 1266
+    /// </summary>
+    public enum ExecutionStatusEnum
+    {
+        NotStarted = 1,         // 1. Chưa thực hiện
+        InProgressOnTime = 2,   // 2. Đang thực hiện (trong hạn)
+        InProgressOverdue = 3,  // 3. Đang thực hiện (quá hạn)
+        CompletedOnTime = 4,    // 4. Hoàn thành (đúng hạn)
+        CompletedOverdue = 5,   // 5. Hoàn thành (quá hạn)
+        ExpiringSoon = 6        // 6. Sắp hết hạn (Nhiệm vụ cha <= 30 ngày, Nhiệm vụ con <= 10% tổng thời gian)
+    }
 }

@@ -43,29 +43,24 @@
 
         <!-- Role Filter -->
         <div>
-          <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1">Vai Trò</label>
-          <select 
-            v-model="selectedRoleFilter" 
-            class="w-full text-xs font-bold bg-white border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-2xs"
-          >
-            <option value="all">Tất cả vai trò</option>
-            <option value="Admin">Quản trị viên (Admin)</option>
-            <option value="AgencyUser">Cán bộ Cơ quan/Bộ ngành</option>
-          </select>
+          <SearchableSelect 
+            v-model="selectedRoleFilters" 
+            :options="roleOptions" 
+            :isMulti="true" 
+            label="Vai Trò" 
+            placeholder="Tất cả vai trò"
+          />
         </div>
 
         <!-- Agency Filter -->
         <div>
-          <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1">Cơ Quan Gán</label>
-          <select 
-            v-model="selectedAgencyFilter" 
-            class="w-full text-xs font-bold bg-white border border-slate-200 rounded-xl px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-2xs"
-          >
-            <option value="all">Tất cả cơ quan</option>
-            <option v-for="ag in agencies" :key="ag.id" :value="ag.id">
-              {{ ag.code }} - {{ ag.name }}
-            </option>
-          </select>
+          <SearchableSelect 
+            v-model="selectedAgencyFilters" 
+            :options="agencyOptions" 
+            :isMulti="true" 
+            label="Cơ Quan Gán" 
+            placeholder="Tất cả cơ quan"
+          />
         </div>
 
         <!-- Action Buttons -->
@@ -216,47 +211,57 @@
 
     <!-- Add Account Modal -->
     <div v-if="isAddModalOpen" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 space-y-4 font-sans">
+      <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-xl w-full p-6 space-y-4 font-sans">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
           <h3 class="text-base font-extrabold text-slate-800">+ Thêm Tài Khoản Mới</h3>
           <button @click="isAddModalOpen = false" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
         </div>
 
         <form @submit.prevent="saveNewUser" class="space-y-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Username *</label>
-            <input v-model="newUserForm.username" type="text" required class="w-full text-xs font-semibold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Tên Đăng Nhập *</label>
+              <input v-model="newUserForm.username" type="text" required class="w-full text-xs font-semibold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Mật Khẩu *</label>
+              <input v-model="newUserForm.password" type="password" required class="w-full text-xs font-semibold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+            </div>
           </div>
 
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Mật khẩu *</label>
-            <input v-model="newUserForm.password" type="password" required class="w-full text-xs font-semibold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Họ và Tên *</label>
+              <input v-model="newUserForm.fullName" type="text" required class="w-full text-xs font-semibold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Email</label>
+              <input v-model="newUserForm.email" type="email" class="w-full text-xs font-semibold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+            </div>
           </div>
 
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Họ và Tên *</label>
-            <input v-model="newUserForm.fullName" type="text" required class="w-full text-xs font-semibold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
-          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <SearchableSelect 
+                v-model="newUserForm.role" 
+                :options="roleModalOptions" 
+                :isMulti="false" 
+                label="Vai Trò" 
+                placeholder="Chọn vai trò"
+              />
+            </div>
 
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Email</label>
-            <input v-model="newUserForm.email" type="email" class="w-full text-xs font-semibold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Vai Trò</label>
-            <select v-model="newUserForm.role" class="w-full text-xs font-bold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
-              <option value="Admin">Quản trị viên (Admin)</option>
-              <option value="AgencyUser">Cán bộ Cơ quan/Bộ ngành</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Cơ Quan Chủ Trì Gán</label>
-            <select v-model="newUserForm.agencyId" class="w-full text-xs font-bold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
-              <option :value="null">Không chọn (Hoặc Admin)</option>
-              <option v-for="ag in agencies" :key="ag.id" :value="ag.id">{{ ag.code }} - {{ ag.name }}</option>
-            </select>
+            <div>
+              <SearchableSelect 
+                v-model="newUserForm.agencyId" 
+                :options="agencyOptions" 
+                :isMulti="false" 
+                label="Cơ Quan Chủ Trì Gán" 
+                placeholder="Không chọn (Hoặc Admin)"
+              />
+            </div>
           </div>
 
           <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
@@ -269,37 +274,45 @@
 
     <!-- Edit Account Modal -->
     <div v-if="isEditModalOpen" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 space-y-4 font-sans">
+      <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-xl w-full p-6 space-y-4 font-sans">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
           <h3 class="text-base font-extrabold text-slate-800">Chỉnh Sửa Tài Khoản: {{ editUserForm.username }}</h3>
           <button @click="isEditModalOpen = false" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
         </div>
 
         <form @submit.prevent="saveEditUser" class="space-y-3">
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Họ và Tên</label>
-            <input v-model="editUserForm.fullName" type="text" required class="w-full text-xs font-semibold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Họ và Tên</label>
+              <input v-model="editUserForm.fullName" type="text" required class="w-full text-xs font-semibold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-slate-700 mb-1">Email</label>
+              <input v-model="editUserForm.email" type="email" class="w-full text-xs font-semibold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+            </div>
           </div>
 
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Email</label>
-            <input v-model="editUserForm.email" type="email" class="w-full text-xs font-semibold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
-          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <SearchableSelect 
+                v-model="editUserForm.role" 
+                :options="roleModalOptions" 
+                :isMulti="false" 
+                label="Vai Trò" 
+                placeholder="Chọn vai trò"
+              />
+            </div>
 
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Vai Trò</label>
-            <select v-model="editUserForm.role" class="w-full text-xs font-bold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
-              <option value="Admin">Quản trị viên (Admin)</option>
-              <option value="AgencyUser">Cán bộ Cơ quan/Bộ ngành</option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Cơ Quan Gán</label>
-            <select v-model="editUserForm.agencyId" class="w-full text-xs font-bold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none">
-              <option :value="null">Không gán (Toàn quyền)</option>
-              <option v-for="ag in agencies" :key="ag.id" :value="ag.id">{{ ag.code }} - {{ ag.name }}</option>
-            </select>
+            <div>
+              <SearchableSelect 
+                v-model="editUserForm.agencyId" 
+                :options="agencyOptions" 
+                :isMulti="false" 
+                label="Cơ Quan Gán" 
+                placeholder="Không gán (Toàn quyền)"
+              />
+            </div>
           </div>
 
           <div class="flex items-center gap-2 pt-1">
@@ -343,7 +356,8 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, onMounted } from 'vue';
+import SearchableSelect from '../components/SearchableSelect.vue';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
 import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
@@ -355,8 +369,22 @@ const isLoading = ref(true);
 
 const searchInput = ref('');
 const searchQuery = ref('');
-const selectedRoleFilter = ref('all');
-const selectedAgencyFilter = ref('all');
+const selectedRoleFilters = ref([]);
+const selectedAgencyFilters = ref([]);
+
+const roleOptions = ref([
+  { value: 'Admin', label: 'Quản trị viên (Admin)' },
+  { value: 'AgencyUser', label: 'Cán bộ Cơ quan/Bộ ngành' }
+]);
+
+const roleModalOptions = ref([
+  { value: 'Admin', label: 'Quản trị viên (Admin)' },
+  { value: 'AgencyUser', label: 'Cán bộ Cơ quan/Bộ ngành' }
+]);
+
+const agencyOptions = computed(() => {
+  return agencies.value.map(ag => ({ value: ag.id, label: `${ag.code} - ${ag.name}` }));
+});
 
 const pageNumber = ref(1);
 const pageSize = ref(10);
@@ -416,8 +444,13 @@ async function fetchUsers() {
     url.searchParams.append('pageNumber', pageNumber.value);
     url.searchParams.append('pageSize', pageSize.value);
     if (searchQuery.value.trim()) url.searchParams.append('search', searchQuery.value.trim());
-    if (selectedRoleFilter.value !== 'all') url.searchParams.append('role', selectedRoleFilter.value);
-    if (selectedAgencyFilter.value !== 'all') url.searchParams.append('agencyId', selectedAgencyFilter.value);
+    
+    if (selectedRoleFilters.value && selectedRoleFilters.value.length > 0) {
+      url.searchParams.append('role', selectedRoleFilters.value[0]);
+    }
+    if (selectedAgencyFilters.value && selectedAgencyFilters.value.length > 0) {
+      url.searchParams.append('agencyId', selectedAgencyFilters.value[0]);
+    }
 
     const res = await fetch(url);
     if (res.ok) {
@@ -468,10 +501,19 @@ function openAddModal() {
 
 async function saveNewUser() {
   try {
+    const payload = {
+      username: newUserForm.value.username,
+      password: newUserForm.value.password,
+      fullName: newUserForm.value.fullName,
+      email: newUserForm.value.email,
+      roleString: newUserForm.value.role,
+      agencyId: newUserForm.value.agencyId || null
+    };
+
     const res = await fetch(getApiUrl('/api/user'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newUserForm.value)
+      body: JSON.stringify(payload)
     });
 
     if (res.ok) {

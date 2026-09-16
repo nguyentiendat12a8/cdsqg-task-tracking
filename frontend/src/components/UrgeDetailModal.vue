@@ -5,7 +5,7 @@
       <!-- Modal Header -->
       <div class="flex justify-between items-start border-b border-slate-100 pb-3 shrink-0">
         <div>
-          <span class="text-xs font-bold text-rose-600 uppercase tracking-wider block">Chi Tiết Văn Bản Chỉ Đạo Đôn Đốc</span>
+          <span class="text-xs font-bold text-rose-600 uppercase tracking-wider block">Chi Tiết Văn Bản Thông Báo</span>
           <h3 class="text-base font-extrabold text-slate-800 mt-0.5">
             {{ log.taskCode }} - {{ log.taskTitle }}
           </h3>
@@ -19,7 +19,7 @@
         <!-- Info & Metadata Card -->
         <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
           <div>
-            <span class="text-slate-500 font-medium">Cơ quan nhận đôn đốc: </span>
+            <span class="text-slate-500 font-medium">Cơ quan nhận thông báo: </span>
             <span class="font-extrabold text-slate-900 px-2 py-0.5 bg-blue-100 text-blue-900 rounded border border-blue-200">
               🏢 {{ log.leadAgencyName || log.leadAgencyCode || 'Cơ quan chủ trì' }}
             </span>
@@ -32,7 +32,7 @@
 
         <!-- Full Directive Content -->
         <div class="space-y-1.5">
-          <label class="text-xs font-extrabold text-slate-700 uppercase">Nội Dung Văn Bản Đôn Đốc</label>
+          <label class="text-xs font-extrabold text-slate-700 uppercase">Nội Dung Văn Bản Thông Báo</label>
           <div 
             v-html="log.urgeContent"
             class="p-5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 font-medium leading-relaxed shadow-2xs space-y-2 whitespace-pre-line"

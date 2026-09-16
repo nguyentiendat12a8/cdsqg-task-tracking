@@ -138,7 +138,7 @@ using (var scope = app.Services.CreateScope())
             try
             {
                 context.Database.EnsureCreated();
-                EnsureUsersTableExists(context);
+                EnsureDatabaseSchemaUpdated(context);
             }
             catch (Exception ex)
             {
@@ -154,11 +154,12 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-void EnsureUsersTableExists(AppDbContext db)
+void EnsureDatabaseSchemaUpdated(AppDbContext db)
 {
     try
     {
-        string sql = @"
+        // 1. Ensure Users table
+        string sqlUsers = @"
             CREATE TABLE IF NOT EXISTS ""Users"" (
                 ""Id"" uuid NOT NULL CONSTRAINT ""PK_Users"" PRIMARY KEY,
                 ""Username"" text NOT NULL,
@@ -173,11 +174,47 @@ void EnsureUsersTableExists(AppDbContext db)
             );
             CREATE UNIQUE INDEX IF NOT EXISTS ""IX_Users_Username"" ON ""Users"" (""Username"");
         ";
-        db.Database.ExecuteSqlRaw(sql);
+        db.Database.ExecuteSqlRaw(sqlUsers);
+
+        // 2. Ensure Agencies columns
+        string sqlAgencies = @"
+            ALTER TABLE ""Agencies"" ADD COLUMN IF NOT EXISTS ""ParentId"" uuid NULL;
+        ";
+        db.Database.ExecuteSqlRaw(sqlAgencies);
+
+        // 3. Ensure GoalTaskItems columns
+        string sqlGoalTaskItems = @"
+            ALTER TABLE ""GoalTaskItems"" ADD COLUMN IF NOT EXISTS ""ParentId"" uuid NULL;
+            ALTER TABLE ""GoalTaskItems"" ADD COLUMN IF NOT EXISTS ""StartDate"" timestamp without time zone NULL;
+            ALTER TABLE ""GoalTaskItems"" ADD COLUMN IF NOT EXISTS ""DueDate"" timestamp without time zone NULL;
+            ALTER TABLE ""GoalTaskItems"" ADD COLUMN IF NOT EXISTS ""IsGeneralTask"" boolean NOT NULL DEFAULT FALSE;
+            ALTER TABLE ""GoalTaskItems"" ADD COLUMN IF NOT EXISTS ""Section"" text NULL;
+            ALTER TABLE ""GoalTaskItems"" ADD COLUMN IF NOT EXISTS ""Group"" text NULL;
+            ALTER TABLE ""GoalTaskItems"" ADD COLUMN IF NOT EXISTS ""IsOngoing"" boolean NOT NULL DEFAULT FALSE;
+            UPDATE ""GoalTaskItems"" SET ""Section"" = '' WHERE ""Section"" IS NULL;
+            UPDATE ""GoalTaskItems"" SET ""Group"" = '' WHERE ""Group"" IS NULL;
+        ";
+        db.Database.ExecuteSqlRaw(sqlGoalTaskItems);
+
+        // 4. Ensure Notifications table
+        string sqlNotifications = @"
+            CREATE TABLE IF NOT EXISTS ""Notifications"" (
+                ""Id"" uuid NOT NULL CONSTRAINT ""PK_Notifications"" PRIMARY KEY,
+                ""UserId"" uuid NULL CONSTRAINT ""FK_Notifications_Users_UserId"" REFERENCES ""Users"" (""Id"") ON DELETE CASCADE,
+                ""AgencyId"" uuid NULL CONSTRAINT ""FK_Notifications_Agencies_AgencyId"" REFERENCES ""Agencies"" (""Id"") ON DELETE CASCADE,
+                ""Title"" text NOT NULL,
+                ""Message"" text NOT NULL,
+                ""Type"" text NOT NULL,
+                ""IsRead"" boolean NOT NULL DEFAULT FALSE,
+                ""LinkUrl"" text NULL,
+                ""CreatedAt"" timestamp without time zone NOT NULL
+            );
+        ";
+        db.Database.ExecuteSqlRaw(sqlNotifications);
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"Error ensuring Users table exists: {ex.Message}");
+        Console.WriteLine($"[WARN] EnsureDatabaseSchemaUpdated error: {ex.Message}");
     }
 }
 
@@ -230,6 +267,38 @@ void SeedInitialData(AppDbContext db, IPasswordHasher hasher)
             CreatedAt = DateTime.UtcNow
         };
         db.Users.Add(adminUser);
+    }
+
+    // 4. Seed Decision 1266 Document Container if missing
+    var doc1266Id = Guid.Parse("12660000-0000-0000-0000-000000001266");
+    var doc1266 = db.Documents.FirstOrDefault(d => d.Id == doc1266Id || d.DocumentNumber == "1266/QĐ-TTg");
+    if (doc1266 == null)
+    {
+        doc1266 = new Document
+        {
+            Id = doc1266Id,
+            DocumentNumber = "1266/QĐ-TTg",
+            Name = "Quyết định số 1266/QĐ-TTg ngày 14/07/2026 của Thủ tướng Chính phủ",
+            Summary = "Hệ thống theo dõi nhiệm vụ được giao tại Quyết định số 1266/QĐ-TTg",
+            Signer = "Thủ tướng Chính phủ",
+            IssueDate = new DateTime(2026, 7, 14),
+            StartYear = 2026,
+            EndYear = 2030,
+            CreatedAt = DateTime.UtcNow
+        };
+        db.Documents.Add(doc1266);
+    }
+
+    var targetDocId = doc1266.Id;
+
+    // 5. Ensure existing GoalTaskItems are assigned to Decision 1266 Document
+    var orphanItems = db.GoalTaskItems.Where(i => i.DocumentId != targetDocId).ToList();
+    if (orphanItems.Any())
+    {
+        foreach (var item in orphanItems)
+        {
+            item.DocumentId = targetDocId;
+        }
     }
 
     db.SaveChanges();

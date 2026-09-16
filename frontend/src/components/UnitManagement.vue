@@ -87,12 +87,14 @@
           
           <div class="flex items-center gap-1.5 border-l border-slate-200 pl-3">
             <span>Số bản ghi/trang:</span>
-            <select v-model="pageSize" @change="execSearch" class="bg-white border border-slate-300 rounded-lg px-2 py-1 font-bold text-xs focus:outline-none">
-              <option :value="10">10</option>
-              <option :value="25">25</option>
-              <option :value="50">50</option>
-              <option :value="100">100</option>
-            </select>
+            <SearchableSelect 
+              v-model="pageSize" 
+              :options="pageSizeOptions" 
+              :isMulti="false" 
+              :clearable="false" 
+              @change="execSearch" 
+              class="w-20"
+            />
           </div>
         </div>
 
@@ -123,35 +125,31 @@
 
     <!-- Create/Edit Modal -->
     <div v-if="isModalOpen" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6 space-y-4">
+      <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-xl w-full p-6 sm:p-7 space-y-4">
         <h3 class="text-lg font-bold text-slate-800 border-b border-slate-100 pb-2">
           {{ isEditing ? 'Sửa Đơn Vị Tính' : 'Thêm Đơn Vị Tính Mới' }}
         </h3>
 
         <form @submit.prevent="saveUnit" class="space-y-3">
-          <div>
-            <label class="text-xs font-bold text-slate-700 uppercase">Mã Đơn Vị (e.g. PERCENT, DOC, LUOT)</label>
-            <input v-model="form.code" required class="w-full text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 mt-1" />
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-xs font-bold text-slate-700 uppercase">Mã Đơn Vị (e.g. PERCENT)</label>
+              <input v-model="form.code" required class="w-full text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 mt-1" />
+            </div>
+
+            <div>
+              <label class="text-xs font-bold text-slate-700 uppercase">Tên Hiển Thị (e.g. %)</label>
+              <input v-model="form.name" required class="w-full text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 mt-1" />
+            </div>
           </div>
 
           <div>
-            <label class="text-xs font-bold text-slate-700 uppercase">Tên Hiển Thị (e.g. %, Văn bản, Lượt)</label>
-            <input v-model="form.name" required class="w-full text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 mt-1" />
-          </div>
-
-          <div>
-            <label class="text-xs font-bold text-slate-700 uppercase">Kiểu Dữ Liệu</label>
-            <select 
+            <SearchableSelect 
               v-model="form.dataType" 
-              :disabled="isEditing && editingUsedCount > 0"
-              required 
-              class="w-full text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 mt-1 disabled:opacity-60 disabled:bg-slate-100 disabled:cursor-not-allowed"
-            >
-              <option :value="1">Số thập phân (%)</option>
-              <option :value="2">Số nguyên</option>
-              <option :value="3">Boolean (Đúng/Sai)</option>
-              <option :value="4">Trạng thái văn bản</option>
-            </select>
+              :options="dataTypeOptions" 
+              :isMulti="false" 
+              label="Kiểu Dữ Liệu" 
+            />
             <p v-if="isEditing && editingUsedCount > 0" class="text-[11px] text-amber-700 bg-amber-50 p-2 rounded-lg border border-amber-200 mt-1.5 font-semibold flex items-center gap-1.5">
               <span>⚠️</span>
               <span>Đơn vị tính này đã được sử dụng bởi <strong>{{ editingUsedCount }}</strong> mục tiêu/nhiệm vụ. Không thể thay đổi kiểu dữ liệu.</span>
@@ -171,12 +169,22 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue';
+import SearchableSelect from './SearchableSelect.vue';
 import { toast } from 'vue3-toastify';
 import LoadingSpinner from './LoadingSpinner.vue';
 import { getApiUrl } from '../config/api';
 
 const units = ref([]);
 const isLoading = ref(true);
+
+const pageSizeOptions = ref([10, 25, 50, 100].map(n => ({ value: n, label: String(n) })));
+
+const dataTypeOptions = ref([
+  { value: 1, label: 'Số thập phân (%)' },
+  { value: 2, label: 'Số nguyên' },
+  { value: 3, label: 'Boolean (Đúng/Sai)' },
+  { value: 4, label: 'Trạng thái văn bản' }
+]);
 
 const searchDraft = ref('');
 const appliedSearch = ref('');

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +12,7 @@ namespace Cdsqg.Api.Controllers
 {
     [ApiController]
     [Route("api/agencies")]
+    [Route("api/agency")]
     public class AgencyController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -23,10 +25,11 @@ namespace Cdsqg.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetAllAgencies(
             [FromQuery] string? search = null,
+            [FromQuery] Guid? parentId = null,
             [FromQuery] int? pageNumber = null,
             [FromQuery] int? pageSize = null)
         {
-            var query = _context.Agencies.AsQueryable();
+            var query = _context.Agencies.Include(a => a.ParentAgency).AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(search))
             {
@@ -34,6 +37,11 @@ namespace Cdsqg.Api.Controllers
                 query = query.Where(a => 
                     a.Code.ToLower().Contains(s) || 
                     a.Name.ToLower().Contains(s));
+            }
+
+            if (parentId.HasValue && parentId.Value != Guid.Empty)
+            {
+                query = query.Where(a => a.ParentId == parentId.Value);
             }
 
             var leadCounts = await _context.GoalTaskItems
@@ -66,6 +74,8 @@ namespace Cdsqg.Api.Controllers
                     a.Code,
                     a.Name,
                     a.Type,
+                    a.ParentId,
+                    ParentName = a.ParentAgency?.Name,
                     a.IsActive,
                     a.CreatedAt,
                     usedCount = leadCounts.GetValueOrDefault(a.Id, 0) + urgeCounts.GetValueOrDefault(a.Id, 0)
@@ -88,6 +98,8 @@ namespace Cdsqg.Api.Controllers
                 a.Code,
                 a.Name,
                 a.Type,
+                a.ParentId,
+                ParentName = a.ParentAgency?.Name,
                 a.IsActive,
                 a.CreatedAt,
                 usedCount = leadCounts.GetValueOrDefault(a.Id, 0) + urgeCounts.GetValueOrDefault(a.Id, 0)
@@ -106,6 +118,7 @@ namespace Cdsqg.Api.Controllers
             }
 
             agency.Id = Guid.NewGuid();
+            if (agency.ParentId == Guid.Empty) agency.ParentId = null;
             agency.CreatedAt = DateTime.UtcNow;
             _context.Agencies.Add(agency);
             await _context.SaveChangesAsync();
@@ -119,7 +132,6 @@ namespace Cdsqg.Api.Controllers
             var existing = await _context.Agencies.FindAsync(id);
             if (existing == null) return NotFound(new { error = "Không tìm thấy Cơ quan." });
 
-            // Kiểm tra ràng buộc nếu có Mục tiêu/Nhiệm vụ/Đôn đốc đang sử dụng Cơ quan này và người dùng muốn đổi Mã Cơ quan
             if (!string.Equals(existing.Code, dto.Code, StringComparison.OrdinalIgnoreCase))
             {
                 int leadCount = await _context.GoalTaskItems.CountAsync(g => g.LeadAgencyId == id);
@@ -135,6 +147,7 @@ namespace Cdsqg.Api.Controllers
             existing.Code = dto.Code;
             existing.Name = dto.Name;
             existing.Type = dto.Type;
+            existing.ParentId = (dto.ParentId.HasValue && dto.ParentId.Value != Guid.Empty) ? dto.ParentId : null;
             existing.IsActive = dto.IsActive;
 
             await _context.SaveChangesAsync();
@@ -149,11 +162,12 @@ namespace Cdsqg.Api.Controllers
 
             int leadCount = await _context.GoalTaskItems.CountAsync(g => g.LeadAgencyId == id);
             int urgeCount = await _context.TaskUrgeLogs.CountAsync(u => u.LeadAgencyId == id);
-            int totalUsage = leadCount + urgeCount;
+            int childAgencyCount = await _context.Agencies.CountAsync(a => a.ParentId == id);
+            int totalUsage = leadCount + urgeCount + childAgencyCount;
 
             if (totalUsage > 0)
             {
-                return BadRequest(new { error = $"Không thể xóa cơ quan này vì đã có {totalUsage} mục tiêu / nhiệm vụ / đôn đốc đang sử dụng." });
+                return BadRequest(new { error = $"Không thể xóa cơ quan này vì đang được sử dụng hoặc có cơ quan trực thuộc liên quan." });
             }
 
             _context.Agencies.Remove(existing);

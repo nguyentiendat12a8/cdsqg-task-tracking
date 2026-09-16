@@ -1,6 +1,6 @@
 <template>
   <div v-if="isOpen" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-xl w-full p-6 space-y-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-3xl w-full p-6 sm:p-7 space-y-4">
       
       <div class="flex justify-between items-start border-b border-slate-100 pb-3">
         <div>
@@ -30,53 +30,49 @@
         </div>
 
         <div>
-          <label class="text-xs font-bold text-slate-700 uppercase">Tên Mục Tiêu / Nhiệm Vụ <span class="text-rose-500">*</span></label>
-          <textarea v-model="form.title" required rows="2" placeholder="Nhập tên chi tiết mục tiêu hoặc nhiệm vụ..." class="w-full text-xs font-semibold bg-slate-50 border border-slate-300 rounded-xl p-3 focus:bg-white focus:ring-2 focus:ring-blue-500"></textarea>
+          <label class="text-xs font-bold text-slate-700 uppercase">
+            {{ itemType === 'Goal' ? 'Tên Mục Tiêu' : 'Tên Nhiệm Vụ' }} <span class="text-rose-500">*</span>
+          </label>
+          <textarea 
+            v-model="form.title" 
+            required 
+            rows="2" 
+            :placeholder="itemType === 'Goal' ? 'Nhập tên chi tiết mục tiêu...' : 'Nhập tên chi tiết nhiệm vụ...'" 
+            class="w-full text-xs font-semibold bg-slate-50 border border-slate-300 rounded-xl p-3 focus:bg-white focus:ring-2 focus:ring-blue-500"
+          ></textarea>
         </div>
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="text-xs font-bold text-slate-700 uppercase">Đơn Vị Chủ Trì <span class="text-rose-500">*</span></label>
-            <select v-model="form.leadAgencyId" required class="w-full text-xs font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2">
-              <option value="" disabled>-- Chọn Đơn vị Chủ trì --</option>
-              <option v-for="agency in agencies" :key="agency.id" :value="agency.id">
-                {{ agency.code }} - {{ agency.name }}
-              </option>
-            </select>
+            <SearchableSelect 
+              v-model="form.leadAgencyId" 
+              :options="agencyOptions" 
+              :isMulti="false" 
+              label="Đơn Vị Chủ Trì" 
+              placeholder="-- Chọn Đơn vị Chủ trì --"
+            />
           </div>
 
           <div>
-            <label class="text-xs font-bold text-slate-700 uppercase">Đơn Vị Tính <span class="text-rose-500">*</span></label>
-            <select v-model="form.unitId" required @change="onUnitChanged" class="w-full text-xs font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2">
-              <option value="" disabled>-- Chọn Đơn vị tính --</option>
-              <option v-for="unit in units" :key="unit.id" :value="unit.id">
-                {{ unit.name }} ({{ formatUnitDataType(unit.dataType) }})
-              </option>
-            </select>
+            <SearchableSelect 
+              v-model="form.unitId" 
+              :options="unitOptions" 
+              :isMulti="false" 
+              label="Đơn Vị Tính" 
+              placeholder="-- Chọn Đơn vị tính --"
+              @change="onUnitChanged"
+            />
           </div>
         </div>
 
         <div>
-          <label class="text-xs font-bold text-slate-700 uppercase">Cơ Quan Phối Hợp (Chọn nhiều)</label>
-          <div class="relative mt-1">
-            <button 
-              type="button" 
-              @click="isCoordinatingDropdownOpen = !isCoordinatingDropdownOpen"
-              class="w-full text-left text-xs font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2.5 flex items-center justify-between focus:bg-white focus:ring-2 focus:ring-blue-500"
-            >
-              <span class="truncate">
-                {{ form.coordinatingAgencyIds.length > 0 ? `Đã chọn ${form.coordinatingAgencyIds.length} cơ quan phối hợp` : '-- Chọn các cơ quan phối hợp --' }}
-              </span>
-              <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
-            </button>
-
-            <div v-if="isCoordinatingDropdownOpen" class="absolute z-20 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl p-2.5 max-h-48 overflow-y-auto space-y-1">
-              <label v-for="agency in agencies" :key="agency.id" class="flex items-center gap-2 px-2 py-1.5 hover:bg-slate-50 rounded-lg text-xs font-semibold text-slate-700 cursor-pointer">
-                <input type="checkbox" :value="agency.id" v-model="form.coordinatingAgencyIds" class="rounded text-blue-600 focus:ring-blue-500" />
-                <span>{{ agency.code }} - {{ agency.name }}</span>
-              </label>
-            </div>
-          </div>
+          <SearchableSelect 
+            v-model="form.coordinatingAgencyIds" 
+            :options="agencyOptions" 
+            :isMulti="true" 
+            label="Cơ Quan Phối Hợp" 
+            placeholder="-- Chọn các cơ quan phối hợp --"
+          />
         </div>
 
         <div class="flex justify-end gap-3 border-t border-slate-100 pt-3">
@@ -92,7 +88,8 @@
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
+import SearchableSelect from './SearchableSelect.vue';
 import { getApiUrl } from '../config/api';
 
 const props = defineProps({
@@ -121,6 +118,14 @@ const units = ref([]);
 const isSubmitting = ref(false);
 const errorMessage = ref(null);
 const isCoordinatingDropdownOpen = ref(false);
+
+const agencyOptions = computed(() => {
+  return agencies.value.map(ag => ({ value: ag.id, label: `${ag.code} - ${ag.name}` }));
+});
+
+const unitOptions = computed(() => {
+  return units.value.map(u => ({ value: u.id, label: `${u.name} (${formatUnitDataType(u.dataType)})` }));
+});
 
 function formatUnitDataType(dataType) {
   if (dataType === 1 || dataType === 'Integer') return 'Định lượng số nguyên';

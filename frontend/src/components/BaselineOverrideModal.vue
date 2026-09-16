@@ -13,14 +13,17 @@
 
       <!-- Year Selector & Annual Target Display -->
       <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-amber-50/80 p-3.5 rounded-xl border border-amber-200/80">
-        <div class="flex items-center gap-2">
-          <label class="text-xs font-bold text-amber-950 uppercase shrink-0">Năm Cấu Hình:</label>
-          <select v-model="selectedYear" class="bg-white border border-amber-300 text-amber-900 font-bold text-xs rounded-lg px-3 py-1.5 focus:outline-none shadow-sm">
-            <option v-for="y in dynamicYears" :key="y" :value="y">Năm {{ y }}</option>
-          </select>
+        <div class="flex items-center gap-2 min-w-[220px]">
+          <SearchableSelect 
+            v-model="selectedYear" 
+            :options="yearOptions" 
+            :isMulti="false" 
+            label="NĂM CẤU HÌNH:" 
+            placeholder="Chọn năm"
+          />
         </div>
 
-        <div class="text-xs font-bold text-amber-900 bg-amber-100/90 px-3 py-1 rounded-lg border border-amber-200 shrink-0">
+        <div class="text-xs font-bold text-amber-900 bg-amber-100/90 px-3 py-1.5 rounded-xl border border-amber-200 shrink-0">
           Chỉ tiêu cả năm {{ selectedYear }}: 
           <span class="text-purple-900 font-black">{{ yearlyTargets[selectedYear] ?? 'Chưa đặt' }}</span>
           <span v-if="isQuant" class="text-[10px] text-slate-500 font-bold ml-1">({{ unitName || '%' }})</span>
@@ -86,16 +89,13 @@
 
             <!-- Qualitative Status Select -->
             <div v-else>
-              <select 
-                :value="getMilestoneVal(getQuarterKey(q)) || 'NotStarted'" 
-                @change="setMilestoneVal(getQuarterKey(q), $event.target.value)"
-                class="w-full text-xs font-bold bg-white border border-slate-300 rounded-lg px-2.5 py-2 focus:ring-2 focus:ring-amber-500"
-              >
-                <option value="NotStarted">Chưa thực hiện</option>
-                <option value="Drafting">Đang soạn thảo</option>
-                <option value="Reviewing">Đang xin ý kiến</option>
-                <option value="Completed">Hoàn thành</option>
-              </select>
+              <SearchableSelect 
+                :modelValue="getMilestoneVal(getQuarterKey(q)) || 'NotStarted'" 
+                @update:modelValue="val => setMilestoneVal(getQuarterKey(q), val)"
+                :options="qualitativeStatusOptions"
+                :isMulti="false"
+                placeholder="Chọn trạng thái"
+              />
             </div>
           </div>
         </div>
@@ -127,16 +127,13 @@
 
             <!-- Qualitative Status Select -->
             <div v-else>
-              <select 
-                :value="getMilestoneVal(getMonthKey(m)) || 'NotStarted'" 
-                @change="setMilestoneVal(getMonthKey(m), $event.target.value)"
-                class="w-full text-[11px] font-bold bg-white border border-slate-300 rounded-lg px-1.5 py-1 focus:ring-2 focus:ring-amber-500"
-              >
-                <option value="NotStarted">Chưa làm</option>
-                <option value="Drafting">Soạn thảo</option>
-                <option value="Reviewing">Xin ý kiến</option>
-                <option value="Completed">Hoàn thành</option>
-              </select>
+              <SearchableSelect 
+                :modelValue="getMilestoneVal(getMonthKey(m)) || 'NotStarted'" 
+                @update:modelValue="val => setMilestoneVal(getMonthKey(m), val)"
+                :options="qualitativeStatusOptions"
+                :isMulti="false"
+                placeholder="Chọn trạng thái"
+              />
             </div>
           </div>
         </div>
@@ -155,7 +152,7 @@
           class="px-5 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 disabled:opacity-50 rounded-xl shadow-sm transition flex items-center gap-1.5"
         >
           <span v-if="isSaving" class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-          {{ isSaving ? 'Đang lưu...' : 'Lưu Custom Baseline' }}
+          {{ isSaving ? 'Đang lưu...' : 'Lưu' }}
         </button>
       </div>
 
@@ -166,6 +163,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import { toast } from 'vue3-toastify';
+import SearchableSelect from './SearchableSelect.vue';
 import { getApiUrl } from '../config/api';
 
 const props = defineProps({
@@ -189,6 +187,20 @@ const activeViewTab = ref('quarterly'); // 'quarterly' | 'monthly'
 
 const milestones = ref({});
 const isSaving = ref(false);
+
+const yearOptions = computed(() => {
+  return (props.dynamicYears || [2026, 2027, 2028, 2029, 2030]).map(y => ({
+    value: y,
+    label: `Năm ${y}`
+  }));
+});
+
+const qualitativeStatusOptions = ref([
+  { value: 'NotStarted', label: 'Chưa thực hiện' },
+  { value: 'Drafting', label: 'Đang soạn thảo' },
+  { value: 'Reviewing', label: 'Đang xin ý kiến' },
+  { value: 'Completed', label: 'Hoàn thành' }
+]);
 
 const isQuant = computed(() => {
   return props.evaluationType === 'Quantitative' || props.evaluationType === 1 || props.evaluationType === '1';

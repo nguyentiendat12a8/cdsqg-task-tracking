@@ -6,8 +6,8 @@ using Cdsqg.Core.Enums;
 namespace Cdsqg.Core.Entities
 {
     /// <summary>
-    /// Module 2 & 3: Level 1A (Goals) & Level 1B (Tasks) linked to Level 0 Document
-    /// Includes PostgreSQL JSONB CustomBaseline column for flexible milestone overrides.
+    /// Module 2 & 3: Goals & Tasks under Decision 1266
+    /// Supports Sub-tasks hierarchy, General vs Specific scope, and Date ranges.
     /// </summary>
     public class GoalTaskItem
     {
@@ -21,9 +21,33 @@ namespace Cdsqg.Core.Entities
         /// </summary>
         public ItemTypeEnum ItemType { get; set; } = ItemTypeEnum.Task;
 
+        /// <summary>
+        /// ID Mục tiêu / Nhiệm vụ cha (Nếu là Nhiệm vụ con / Sub-task)
+        /// </summary>
+        public Guid? ParentId { get; set; }
+        public GoalTaskItem? ParentItem { get; set; }
+
         public string Code { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
         public string Category { get; set; } = string.Empty;
+        public string? Section { get; set; }
+        public string? Group { get; set; }
+        public bool IsOngoing { get; set; } = false;
+
+        /// <summary>
+        /// Phân loại phạm vi: true = Nhiệm vụ chung, false = Nhiệm vụ riêng (Mặc định = false)
+        /// </summary>
+        public bool IsGeneralTask { get; set; } = false;
+
+        /// <summary>
+        /// Ngày bắt đầu thực hiện
+        /// </summary>
+        public DateTime? StartDate { get; set; }
+
+        /// <summary>
+        /// Ngày hoàn thành / Hạn chót
+        /// </summary>
+        public DateTime? DueDate { get; set; }
 
         /// <summary>
         /// Đơn vị chủ trì
@@ -53,10 +77,7 @@ namespace Cdsqg.Core.Entities
         public CalculationMethodEnum CalculationMethod { get; set; } = CalculationMethodEnum.LatestValue;
 
         /// <summary>
-        /// BRD Module 3 CRUCIAL REQUIREMENT:
         /// Dynamic PostgreSQL JSONB column storing custom baseline milestone overrides.
-        /// Example payload: {"Q1_2026": 10.0, "Q2_2026": 40.0, "Q3_2026": 70.0, "Q4_2026": 100.0}
-        /// Prevents schema changes while enabling infinite milestone flexibility per quarter/month.
         /// </summary>
         public Dictionary<string, string> CustomBaseline { get; set; } = new Dictionary<string, string>();
 
@@ -79,7 +100,14 @@ namespace Cdsqg.Core.Entities
         [NotMapped]
         public DateTime? LastUpdated { get; set; }
 
+        /// <summary>
+        /// Computed 6-status execution evaluation enum
+        /// </summary>
+        [NotMapped]
+        public ExecutionStatusEnum CalculatedStatus { get; set; } = ExecutionStatusEnum.NotStarted;
+
         // Navigation Collections
+        public ICollection<GoalTaskItem> SubItems { get; set; } = new List<GoalTaskItem>();
         public ICollection<TargetBaseline> Baselines { get; set; } = new List<TargetBaseline>();
         public ICollection<ProgressLog> ProgressLogs { get; set; } = new List<ProgressLog>();
     }

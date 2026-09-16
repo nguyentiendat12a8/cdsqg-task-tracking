@@ -1,6 +1,6 @@
 <template>
   <div v-if="isOpen" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-2xl w-full p-6 space-y-4 font-sans max-h-[90vh] overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-3xl w-full p-6 sm:p-7 space-y-4 font-sans max-h-[90vh] overflow-y-auto">
       
       <!-- Modal Header -->
       <div class="flex justify-between items-start border-b border-slate-100 pb-3">
@@ -50,12 +50,12 @@
           </div>
 
           <div>
-            <label class="text-xs font-bold text-slate-700 uppercase">Thời Hạn Thực Hiện <span class="text-rose-500">*</span></label>
-            <select v-model="form.timeResolution" required class="w-full text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2">
-              <option value="Range">Giai đoạn nhiều năm (Ví dụ 2026-2030)</option>
-              <option value="SpecificYear">Theo năm cụ thể</option>
-              <option value="Continuous">Thường xuyên hàng năm</option>
-            </select>
+            <SearchableSelect 
+              v-model="form.timeResolution" 
+              :options="timeResolutionOptions" 
+              :isMulti="false" 
+              label="Thời Hạn Thực Hiện" 
+            />
           </div>
         </div>
 
@@ -118,9 +118,16 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue';
+import SearchableSelect from './SearchableSelect.vue';
 import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
 import { getApiUrl } from '../config/api';
+
+const timeResolutionOptions = ref([
+  { value: 'Range', label: 'Giai đoạn nhiều năm (Ví dụ 2026-2030)' },
+  { value: 'SpecificYear', label: 'Theo năm cụ thể' },
+  { value: 'Continuous', label: 'Thường xuyên hàng năm' }
+]);
 
 const props = defineProps({
   isOpen: { type: Boolean, default: false },

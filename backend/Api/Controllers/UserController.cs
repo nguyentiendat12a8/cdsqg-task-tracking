@@ -27,7 +27,7 @@ namespace Cdsqg.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetUsers(
             [FromQuery] string? search,
-            [FromQuery] UserRoleEnum? role,
+            [FromQuery] string? role,
             [FromQuery] Guid? agencyId,
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 10)
@@ -42,12 +42,15 @@ namespace Cdsqg.Api.Controllers
                                          u.Email.ToLower().Contains(q));
             }
 
-            if (role.HasValue)
+            if (!string.IsNullOrWhiteSpace(role) && role != "all")
             {
-                query = query.Where(u => u.Role == role.Value);
+                if (Enum.TryParse<UserRoleEnum>(role, true, out var parsedRole))
+                {
+                    query = query.Where(u => u.Role == parsedRole);
+                }
             }
 
-            if (agencyId.HasValue)
+            if (agencyId.HasValue && agencyId.Value != Guid.Empty)
             {
                 query = query.Where(u => u.AgencyId == agencyId.Value);
             }
@@ -89,13 +92,23 @@ namespace Cdsqg.Api.Controllers
         {
             if (string.IsNullOrWhiteSpace(dto.Username) || string.IsNullOrWhiteSpace(dto.Password))
             {
-                return BadRequest(new { message = "Username và Mật khẩu là bắt buộc." });
+                return BadRequest(new { message = "Tên đăng nhập và Mật khẩu là bắt buộc." });
             }
 
             var usernameClean = dto.Username.Trim().ToLower();
             if (await _db.Users.AnyAsync(u => u.Username.ToLower() == usernameClean))
             {
                 return BadRequest(new { message = $"Tên đăng nhập '{dto.Username}' đã tồn tại trong hệ thống." });
+            }
+
+            var userRole = UserRoleEnum.AgencyUser;
+            if (!string.IsNullOrWhiteSpace(dto.RoleString))
+            {
+                Enum.TryParse(dto.RoleString, true, out userRole);
+            }
+            else
+            {
+                userRole = dto.Role;
             }
 
             var user = new User
@@ -105,8 +118,8 @@ namespace Cdsqg.Api.Controllers
                 PasswordHash = _passwordHasher.HashPassword(dto.Password),
                 FullName = string.IsNullOrWhiteSpace(dto.FullName) ? dto.Username.Trim() : dto.FullName.Trim(),
                 Email = dto.Email?.Trim() ?? string.Empty,
-                Role = dto.Role,
-                AgencyId = dto.AgencyId,
+                Role = userRole,
+                AgencyId = (dto.AgencyId.HasValue && dto.AgencyId.Value != Guid.Empty) ? dto.AgencyId : null,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
             };
@@ -114,7 +127,7 @@ namespace Cdsqg.Api.Controllers
             _db.Users.Add(user);
             await _db.SaveChangesAsync();
 
-            var agency = dto.AgencyId.HasValue ? await _db.Agencies.FindAsync(dto.AgencyId.Value) : null;
+            var agency = user.AgencyId.HasValue ? await _db.Agencies.FindAsync(user.AgencyId.Value) : null;
 
             return CreatedAtAction(nameof(GetUsers), new { id = user.Id }, new UserDto
             {
@@ -141,15 +154,25 @@ namespace Cdsqg.Api.Controllers
                 return NotFound(new { message = "Không tìm thấy người dùng." });
             }
 
+            var userRole = user.Role;
+            if (!string.IsNullOrWhiteSpace(dto.RoleString))
+            {
+                Enum.TryParse(dto.RoleString, true, out userRole);
+            }
+            else
+            {
+                userRole = dto.Role;
+            }
+
             user.FullName = string.IsNullOrWhiteSpace(dto.FullName) ? user.FullName : dto.FullName.Trim();
             user.Email = dto.Email?.Trim() ?? user.Email;
-            user.Role = dto.Role;
-            user.AgencyId = dto.AgencyId;
+            user.Role = userRole;
+            user.AgencyId = (dto.AgencyId.HasValue && dto.AgencyId.Value != Guid.Empty) ? dto.AgencyId : null;
             user.IsActive = dto.IsActive;
 
             await _db.SaveChangesAsync();
 
-            var agency = dto.AgencyId.HasValue ? await _db.Agencies.FindAsync(dto.AgencyId.Value) : null;
+            var agency = user.AgencyId.HasValue ? await _db.Agencies.FindAsync(user.AgencyId.Value) : null;
 
             return Ok(new UserDto
             {
@@ -196,7 +219,6 @@ namespace Cdsqg.Api.Controllers
                 return NotFound(new { message = "Không tìm thấy người dùng." });
             }
 
-            // Prevent deleting default admin account
             if (user.Username.ToLower() == "admin")
             {
                 return BadRequest(new { message = "Không thể xóa tài khoản Admin hệ thống mặc định." });
