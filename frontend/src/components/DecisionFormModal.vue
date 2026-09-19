@@ -45,8 +45,8 @@
 
         <div class="grid grid-cols-2 gap-4">
           <div>
-            <label class="text-xs font-bold text-slate-700 uppercase">Ngày Ban Hành <span class="text-rose-500">*</span></label>
-            <input type="date" v-model="form.issueDate" required class="w-full text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2" />
+            <label class="text-xs font-bold text-slate-700 uppercase block mb-1">Ngày Ban Hành <span class="text-rose-500">*</span></label>
+            <DatePicker v-model="form.issueDate" placeholder="dd/mm/yyyy" :required="true" />
           </div>
 
           <div>
@@ -120,6 +120,7 @@
 <script setup>
 import { ref, computed, watch } from 'vue';
 import SearchableSelect from './SearchableSelect.vue';
+import DatePicker from './DatePicker.vue';
 import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
 import { getApiUrl } from '../config/api';

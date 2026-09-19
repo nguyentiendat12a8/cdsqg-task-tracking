@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Microsoft.AspNetCore.Http;
+using Cdsqg.Core.Entities;
 using Cdsqg.Core.Enums;
 
 namespace Cdsqg.Application.DTOs
@@ -34,6 +35,7 @@ namespace Cdsqg.Application.DTOs
         public TextStatusEnum? QualitativeStatus { get => Status; set => Status = value; }
         
         public string? SummaryNotes { get; set; } = string.Empty;
+        public List<TaskDeliverable>? Deliverables { get; set; }
         public IFormFile? EvidenceFile { get; set; }
         public List<IFormFile>? EvidenceFiles { get; set; }
         public List<string>? ExistingFiles { get; set; }

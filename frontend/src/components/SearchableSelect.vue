@@ -1,7 +1,7 @@
 <template>
   <div class="relative w-full text-left font-sans" ref="container">
     <label v-if="label" :class="labelClass || 'text-xs font-bold text-slate-700 uppercase block mb-1'">
-      {{ label }}
+      {{ label }} <span v-if="required" class="text-rose-500 ml-0.5">*</span>
     </label>
     
     <!-- Select Box Trigger -->
@@ -9,11 +9,12 @@
       ref="triggerRef"
       @click="toggleDropdown"
       :class="[
-        'w-full bg-white border rounded-xl px-2.5 py-1.5 text-xs font-semibold text-slate-800 flex items-center justify-between cursor-pointer transition shadow-2xs min-h-[34px]',
-        isOpen ? 'border-blue-500 ring-2 ring-blue-500/20' : 'border-slate-200 hover:border-slate-300'
+        'w-full border rounded-xl px-2.5 py-1 text-xs font-semibold flex items-center justify-between transition shadow-2xs h-[34px] min-h-[34px] max-h-[34px] overflow-hidden',
+        disabled ? 'bg-slate-100 border-slate-200 text-slate-500 cursor-not-allowed opacity-75' : 'bg-white text-slate-800 cursor-pointer',
+        isOpen ? 'border-blue-500 ring-2 ring-blue-500/20' : (disabled ? '' : 'border-slate-200 hover:border-slate-300')
       ]"
     >
-      <div class="flex flex-wrap gap-1 items-center overflow-hidden flex-1 max-w-full">
+      <div class="flex flex-nowrap gap-1 items-center overflow-hidden flex-1 min-w-0 max-w-full">
         <!-- Empty / All state -->
         <span v-if="selectedList.length === 0" class="text-slate-500 font-semibold truncate">
           {{ placeholder || 'Tất cả' }}
@@ -35,7 +36,7 @@
             <span 
               v-for="item in displaySelectedItems" 
               :key="item.value"
-              class="bg-blue-50 text-blue-700 border border-blue-200/80 text-[11px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-1 shrink-0 max-w-[280px]"
+              class="bg-blue-50 text-blue-700 border border-blue-200/80 text-[11px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-1 shrink min-w-0 max-w-[140px] truncate"
               :title="item.label"
             >
               <span class="truncate">{{ item.label }}</span>
@@ -43,7 +44,7 @@
                 v-if="clearable"
                 type="button"
                 @click.stop="removeItem(item)"
-                class="hover:text-blue-950 text-slate-400 hover:text-rose-600 font-black text-xs leading-none"
+                class="hover:text-blue-950 text-slate-400 hover:text-rose-600 font-black text-xs leading-none shrink-0"
                 title="Xóa chọn"
               >
                 ×
@@ -83,13 +84,14 @@
         v-if="isOpen" 
         ref="dropdownPanelRef"
         :style="dropdownStyle"
-        class="fixed bg-white border border-slate-200 rounded-2xl shadow-2xl z-[9999] p-2 space-y-2 max-w-full animate-in fade-in zoom-in-95 duration-100 font-sans text-left"
+        class="fixed bg-white border border-slate-200 rounded-2xl shadow-2xl z-[9999999] p-2 space-y-2 max-w-full animate-in fade-in zoom-in-95 duration-100 font-sans text-left"
       >
         <!-- Quick Search input inside control -->
         <div class="relative">
           <input 
             ref="searchInputRef"
-            v-model="searchQuery"
+            :value="searchQuery"
+            @input="searchQuery = $event.target.value"
             type="text" 
             placeholder="Tìm nhanh..."
             class="w-full bg-slate-100 border-0 rounded-xl pl-8 pr-7 py-1.5 text-xs font-semibold text-slate-800 focus:ring-2 focus:ring-blue-500 focus:bg-white transition"
@@ -167,6 +169,8 @@ const props = defineProps({
   placeholder: { type: String, default: '' },
   isMulti: { type: Boolean, default: true },
   clearable: { type: Boolean, default: true },
+  required: { type: Boolean, default: false },
+  disabled: { type: Boolean, default: false },
   maxDisplayTags: { type: Number, default: 1 }
 });
 
@@ -230,6 +234,7 @@ function updateDropdownPosition() {
     top: `${top}px`,
     left: `${left}px`,
     width: `${minWidth}px`,
+    zIndex: 9999999
   };
 }
 
@@ -239,6 +244,7 @@ function removeScrollListeners() {
 }
 
 function toggleDropdown() {
+  if (props.disabled) return;
   isOpen.value = !isOpen.value;
   if (isOpen.value) {
     updateDropdownPosition();

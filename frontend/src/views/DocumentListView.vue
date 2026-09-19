@@ -69,20 +69,12 @@
           <div class="relative w-full">
             <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             <input 
-              v-model="searchInput" 
-              @keyup.enter="execSearch"
+              :value="searchInput" 
+              @input="searchInput = $event.target.value"
               placeholder="Tìm kiếm theo số hiệu văn bản, trích yếu quyết định..." 
               class="w-full text-xs font-semibold pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-2xs"
             />
           </div>
-
-          <button 
-            @click="execSearch" 
-            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5 shrink-0"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            <span>Tìm Kiếm</span>
-          </button>
 
           <button 
             @click="resetSearch" 
@@ -242,12 +234,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import DecisionFormModal from '../components/DecisionFormModal.vue';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
 import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
 import { getApiUrl } from '../config/api';
+import { confirmModal } from '../services/confirm';
 
 const emit = defineEmits(['selectDocument', 'openLlmImport']);
 
@@ -294,14 +287,28 @@ function saveState() {
   }
 }
 
+let docFetchRequestId = 0;
+let docSearchDebounceTimer = null;
+
 function execSearch() {
+  if (docSearchDebounceTimer) clearTimeout(docSearchDebounceTimer);
+  docFetchRequestId++;
   searchQuery.value = searchInput.value;
   pageNumber.value = 1;
   saveState();
   fetchDocuments();
 }
 
+watch(searchInput, () => {
+  if (docSearchDebounceTimer) clearTimeout(docSearchDebounceTimer);
+  docSearchDebounceTimer = setTimeout(() => {
+    execSearch();
+  }, 300);
+});
+
 function resetSearch() {
+  if (docSearchDebounceTimer) clearTimeout(docSearchDebounceTimer);
+  docFetchRequestId++;
   searchInput.value = '';
   searchQuery.value = '';
   pageNumber.value = 1;
@@ -341,6 +348,7 @@ function formatDate(dateStr) {
 }
 
 async function fetchDocuments() {
+  const currentRequestId = ++docFetchRequestId;
   isLoading.value = true;
   try {
     const url = new URL(getApiUrl('/api/documents'));
@@ -353,6 +361,7 @@ async function fetchDocuments() {
     const res = await fetch(url);
     if (res.ok) {
       const data = await res.json();
+      if (currentRequestId !== docFetchRequestId) return; // switchMap: ignore stale response
       if (data.items) {
         documents.value = data.items;
         totalCount.value = data.totalCount || data.items.length;
@@ -366,9 +375,12 @@ async function fetchDocuments() {
       }
     }
   } catch (e) {
+    if (currentRequestId !== docFetchRequestId) return;
     console.error('Failed to load documents:', e);
   } finally {
-    isLoading.value = false;
+    if (currentRequestId === docFetchRequestId) {
+      isLoading.value = false;
+    }
   }
 }
 
@@ -377,7 +389,16 @@ function onDocumentCreated(newDoc) {
 }
 
 async function deleteDoc(doc) {
-  if (!confirm(`Bạn có chắc chắn muốn xóa văn bản ${doc.documentNumber}? Tất cả mục tiêu và nhiệm vụ liên quan sẽ bị xóa.`)) return;
+  const confirmed = await confirmModal({
+    title: 'Xóa văn bản / Quyết định',
+    message: `Bạn có chắc chắn muốn xóa văn bản ${doc.documentNumber}? Tất cả mục tiêu và nhiệm vụ liên quan thuộc văn bản này cũng sẽ bị xóa. Thao tác này không thể hoàn tác.`,
+    confirmText: 'Xóa văn bản',
+    cancelText: 'Hủy bỏ',
+    type: 'danger'
+  });
+
+  if (!confirmed) return;
+
   try {
     const res = await fetch(getApiUrl(`/api/documents/${doc.id}`), { method: 'DELETE' });
     if (res.ok) {

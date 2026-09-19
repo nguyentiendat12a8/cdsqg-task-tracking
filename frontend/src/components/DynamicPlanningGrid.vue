@@ -9,113 +9,114 @@
       </div>
     </transition>
 
-    <!-- ADVANCED FILTER BAR WITH SEARCH BUTTON & LOCALSTORAGE PERSISTENCE -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-2 bg-slate-50 p-3 rounded-2xl border border-slate-200 w-full items-end">
-      <!-- Search Query -->
-      <div>
-        <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1">Từ Khóa</label>
-        <div class="relative">
-          <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+    <!-- ADVANCED FILTER BAR WITH OVERLAY PANEL -->
+    <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-50/60 p-3 w-full rounded-2xl border border-slate-200/80">
+      <div class="flex items-center gap-2 flex-1 max-w-xl">
+        <!-- Quick Search Input -->
+        <div class="relative flex-1">
+          <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
           <input 
-            v-model="filterDraft.searchQuery" 
-            @keyup.enter="execGridFilterSearch"
-            placeholder="Mã, tên..." 
-            class="w-full text-xs font-semibold pl-8 pr-2.5 py-1.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none min-h-[34px]"
+            :value="filterDraft.searchQuery" 
+            @input="filterDraft.searchQuery = $event.target.value"
+            placeholder="Tìm theo mã, tên chỉ tiêu kế hoạch..." 
+            class="w-full text-xs font-semibold pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none h-[34px]"
           />
         </div>
-      </div>
 
-      <!-- Agency Filter -->
-      <div>
-        <SearchableSelect 
-          v-model="filterDraft.selectedAgencyIds" 
-          :options="agencyOptions" 
-          :isMulti="true" 
-          label="Cơ Quan Chủ Trì" 
-          placeholder="Tất cả cơ quan"
-        />
-      </div>
-
-      <!-- Section Filter -->
-      <div v-if="filterItemType === 'Goal' || (!filterItemType && activeSubTab === 'goals')">
-        <SearchableSelect 
-          v-model="filterDraft.selectedSections" 
-          :options="sectionFilterOptions" 
-          :isMulti="true" 
-          label="Mục (Phụ lục)" 
-          placeholder="Tất cả mục"
-        />
-      </div>
-
-      <!-- Group Filter -->
-      <div>
-        <SearchableSelect 
-          v-model="filterDraft.selectedGroups" 
-          :options="groupFilterOptions" 
-          :isMulti="true" 
-          label="Nhóm Trọng Tâm" 
-          placeholder="Tất cả nhóm"
-        />
-      </div>
-
-      <!-- Year Range Filter -->
-      <div>
-        <div class="flex items-center justify-between mb-1">
-          <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block">Giai Đoạn</label>
-          <label class="inline-flex items-center gap-1 cursor-pointer text-[10px] font-extrabold text-blue-700">
-            <input type="checkbox" v-model="filterDraft.onlyOngoing" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3 h-3">
-            Thường xuyên
-          </label>
-        </div>
-        <div class="flex items-center gap-1">
-          <SearchableSelect 
-            v-model="filterDraft.fromYear" 
-            :options="yearRangeOptions" 
-            :isMulti="false" 
-            placeholder="Từ năm" 
-            class="w-full"
-          />
-          <span class="text-xs font-bold text-slate-400">➔</span>
-          <SearchableSelect 
-            v-model="filterDraft.toYear" 
-            :options="yearRangeOptions" 
-            :isMulti="false" 
-            placeholder="Đến năm" 
-            class="w-full"
-          />
-        </div>
-      </div>
-
-      <!-- Progress/Alert Status Filter -->
-      <div>
-        <SearchableSelect 
-          v-model="filterDraft.selectedStatuses" 
-          :options="gridStatusOptions" 
-          :isMulti="true" 
-          label="Trạng Thái Tiến Độ" 
-          placeholder="Tất cả trạng thái"
-        />
-      </div>
-
-      <!-- Filter Action Buttons -->
-      <div class="flex items-center gap-1.5 col-span-1 xl:col-start-7 ml-auto w-full justify-end">
-        <button 
-          type="button" 
-          @click="execGridFilterSearch" 
-          class="w-full sm:w-auto px-5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-1 min-h-[34px] cursor-pointer whitespace-nowrap"
+        <!-- OverlayPanel Advanced Filter Popover -->
+        <OverlayPanel 
+          title="Bộ Lọc Ma Trận Kế Hoạch Nâng Cao"
+          buttonText="Lọc Nâng Cao"
+          :activeCount="activeFilterCount"
+          widthClass="w-[340px] sm:w-[500px]"
+          @apply="execGridFilterSearch"
+          @reset="resetGridFilterSearch"
         >
-          <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-          <span>Tìm Kiếm</span>
-        </button>
+          <div class="space-y-3">
+            <!-- Agency Filter -->
+            <div>
+              <SearchableSelect 
+                v-model="filterDraft.selectedAgencyIds" 
+                :options="agencyOptions" 
+                :isMulti="true" 
+                label="Cơ Quan Chủ Trì" 
+                placeholder="Tất cả cơ quan"
+              />
+            </div>
 
-        <button 
-          type="button" 
-          @click="resetGridFilterSearch" 
-          class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition shrink-0 min-h-[34px] cursor-pointer"
-          title="Đặt lại bộ lọc"
-        >
-          ↺
-        </button>
+            <!-- Scope Filter -->
+            <div>
+              <SearchableSelect 
+                v-model="filterDraft.selectedScopes" 
+                :options="gridScopeOptions" 
+                :isMulti="true" 
+                label="Phạm Vi (Chung - Riêng)" 
+                placeholder="Tất cả phạm vi"
+              />
+            </div>
+
+            <!-- Section Filter -->
+            <div v-if="filterItemType === 'Goal' || (!filterItemType && activeSubTab === 'goals')">
+              <SearchableSelect 
+                v-model="filterDraft.selectedSections" 
+                :options="sectionFilterOptions" 
+                :isMulti="true" 
+                label="Mục (Phụ lục)" 
+                placeholder="Tất cả mục"
+              />
+            </div>
+
+            <!-- Group Filter -->
+            <div>
+              <SearchableSelect 
+                v-model="filterDraft.selectedGroups" 
+                :options="groupFilterOptions" 
+                :isMulti="true" 
+                label="Nhóm Trọng Tâm" 
+                placeholder="Tất cả nhóm"
+              />
+            </div>
+
+            <!-- Year Range Filter -->
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block">Giai Đoạn</label>
+                <label class="inline-flex items-center gap-1 cursor-pointer text-[10px] font-extrabold text-blue-700">
+                  <input type="checkbox" v-model="filterDraft.onlyOngoing" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3 h-3">
+                  Thường xuyên
+                </label>
+              </div>
+              <div class="flex items-center gap-1">
+                <SearchableSelect 
+                  v-model="filterDraft.fromYear" 
+                  :options="yearRangeOptions" 
+                  :isMulti="false" 
+                  placeholder="Từ năm" 
+                  class="w-full"
+                />
+                <span class="text-xs font-bold text-slate-400">➔</span>
+                <SearchableSelect 
+                  v-model="filterDraft.toYear" 
+                  :options="yearRangeOptions" 
+                  :isMulti="false" 
+                  placeholder="Đến năm" 
+                  class="w-full"
+                />
+              </div>
+            </div>
+
+            <!-- Progress/Alert Status Filter -->
+            <div>
+              <SearchableSelect 
+                v-model="filterDraft.selectedStatuses" 
+                :options="gridStatusOptions" 
+                :isMulti="true" 
+                label="Trạng Thái Tiến Độ" 
+                placeholder="Tất cả trạng thái"
+              />
+            </div>
+          </div>
+        </OverlayPanel>
       </div>
     </div>
 
@@ -160,29 +161,25 @@
 
                 <td class="px-4 py-3 border-r border-slate-200 sticky left-[75px] z-20 bg-white group-hover:bg-[#FAF5FF] shadow-[1px_0_0_0_#e2e8f0] min-w-[280px] w-[280px] max-w-[280px]">
                   <VTooltip 
-                    v-if="item.title && item.title.length > 40"
                     theme="custom-dark"
                     placement="top"
-                    :delay="{ show: 1000, hide: 0 }"
+                    :delay="{ show: 1500, hide: 0 }"
                   >
-                    <div class="line-clamp-4 font-semibold text-slate-800 text-xs leading-relaxed cursor-help">
+                    <div class="line-clamp-5 font-semibold text-slate-800 text-xs leading-relaxed cursor-help">
                       {{ item.title }}
                     </div>
 
                     <template #popper>
-                      <div class="whitespace-normal break-words text-left leading-relaxed min-w-[280px] max-w-[400px]">
+                      <div class="whitespace-normal break-words text-left leading-relaxed min-w-[280px] max-w-[450px] p-1">
                         <span class="font-extrabold text-purple-300 block mb-1 text-[11px] uppercase tracking-wider">🎯 Chi Tiết Mục Tiêu</span>
                         {{ item.title }}
                       </div>
                     </template>
                   </VTooltip>
-                  <div v-else class="line-clamp-4 font-semibold text-slate-800 text-xs leading-relaxed">
-                    {{ item.title }}
-                  </div>
                 </td>
 
                 <td class="px-4 py-3 border-r border-slate-200 font-bold text-slate-700 min-w-[130px] w-[130px] max-w-[130px] sticky left-[355px] z-20 bg-white group-hover:bg-[#FAF5FF] shadow-[3px_0_6px_-1px_rgba(0,0,0,0.15)]">
-                  {{ item.leadAgencyCode || 'N/A' }}
+                  {{ item.leadAgencyName || item.leadAgencyCode || 'N/A' }}
                 </td>
 
                 <!-- SCROLLABLE CELLS -->
@@ -252,29 +249,25 @@
 
                 <td class="px-4 py-3 border-r border-slate-200 sticky left-[75px] z-20 bg-white group-hover:bg-[#EFF6FF] shadow-[1px_0_0_0_#e2e8f0] min-w-[280px] w-[280px] max-w-[280px]">
                   <VTooltip 
-                    v-if="item.title && item.title.length > 40"
                     theme="custom-dark"
                     placement="top"
-                    :delay="{ show: 1000, hide: 0 }"
+                    :delay="{ show: 1500, hide: 0 }"
                   >
-                    <div class="line-clamp-4 font-semibold text-slate-800 text-xs leading-relaxed cursor-help">
+                    <div class="line-clamp-5 font-semibold text-slate-800 text-xs leading-relaxed cursor-help">
                       {{ item.title }}
                     </div>
 
                     <template #popper>
-                      <div class="whitespace-normal break-words text-left leading-relaxed min-w-[280px] max-w-[400px]">
+                      <div class="whitespace-normal break-words text-left leading-relaxed min-w-[280px] max-w-[450px] p-1">
                         <span class="font-extrabold text-blue-300 block mb-1 text-[11px] uppercase tracking-wider">📋 Chi Tiết Nhiệm Vụ</span>
                         {{ item.title }}
                       </div>
                     </template>
                   </VTooltip>
-                  <div v-else class="line-clamp-4 font-semibold text-slate-800 text-xs leading-relaxed">
-                    {{ item.title }}
-                  </div>
                 </td>
 
                 <td class="px-4 py-3 border-r border-slate-200 font-bold text-slate-700 min-w-[130px] w-[130px] max-w-[130px] sticky left-[355px] z-20 bg-white group-hover:bg-[#EFF6FF] shadow-[3px_0_6px_-1px_rgba(0,0,0,0.15)]">
-                  {{ item.leadAgencyCode || 'N/A' }}
+                  {{ item.leadAgencyName || item.leadAgencyCode || 'N/A' }}
                 </td>
 
                 <!-- SCROLLABLE CELLS -->
@@ -392,6 +385,7 @@ import { ref, computed, watch, onMounted } from 'vue';
 import BaselineOverrideModal from './BaselineOverrideModal.vue';
 import LoadingSpinner from './LoadingSpinner.vue';
 import SearchableSelect from './SearchableSelect.vue';
+import OverlayPanel from './OverlayPanel.vue';
 import { getApiUrl } from '../config/api';
 import { GOAL_SECTIONS, GOAL_GROUPS, TASK_SECTIONS, TASK_GROUPS } from '../config/planningStructureConfig';
 
@@ -409,7 +403,7 @@ const toastMessage = ref('');
 let toastTimeout = null;
 
 const agencyOptions = computed(() => {
-  return agencies.value.map(ag => ({ value: ag.id, label: `${ag.code} - ${ag.name}` }));
+  return agencies.value.map(ag => ({ value: ag.id, label: ag.name }));
 });
 
 const sectionFilterOptions = computed(() => {
@@ -460,6 +454,7 @@ const STORAGE_KEY = computed(() => `cdsqg_grid_filters_${props.documentId}`);
 const filterDraft = ref({
   searchQuery: '',
   selectedAgencyIds: [],
+  selectedScopes: [],
   selectedStatuses: [],
   selectedYears: [],
   selectedSections: [],
@@ -472,6 +467,7 @@ const filterDraft = ref({
 const appliedFilters = ref({
   searchQuery: '',
   selectedAgencyIds: [],
+  selectedScopes: [],
   selectedStatuses: [],
   selectedYears: [],
   selectedSections: [],
@@ -479,6 +475,22 @@ const appliedFilters = ref({
   fromYear: null,
   toYear: null,
   onlyOngoing: false
+});
+
+const gridScopeOptions = computed(() => [
+  { value: 'general', label: 'Phạm vi Chung (Tất cả đơn vị)' },
+  { value: 'specific', label: 'Phạm vi Riêng (Đơn vị cụ thể)' }
+]);
+
+const activeFilterCount = computed(() => {
+  let count = 0;
+  if (filterDraft.value.selectedAgencyIds?.length) count++;
+  if (filterDraft.value.selectedScopes?.length) count++;
+  if (filterDraft.value.selectedSections?.length) count++;
+  if (filterDraft.value.selectedGroups?.length) count++;
+  if (filterDraft.value.fromYear || filterDraft.value.toYear || filterDraft.value.onlyOngoing) count++;
+  if (filterDraft.value.selectedStatuses?.length) count++;
+  return count;
 });
 
 // Pagination States
@@ -498,7 +510,12 @@ function loadSavedFilters() {
   }
 }
 
+let gridSearchTimer = null;
+let gridSearchRequestId = 0;
+
 function execGridFilterSearch() {
+  if (gridSearchTimer) clearTimeout(gridSearchTimer);
+  gridSearchRequestId++;
   appliedFilters.value = { ...filterDraft.value };
   gridCurrentPage.value = 1;
   try {
@@ -508,10 +525,23 @@ function execGridFilterSearch() {
   }
 }
 
+watch(() => filterDraft.value.searchQuery, (newVal) => {
+  if (gridSearchTimer) clearTimeout(gridSearchTimer);
+  const currentId = ++gridSearchRequestId;
+  gridSearchTimer = setTimeout(() => {
+    if (currentId !== gridSearchRequestId) return;
+    appliedFilters.value.searchQuery = newVal || '';
+    gridCurrentPage.value = 1;
+  }, 300);
+});
+
 function resetGridFilterSearch() {
+  if (gridSearchTimer) clearTimeout(gridSearchTimer);
+  gridSearchRequestId++;
   filterDraft.value = {
     searchQuery: '',
     selectedAgencyIds: [],
+    selectedScopes: [],
     selectedStatuses: [],
     selectedYears: [],
     selectedSections: [],
@@ -564,9 +594,9 @@ const tasksList = computed(() => {
 });
 
 function filterGridItem(item) {
-  // 1. Search Query Filter
-  if (appliedFilters.value.searchQuery && appliedFilters.value.searchQuery.trim()) {
-    const q = appliedFilters.value.searchQuery.toLowerCase().trim();
+  // 1. Search Query Filter - Real-time debounced matching
+  const q = (appliedFilters.value.searchQuery || '').toLowerCase().trim();
+  if (q) {
     const matchQ = (item.code && item.code.toLowerCase().includes(q)) ||
                    (item.title && item.title.toLowerCase().includes(q)) ||
                    (item.leadAgencyCode && item.leadAgencyCode.toLowerCase().includes(q)) ||
@@ -584,6 +614,14 @@ function filterGridItem(item) {
       item.leadAgencyName === ag.name
     );
     if (!matchAg) return false;
+  }
+
+  // 2.5 Scope Filter (Multi-select)
+  if (appliedFilters.value.selectedScopes && appliedFilters.value.selectedScopes.length > 0) {
+    const isGeneral = item.isGeneralTask || item.leadAgencyCode === 'ALL_AGENCIES' || item.leadAgencyId === '00000000-0000-0000-0000-000000009999';
+    const matchGen = appliedFilters.value.selectedScopes.includes('general') && isGeneral;
+    const matchSpec = appliedFilters.value.selectedScopes.includes('specific') && !isGeneral;
+    if (!matchGen && !matchSpec) return false;
   }
 
   // 3. Section Filter (Multi-select)
@@ -677,6 +715,9 @@ const gridPageStart = computed(() => totalGridItems.value === 0 ? 0 : (gridCurre
 const gridPageEnd = computed(() => Math.min(gridCurrentPage.value * gridPageSize.value, totalGridItems.value));
 
 function isQuantitative(item) {
+  if (item.itemType === 'Task' || item.itemType === 2 || item.itemType === '2') {
+    return false;
+  }
   return item.evaluationType === 'Quantitative' || item.evaluationType === 1 || item.evaluationType === '1';
 }
 

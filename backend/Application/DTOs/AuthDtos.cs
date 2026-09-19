@@ -23,6 +23,7 @@ namespace Cdsqg.Application.DTOs
         public string? AgencyName { get; set; }
 
         public bool IsActive { get; set; }
+        public bool HasDataOperations { get; set; }
         public DateTime CreatedAt { get; set; }
         public DateTime? LastLoginAt { get; set; }
     }

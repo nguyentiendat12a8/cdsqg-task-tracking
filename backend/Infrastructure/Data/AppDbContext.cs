@@ -67,6 +67,14 @@ namespace Cdsqg.Infrastructure.Data
                 entity.Property(e => e.Name).IsRequired().HasMaxLength(250);
                 entity.Property(e => e.Type).HasConversion<string>();
 
+                entity.Property(e => e.ContactPersons)
+                      .HasConversion(
+                          v => JsonSerializer.Serialize(v ?? new List<AgencyContactPerson>(), (JsonSerializerOptions?)null),
+                          v => string.IsNullOrWhiteSpace(v)
+                              ? new List<AgencyContactPerson>()
+                              : JsonSerializer.Deserialize<List<AgencyContactPerson>>(v, (JsonSerializerOptions?)null) ?? new List<AgencyContactPerson>()
+                      );
+
                 entity.HasOne(e => e.ParentAgency)
                       .WithMany(a => a.ChildAgencies)
                       .HasForeignKey(e => e.ParentId)
@@ -144,6 +152,13 @@ namespace Cdsqg.Infrastructure.Data
                       .HasConversion(
                           v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
                           v => JsonSerializer.Deserialize<Dictionary<string, object>>(v, (JsonSerializerOptions?)null) ?? new Dictionary<string, object>()
+                      );
+
+                entity.Property(e => e.Deliverables)
+                      .HasColumnType("jsonb")
+                      .HasConversion(
+                          v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                          v => JsonSerializer.Deserialize<List<TaskDeliverable>>(v, (JsonSerializerOptions?)null) ?? new List<TaskDeliverable>()
                       );
             });
 

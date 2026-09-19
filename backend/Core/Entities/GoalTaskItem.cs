@@ -82,6 +82,11 @@ namespace Cdsqg.Core.Entities
         public Dictionary<string, string> CustomBaseline { get; set; } = new Dictionary<string, string>();
 
         /// <summary>
+        /// Multi-Deliverables Checklist stored in PostgreSQL JSONB
+        /// </summary>
+        public List<TaskDeliverable> Deliverables { get; set; } = new List<TaskDeliverable>();
+
+        /// <summary>
         /// Advanced dynamic KPI metadata stored in PostgreSQL JSONB
         /// </summary>
         public Dictionary<string, object> DynamicKPIs { get; set; } = new Dictionary<string, object>();
@@ -110,5 +115,17 @@ namespace Cdsqg.Core.Entities
         public ICollection<GoalTaskItem> SubItems { get; set; } = new List<GoalTaskItem>();
         public ICollection<TargetBaseline> Baselines { get; set; } = new List<TargetBaseline>();
         public ICollection<ProgressLog> ProgressLogs { get; set; } = new List<ProgressLog>();
+    }
+
+    public class TaskDeliverable
+    {
+        public string Id { get; set; } = Guid.NewGuid().ToString("N");
+        public string Title { get; set; } = string.Empty;
+        public DateTime? DueDate { get; set; }
+        public string CurrentStatus { get; set; } = "NotStarted"; // NotStarted, Drafting, Reviewing, Submitted, Completed
+        public string? DocumentNumber { get; set; }
+        public DateTime? PromulgationDate { get; set; }
+        public string? AttachmentUrl { get; set; }
+        public string? AttachmentName { get; set; }
     }
 }

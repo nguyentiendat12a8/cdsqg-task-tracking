@@ -61,9 +61,6 @@
               label="Đơn Vị Phối Hợp Nhận Thông Báo" 
               placeholder="-- Chọn các đơn vị phối hợp --"
             />
-            <p class="text-[11px] text-slate-500 italic mt-1">
-              💡 Bạn có thể chọn nhiều đơn vị phối hợp để gửi thông báo đồng thời.
-            </p>
           </div>
         </div>
 
@@ -73,42 +70,21 @@
             2. Nội Dung Thông Báo
           </label>
 
-          <!-- Notification Type & Title -->
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div>
-              <SearchableSelect 
-                v-model="form.type" 
-                :options="typeOptions" 
-                :isMulti="false" 
-                label="Loại Thông Báo" 
-                placeholder="-- Chọn loại --"
-              />
-            </div>
-
-            <div class="sm:col-span-2">
-              <label class="text-xs font-bold text-slate-700 uppercase block mb-1">Tiêu Đề Thông Báo <span class="text-rose-500">*</span></label>
-              <input 
-                v-model="form.title" 
-                type="text" 
-                required 
-                placeholder="Nhập tiêu đề thông báo..." 
-                class="w-full text-xs font-bold bg-white border border-slate-300 rounded-xl px-3 py-2 min-h-[38px] focus:ring-2 focus:ring-blue-500" 
-              />
-            </div>
+          <!-- Notification Title -->
+          <div>
+            <label class="text-xs font-bold text-slate-700 uppercase block mb-1">Tiêu Đề Thông Báo <span class="text-rose-500">*</span></label>
+            <input 
+              v-model="form.title" 
+              type="text" 
+              required 
+              placeholder="Nhập tiêu đề thông báo..." 
+              class="w-full text-xs font-bold bg-white border border-slate-300 rounded-xl px-3 py-2 min-h-[38px] focus:ring-2 focus:ring-blue-500" 
+            />
           </div>
 
           <!-- Notification Message Content -->
           <div>
-            <div class="flex justify-between items-center mb-1">
-              <label class="text-xs font-bold text-slate-700 uppercase">Nội Dung Chi Tiết <span class="text-rose-500">*</span></label>
-              <button 
-                type="button" 
-                @click="generateTemplateContent" 
-                class="text-[11px] font-extrabold text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-lg border border-blue-200 transition"
-              >
-                📝 Chèn mẫu văn bản thông báo
-              </button>
-            </div>
+            <label class="text-xs font-bold text-slate-700 uppercase block mb-1">Nội Dung Chi Tiết <span class="text-rose-500">*</span></label>
             
             <RichTextEditor 
               v-model="form.message" 
@@ -175,7 +151,7 @@ const form = ref({
 });
 
 const agencyOptions = computed(() => {
-  return props.agencies.map(ag => ({ value: ag.id, label: `${ag.code} - ${ag.name}` }));
+  return props.agencies.map(ag => ({ value: ag.id, label: ag.name }));
 });
 
 const typeOptions = ref([

@@ -25,13 +25,12 @@
           <div class="relative w-full">
             <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             <input 
-              v-model="searchDraft" 
-              @keyup.enter="execSearch"
+              :value="searchDraft" 
+              @input="searchDraft = $event.target.value"
               placeholder="Tìm kiếm theo mã, tên đơn vị tính, kiểu dữ liệu..." 
               class="w-full text-xs font-semibold pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
             />
           </div>
-          <button @click="execSearch" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer">Tìm</button>
           <button @click="resetSearch" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer">↺</button>
         </div>
         <span class="text-xs text-slate-500 font-semibold shrink-0">
@@ -81,12 +80,12 @@
       </div>
 
       <!-- 3. Bottom Footer: Server Pagination Controls -->
-      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50/70 p-4 border-t border-slate-200/80 text-xs text-slate-600 font-semibold">
-        <div class="flex flex-wrap items-center gap-3">
-          <span>Hiển thị <span class="font-extrabold text-slate-900">{{ totalCount > 0 ? (pageNumber - 1) * pageSize + 1 : 0 }} - {{ Math.min(pageNumber * pageSize, totalCount) }}</span> trên tổng số <span class="font-extrabold text-slate-900">{{ totalCount }}</span> đơn vị tính</span>
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50/70 p-3.5 border-t border-slate-200/80 text-xs text-slate-600 font-semibold">
+        <div class="flex items-center gap-3 whitespace-nowrap flex-wrap sm:flex-nowrap">
+          <span class="whitespace-nowrap">Hiển thị <span class="font-extrabold text-slate-900">{{ totalCount > 0 ? (pageNumber - 1) * pageSize + 1 : 0 }} - {{ Math.min(pageNumber * pageSize, totalCount) }}</span> trên tổng số <span class="font-extrabold text-slate-900">{{ totalCount }}</span> đơn vị tính</span>
           
-          <div class="flex items-center gap-1.5 border-l border-slate-200 pl-3">
-            <span>Số bản ghi/trang:</span>
+          <div class="flex items-center gap-1.5 border-l border-slate-200 pl-3 whitespace-nowrap">
+            <span class="whitespace-nowrap">Số bản ghi/trang:</span>
             <SearchableSelect 
               v-model="pageSize" 
               :options="pageSizeOptions" 
@@ -98,7 +97,7 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 shrink-0 whitespace-nowrap">
           <button 
             @click="changePage(pageNumber - 1)" 
             :disabled="pageNumber <= 1"
@@ -133,12 +132,12 @@
         <form @submit.prevent="saveUnit" class="space-y-3">
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="text-xs font-bold text-slate-700 uppercase">Mã Đơn Vị (e.g. PERCENT)</label>
+              <label class="text-xs font-bold text-slate-700 uppercase">Mã Đơn Vị (e.g. PERCENT) <span class="text-rose-500">*</span></label>
               <input v-model="form.code" required class="w-full text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 mt-1" />
             </div>
 
             <div>
-              <label class="text-xs font-bold text-slate-700 uppercase">Tên Hiển Thị (e.g. %)</label>
+              <label class="text-xs font-bold text-slate-700 uppercase">Tên Hiển Thị (e.g. %) <span class="text-rose-500">*</span></label>
               <input v-model="form.name" required class="w-full text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 mt-1" />
             </div>
           </div>
@@ -168,11 +167,12 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import SearchableSelect from './SearchableSelect.vue';
 import { toast } from 'vue3-toastify';
 import LoadingSpinner from './LoadingSpinner.vue';
 import { getApiUrl } from '../config/api';
+import { confirmModal } from '../services/confirm';
 
 const units = ref([]);
 const isLoading = ref(true);
@@ -200,13 +200,27 @@ const editingId = ref(null);
 const editingUsedCount = ref(0);
 const form = ref({ code: '', name: '', dataType: 1 });
 
+let unitFetchRequestId = 0;
+let unitSearchDebounceTimer = null;
+
 function execSearch() {
+  if (unitSearchDebounceTimer) clearTimeout(unitSearchDebounceTimer);
+  unitFetchRequestId++;
   appliedSearch.value = searchDraft.value;
   pageNumber.value = 1;
   fetchUnits();
 }
 
+watch(searchDraft, () => {
+  if (unitSearchDebounceTimer) clearTimeout(unitSearchDebounceTimer);
+  unitSearchDebounceTimer = setTimeout(() => {
+    execSearch();
+  }, 300);
+});
+
 function resetSearch() {
+  if (unitSearchDebounceTimer) clearTimeout(unitSearchDebounceTimer);
+  unitFetchRequestId++;
   searchDraft.value = '';
   appliedSearch.value = '';
   pageNumber.value = 1;
@@ -251,6 +265,7 @@ function openEditModal(unit) {
 }
 
 async function fetchUnits() {
+  const currentRequestId = ++unitFetchRequestId;
   isLoading.value = true;
   try {
     const url = new URL(getApiUrl('/api/units'));
@@ -263,6 +278,7 @@ async function fetchUnits() {
     const res = await fetch(url);
     if (res.ok) {
       const data = await res.json();
+      if (currentRequestId !== unitFetchRequestId) return;
       if (data.items) {
         units.value = data.items;
         totalCount.value = data.totalCount || data.items.length;
@@ -276,9 +292,12 @@ async function fetchUnits() {
       }
     }
   } catch (e) {
+    if (currentRequestId !== unitFetchRequestId) return;
     console.error('Failed to fetch units:', e);
   } finally {
-    isLoading.value = false;
+    if (currentRequestId === unitFetchRequestId) {
+      isLoading.value = false;
+    }
   }
 }
 
@@ -324,7 +343,15 @@ async function deleteUnit(unit) {
     return;
   }
 
-  if (confirm(`Xóa đơn vị tính "${unit.name}"?`)) {
+  const confirmed = await confirmModal({
+    title: 'Xóa đơn vị tính',
+    message: `Bạn có chắc chắn muốn xóa đơn vị tính "${unit.name}"? Thao tác này không thể hoàn tác.`,
+    confirmText: 'Xóa đơn vị tính',
+    cancelText: 'Hủy bỏ',
+    type: 'danger'
+  });
+
+  if (confirmed) {
     try {
       const res = await fetch(getApiUrl(`/api/units/${unit.id}`), { method: 'DELETE' });
       if (res.ok) {

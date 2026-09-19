@@ -112,6 +112,48 @@
           />
         </div>
 
+        <!-- Multi-Deliverables Checklist Progress Updates -->
+        <div v-if="localDeliverables && localDeliverables.length > 0" class="border border-slate-200 rounded-xl p-3 bg-slate-50/70 space-y-3">
+          <label class="text-xs font-extrabold text-blue-900 uppercase flex items-center justify-between">
+            <span>📋 Cập Nhật Tiến Độ Danh Mục Sản Phẩm Đầu Ra</span>
+            <span class="text-[11px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">{{ localDeliverables.length }} Sản phẩm</span>
+          </label>
+
+          <div class="space-y-2.5 max-h-56 overflow-y-auto pr-1 custom-scrollbar">
+            <div 
+              v-for="(del, idx) in localDeliverables" 
+              :key="idx"
+              class="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs space-y-2"
+            >
+              <div class="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                <span class="text-xs font-bold text-slate-900">{{ idx + 1 }}. {{ del.title }}</span>
+                <span v-if="del.dueDate" class="text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">Hạn: {{ formatDate(del.dueDate) }}</span>
+              </div>
+
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <div>
+                  <label class="text-[10px] font-bold text-slate-600">Trạng Thái Mốc Sản Phẩm</label>
+                  <SearchableSelect 
+                    v-model="del.currentStatus" 
+                    :options="qualitativeStatusOptions" 
+                    :isMulti="false" 
+                    :clearable="false"
+                  />
+                </div>
+
+                <div>
+                  <label class="text-[10px] font-bold text-slate-600">Số / Ký Hiệu Văn Bản</label>
+                  <input 
+                    v-model="del.documentNumber" 
+                    placeholder="VD: 45/2026/NĐ-CP" 
+                    class="w-full text-xs font-semibold bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500" 
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Evidence Multi-File Picker (IFormFile Array) -->
         <div class="space-y-2">
           <label class="text-xs font-bold text-slate-700 uppercase flex items-center justify-between">
@@ -234,6 +276,7 @@ import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
 import SearchableSelect from './SearchableSelect.vue';
 import { getApiUrl } from '../config/api';
+import { authState } from '../services/auth';
 
 const props = defineProps({
   isOpen: { type: Boolean, default: false },
@@ -242,8 +285,18 @@ const props = defineProps({
   taskTitle: { type: String, default: '' },
   evaluationType: { type: String, default: 'Quantitative' },
   unitName: { type: String, default: '%' },
-  customBaseline: { type: Object, default: () => ({}) }
+  customBaseline: { type: Object, default: () => ({}) },
+  deliverables: { type: Array, default: () => [] }
 });
+
+const localDeliverables = ref([]);
+
+function formatDate(dStr) {
+  if (!dStr) return '';
+  const d = new Date(dStr);
+  if (isNaN(d.getTime())) return dStr;
+  return d.toLocaleDateString('vi-VN');
+}
 
 const emit = defineEmits(['close', 'submitted']);
 
@@ -385,8 +438,13 @@ async function fetchExistingProgress() {
   }
 }
 
-watch(() => [props.isOpen, props.customBaseline], ([newOpen]) => {
+watch(() => [props.isOpen, props.customBaseline, props.deliverables], ([newOpen]) => {
   if (newOpen) {
+    if (Array.isArray(props.deliverables)) {
+      localDeliverables.value = JSON.parse(JSON.stringify(props.deliverables));
+    } else {
+      localDeliverables.value = [];
+    }
     if (showQuarterOption.value) {
       setPeriodType('quarterly');
     } else if (showMonthOption.value) {
@@ -409,6 +467,11 @@ function close() {
 }
 
 async function submitProgress() {
+  if (authState.isAdmin.value) {
+    toast.warning("Tài khoản Quản trị viên (Admin) không thực hiện cập nhật tiến độ. Thao tác này dành cho tài khoản cán bộ đầu mối của các Cơ quan / Bộ / Ngành.");
+    return;
+  }
+
   if (!form.value.periodYear) {
     toast.error("Vui lòng chọn Năm Báo Cáo!");
     return;
@@ -427,9 +490,11 @@ async function submitProgress() {
       return;
     }
   } else {
-    if (!form.value.status) {
-      toast.error("Vui lòng chọn trạng thái thực tế văn bản!");
-      return;
+    if (!localDeliverables.value || localDeliverables.value.length === 0) {
+      if (!form.value.status) {
+        toast.error("Vui lòng chọn trạng thái thực tế văn bản!");
+        return;
+      }
     }
   }
 
@@ -445,7 +510,18 @@ async function submitProgress() {
       formData.append('Value', form.value.value);
       formData.append('ActualValue', form.value.value);
     } else {
-      formData.append('Status', form.value.status);
+      formData.append('Status', form.value.status || 'Drafting');
+    }
+
+    if (localDeliverables.value && localDeliverables.value.length > 0) {
+      localDeliverables.value.forEach((d, idx) => {
+        formData.append(`Deliverables[${idx}].Id`, d.id || '');
+        formData.append(`Deliverables[${idx}].Title`, d.title || '');
+        if (d.dueDate) formData.append(`Deliverables[${idx}].DueDate`, d.dueDate);
+        formData.append(`Deliverables[${idx}].CurrentStatus`, d.currentStatus || 'NotStarted');
+        if (d.documentNumber) formData.append(`Deliverables[${idx}].DocumentNumber`, d.documentNumber);
+        if (d.promulgationDate) formData.append(`Deliverables[${idx}].PromulgationDate`, d.promulgationDate);
+      });
     }
     
     if (form.value.notes) {

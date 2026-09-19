@@ -55,27 +55,44 @@ namespace Cdsqg.Api.Controllers
                 query = query.Where(u => u.AgencyId == agencyId.Value);
             }
 
+            var leadCounts = await _db.GoalTaskItems
+                .Where(g => g.LeadAgencyId != Guid.Empty)
+                .Select(g => g.LeadAgencyId)
+                .Distinct()
+                .ToListAsync();
+
+            var urgeCounts = await _db.TaskUrgeLogs
+                .Where(uLog => uLog.LeadAgencyId != null)
+                .Select(uLog => uLog.LeadAgencyId!.Value)
+                .Distinct()
+                .ToListAsync();
+
+            var usedAgencyIds = new HashSet<Guid>(leadCounts.Concat(urgeCounts));
+            bool anyDataInSystem = await _db.GoalTaskItems.AnyAsync() || await _db.TaskUrgeLogs.AnyAsync();
+
             var totalCount = await query.CountAsync();
             var totalPages = (int)Math.Ceiling((double)totalCount / pageSize);
 
-            var items = await query.OrderByDescending(u => u.CreatedAt)
+            var rawItems = await query.OrderByDescending(u => u.CreatedAt)
                 .Skip((pageNumber - 1) * pageSize)
                 .Take(pageSize)
-                .Select(u => new UserDto
-                {
-                    Id = u.Id,
-                    Username = u.Username,
-                    FullName = u.FullName,
-                    Email = u.Email,
-                    Role = u.Role,
-                    AgencyId = u.AgencyId,
-                    AgencyCode = u.Agency != null ? u.Agency.Code : null,
-                    AgencyName = u.Agency != null ? u.Agency.Name : null,
-                    IsActive = u.IsActive,
-                    CreatedAt = u.CreatedAt,
-                    LastLoginAt = u.LastLoginAt
-                })
                 .ToListAsync();
+
+            var items = rawItems.Select(u => new UserDto
+            {
+                Id = u.Id,
+                Username = u.Username,
+                FullName = u.FullName,
+                Email = u.Email,
+                Role = u.Role,
+                AgencyId = u.AgencyId,
+                AgencyCode = u.Agency?.Code,
+                AgencyName = u.Agency?.Name,
+                IsActive = u.IsActive,
+                HasDataOperations = (u.Role == UserRoleEnum.Admin && anyDataInSystem) || (u.AgencyId.HasValue && usedAgencyIds.Contains(u.AgencyId.Value)),
+                CreatedAt = u.CreatedAt,
+                LastLoginAt = u.LastLoginAt
+            }).ToList();
 
             return Ok(new
             {
@@ -111,6 +128,12 @@ namespace Cdsqg.Api.Controllers
                 userRole = dto.Role;
             }
 
+            Guid? targetAgencyId = (dto.AgencyId.HasValue && dto.AgencyId.Value != Guid.Empty) ? dto.AgencyId : null;
+            if (userRole == UserRoleEnum.Admin)
+            {
+                targetAgencyId = null;
+            }
+
             var user = new User
             {
                 Id = Guid.NewGuid(),
@@ -119,7 +142,7 @@ namespace Cdsqg.Api.Controllers
                 FullName = string.IsNullOrWhiteSpace(dto.FullName) ? dto.Username.Trim() : dto.FullName.Trim(),
                 Email = dto.Email?.Trim() ?? string.Empty,
                 Role = userRole,
-                AgencyId = (dto.AgencyId.HasValue && dto.AgencyId.Value != Guid.Empty) ? dto.AgencyId : null,
+                AgencyId = targetAgencyId,
                 IsActive = true,
                 CreatedAt = DateTime.UtcNow
             };
@@ -140,6 +163,7 @@ namespace Cdsqg.Api.Controllers
                 AgencyCode = agency?.Code,
                 AgencyName = agency?.Name,
                 IsActive = user.IsActive,
+                HasDataOperations = false,
                 CreatedAt = user.CreatedAt,
                 LastLoginAt = user.LastLoginAt
             });
@@ -164,10 +188,29 @@ namespace Cdsqg.Api.Controllers
                 userRole = dto.Role;
             }
 
+            Guid? targetAgencyId = (dto.AgencyId.HasValue && dto.AgencyId.Value != Guid.Empty) ? dto.AgencyId : null;
+            if (userRole == UserRoleEnum.Admin)
+            {
+                targetAgencyId = null;
+            }
+
+            // Check if user has data operations in the system
+            bool anyDataInSystem = await _db.GoalTaskItems.AnyAsync() || await _db.TaskUrgeLogs.AnyAsync();
+            bool userAgencyHasData = user.AgencyId.HasValue && (await _db.GoalTaskItems.AnyAsync(g => g.LeadAgencyId == user.AgencyId.Value) || await _db.TaskUrgeLogs.AnyAsync(l => l.LeadAgencyId == user.AgencyId.Value));
+            bool hasData = (user.Role == UserRoleEnum.Admin && anyDataInSystem) || userAgencyHasData;
+
+            if (hasData)
+            {
+                if (userRole != user.Role || targetAgencyId != user.AgencyId)
+                {
+                    return BadRequest(new { message = "Tài khoản đã phát sinh dữ liệu trong hệ thống, không được phép thay đổi Vai trò và Cơ quan gắn." });
+                }
+            }
+
             user.FullName = string.IsNullOrWhiteSpace(dto.FullName) ? user.FullName : dto.FullName.Trim();
             user.Email = dto.Email?.Trim() ?? user.Email;
             user.Role = userRole;
-            user.AgencyId = (dto.AgencyId.HasValue && dto.AgencyId.Value != Guid.Empty) ? dto.AgencyId : null;
+            user.AgencyId = targetAgencyId;
             user.IsActive = dto.IsActive;
 
             await _db.SaveChangesAsync();

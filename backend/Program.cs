@@ -179,6 +179,8 @@ void EnsureDatabaseSchemaUpdated(AppDbContext db)
         // 2. Ensure Agencies columns
         string sqlAgencies = @"
             ALTER TABLE ""Agencies"" ADD COLUMN IF NOT EXISTS ""ParentId"" uuid NULL;
+            ALTER TABLE ""Agencies"" ADD COLUMN IF NOT EXISTS ""ContactPersons"" text NULL;
+            UPDATE ""Agencies"" SET ""ContactPersons"" = '[]' WHERE ""ContactPersons"" IS NULL OR ""ContactPersons"" = '';
         ";
         db.Database.ExecuteSqlRaw(sqlAgencies);
 
@@ -191,6 +193,7 @@ void EnsureDatabaseSchemaUpdated(AppDbContext db)
             ALTER TABLE ""GoalTaskItems"" ADD COLUMN IF NOT EXISTS ""Section"" text NULL;
             ALTER TABLE ""GoalTaskItems"" ADD COLUMN IF NOT EXISTS ""Group"" text NULL;
             ALTER TABLE ""GoalTaskItems"" ADD COLUMN IF NOT EXISTS ""IsOngoing"" boolean NOT NULL DEFAULT FALSE;
+            ALTER TABLE ""GoalTaskItems"" ADD COLUMN IF NOT EXISTS ""Deliverables"" jsonb NOT NULL DEFAULT '[]'::jsonb;
             UPDATE ""GoalTaskItems"" SET ""Section"" = '' WHERE ""Section"" IS NULL;
             UPDATE ""GoalTaskItems"" SET ""Group"" = '' WHERE ""Group"" IS NULL;
         ";
@@ -235,13 +238,29 @@ app.Run();
 void SeedInitialData(AppDbContext db, IPasswordHasher hasher)
 {
     // 1. Seed Reference Agencies Dictionary if missing
-    if (!db.Agencies.Any())
+    var allAgencies = db.Agencies.FirstOrDefault(a => a.Code == "ALL_AGENCIES");
+    if (allAgencies == null)
+    {
+        allAgencies = new Agency 
+        { 
+            Id = Guid.Parse("00000000-0000-0000-0000-000000009999"), 
+            Code = "ALL_AGENCIES", 
+            Name = "Các bộ, ngành, địa phương", 
+            Type = AgencyTypeEnum.Ministry, 
+            CreatedAt = DateTime.UtcNow 
+        };
+        db.Agencies.Add(allAgencies);
+        db.SaveChanges();
+    }
+
+    if (!db.Agencies.Any(a => a.Code != "ALL_AGENCIES"))
     {
         var btttt = new Agency { Id = Guid.NewGuid(), Code = "BTTTT", Name = "Bộ Thông tin và Truyền thông", Type = AgencyTypeEnum.Ministry, CreatedAt = DateTime.UtcNow };
         var bca = new Agency { Id = Guid.NewGuid(), Code = "BCA", Name = "Bộ Công an", Type = AgencyTypeEnum.Ministry, CreatedAt = DateTime.UtcNow };
         var bkhdt = new Agency { Id = Guid.NewGuid(), Code = "BKHĐT", Name = "Bộ Kế hoạch và Đầu tư", Type = AgencyTypeEnum.Ministry, CreatedAt = DateTime.UtcNow };
         var tphcm = new Agency { Id = Guid.NewGuid(), Code = "TPHCM", Name = "UBND TP. Hồ Chí Minh", Type = AgencyTypeEnum.Province, CreatedAt = DateTime.UtcNow };
         db.Agencies.AddRange(btttt, bca, bkhdt, tphcm);
+        db.SaveChanges();
     }
 
     // 2. Seed Reference Units Dictionary if missing

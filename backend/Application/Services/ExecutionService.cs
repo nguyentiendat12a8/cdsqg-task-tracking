@@ -176,6 +176,11 @@ namespace Cdsqg.Application.Services
 
             string primaryFileUrl = uploadedUrls.FirstOrDefault() ?? string.Empty;
 
+            if (dto.Deliverables != null && dto.Deliverables.Count > 0)
+            {
+                task.Deliverables = dto.Deliverables;
+            }
+
             // 5. Save Progress Log to Database
             var progressLog = new ProgressLog
             {

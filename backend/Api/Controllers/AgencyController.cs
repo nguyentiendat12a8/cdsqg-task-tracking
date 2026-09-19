@@ -34,9 +34,38 @@ namespace Cdsqg.Api.Controllers
             if (!string.IsNullOrWhiteSpace(search))
             {
                 var s = search.Trim().ToLower();
-                query = query.Where(a => 
-                    a.Code.ToLower().Contains(s) || 
-                    a.Name.ToLower().Contains(s));
+                var matchingAgencyInfo = await _context.Agencies
+                    .Where(a => (!string.IsNullOrEmpty(a.Code) && a.Code.ToLower().Contains(s)) || a.Name.ToLower().Contains(s))
+                    .Select(a => new { a.Id, a.ParentId })
+                    .ToListAsync();
+
+                var matchedIds = new HashSet<Guid>(matchingAgencyInfo.Select(a => a.Id));
+
+                // Add parent agency IDs if any matched agency is a sub-agency
+                foreach (var item in matchingAgencyInfo)
+                {
+                    if (item.ParentId.HasValue && item.ParentId.Value != Guid.Empty)
+                    {
+                        matchedIds.Add(item.ParentId.Value);
+                    }
+                }
+
+                // Add all sub-agency IDs if any matched agency is a parent agency
+                var matchedParentIds = matchingAgencyInfo.Where(a => !a.ParentId.HasValue || a.ParentId.Value == Guid.Empty).Select(a => a.Id).ToList();
+                if (matchedParentIds.Count > 0)
+                {
+                    var childIds = await _context.Agencies
+                        .Where(a => a.ParentId.HasValue && matchedParentIds.Contains(a.ParentId.Value))
+                        .Select(a => a.Id)
+                        .ToListAsync();
+
+                    foreach (var cid in childIds)
+                    {
+                        matchedIds.Add(cid);
+                    }
+                }
+
+                query = query.Where(a => matchedIds.Contains(a.Id));
             }
 
             if (parentId.HasValue && parentId.Value != Guid.Empty)
@@ -63,7 +92,8 @@ namespace Cdsqg.Api.Controllers
                 int totalPages = (int)Math.Ceiling(totalCount / (double)pSize);
 
                 var pagedItems = await query
-                    .OrderBy(a => a.Code)
+                    .OrderByDescending(a => a.Code == "ALL_AGENCIES")
+                    .ThenBy(a => a.Name)
                     .Skip((pNum - 1) * pSize)
                     .Take(pSize)
                     .ToListAsync();
@@ -76,6 +106,7 @@ namespace Cdsqg.Api.Controllers
                     a.Type,
                     a.ParentId,
                     ParentName = a.ParentAgency?.Name,
+                    a.ContactPersons,
                     a.IsActive,
                     a.CreatedAt,
                     usedCount = leadCounts.GetValueOrDefault(a.Id, 0) + urgeCounts.GetValueOrDefault(a.Id, 0)
@@ -91,7 +122,10 @@ namespace Cdsqg.Api.Controllers
                 });
             }
 
-            var list = await query.OrderBy(a => a.Code).ToListAsync();
+            var list = await query
+                .OrderByDescending(a => a.Code == "ALL_AGENCIES")
+                .ThenBy(a => a.Name)
+                .ToListAsync();
             var resultList = list.Select(a => new
             {
                 a.Id,
@@ -100,6 +134,7 @@ namespace Cdsqg.Api.Controllers
                 a.Type,
                 a.ParentId,
                 ParentName = a.ParentAgency?.Name,
+                a.ContactPersons,
                 a.IsActive,
                 a.CreatedAt,
                 usedCount = leadCounts.GetValueOrDefault(a.Id, 0) + urgeCounts.GetValueOrDefault(a.Id, 0)
@@ -112,14 +147,19 @@ namespace Cdsqg.Api.Controllers
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            if (await _context.Agencies.AnyAsync(a => a.Code == agency.Code))
+            if (!string.IsNullOrWhiteSpace(agency.Code) && await _context.Agencies.AnyAsync(a => a.Code == agency.Code))
             {
                 return BadRequest(new { error = $"Mã cơ quan '{agency.Code}' đã tồn tại trong hệ thống." });
             }
 
             agency.Id = Guid.NewGuid();
+            if (string.IsNullOrWhiteSpace(agency.Code))
+            {
+                agency.Code = "AG-" + Guid.NewGuid().ToString("N")[..8];
+            }
             if (agency.ParentId == Guid.Empty) agency.ParentId = null;
             agency.CreatedAt = DateTime.UtcNow;
+            agency.ContactPersons ??= new List<AgencyContactPerson>();
             _context.Agencies.Add(agency);
             await _context.SaveChangesAsync();
 
@@ -132,7 +172,7 @@ namespace Cdsqg.Api.Controllers
             var existing = await _context.Agencies.FindAsync(id);
             if (existing == null) return NotFound(new { error = "Không tìm thấy Cơ quan." });
 
-            if (!string.Equals(existing.Code, dto.Code, StringComparison.OrdinalIgnoreCase))
+            if (!string.IsNullOrWhiteSpace(dto.Code) && !string.Equals(existing.Code, dto.Code, StringComparison.OrdinalIgnoreCase))
             {
                 int leadCount = await _context.GoalTaskItems.CountAsync(g => g.LeadAgencyId == id);
                 int urgeCount = await _context.TaskUrgeLogs.CountAsync(u => u.LeadAgencyId == id);
@@ -142,13 +182,18 @@ namespace Cdsqg.Api.Controllers
                 {
                     return BadRequest(new { error = $"Không thể thay đổi mã cơ quan vì đã có {totalUsage} mục tiêu / nhiệm vụ / đôn đốc đang sử dụng." });
                 }
+                existing.Code = dto.Code;
+            }
+            else if (string.IsNullOrWhiteSpace(existing.Code))
+            {
+                existing.Code = "AG-" + Guid.NewGuid().ToString("N")[..8];
             }
 
-            existing.Code = dto.Code;
             existing.Name = dto.Name;
             existing.Type = dto.Type;
             existing.ParentId = (dto.ParentId.HasValue && dto.ParentId.Value != Guid.Empty) ? dto.ParentId : null;
             existing.IsActive = dto.IsActive;
+            existing.ContactPersons = dto.ContactPersons ?? new List<AgencyContactPerson>();
 
             await _context.SaveChangesAsync();
             return Ok(existing);

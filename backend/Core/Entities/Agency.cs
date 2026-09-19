@@ -36,6 +36,11 @@ namespace Cdsqg.Core.Entities
         public bool IsActive { get; set; } = true;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
+        /// <summary>
+        /// Danh sách cán bộ đầu mối của cơ quan
+        /// </summary>
+        public List<AgencyContactPerson> ContactPersons { get; set; } = new List<AgencyContactPerson>();
+
         // Tập hợp các Cơ quan trực thuộc
         public ICollection<Agency> ChildAgencies { get; set; } = new List<Agency>();
     }

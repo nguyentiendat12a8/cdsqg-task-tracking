@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Cdsqg.Core.Entities;
 
 namespace Cdsqg.Application.DTOs
 {
@@ -53,24 +54,25 @@ namespace Cdsqg.Application.DTOs
         public string CalculatedStatus { get; set; } = "NotStarted";
 
         public Dictionary<string, string> CustomBaseline { get; set; } = new Dictionary<string, string>();
+        public List<TaskDeliverable> Deliverables { get; set; } = new List<TaskDeliverable>();
         public Dictionary<int, object?> YearlyTargets { get; set; } = new Dictionary<int, object?>();
 
         public List<PlanningGridItemDto> SubItems { get; set; } = new List<PlanningGridItemDto>();
     }
 
-    public class CreateGoalTaskItemDto
+    public class CreateGoalTaskItemRequestDto
     {
         public Guid DocumentId { get; set; }
         public Guid? ParentId { get; set; }
         public string ItemType { get; set; } = "Task";
         public string Code { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
-        public string Category { get; set; } = "Chính phủ số";
+        public string Category { get; set; } = string.Empty;
         public string Section { get; set; } = string.Empty;
         public string Group { get; set; } = string.Empty;
         public bool IsOngoing { get; set; } = false;
-        public bool IsGeneralTask { get; set; } = false;
 
+        public bool IsGeneralTask { get; set; } = false;
         public DateTime? StartDate { get; set; }
         public DateTime? DueDate { get; set; }
 
@@ -80,6 +82,9 @@ namespace Cdsqg.Application.DTOs
         public Guid? UnitId { get; set; }
         public string EvaluationType { get; set; } = "Quantitative";
         public string CalculationMethod { get; set; } = "LatestValue";
+        public Dictionary<string, string>? CustomBaseline { get; set; }
+        public Dictionary<int, decimal>? YearlyTargets { get; set; }
+        public List<TaskDeliverable> Deliverables { get; set; } = new List<TaskDeliverable>();
     }
 
     public class UpdateCustomBaselineDto
@@ -92,5 +97,19 @@ namespace Cdsqg.Application.DTOs
         public int Year { get; set; }
         public decimal? TargetQuantity { get; set; }
         public string? TargetQualitativeStatus { get; set; }
+    }
+
+    public class UpdateGoalTaskItemRequestDto
+    {
+        public string Title { get; set; } = string.Empty;
+        public string? Section { get; set; }
+        public string? Group { get; set; }
+        public bool IsOngoing { get; set; } = false;
+        public bool IsGeneralTask { get; set; } = false;
+        public DateTime? StartDate { get; set; }
+        public DateTime? DueDate { get; set; }
+        public Guid LeadAgencyId { get; set; }
+        public List<Guid> CoordinatingAgencyIds { get; set; } = new List<Guid>();
+        public List<TaskDeliverable> Deliverables { get; set; } = new List<TaskDeliverable>();
     }
 }

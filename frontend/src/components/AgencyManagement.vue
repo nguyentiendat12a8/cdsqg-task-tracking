@@ -33,13 +33,12 @@
           <div class="relative w-full">
             <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             <input 
-              v-model="searchDraft" 
-              @keyup.enter="execSearch"
-              placeholder="Tìm kiếm theo mã cơ quan, tên cơ quan..." 
+              :value="searchDraft" 
+              @input="searchDraft = $event.target.value"
+              placeholder="Tìm kiếm theo tên cơ quan..." 
               class="w-full text-xs font-semibold pl-9 pr-4 py-1.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
             />
           </div>
-          <button @click="execSearch" class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-2xs transition shrink-0 cursor-pointer">Tìm Kiếm</button>
           <button @click="resetSearch" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition shrink-0 cursor-pointer">↺</button>
         </div>
         <span class="text-xs text-slate-500 font-bold shrink-0">
@@ -54,30 +53,25 @@
         <table v-else class="w-full text-left text-sm text-slate-700 border-collapse">
           <thead class="bg-slate-100 text-xs text-slate-600 uppercase font-extrabold border-b border-slate-200 sticky top-0 z-10">
             <tr>
-              <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100">Cấu Trúc Cây Cơ Quan (Mã & Tên Đầy Đủ)</th>
-              <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100">Cơ Quan Cấp Trên</th>
-              <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 text-center">Phân Loại</th>
-              <th class="px-3 py-2.5 text-center bg-slate-100 whitespace-nowrap">Thao Tác</th>
+              <th class="px-3.5 py-2.5 border-r border-slate-200 bg-slate-100">Cấu Trúc Cây Cơ Quan & Đơn Vị Trực Thuộc</th>
+              <th class="px-3.5 py-2.5 border-r border-slate-200 bg-slate-100 text-center w-40">Phân Loại</th>
+              <th class="px-3.5 py-2.5 border-r border-slate-200 bg-slate-100 text-center w-52">Thông Tin Đầu Mối Liên Hệ</th>
+              <th class="px-3.5 py-2.5 text-center bg-slate-100 whitespace-nowrap w-24">Thao Tác</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
             <tr 
               v-for="row in visibleTreeRows" 
-              :key="row.id" 
-              :class="[
-                'hover:bg-blue-50/40 transition',
-                row.level === 0 ? 'bg-white font-bold' : 'bg-slate-50/50'
-              ]"
+              :key="row.id"
+              class="hover:bg-blue-50/40 transition text-xs"
             >
-              <!-- Tree Node Column with Indentation and Chevron Expand Toggle -->
-              <td class="px-3 py-2 border-r border-slate-200">
+              <!-- Hierarchy Tree Node Column -->
+              <td class="px-3.5 py-2.5 border-r border-slate-200">
                 <div class="flex items-center gap-2" :style="{ paddingLeft: `${row.level * 24}px` }">
-                  
-                  <!-- Expand/Collapse Chevron Button -->
                   <button 
                     v-if="row.hasChildren"
-                    @click="toggleExpand(row.id)"
-                    class="w-5 h-5 rounded hover:bg-slate-200 text-slate-600 flex items-center justify-center transition shrink-0"
+                    @click="toggleNode(row.id)"
+                    class="w-5 h-5 rounded hover:bg-slate-200 text-slate-600 flex items-center justify-center transition shrink-0 cursor-pointer"
                     :title="expandedNodes.has(row.id) ? 'Thu gọn' : 'Mở rộng'"
                   >
                     <svg class="w-3.5 h-3.5 transition-transform duration-200" :class="{ 'rotate-90': expandedNodes.has(row.id) }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -88,11 +82,7 @@
                     {{ row.level > 0 ? '└─' : '' }}
                   </span>
 
-                  <!-- Code Badge & Name -->
-                  <span class="px-2 py-0.5 rounded-md font-black text-xs text-blue-700 bg-blue-50 border border-blue-200 shrink-0">
-                    {{ row.code }}
-                  </span>
-
+                  <!-- Name -->
                   <span class="text-xs font-bold text-slate-900 truncate">
                     {{ row.name }}
                   </span>
@@ -103,27 +93,33 @@
                 </div>
               </td>
 
-              <!-- Parent Agency Name -->
-              <td class="px-4 py-3 border-r border-slate-200 text-xs font-semibold text-slate-600">
-                {{ row.parentName || '— (Cơ quan độc lập / Bộ / Tỉnh)' }}
-              </td>
-
               <!-- Agency Type Badge -->
-              <td class="px-4 py-3 border-r border-slate-200 text-center">
-                <span :class="['px-2.5 py-1 rounded-full text-xs font-extrabold', getTypeBadgeClass(row.type)]">
-                  {{ getTypeLabel(row.type) }}
+              <td class="px-4 py-2.5 border-r border-slate-200 text-center">
+                <span :class="['px-2.5 py-1 rounded-full text-xs font-extrabold', getTypeBadgeClass(row)]">
+                  {{ getTypeLabel(row) }}
                 </span>
               </td>
 
-              <!-- Actions -->
-              <td class="px-4 py-3 text-center space-x-1 whitespace-nowrap">
-                <button @click="openCreateModal(row.id)" class="px-2.5 py-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-extrabold text-xs rounded-lg transition border border-emerald-200" title="Thêm Đơn vị Trực thuộc">
-                  + Trực thuộc
+              <!-- Contact Persons Column (Clickable Badge Button to View Details) -->
+              <td class="px-3.5 py-2.5 border-r border-slate-200 text-center">
+                <button 
+                  v-if="row.contactPersons && row.contactPersons.length > 0"
+                  @click="openContactPersonsModal(row)"
+                  class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs rounded-xl transition border border-blue-200 inline-flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                  title="Click để xem chi tiết cán bộ đầu mối liên hệ"
+                >
+                  <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                  <span>{{ row.contactPersons.length }} cán bộ đầu mối</span>
                 </button>
-                <button @click="openEditModal(row)" class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition inline-flex items-center" title="Sửa">
+                <span v-else class="text-slate-400 italic text-xs">—</span>
+              </td>
+
+              <!-- Actions -->
+              <td class="px-4 py-2.5 text-center space-x-1 whitespace-nowrap">
+                <button @click="openEditModal(row)" class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition inline-flex items-center cursor-pointer" title="Sửa">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                 </button>
-                <button @click="deleteAgency(row)" class="p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg transition inline-flex items-center" title="Xóa">
+                <button @click="deleteAgency(row)" class="p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg transition inline-flex items-center cursor-pointer" title="Xóa">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                 </button>
               </td>
@@ -139,12 +135,12 @@
       </div>
 
       <!-- Server Pagination Controls -->
-      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50/70 p-4 border-t border-slate-200/80 text-xs text-slate-600 font-semibold">
-        <div class="flex flex-wrap items-center gap-3">
-          <span>Hiển thị <span class="font-extrabold text-slate-900">{{ totalCount > 0 ? (pageNumber - 1) * pageSize + 1 : 0 }} - {{ Math.min(pageNumber * pageSize, totalCount) }}</span> trên tổng số <span class="font-extrabold text-slate-900">{{ totalCount }}</span> cơ quan / đơn vị</span>
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50/70 p-3.5 border-t border-slate-200/80 text-xs text-slate-600 font-semibold">
+        <div class="flex items-center gap-3 whitespace-nowrap flex-wrap sm:flex-nowrap">
+          <span class="whitespace-nowrap">Hiển thị <span class="font-extrabold text-slate-900">{{ totalCount > 0 ? (pageNumber - 1) * pageSize + 1 : 0 }} - {{ Math.min(pageNumber * pageSize, totalCount) }}</span> trên tổng số <span class="font-extrabold text-slate-900">{{ totalCount }}</span> cơ quan / đơn vị</span>
           
-          <div class="flex items-center gap-1.5 border-l border-slate-200 pl-3">
-            <span>Số bản ghi/trang:</span>
+          <div class="flex items-center gap-1.5 border-l border-slate-200 pl-3 whitespace-nowrap">
+            <span class="whitespace-nowrap">Số bản ghi/trang:</span>
             <SearchableSelect 
               v-model="pageSize" 
               :options="pageSizeOptions" 
@@ -156,7 +152,7 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 shrink-0 whitespace-nowrap">
           <button 
             @click="changePage(pageNumber - 1)" 
             :disabled="pageNumber <= 1"
@@ -181,29 +177,17 @@
 
     </div>
 
-    <!-- Create/Edit Modal with Parent Selector -->
+    <!-- Create/Edit Modal with Parent Selector & Contact Persons -->
     <div v-if="isModalOpen" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-      <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-2xl w-full p-6 sm:p-7 space-y-4">
-        <h3 class="text-lg font-bold text-slate-800 border-b border-slate-100 pb-2">
+      <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-3xl w-full p-6 sm:p-7 space-y-4 max-h-[90vh] flex flex-col">
+        <h3 class="text-lg font-bold text-slate-800 border-b border-slate-100 pb-2 shrink-0">
           {{ isEditing ? 'Chỉnh Sửa Cơ Quan' : 'Thêm Cơ Quan / Đơn Vị Mới' }}
         </h3>
 
-        <form @submit.prevent="saveAgency" class="space-y-3">
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="text-xs font-bold text-slate-700 uppercase">Mã Cơ Quan / Đơn Vị</label>
-              <input 
-                v-model="form.code" 
-                :disabled="isEditing && editingUsedCount > 0"
-                required 
-                class="w-full text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 mt-1 disabled:opacity-60 disabled:bg-slate-100 disabled:cursor-not-allowed" 
-              />
-            </div>
-
-            <div>
-              <label class="text-xs font-bold text-slate-700 uppercase">Tên Đầy Đủ</label>
-              <input v-model="form.name" required class="w-full text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 mt-1" />
-            </div>
+        <form @submit.prevent="saveAgency" class="space-y-4 flex-1 overflow-y-auto pr-1">
+          <div>
+            <label class="text-xs font-bold text-slate-700 uppercase">Tên Đầy Đủ Cơ Quan / Đơn Vị <span class="text-rose-500">*</span></label>
+            <input v-model="form.name" required placeholder="Nhập tên cơ quan / đơn vị..." class="w-full text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 mt-1 focus:bg-white focus:ring-2 focus:ring-blue-500" />
           </div>
 
           <div class="grid grid-cols-2 gap-3">
@@ -218,12 +202,107 @@
             </div>
 
             <div>
-              <SearchableSelect 
-                v-model="form.type" 
-                :options="agencyTypeOptions" 
-                :isMulti="false" 
-                label="Phân Loại" 
-              />
+              <template v-if="form.parentId">
+                <label class="text-xs font-bold text-slate-700 uppercase block mb-1">Phân Loại</label>
+                <div class="h-[34px] min-h-[34px] max-h-[34px] px-2.5 bg-slate-100 text-slate-600 font-bold text-xs rounded-xl border border-slate-200 flex items-center gap-1.5 cursor-not-allowed">
+                  <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                  <span class="truncate">Đơn vị trực thuộc (Tự động theo cơ quan cấp trên)</span>
+                </div>
+              </template>
+              <template v-else>
+                <SearchableSelect 
+                  v-model="form.type" 
+                  :options="agencyTypeOptions" 
+                  :isMulti="false" 
+                  label="Phân Loại" 
+                />
+              </template>
+            </div>
+          </div>
+
+          <!-- Contact Persons Section -->
+          <div class="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 space-y-3">
+            <div class="flex items-center justify-between">
+              <label class="text-xs font-extrabold text-slate-800 uppercase flex items-center gap-1.5">
+                <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+                Thông Tin Cán Bộ Đầu Mối (Liên Hệ)
+              </label>
+              <button 
+                type="button" 
+                @click="addContactPerson" 
+                class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs rounded-lg transition border border-blue-200 flex items-center gap-1"
+              >
+                + Thêm cán bộ đầu mối
+              </button>
+            </div>
+
+            <div v-if="!form.contactPersons || form.contactPersons.length === 0" class="text-xs text-slate-400 italic text-center py-2">
+              Chưa có cán bộ đầu mối. Nhấn nút trên để thêm.
+            </div>
+
+            <div v-else class="space-y-3 max-h-60 overflow-y-auto pr-1">
+              <div 
+                v-for="(person, idx) in form.contactPersons" 
+                :key="idx" 
+                class="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs space-y-2 relative"
+              >
+                <div class="flex items-center justify-between border-b border-slate-100 pb-1.5">
+                  <span class="text-xs font-bold text-blue-700">Cán bộ đầu mối #{{ idx + 1 }}</span>
+                  <button 
+                    type="button" 
+                    @click="removeContactPerson(idx)" 
+                    class="text-rose-500 hover:text-rose-700 text-xs font-bold hover:bg-rose-50 px-2 py-0.5 rounded transition"
+                  >
+                    ✕ Xóa
+                  </button>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div>
+                    <label class="text-[11px] font-bold text-slate-600">Họ và tên</label>
+                    <input 
+                      v-model="person.name" 
+                      placeholder="Phạm Quang Cường" 
+                      class="w-full text-xs font-semibold bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500" 
+                    />
+                  </div>
+                  <div>
+                    <label class="text-[11px] font-bold text-slate-600">Chức vụ</label>
+                    <input 
+                      v-model="person.position" 
+                      placeholder="Phó giám đốc" 
+                      class="w-full text-xs font-semibold bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500" 
+                    />
+                  </div>
+                  <div>
+                    <label class="text-[11px] font-bold text-slate-600">Phòng ban / Đơn vị</label>
+                    <input 
+                      v-model="person.department" 
+                      placeholder="Sở KHCN" 
+                      class="w-full text-xs font-semibold bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500" 
+                    />
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <div>
+                    <label class="text-[11px] font-bold text-slate-600">Số điện thoại</label>
+                    <input 
+                      v-model="person.phone" 
+                      placeholder="0976 819 323" 
+                      class="w-full text-xs font-semibold bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500" 
+                    />
+                  </div>
+                  <div>
+                    <label class="text-[11px] font-bold text-slate-600">Email</label>
+                    <input 
+                      v-model="person.email" 
+                      placeholder="cuongpq.sokhcn@laichau.gov.vn" 
+                      class="w-full text-xs font-semibold bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500" 
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
@@ -235,15 +314,78 @@
       </div>
     </div>
 
+    <!-- Contact Persons Detail View Modal -->
+    <div v-if="isContactModalOpen" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-2xl w-full p-6 space-y-4 font-sans max-h-[85vh] flex flex-col">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3 shrink-0">
+          <div class="flex items-center gap-2 text-slate-800">
+            <span class="p-2 bg-blue-50 text-blue-600 rounded-xl font-bold">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
+            </span>
+            <div>
+              <h3 class="text-base font-extrabold text-slate-900">Danh Sách Cán Bộ Đầu Mối</h3>
+              <p class="text-xs text-blue-700 font-bold mt-0.5">{{ selectedAgencyForContacts?.name }}</p>
+            </div>
+          </div>
+          <button @click="isContactModalOpen = false" class="text-slate-400 hover:text-slate-600 font-bold text-lg cursor-pointer">✕</button>
+        </div>
+
+        <div class="space-y-3 overflow-y-auto pr-1 flex-1">
+          <div 
+            v-for="(cp, idx) in (selectedAgencyForContacts?.contactPersons || [])" 
+            :key="idx"
+            class="bg-slate-50/80 p-3.5 rounded-xl border border-slate-200/80 space-y-2"
+          >
+            <div class="flex items-center justify-between border-b border-slate-200/60 pb-1.5">
+              <div class="flex items-center gap-2">
+                <span class="w-5 h-5 rounded-full bg-blue-600 text-white font-extrabold text-[11px] flex items-center justify-center shrink-0">{{ idx + 1 }}</span>
+                <span class="text-xs font-extrabold text-slate-900">{{ cp.name }}</span>
+              </div>
+              <span v-if="cp.position" class="px-2 py-0.5 bg-blue-100 text-blue-800 text-[10px] font-bold rounded-full">{{ cp.position }}</span>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-semibold text-slate-700">
+              <div v-if="cp.department" class="flex items-center gap-1.5">
+                <span class="text-slate-400">🏢 Phòng ban:</span>
+                <span class="font-bold text-slate-800">{{ cp.department }}</span>
+              </div>
+              <div v-if="cp.phone" class="flex items-center gap-1.5">
+                <span class="text-slate-400">📞 Điện thoại:</span>
+                <span class="font-bold text-blue-700">{{ cp.phone }}</span>
+              </div>
+              <div v-if="cp.email" class="flex items-center gap-1.5 col-span-1 sm:col-span-2">
+                <span class="text-slate-400">✉️ Email:</span>
+                <span class="font-bold text-slate-800">{{ cp.email }}</span>
+              </div>
+            </div>
+          </div>
+
+          <div v-if="!selectedAgencyForContacts?.contactPersons || selectedAgencyForContacts.contactPersons.length === 0" class="text-center py-8 text-slate-400 font-semibold italic">
+            Chưa có thông tin cán bộ đầu mối liên hệ cho cơ quan này.
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between border-t border-slate-100 pt-3 shrink-0">
+          <button @click="openEditModal(selectedAgencyForContacts); isContactModalOpen = false;" class="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs rounded-xl transition border border-blue-200 cursor-pointer">
+            ✏️ Chỉnh sửa cán bộ đầu mối
+          </button>
+          <button @click="isContactModalOpen = false" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl cursor-pointer">
+            Đóng
+          </button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import SearchableSelect from './SearchableSelect.vue';
 import { toast } from 'vue3-toastify';
 import LoadingSpinner from './LoadingSpinner.vue';
 import { getApiUrl } from '../config/api';
+import { confirmModal } from '../services/confirm';
 
 const rawAgenciesList = ref([]);
 const allParentOptions = ref([]);
@@ -253,13 +395,14 @@ const pageSizeOptions = ref([10, 25, 50, 100].map(n => ({ value: n, label: Strin
 
 const agencyTypeOptions = ref([
   { value: 1, label: 'Bộ / Ngành' },
-  { value: 2, label: 'Tỉnh / Thành phố' },
-  { value: 3, label: 'Đơn vị nội bộ / Trực thuộc (Cục, Sở, Trung tâm)' },
-  { value: 4, label: 'Khác' }
+  { value: 2, label: 'Tỉnh / Thành phố' }
 ]);
 
 const parentAgencyOptions = computed(() => {
-  return allParentOptions.value.map(p => ({ value: p.id, label: `${p.name} (${p.code})` }));
+  // Enforce 2 levels max: Only root agencies (parentId == null) can be selected as a parent agency
+  return allParentOptions.value
+    .filter(p => !p.parentId && p.id !== editingId.value && p.code !== 'ALL_AGENCIES')
+    .map(p => ({ value: p.id, label: p.name }));
 });
 
 const searchDraft = ref('');
@@ -276,15 +419,54 @@ const isEditing = ref(false);
 const editingId = ref(null);
 const editingUsedCount = ref(0);
 
-const form = ref({ code: '', name: '', parentId: null, type: 1 });
+const isContactModalOpen = ref(false);
+const selectedAgencyForContacts = ref(null);
+
+function openContactPersonsModal(agency) {
+  selectedAgencyForContacts.value = agency;
+  isContactModalOpen.value = true;
+}
+
+const form = ref({ code: '', name: '', parentId: null, type: 1, contactPersons: [] });
+
+function formatContactPerson(cp) {
+  if (!cp) return '';
+  const parts = [cp.name, cp.position, cp.department, cp.phone, cp.email].filter(p => p && String(p).trim().length > 0);
+  return parts.join(' - ');
+}
+
+function addContactPerson() {
+  if (!form.value.contactPersons) form.value.contactPersons = [];
+  form.value.contactPersons.push({ name: '', position: '', department: '', phone: '', email: '' });
+}
+
+function removeContactPerson(index) {
+  if (form.value.contactPersons && index >= 0 && index < form.value.contactPersons.length) {
+    form.value.contactPersons.splice(index, 1);
+  }
+}
+
+let agencyFetchRequestId = 0;
+let agencySearchDebounceTimer = null;
 
 function execSearch() {
+  if (agencySearchDebounceTimer) clearTimeout(agencySearchDebounceTimer);
+  agencyFetchRequestId++;
   searchQuery.value = searchDraft.value;
   pageNumber.value = 1;
   fetchAgencies();
 }
 
+watch(searchDraft, () => {
+  if (agencySearchDebounceTimer) clearTimeout(agencySearchDebounceTimer);
+  agencySearchDebounceTimer = setTimeout(() => {
+    execSearch();
+  }, 300);
+});
+
 function resetSearch() {
+  if (agencySearchDebounceTimer) clearTimeout(agencySearchDebounceTimer);
+  agencyFetchRequestId++;
   searchDraft.value = '';
   searchQuery.value = '';
   pageNumber.value = 1;
@@ -297,17 +479,24 @@ function changePage(newPage) {
   fetchAgencies();
 }
 
-function getTypeLabel(type) {
+function getTypeLabel(row) {
+  if (typeof row === 'object' && row !== null) {
+    if (row.parentId) return 'Đơn vị trực thuộc';
+    const type = row.type;
+    if (type === 1 || type === '1' || type === 'Ministry') return 'Bộ / Ngành';
+    if (type === 2 || type === '2' || type === 'Province') return 'Tỉnh / TP';
+    return 'Bộ / Ngành';
+  }
   const map = { 
     1: 'Bộ / Ngành', 'Ministry': 'Bộ / Ngành', '1': 'Bộ / Ngành',
     2: 'Tỉnh / TP', 'Province': 'Tỉnh / TP', '2': 'Tỉnh / TP',
-    3: 'Trực thuộc / Nội bộ', 'Internal': 'Trực thuộc / Nội bộ', '3': 'Trực thuộc / Nội bộ',
-    4: 'Khác', 'Other': 'Khác', '4': 'Khác'
+    3: 'Đơn vị trực thuộc', 'Internal': 'Đơn vị trực thuộc', '3': 'Đơn vị trực thuộc'
   };
-  return map[type] || type || 'Khác';
+  return map[row] || 'Bộ / Ngành';
 }
 
-function getTypeBadgeClass(type) {
+function getTypeBadgeClass(row) {
+  const type = (typeof row === 'object' && row !== null && row.parentId) ? 3 : (typeof row === 'object' ? row.type : row);
   if (type === 1 || type === '1' || type === 'Ministry') return 'bg-purple-50 text-purple-700 border border-purple-100';
   if (type === 2 || type === '2' || type === 'Province') return 'bg-blue-50 text-blue-700 border border-blue-100';
   if (type === 3 || type === '3' || type === 'Internal') return 'bg-emerald-50 text-emerald-700 border border-emerald-100';
@@ -321,6 +510,7 @@ function toggleExpand(agencyId) {
     expandedNodes.value.add(agencyId);
   }
 }
+const toggleNode = toggleExpand;
 
 function expandAll() {
   const set = new Set();
@@ -334,21 +524,8 @@ function collapseAll() {
 
 // Build Tree Hierarchy Structure & Flattened Visible Rows
 const visibleTreeRows = computed(() => {
-  const list = rawAgenciesList.value || [];
-  let filtered = list;
-
-  if (searchQuery.value.trim()) {
-    const q = searchQuery.value.trim().toLowerCase();
-    filtered = list.filter(a => a.code.toLowerCase().includes(q) || a.name.toLowerCase().includes(q));
-    // When searching, display flat matching list
-    return filtered.map(a => ({
-      ...a,
-      level: 0,
-      hasChildren: false,
-      children: []
-    }));
-  }
-
+  const list = (rawAgenciesList.value || []).filter(a => a.code !== 'ALL_AGENCIES');
+  
   // Group by ParentId
   const agencyMap = new Map();
   list.forEach(a => agencyMap.set(a.id, { ...a, children: [] }));
@@ -362,23 +539,57 @@ const visibleTreeRows = computed(() => {
     }
   });
 
+  if (searchQuery.value.trim()) {
+    const q = searchQuery.value.trim().toLowerCase();
+    const matchingRoots = roots.filter(r => {
+      const matchParent = r.name.toLowerCase().includes(q) || (r.code && r.code.toLowerCase().includes(q));
+      const matchChild = r.children.some(c => c.name.toLowerCase().includes(q) || (c.code && c.code.toLowerCase().includes(q)));
+      return matchParent || matchChild;
+    });
+
+    totalCount.value = matchingRoots.length;
+    totalPages.value = Math.max(1, Math.ceil(matchingRoots.length / pageSize.value));
+    const pagedRoots = matchingRoots.slice((pageNumber.value - 1) * pageSize.value, pageNumber.value * pageSize.value);
+
+    const result = [];
+    pagedRoots.forEach(r => {
+      const matchParent = r.name.toLowerCase().includes(q) || (r.code && r.code.toLowerCase().includes(q));
+      const childrenToShow = matchParent 
+        ? r.children 
+        : r.children.filter(c => c.name.toLowerCase().includes(q) || (c.code && c.code.toLowerCase().includes(q)));
+
+      const hasChildren = r.children && r.children.length > 0;
+      result.push({ ...r, level: 0, hasChildren });
+      if (hasChildren && (expandedNodes.value.has(r.id) || matchParent || childrenToShow.length > 0)) {
+        childrenToShow.forEach(c => {
+          result.push({ ...c, level: 1, hasChildren: false });
+        });
+      }
+    });
+    return result;
+  }
+
+  totalCount.value = roots.length;
+  totalPages.value = Math.max(1, Math.ceil(roots.length / pageSize.value));
+  const pagedRoots = roots.slice((pageNumber.value - 1) * pageSize.value, pageNumber.value * pageSize.value);
+
   const result = [];
   function traverse(nodes, level = 0) {
     nodes.forEach(node => {
-      const hasChildren = node.children && node.children.length > 0;
+      const hasChildren = level === 0 && node.children && node.children.length > 0;
       result.push({
         ...node,
         level,
         hasChildren
       });
 
-      if (hasChildren && expandedNodes.value.has(node.id)) {
+      if (hasChildren && level === 0 && expandedNodes.value.has(node.id)) {
         traverse(node.children, level + 1);
       }
     });
   }
 
-  traverse(roots);
+  traverse(pagedRoots);
   return result;
 });
 
@@ -386,7 +597,13 @@ function openCreateModal(parentAgencyId = null) {
   isEditing.value = false;
   editingId.value = null;
   editingUsedCount.value = 0;
-  form.value = { code: '', name: '', parentId: parentAgencyId, type: parentAgencyId ? 3 : 1 };
+  form.value = { 
+    code: '', 
+    name: '', 
+    parentId: parentAgencyId, 
+    type: parentAgencyId ? 3 : 1,
+    contactPersons: [] 
+  };
   isModalOpen.value = true;
 }
 
@@ -405,17 +622,19 @@ function openEditModal(agency) {
     code: agency.code, 
     name: agency.name, 
     parentId: agency.parentId || null,
-    type: mappedType 
+    type: mappedType,
+    contactPersons: Array.isArray(agency.contactPersons) 
+      ? JSON.parse(JSON.stringify(agency.contactPersons)) 
+      : []
   };
   isModalOpen.value = true;
 }
 
 async function fetchAgencies() {
+  const currentRequestId = ++agencyFetchRequestId;
   isLoading.value = true;
   try {
     const url = new URL(getApiUrl('/api/agencies'));
-    url.searchParams.append('pageNumber', pageNumber.value);
-    url.searchParams.append('pageSize', pageSize.value);
     if (searchQuery.value.trim()) {
       url.searchParams.append('search', searchQuery.value.trim());
     }
@@ -423,29 +642,24 @@ async function fetchAgencies() {
     const res = await fetch(url);
     if (res.ok) {
       const data = await res.json();
-      if (data.items) {
-        rawAgenciesList.value = data.items;
-        totalCount.value = data.totalCount || 0;
-        pageNumber.value = data.pageNumber || 1;
-        pageSize.value = data.pageSize || 10;
-        totalPages.value = data.totalPages || 1;
-      } else {
-        rawAgenciesList.value = Array.isArray(data) ? data : [];
-        totalCount.value = rawAgenciesList.value.length;
-        totalPages.value = 1;
-      }
+      if (currentRequestId !== agencyFetchRequestId) return;
+      const allItems = Array.isArray(data) ? data : (data.items || []);
+      rawAgenciesList.value = allItems;
 
       // Expand all root nodes by default
       const defaultExpanded = new Set();
-      rawAgenciesList.value.forEach(a => {
+      allItems.forEach(a => {
         if (!a.parentId) defaultExpanded.add(a.id);
       });
       expandedNodes.value = defaultExpanded;
     }
   } catch (e) {
+    if (currentRequestId !== agencyFetchRequestId) return;
     console.error('Error fetching agencies:', e);
   } finally {
-    isLoading.value = false;
+    if (currentRequestId === agencyFetchRequestId) {
+      isLoading.value = false;
+    }
   }
 }
 
@@ -463,11 +677,25 @@ async function fetchAllParentOptions() {
 
 async function saveAgency() {
   try {
+    const cleanedContacts = (form.value.contactPersons || [])
+      .filter(cp => cp.name || cp.position || cp.department || cp.phone || cp.email)
+      .map(cp => ({
+        name: cp.name || '',
+        position: cp.position || '',
+        department: cp.department || '',
+        phone: cp.phone || '',
+        email: cp.email || ''
+      }));
+
+    const isSubAgency = !!form.value.parentId;
+    const finalType = isSubAgency ? 3 : Number(form.value.type || 1);
+
     const payload = {
-      code: form.value.code,
+      code: form.value.code || form.value.name || '',
       name: form.value.name,
       parentId: form.value.parentId || null,
-      type: Number(form.value.type),
+      type: finalType,
+      contactPersons: cleanedContacts,
       isActive: true
     };
 
@@ -505,7 +733,15 @@ async function deleteAgency(agency) {
     return;
   }
 
-  if (confirm(`Bạn có chắc chắn muốn xóa cơ quan "${agency.name}"?`)) {
+  const confirmed = await confirmModal({
+    title: 'Xóa cơ quan / đơn vị',
+    message: `Bạn có chắc chắn muốn xóa cơ quan "${agency.name}"? Thao tác này không thể hoàn tác.`,
+    confirmText: 'Xóa cơ quan',
+    cancelText: 'Hủy bỏ',
+    type: 'danger'
+  });
+
+  if (confirmed) {
     try {
       const res = await fetch(getApiUrl(`/api/agencies/${agency.id}`), { method: 'DELETE' });
       if (res.ok) {

@@ -1,24 +1,29 @@
 <template>
-  <div class="min-h-screen bg-slate-100 text-slate-900 font-sans flex flex-col antialiased">
+  <div class="h-screen w-screen bg-slate-100 text-slate-900 font-sans flex flex-col antialiased overflow-hidden">
+    <!-- Global Confirmation Modal -->
+    <ConfirmModal />
+
     <!-- LOGIN VIEW (UNAUTHENTICATED SCREEN) -->
     <LoginView v-if="!authState.isLoggedIn.value" @loggedIn="onLoggedIn" />
 
     <!-- MAIN SYSTEM INTERFACE (AUTHENTICATED SCREEN WITH LEFT SIDEBAR) -->
-    <div v-else class="flex flex-1 h-screen overflow-hidden w-full">
+    <div v-else class="flex flex-1 h-full w-full overflow-hidden">
       
       <!-- Collapsible Left Navigation Sidebar -->
       <AppSidebar 
         :activeTab="currentTab" 
         @navigate="switchTab" 
+        class="shrink-0 h-full sticky top-0 z-40"
       />
 
       <!-- Main Content Area -->
-      <div class="flex-1 flex flex-col h-full overflow-hidden bg-slate-100">
+      <div class="flex-1 flex flex-col h-full overflow-hidden bg-slate-100 min-w-0">
         
         <!-- Fixed Top Header -->
         <AppHeader 
           :user="authState.user.value" 
           @logout="handleLogout" 
+          class="shrink-0 sticky top-0 z-30"
         />
 
         <!-- Scrollable Dynamic View Content -->
@@ -41,13 +46,14 @@
           <DocumentDetailView 
             v-else-if="['tasks', 'tasks-list', 'tasks-grid'].includes(currentTab)" 
             filterItemType="Task"
-            :subTab="currentTab === 'tasks-grid' ? 'grid' : 'list'"
+            subTab="list"
           />
 
           <!-- Báo cáo - Xuất Excel (Executive Reports Center) -->
           <ExecutiveReportsView v-else-if="currentTab === 'reports'" />
 
           <!-- Thiết lập chung (Submenus) -->
+          <MasterDataView v-else-if="['settings', 'master-data'].includes(currentTab)" />
           <AgencyManagement v-else-if="currentTab === 'agencies'" />
           <UnitManagement v-else-if="currentTab === 'units'" />
           <UserManagementView v-else-if="currentTab === 'users'" />
@@ -68,10 +74,12 @@ import AppHeader from './components/AppHeader.vue';
 import ExecutiveDashboard from './views/ExecutiveDashboard.vue';
 import DocumentDetailView from './views/DocumentDetailView.vue';
 import ExecutiveReportsView from './views/ExecutiveReportsView.vue';
+import MasterDataView from './views/MasterDataView.vue';
 import AgencyManagement from './components/AgencyManagement.vue';
 import UnitManagement from './components/UnitManagement.vue';
 import UserManagementView from './views/UserManagementView.vue';
 import ImportHistoryAudit from './components/ImportHistoryAudit.vue';
+import ConfirmModal from './components/ConfirmModal.vue';
 import { authState, logout } from './services/auth';
 
 const currentTab = ref('dashboard');
@@ -90,7 +98,7 @@ function parseHashRoute() {
   const rawPath = hash.replace(/^#\/?/, '');
   const [route] = rawPath.split('?');
 
-  if (['goals', 'goals-list', 'goals-grid', 'tasks', 'tasks-list', 'tasks-grid', 'reports', 'agencies', 'units', 'users', 'import-history'].includes(route)) {
+  if (['goals', 'goals-list', 'goals-grid', 'tasks', 'tasks-list', 'tasks-grid', 'reports', 'agencies', 'units', 'users', 'import-history', 'settings', 'master-data'].includes(route)) {
     currentTab.value = route;
   } else {
     currentTab.value = 'dashboard';

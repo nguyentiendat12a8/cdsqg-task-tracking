@@ -14,7 +14,7 @@
         <button 
           @click="exportExcel" 
           class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs"
-          title="Xuất bảng này ra file Excel (.xlsx)"
+          title="Xuất bảng này ra file Excel"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           Xuất Excel
@@ -34,47 +34,45 @@
     <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden w-full flex flex-col">
       
       <!-- 1. Top Header: Search & Filter Bar -->
-      <div class="p-4 border-b border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center gap-3 bg-white">
-        <div>
-          <SearchableSelect 
-            v-model="selectedCategoryDraft" 
-            :options="importCategoryOptions" 
-            :isMulti="false" 
-            label="Phân Loại Dữ Liệu" 
-            placeholder="Tất Cả Phân Loại Dữ Liệu"
-            class="min-w-[200px]"
-          />
-        </div>
+      <div class="p-3 border-b border-slate-200/80 bg-slate-50/60 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full">
+        <div class="flex items-center gap-2 flex-1 max-w-xl">
+          <!-- Keyword Search Input -->
+          <div class="relative flex-1">
+            <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input 
+              :value="searchQueryDraft" 
+              @input="searchQueryDraft = $event.target.value"
+              placeholder="Tìm tên file, loại nạp, người thực hiện, ghi chú..." 
+              class="w-full text-xs font-semibold pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none h-[34px]"
+            />
+          </div>
 
-        <!-- Keyword Search Input -->
-        <div class="relative flex-1">
-          <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-          <input 
-            v-model="searchQueryDraft" 
-            @keyup.enter="execSearch"
-            placeholder="Tìm tên file, loại nạp, người thực hiện, ghi chú..." 
-            class="w-full text-xs font-semibold pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-xs"
-          />
-        </div>
-
-        <!-- Action Buttons -->
-        <div class="flex items-center gap-2 shrink-0">
-          <button 
-            @click="execSearch" 
-            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5"
+          <!-- OverlayPanel Advanced Filter Popover -->
+          <OverlayPanel
+            title="Lọc Nhật Ký Nạp File"
+            buttonText="Lọc Nâng Cao"
+            :activeCount="activeFilterCount"
+            widthClass="w-[320px] sm:w-[420px]"
+            @apply="execSearch"
+            @reset="resetSearch"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            <span>Tìm Kiếm</span>
-          </button>
-
-          <button 
-            @click="resetSearch" 
-            class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition"
-            title="Đặt lại bộ lọc"
-          >
-            ↺
-          </button>
+            <div class="space-y-3">
+              <div>
+                <SearchableSelect 
+                  v-model="selectedCategoryDraft" 
+                  :options="importCategoryOptions" 
+                  :isMulti="false" 
+                  label="Phân Loại Dữ Liệu"
+                  placeholder="Tất Cả Phân Loại Dữ Liệu"
+                />
+              </div>
+            </div>
+          </OverlayPanel>
         </div>
+
+        <span class="text-xs font-bold text-slate-500 shrink-0">
+          Tổng số {{ totalCount }} nhật ký nạp file
+        </span>
       </div>
 
       <!-- 2. Middle Body: Table Section -->
@@ -218,11 +216,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, computed, watch, onMounted } from 'vue';
 import SearchableSelect from './SearchableSelect.vue';
-import { toast } from 'vue3-toastify';
-import * as XLSX from 'xlsx';
+import { exportToExcel } from '../utils/excelExport';
 import LoadingSpinner from './LoadingSpinner.vue';
+import OverlayPanel from './OverlayPanel.vue';
 import { getApiUrl } from '../config/api';
 
 const importCategoryOptions = ref([
@@ -242,6 +240,12 @@ const appliedSearchQuery = ref('');
 
 const selectedCategoryDraft = ref('');
 const appliedCategory = ref('');
+
+const activeFilterCount = computed(() => {
+  let count = 0;
+  if (selectedCategoryDraft.value) count++;
+  return count;
+});
 
 const currentPage = ref(1);
 const pageSize = ref(10);
@@ -354,7 +358,12 @@ function saveState() {
   }
 }
 
+let importFetchRequestId = 0;
+let importSearchDebounceTimer = null;
+
 function execSearch() {
+  if (importSearchDebounceTimer) clearTimeout(importSearchDebounceTimer);
+  importFetchRequestId++;
   appliedSearchQuery.value = searchQueryDraft.value;
   appliedCategory.value = selectedCategoryDraft.value;
   currentPage.value = 1;
@@ -362,7 +371,16 @@ function execSearch() {
   loadImportHistory();
 }
 
+watch(searchQueryDraft, () => {
+  if (importSearchDebounceTimer) clearTimeout(importSearchDebounceTimer);
+  importSearchDebounceTimer = setTimeout(() => {
+    execSearch();
+  }, 300);
+});
+
 function resetSearch() {
+  if (importSearchDebounceTimer) clearTimeout(importSearchDebounceTimer);
+  importFetchRequestId++;
   searchQueryDraft.value = '';
   appliedSearchQuery.value = '';
   selectedCategoryDraft.value = '';
@@ -377,25 +395,13 @@ function resetSearch() {
 }
 
 function exportExcel() {
-  if (!logs.value || logs.value.length === 0) {
-    toast.warning("Không có dữ liệu lịch sử nạp để xuất Excel!");
-    return;
-  }
+  const headers = ["STT", "Tên File Dữ Liệu Thực Tế", "Phân Loại Dữ Liệu", "Định Dạng", "Người Thực Hiện", "Thời Gian Nạp", "Mục Tiêu Tạo", "Nhiệm Vụ Tạo", "Trạng Thái", "Ghi Chú Chi Tiết"];
+  const minColWidths = { 0: 8, 1: 45, 2: 25, 3: 12, 4: 20, 5: 20, 6: 15, 7: 15, 8: 18, 9: 50 };
 
-  const now = new Date();
-  const timeStr = `${now.toLocaleDateString('vi-VN')} ${now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
-
-  const data = [
-    ["THỐNG KÊ LỊCH SỬ NẠP DỮ LIỆU FILE HỆ THỐNG"],
-    [`Thời gian xuất báo cáo: ${timeStr}`],
-    [],
-    ["STT", "Tên File Dữ Liệu Thực Tế", "Phân Loại Dữ Liệu", "Định Dạng", "Người Thực Hiện", "Thời Gian Nạp", "Mục Tiêu Tạo", "Nhiệm Vụ Tạo", "Trạng Thái", "Ghi Chú Chi Tiết"]
-  ];
-
-  logs.value.forEach((log, idx) => {
+  const rows = logs.value.map((log, idx) => {
     const cleanFiles = parseCleanFileList(log).map(f => f.cleanName).join("; ");
-    data.push([
-      (currentPage.value - 1) * pageSize.value + idx + 1,
+    return [
+      idx + 1,
       cleanFiles || log.fileName || '',
       getCategoryLabel(log.category || log.fileType),
       log.fileType || 'JSON',
@@ -405,31 +411,17 @@ function exportExcel() {
       log.totalTasksCreated || 0,
       log.status || '',
       log.summaryNotes || ''
-    ]);
+    ];
   });
 
-  const ws = XLSX.utils.aoa_to_sheet(data);
-
-  const colWidths = data[3].map((hdr, colIdx) => {
-    let maxLen = hdr ? hdr.toString().length : 10;
-    for (let r = 4; r < data.length; r++) {
-      const cellVal = data[r][colIdx] !== undefined && data[r][colIdx] !== null ? data[r][colIdx].toString() : '';
-      if (cellVal.length > maxLen) maxLen = cellVal.length;
-    }
-    return Math.max(maxLen + 4, 12);
+  exportToExcel({
+    title: "THỐNG KÊ LỊCH SỬ NẠP DỮ LIỆU FILE HỆ THỐNG",
+    headers,
+    rows,
+    fileName: "Thong_Ke_Lich_Su_Nap_Du_Lieu",
+    sheetName: "Lịch sử nạp dữ liệu",
+    minColWidths
   });
-
-  if (colWidths[1] < 45) colWidths[1] = 45;
-  if (colWidths[9] < 50) colWidths[9] = 50;
-
-  ws['!cols'] = colWidths.map(w => ({ wch: w }));
-
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Lịch sử nạp dữ liệu");
-
-  const dateFileStr = now.toISOString().slice(0, 10);
-  XLSX.writeFile(wb, `Thong_ke_lich_su_nap_du_lieu_${dateFileStr}.xlsx`);
-  toast.success("Đã xuất file Excel (.xlsx) thành công!");
 }
 
 function changePage(newPage) {
@@ -449,6 +441,7 @@ function formatDate(dateStr) {
 }
 
 async function loadImportHistory() {
+  const currentRequestId = ++importFetchRequestId;
   isLoading.value = true;
   try {
     const url = new URL(getApiUrl('/api/documents/import-history'));
@@ -464,6 +457,7 @@ async function loadImportHistory() {
     const res = await fetch(url);
     if (res.ok) {
       const data = await res.json();
+      if (currentRequestId !== importFetchRequestId) return;
       if (data.items) {
         logs.value = data.items;
         totalCount.value = data.totalCount || data.items.length;
@@ -477,9 +471,12 @@ async function loadImportHistory() {
       }
     }
   } catch (e) {
+    if (currentRequestId !== importFetchRequestId) return;
     console.error('Failed to load import history:', e);
   } finally {
-    isLoading.value = false;
+    if (currentRequestId === importFetchRequestId) {
+      isLoading.value = false;
+    }
   }
 }
 

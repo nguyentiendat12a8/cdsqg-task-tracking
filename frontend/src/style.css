@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+html, body, #app {
+  height: 100%;
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
 /* Custom FloatingVue Dark Tooltip Theme */
 .v-popper--theme-custom-dark .v-popper__inner {
   background: rgba(15, 23, 42, 0.96) !important;
@@ -16,6 +24,28 @@
 
 .v-popper--theme-custom-dark .v-popper__arrow-inner {
   border-color: rgba(15, 23, 42, 0.96) !important;
+}
+
+/* Custom Clean FloatingVue Overlay Panel (Filter Popovers) */
+.v-popper-clean-overlay.v-popper__popper {
+  outline: none !important;
+}
+
+.v-popper-clean-overlay .v-popper__inner {
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+  outline: none !important;
+}
+
+.v-popper-clean-overlay .v-popper__arrow-container,
+.v-popper-clean-overlay .v-popper__arrow-outer,
+.v-popper-clean-overlay .v-popper__arrow-inner {
+  display: none !important;
+  visibility: hidden !important;
+  opacity: 0 !important;
 }
 
 /* Custom Smooth Scrollbar for Fixed Height List Containers */

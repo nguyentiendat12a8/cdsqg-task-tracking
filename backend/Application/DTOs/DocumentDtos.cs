@@ -52,22 +52,6 @@ namespace Cdsqg.Application.DTOs
         public DateTime CreatedAt { get; set; }
     }
 
-    public class CreateGoalTaskItemRequestDto
-    {
-        public Guid DocumentId { get; set; }
-        public string ItemType { get; set; } = "Task"; // "Goal" or "Task"
-        public string Code { get; set; } = string.Empty;
-        public string Title { get; set; } = string.Empty;
-        public string Category { get; set; } = string.Empty;
-        public Guid LeadAgencyId { get; set; }
-        public List<Guid> CoordinatingAgencyIds { get; set; } = new List<Guid>();
-        public Guid? UnitId { get; set; }
-        public string EvaluationType { get; set; } = "Quantitative"; // "Quantitative" or "Qualitative"
-        public string CalculationMethod { get; set; } = "LatestValue";
-        public Dictionary<int, decimal>? YearlyTargets { get; set; }
-        public Dictionary<string, string>? CustomBaseline { get; set; }
-    }
-
     public class PagedResultDto<T>
     {
         public List<T> Items { get; set; } = new List<T>();

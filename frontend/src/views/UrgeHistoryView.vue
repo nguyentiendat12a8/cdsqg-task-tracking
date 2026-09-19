@@ -17,7 +17,7 @@
         <button 
           @click="exportExcel"
           class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs"
-          title="Xuất lịch sử thông báo ra file Excel (.xlsx)"
+          title="Xuất lịch sử thông báo ra file Excel"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           Xuất Excel
@@ -69,78 +69,57 @@
     <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden w-full flex flex-col">
       
       <!-- 1. Top Header: Search & Advanced Filter Bar -->
-      <div class="p-5 border-b border-slate-200/80 space-y-4 bg-white">
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="p-3 border-b border-slate-200/80 bg-slate-50/60 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full">
+        <div class="flex items-center gap-2 flex-1 max-w-xl">
           <!-- Text Search Input -->
-          <div>
-            <label class="text-[11px] font-extrabold text-slate-500 uppercase block mb-1">Từ Khóa Tìm Kiếm</label>
-            <div class="relative">
-              <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-              <input 
-                v-model="searchQueryDraft" 
-                @keyup.enter="execSearch"
-                placeholder="Mã, tên nhiệm vụ, nội dung..." 
-                class="w-full text-xs font-semibold pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-rose-500 focus:outline-none"
-              />
+          <div class="relative flex-1">
+            <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+            <input 
+              :value="searchQueryDraft" 
+              @input="searchQueryDraft = $event.target.value"
+              placeholder="Tìm theo mã, tên nhiệm vụ, nội dung..." 
+              class="w-full text-xs font-semibold pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-500 focus:outline-none h-[34px]"
+            />
+          </div>
+
+          <!-- OverlayPanel Advanced Filter Popover -->
+          <OverlayPanel
+            title="Lọc Lịch Sử Thông Báo"
+            buttonText="Lọc Nâng Cao"
+            :activeCount="activeFilterCount"
+            widthClass="w-[340px] sm:w-[460px]"
+            @apply="execSearch"
+            @reset="resetSearch"
+          >
+            <div class="space-y-3">
+              <div>
+                <SearchableSelect 
+                  v-model="selectedAgencyIds" 
+                  :options="agencyOptions" 
+                  :isMulti="true" 
+                  label="Cơ Quan Nhận Thông Báo" 
+                  placeholder="Tất cả cơ quan / Bộ ngành"
+                />
+              </div>
+
+              <div>
+                <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1">Khoảng Thời Gian Gửi</label>
+                <div class="grid grid-cols-2 gap-2">
+                  <div>
+                    <label class="text-[10px] font-bold text-slate-400 block mb-0.5">Từ ngày</label>
+                    <DatePicker v-model="fromDate" placeholder="dd/mm/yyyy" />
+                  </div>
+                  <div>
+                    <label class="text-[10px] font-bold text-slate-400 block mb-0.5">Đến ngày</label>
+                    <DatePicker v-model="toDate" placeholder="dd/mm/yyyy" />
+                  </div>
+                </div>
+              </div>
             </div>
-          </div>
-
-          <!-- Agency Selector Dropdown -->
-          <div>
-            <SearchableSelect 
-              v-model="selectedAgencyIds" 
-              :options="agencyOptions" 
-              :isMulti="true" 
-              label="Cơ Quan Nhận Thông Báo" 
-              placeholder="Tất cả cơ quan / Bộ ngành"
-            />
-          </div>
-
-          <!-- From Date -->
-          <div>
-            <label class="text-[11px] font-extrabold text-slate-500 uppercase block mb-1">Từ Ngày Gửi</label>
-            <input 
-              type="date" 
-              v-model="fromDate" 
-              class="w-full text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:bg-white focus:ring-2 focus:ring-rose-500 focus:outline-none"
-            />
-          </div>
-
-          <!-- To Date -->
-          <div>
-            <label class="text-[11px] font-extrabold text-slate-500 uppercase block mb-1">Đến Ngày Gửi</label>
-            <input 
-              type="date" 
-              v-model="toDate" 
-              class="w-full text-xs font-bold bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:bg-white focus:ring-2 focus:ring-rose-500 focus:outline-none"
-            />
-          </div>
-        </div>
-
-        <!-- Filter Action Buttons & Counter Row -->
-        <div class="flex flex-col sm:flex-row items-center justify-between gap-3 pt-3 border-t border-slate-100">
-          <div class="flex items-center gap-2">
-            <button 
-              @click="execSearch" 
-              class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center gap-1.5 cursor-pointer"
-            >
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-              <span>Tìm Kiếm & Lọc Nâng Cao</span>
-            </button>
-
-            <button 
-              @click="resetSearch" 
-              class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-1"
-              title="Đặt lại tất cả bộ lọc"
-            >
-              ↺ Đặt Lại Bộ Lọc
-            </button>
-          </div>
-
-          <span class="text-xs font-semibold text-slate-500">
-            Hiển thị: <span class="text-slate-900 font-bold">{{ logs.length }}</span> / {{ totalCount }} văn bản thông báo
-          </span>
-        </div>
+          </OverlayPanel>
+        <span class="text-xs font-bold text-slate-500 shrink-0">
+          Hiển thị {{ logs.length }} / {{ totalCount }} nhật ký thông báo
+        </span>
       </div>
 
       <!-- 2. Middle Body: Main Urge Logs List Table -->
@@ -249,10 +228,11 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import SearchableSelect from '../components/SearchableSelect.vue';
-import { toast } from 'vue3-toastify';
-import * as XLSX from 'xlsx';
+import { exportToExcel } from '../utils/excelExport';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
 import UrgeDetailModal from '../components/UrgeDetailModal.vue';
+import OverlayPanel from '../components/OverlayPanel.vue';
+import DatePicker from '../components/DatePicker.vue';
 import { getApiUrl } from '../config/api';
 
 const STORAGE_KEY = 'cdsqg_urge_history_query';
@@ -267,15 +247,18 @@ const appliedSearchQuery = ref('');
 const selectedAgencyIds = ref([]);
 const appliedAgencyIds = ref([]);
 
-const agencyOptions = computed(() => {
-  return agencies.value.map(ag => ({ value: ag.id, label: `${ag.code} - ${ag.name}` }));
-});
-
 const fromDate = ref('');
 const appliedFromDate = ref('');
 
 const toDate = ref('');
 const appliedToDate = ref('');
+
+const activeFilterCount = computed(() => {
+  let count = 0;
+  if (selectedAgencyIds.value?.length) count++;
+  if (fromDate.value || toDate.value) count++;
+  return count;
+});
 
 const currentPage = ref(1);
 const pageSize = ref(10);
@@ -324,7 +307,12 @@ async function loadAgencies() {
   }
 }
 
+let urgeFetchRequestId = 0;
+let urgeSearchDebounceTimer = null;
+
 function execSearch() {
+  if (urgeSearchDebounceTimer) clearTimeout(urgeSearchDebounceTimer);
+  urgeFetchRequestId++;
   appliedSearchQuery.value = searchQueryDraft.value;
   appliedAgencyIds.value = [...selectedAgencyIds.value];
   appliedFromDate.value = fromDate.value;
@@ -338,7 +326,16 @@ function execSearch() {
   loadLogs();
 }
 
+watch(searchQueryDraft, () => {
+  if (urgeSearchDebounceTimer) clearTimeout(urgeSearchDebounceTimer);
+  urgeSearchDebounceTimer = setTimeout(() => {
+    execSearch();
+  }, 300);
+});
+
 function resetSearch() {
+  if (urgeSearchDebounceTimer) clearTimeout(urgeSearchDebounceTimer);
+  urgeFetchRequestId++;
   searchQueryDraft.value = '';
   appliedSearchQuery.value = '';
   selectedAgencyIds.value = [];
@@ -357,55 +354,27 @@ function resetSearch() {
 }
 
 function exportExcel() {
-  if (!logs.value || logs.value.length === 0) {
-    toast.warning("Không có dữ liệu nhật ký thông báo để xuất Excel!");
-    return;
-  }
+  const headers = ["STT", "Mã Nhiệm Vụ", "Nhiệm Vụ", "Cơ Quan Nhận Thông Báo", "Chỉ Số Dự Báo (%)", "Nội Dung Thông Báo", "Thời Gian Gửi"];
+  const minColWidths = { 0: 8, 1: 15, 2: 45, 3: 28, 4: 18, 5: 50, 6: 20 };
 
-  const now = new Date();
-  const timeStr = `${now.toLocaleDateString('vi-VN')} ${now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+  const rows = logs.value.map((log, idx) => [
+    idx + 1,
+    log.taskCode || '',
+    log.taskTitle || '',
+    log.leadAgencyName || log.leadAgencyCode || 'Chưa xác định',
+    log.forecastValue !== undefined && log.forecastValue !== null ? `${log.forecastValue}%` : '—',
+    log.urgeContent || '',
+    formatDate(log.createdAt)
+  ]);
 
-  const data = [
-    ["BÁO CÁO LỊCH SỬ THÔNG BÁO & CHỈ ĐẠO TIẾN ĐỘ"],
-    [`Thời gian xuất báo cáo: ${timeStr}`],
-    [],
-    ["STT", "Mã Nhiệm Vụ", "Nhiệm Vụ", "Cơ Quan Nhận Thông Báo", "Chỉ Số Dự Báo (%)", "Nội Dung Thông Báo", "Thời Gian Gửi"]
-  ];
-
-  logs.value.forEach((log, idx) => {
-    data.push([
-      (currentPage.value - 1) * pageSize.value + idx + 1,
-      log.taskCode || '',
-      log.taskTitle || '',
-      log.leadAgencyName || log.leadAgencyCode || 'Chưa xác định',
-      log.forecastValue !== undefined && log.forecastValue !== null ? `${log.forecastValue}%` : '—',
-      log.urgeContent || '',
-      formatDate(log.createdAt)
-    ]);
+  exportToExcel({
+    title: "BÁO CÁO LỊCH SỬ THÔNG BÁO & CHỈ ĐẠO TIẾN ĐỘ",
+    headers,
+    rows,
+    fileName: "Lich_Su_Thong_Bao",
+    sheetName: "Lịch sử thông báo",
+    minColWidths
   });
-
-  const ws = XLSX.utils.aoa_to_sheet(data);
-
-  const colWidths = data[3].map((hdr, colIdx) => {
-    let maxLen = hdr ? hdr.toString().length : 10;
-    for (let r = 4; r < data.length; r++) {
-      const cellVal = data[r][colIdx] !== undefined && data[r][colIdx] !== null ? data[r][colIdx].toString() : '';
-      if (cellVal.length > maxLen) maxLen = cellVal.length;
-    }
-    return Math.max(maxLen + 4, 12);
-  });
-
-  if (colWidths[2] < 45) colWidths[2] = 45;
-  if (colWidths[5] < 50) colWidths[5] = 50;
-
-  ws['!cols'] = colWidths.map(w => ({ wch: w }));
-
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Lịch sử thông báo");
-
-  const dateFileStr = now.toISOString().slice(0, 10);
-  XLSX.writeFile(wb, `Lich_su_thong_bao_${dateFileStr}.xlsx`);
-  toast.success("Đã xuất file Excel (.xlsx) thành công!");
 }
 
 function changePage(newPage) {
@@ -462,6 +431,7 @@ async function checkAndOpenLogFromHash() {
 }
 
 async function loadLogs() {
+  const currentRequestId = ++urgeFetchRequestId;
   isLoading.value = true;
   try {
     const url = new URL(getApiUrl('/api/execution/urge-logs'));
@@ -484,6 +454,7 @@ async function loadLogs() {
     const res = await fetch(url);
     if (res.ok) {
       const data = await res.json();
+      if (currentRequestId !== urgeFetchRequestId) return;
       if (data.items) {
         logs.value = data.items;
         totalCount.value = data.totalCount || data.items.length;
@@ -497,10 +468,13 @@ async function loadLogs() {
       }
     }
   } catch (e) {
+    if (currentRequestId !== urgeFetchRequestId) return;
     console.error('Failed to fetch urge logs:', e);
   } finally {
-    isLoading.value = false;
-    checkAndOpenLogFromHash();
+    if (currentRequestId === urgeFetchRequestId) {
+      isLoading.value = false;
+      checkAndOpenLogFromHash();
+    }
   }
 }
 

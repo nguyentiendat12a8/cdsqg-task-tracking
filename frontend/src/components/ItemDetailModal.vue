@@ -3,46 +3,39 @@
     <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-4xl w-full p-6 space-y-4 font-sans max-h-[92vh] flex flex-col">
       
       <!-- Modal Header -->
-      <div class="flex justify-between items-start border-b border-slate-100 pb-3 shrink-0">
-        <div class="flex items-center gap-3">
-          <span class="px-2.5 py-1 bg-blue-600 text-white rounded-lg text-xs font-black shadow-sm">
-            {{ item?.code || 'MÃ' }}
-          </span>
-          <div>
-            <h3 class="text-base font-extrabold text-slate-800 leading-snug">
-              {{ item?.title || 'Chi tiết Mục Tiêu / Nhiệm Vụ' }}
-            </h3>
-            <span class="text-xs text-slate-500 font-semibold">
-              {{ item?.itemType === 'Goal' ? 'Mục Tiêu Chiến Lược' : 'Nhiệm Vụ Thực Hiện' }} - Quyết định 1266/QĐ-TTg
-            </span>
-          </div>
+      <div class="flex justify-between items-center border-b border-slate-100 pb-2.5 shrink-0">
+        <div class="flex items-center gap-2.5">
+          <h3 class="text-sm font-semibold text-slate-700">
+            Chi tiết {{ item?.itemType === 'Goal' ? 'Mục Tiêu' : 'Nhiệm Vụ' }}
+          </h3>
+
         </div>
-        <button @click="close" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1 cursor-pointer">✕</button>
+        <button @click="close" class="text-slate-400 hover:text-slate-600 text-lg font-normal p-1 cursor-pointer">✕</button>
       </div>
 
       <!-- Navigation Tabs -->
       <div class="flex items-center gap-2 border-b border-slate-200 shrink-0">
         <button 
           @click="activeTab = 'info'" 
-          :class="['px-4 py-2 text-xs font-extrabold transition border-b-2 cursor-pointer', activeTab === 'info' ? 'border-blue-600 text-blue-700 bg-blue-50/50 rounded-t-lg' : 'border-transparent text-slate-500 hover:text-slate-800']"
+          :class="['px-4 py-2 text-xs font-semibold transition border-b-2 cursor-pointer', activeTab === 'info' ? 'border-blue-600 text-blue-700 bg-blue-50/50 rounded-t-lg' : 'border-transparent text-slate-500 hover:text-slate-800']"
         >
           📋 Thông Tin Chi Tiết
         </button>
         <button 
           @click="activeTab = 'reports'" 
-          :class="['px-4 py-2 text-xs font-extrabold transition border-b-2 cursor-pointer flex items-center gap-1.5', activeTab === 'reports' ? 'border-blue-600 text-blue-700 bg-blue-50/50 rounded-t-lg' : 'border-transparent text-slate-500 hover:text-slate-800']"
+          :class="['px-4 py-2 text-xs font-semibold transition border-b-2 cursor-pointer flex items-center gap-1.5', activeTab === 'reports' ? 'border-blue-600 text-blue-700 bg-blue-50/50 rounded-t-lg' : 'border-transparent text-slate-500 hover:text-slate-800']"
         >
           <span>📊 Lịch Sử Báo Cáo Tiến Độ</span>
-          <span v-if="reportHistory.length > 0" class="px-1.5 py-0.2 bg-blue-100 text-blue-800 rounded-full text-[10px] font-black">
+          <span v-if="reportHistory.length > 0" class="px-1.5 py-0.2 bg-blue-100 text-blue-800 rounded-full text-[10px] font-bold">
             {{ reportHistory.length }}
           </span>
         </button>
         <button 
           @click="activeTab = 'notifications'" 
-          :class="['px-4 py-2 text-xs font-extrabold transition border-b-2 cursor-pointer flex items-center gap-1.5', activeTab === 'notifications' ? 'border-blue-600 text-blue-700 bg-blue-50/50 rounded-t-lg' : 'border-transparent text-slate-500 hover:text-slate-800']"
+          :class="['px-4 py-2 text-xs font-semibold transition border-b-2 cursor-pointer flex items-center gap-1.5', activeTab === 'notifications' ? 'border-blue-600 text-blue-700 bg-blue-50/50 rounded-t-lg' : 'border-transparent text-slate-500 hover:text-slate-800']"
         >
           <span>🔔 Lịch Sử Gửi Thông Báo</span>
-          <span v-if="notificationHistory.length > 0" class="px-1.5 py-0.2 bg-amber-100 text-amber-800 rounded-full text-[10px] font-black">
+          <span v-if="notificationHistory.length > 0" class="px-1.5 py-0.2 bg-amber-100 text-amber-800 rounded-full text-[10px] font-bold">
             {{ notificationHistory.length }}
           </span>
         </button>
@@ -55,58 +48,90 @@
         <div v-if="activeTab === 'info'" class="space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 bg-slate-50/80 p-4 rounded-2xl border border-slate-200 text-xs">
             <div>
-              <span class="text-slate-400 font-bold uppercase block text-[10px]">Mã Số Nhiệm Vụ</span>
-              <span class="font-extrabold text-blue-800 text-sm">{{ item?.code || '—' }}</span>
+              <span class="text-slate-500 font-semibold uppercase block text-[10px]">Mã Số {{ item?.itemType === 'Goal' ? 'Mục Tiêu' : 'Nhiệm Vụ' }}</span>
+              <span class="font-semibold text-blue-700 text-xs mt-0.5 block">{{ item?.code || '—' }}</span>
             </div>
 
             <div>
-              <span class="text-slate-400 font-bold uppercase block text-[10px]">Phạm Vi Triển Khai</span>
-              <span :class="['px-2.5 py-0.5 rounded-full font-extrabold text-[11px] inline-block mt-0.5', item?.isGeneralTask ? 'bg-purple-100 text-purple-800' : 'bg-slate-200 text-slate-700']">
+              <span class="text-slate-500 font-semibold uppercase block text-[10px]">Phạm Vi Triển Khai</span>
+              <span :class="['px-2.5 py-0.5 rounded-full font-medium text-[11px] inline-block mt-0.5', item?.isGeneralTask ? 'bg-purple-100 text-purple-800' : 'bg-slate-200 text-slate-700']">
                 {{ item?.isGeneralTask ? 'Nhiệm vụ chung' : 'Nhiệm vụ riêng' }}
               </span>
             </div>
 
             <div class="md:col-span-2 border-t border-slate-200/60 pt-2">
-              <span class="text-slate-400 font-bold uppercase block text-[10px]">Tên Chi Tiết</span>
-              <p class="font-bold text-slate-900 text-xs leading-relaxed mt-0.5">{{ item?.title || '—' }}</p>
+              <span class="text-slate-500 font-semibold uppercase block text-[10px]">Tên Chi Tiết</span>
+              <p class="font-normal text-slate-800 text-xs leading-relaxed mt-0.5">{{ item?.title || '—' }}</p>
             </div>
 
             <div class="border-t border-slate-200/60 pt-2">
-              <span class="text-slate-400 font-bold uppercase block text-[10px]">Đơn Vị Chủ Trì</span>
-              <span class="font-extrabold text-slate-800 mt-0.5 block">
+              <span class="text-slate-500 font-semibold uppercase block text-[10px]">Đơn Vị Chủ Trì</span>
+              <span class="font-medium text-slate-800 mt-0.5 block">
                 🏛️ {{ item?.leadAgencyName || '—' }} <span v-if="item?.leadAgencyCode">({{ item.leadAgencyCode }})</span>
               </span>
             </div>
 
             <div class="border-t border-slate-200/60 pt-2">
-              <span class="text-slate-400 font-bold uppercase block text-[10px]">Đơn Vị Phối Hợp</span>
-              <span class="font-extrabold text-slate-800 mt-0.5 block">
+              <span class="text-slate-500 font-semibold uppercase block text-[10px]">Đơn Vị Phối Hợp</span>
+              <span class="font-medium text-slate-800 mt-0.5 block">
                 🤝 {{ coordinatingNamesDisplay }}
               </span>
             </div>
 
             <div v-if="item?.itemType === 'Goal'" class="border-t border-slate-200/60 pt-2">
-              <span class="text-slate-400 font-bold uppercase block text-[10px]">Mục (Phụ Lục QĐ 1266)</span>
-              <span class="font-bold text-slate-800 mt-0.5 block">{{ item?.section || '—' }}</span>
+              <span class="text-slate-500 font-semibold uppercase block text-[10px]">Mục (Phụ Lục QĐ 1266)</span>
+              <span class="font-normal text-slate-800 mt-0.5 block">{{ item?.section || '—' }}</span>
             </div>
 
             <div class="border-t border-slate-200/60 pt-2">
-              <span class="text-slate-400 font-bold uppercase block text-[10px]">Nhóm Trọng Tâm</span>
-              <span class="font-bold text-slate-800 mt-0.5 block">{{ item?.group || '—' }}</span>
+              <span class="text-slate-500 font-semibold uppercase block text-[10px]">Nhóm Trọng Tâm</span>
+              <span class="font-normal text-slate-800 mt-0.5 block">{{ item?.group || '—' }}</span>
             </div>
 
             <div class="border-t border-slate-200/60 pt-2">
-              <span class="text-slate-400 font-bold uppercase block text-[10px]">Thời Gian Thực Hiện</span>
-              <span class="font-bold text-slate-700 mt-0.5 block">
+              <span class="text-slate-500 font-semibold uppercase block text-[10px]">Thời Gian Thực Hiện</span>
+              <span v-if="item?.isOngoing" class="font-medium text-blue-700 mt-0.5 inline-flex items-center gap-1 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200 text-xs">
+                Thường xuyên
+              </span>
+              <span v-else class="font-normal text-slate-700 mt-0.5 block">
                 📅 {{ formatDateRange(item?.startDate, item?.dueDate) }}
               </span>
             </div>
 
             <div class="border-t border-slate-200/60 pt-2">
-              <span class="text-slate-400 font-bold uppercase block text-[10px]">Trạng Thái Hiện Tại</span>
-              <span :class="['px-2.5 py-0.5 rounded-full text-xs font-bold inline-block mt-0.5', getStatusBadgeClass(item?.calculatedStatus)]">
+              <span class="text-slate-500 font-semibold uppercase block text-[10px]">Trạng Thái Hiện Tại</span>
+              <span :class="['px-2.5 py-0.5 rounded-full text-xs font-medium inline-block mt-0.5', getStatusBadgeClass(item?.calculatedStatus)]">
                 {{ getStatusLabel(item?.calculatedStatus) }}
               </span>
+            </div>
+
+            <!-- Multi-Deliverables Checklist Display -->
+            <div v-if="item?.deliverables && item.deliverables.length > 0" class="border-t border-slate-200/80 pt-3 space-y-2">
+              <h4 class="text-xs font-extrabold text-blue-900 uppercase flex items-center gap-1.5">
+                <span>📋 Danh Mục Sản Phẩm Đầu Ra Dự Kiến ({{ item.deliverables.length }} sản phẩm)</span>
+              </h4>
+              <div class="space-y-2">
+                <div 
+                  v-for="(del, idx) in item.deliverables" 
+                  :key="idx" 
+                  class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/80 space-y-1 text-xs"
+                >
+                  <div class="flex items-center justify-between font-bold text-slate-800">
+                    <span class="text-slate-900 font-extrabold">{{ idx + 1 }}. {{ del.title }}</span>
+                    <span :class="['px-2 py-0.5 rounded-full text-[10px] font-black', getDeliverableStatusClass(del.currentStatus)]">
+                      {{ getDeliverableStatusLabel(del.currentStatus) }}
+                    </span>
+                  </div>
+                  <div class="flex flex-wrap items-center gap-3 text-[11px] text-slate-600 font-semibold pt-0.5">
+                    <span v-if="del.dueDate" class="flex items-center gap-1">
+                      📅 Hạn chót: <strong class="text-slate-800">{{ formatDate(del.dueDate) }}</strong>
+                    </span>
+                    <span v-if="del.documentNumber" class="flex items-center gap-1 text-blue-700 font-bold">
+                      📄 Văn bản: <strong>{{ del.documentNumber }}</strong>
+                    </span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -205,7 +230,14 @@
       </div>
 
       <!-- Modal Footer -->
-      <div class="flex justify-end border-t border-slate-100 pt-3 shrink-0">
+      <div class="flex items-center justify-between border-t border-slate-100 pt-3 shrink-0">
+        <button 
+          type="button" 
+          @click="onEditClick" 
+          class="px-4 py-2 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition cursor-pointer flex items-center gap-1.5 shadow-2xs"
+        >
+          ✏️ Chỉnh Sửa {{ item?.itemType === 'Goal' ? 'Mục Tiêu' : 'Nhiệm Vụ' }}
+        </button>
         <button 
           type="button" 
           @click="close" 
@@ -229,7 +261,12 @@ const props = defineProps({
   item: { type: Object, default: null }
 });
 
-const emit = defineEmits(['close']);
+const emit = defineEmits(['close', 'edit']);
+
+function onEditClick() {
+  close();
+  emit('edit', props.item);
+}
 
 const activeTab = ref('info');
 const reportHistory = ref([]);
@@ -288,6 +325,28 @@ function getStatusBadgeClass(st) {
     'ExpiringSoon': 'bg-amber-50 text-amber-800 border border-amber-200'
   };
   return map[st] || 'bg-slate-100 text-slate-700';
+}
+
+function getDeliverableStatusLabel(st) {
+  const map = {
+    'NotStarted': 'Chưa thực hiện',
+    'Drafting': 'Đang soạn thảo',
+    'Reviewing': 'Đang trình/Thẩm định',
+    'Submitted': 'Đã trình ban hành',
+    'Completed': 'Đã hoàn thành/Ban hành'
+  };
+  return map[st] || st || 'Chưa thực hiện';
+}
+
+function getDeliverableStatusClass(st) {
+  const map = {
+    'NotStarted': 'bg-slate-100 text-slate-600',
+    'Drafting': 'bg-sky-100 text-sky-800',
+    'Reviewing': 'bg-amber-100 text-amber-800',
+    'Submitted': 'bg-indigo-100 text-indigo-800',
+    'Completed': 'bg-emerald-100 text-emerald-800'
+  };
+  return map[st] || 'bg-slate-100 text-slate-600';
 }
 
 async function loadHistories() {
