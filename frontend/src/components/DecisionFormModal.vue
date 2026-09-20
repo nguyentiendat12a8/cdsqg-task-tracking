@@ -1,9 +1,9 @@
 <template>
-  <div v-if="isOpen" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-3xl w-full p-6 sm:p-7 space-y-4 font-sans max-h-[90vh] overflow-y-auto">
+  <div v-if="isOpen" @click.self="close" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-4xl sm:max-w-5xl w-full p-6 sm:p-7 font-sans max-h-[90vh] flex flex-col">
       
       <!-- Modal Header -->
-      <div class="flex justify-between items-start border-b border-slate-100 pb-3">
+      <div class="flex justify-between items-start border-b border-slate-100 pb-3 shrink-0">
         <div>
           <span class="text-xs font-bold text-blue-600 uppercase tracking-wider block">
             {{ isEditing ? 'Chỉnh Sửa Văn Bản Chỉ Đạo' : 'Thêm Mới Quyết Định / Văn Bản Chỉ Đạo' }}
@@ -12,100 +12,102 @@
             {{ isEditing ? 'Cập Nhật Quyết Định / Văn Bản Chỉ Đạo' : 'Thêm Quyết Định' }}
           </h3>
         </div>
-        <button @click="close" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1">✕</button>
+        <button @click="close" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1 cursor-pointer">✕</button>
       </div>
 
-      <form @submit.prevent="submitDocument" class="space-y-4">
-        <div v-if="errorMessage" class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-bold flex items-center gap-2">
-          <svg class="w-4 h-4 text-rose-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          <span>{{ errorMessage }}</span>
-        </div>
+      <form @submit.prevent="submitDocument" class="flex-1 flex flex-col min-h-0 pt-3">
+        <div class="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-1">
+          <div v-if="errorMessage" class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-bold flex items-center gap-2">
+            <svg class="w-4 h-4 text-rose-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+            <span>{{ errorMessage }}</span>
+          </div>
 
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="text-xs font-bold text-slate-700 uppercase">Số Hiệu Văn Bản / Quyết Định <span class="text-rose-500">*</span></label>
-            <input v-model="form.documentNumber" required placeholder="VD: 749/QĐ-TTg, 06/QĐ-TTg..." class="w-full text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 focus:bg-white focus:ring-2 focus:ring-blue-500" />
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs font-bold text-slate-700 uppercase">Số Hiệu Văn Bản / Quyết Định <span class="text-rose-500">*</span></label>
+              <input v-model="form.documentNumber" required placeholder="VD: 749/QĐ-TTg, 06/QĐ-TTg..." class="w-full text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 focus:bg-white focus:ring-2 focus:ring-blue-500" />
+            </div>
+
+            <div>
+              <label class="text-xs font-bold text-slate-700 uppercase">Người Ký / Chức Vụ</label>
+              <input v-model="form.signer" placeholder="VD: Thủ tướng Phạm Minh Chính" class="w-full text-xs font-semibold bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 focus:bg-white focus:ring-2 focus:ring-blue-500" />
+            </div>
           </div>
 
           <div>
-            <label class="text-xs font-bold text-slate-700 uppercase">Người Ký / Chức Vụ</label>
-            <input v-model="form.signer" placeholder="VD: Thủ tướng Phạm Minh Chính" class="w-full text-xs font-semibold bg-slate-50 border border-slate-300 rounded-xl px-3.5 py-2.5 focus:bg-white focus:ring-2 focus:ring-blue-500" />
-          </div>
-        </div>
-
-        <div>
-          <label class="text-xs font-bold text-slate-700 uppercase">Tên Văn Bản / Quyết Định <span class="text-rose-500">*</span></label>
-          <textarea v-model="form.name" required rows="2" placeholder="VD: Chương trình Chuyển đổi số quốc gia đến năm 2025, định hướng đến năm 2030..." class="w-full text-sm font-semibold bg-slate-50 border border-slate-300 rounded-xl p-3 focus:bg-white focus:ring-2 focus:ring-blue-500"></textarea>
-        </div>
-
-        <div>
-          <label class="text-xs font-bold text-slate-700 uppercase">Trích Yếu Nội Dung Chính</label>
-          <textarea v-model="form.summary" rows="2" placeholder="Tóm tắt trích yếu các nội dung quan trọng của quyết định..." class="w-full text-xs font-semibold bg-slate-50 border border-slate-300 rounded-xl p-3 focus:bg-white focus:ring-2 focus:ring-blue-500"></textarea>
-        </div>
-
-        <div class="grid grid-cols-2 gap-4">
-          <div>
-            <label class="text-xs font-bold text-slate-700 uppercase block mb-1">Ngày Ban Hành <span class="text-rose-500">*</span></label>
-            <DatePicker v-model="form.issueDate" placeholder="dd/mm/yyyy" :required="true" />
+            <label class="text-xs font-bold text-slate-700 uppercase">Tên Văn Bản / Quyết Định <span class="text-rose-500">*</span></label>
+            <textarea v-model="form.name" required rows="2" placeholder="VD: Chương trình Chuyển đổi số quốc gia đến năm 2025, định hướng đến năm 2030..." class="w-full text-sm font-semibold bg-slate-50 border border-slate-300 rounded-xl p-3 focus:bg-white focus:ring-2 focus:ring-blue-500"></textarea>
           </div>
 
           <div>
-            <SearchableSelect 
-              v-model="form.timeResolution" 
-              :options="timeResolutionOptions" 
-              :isMulti="false" 
-              label="Thời Hạn Thực Hiện" 
+            <label class="text-xs font-bold text-slate-700 uppercase">Trích Yếu Nội Dung Chính</label>
+            <textarea v-model="form.summary" rows="2" placeholder="Tóm tắt trích yếu các nội dung quan trọng của quyết định..." class="w-full text-xs font-semibold bg-slate-50 border border-slate-300 rounded-xl p-3 focus:bg-white focus:ring-2 focus:ring-blue-500"></textarea>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <label class="text-xs font-bold text-slate-700 uppercase block mb-1">Ngày Ban Hành <span class="text-rose-500">*</span></label>
+              <DatePicker v-model="form.issueDate" placeholder="dd/mm/yyyy" :required="true" />
+            </div>
+
+            <div>
+              <SearchableSelect 
+                v-model="form.timeResolution" 
+                :options="timeResolutionOptions" 
+                :isMulti="false" 
+                label="Thời Hạn Thực Hiện" 
+              />
+            </div>
+          </div>
+
+          <div v-if="form.timeResolution === 'Range'" class="grid grid-cols-2 gap-4 p-3.5 bg-blue-50/60 rounded-xl border border-blue-100">
+            <div>
+              <label class="text-xs font-bold text-blue-900 uppercase">Năm Bắt Đầu</label>
+              <input type="number" v-model.number="form.startYear" class="w-full text-sm font-bold bg-white border border-blue-200 rounded-xl px-3 py-1.5" />
+            </div>
+            <div>
+              <label class="text-xs font-bold text-blue-900 uppercase">Năm Kết Thúc</label>
+              <input type="number" v-model.number="form.endYear" class="w-full text-sm font-bold bg-white border border-blue-200 rounded-xl px-3 py-1.5" />
+            </div>
+          </div>
+
+          <!-- MULTI-FILE ATTACHMENT FIELD (PDF, DOCX) -->
+          <div class="space-y-2">
+            <label class="text-xs font-bold text-slate-700 uppercase flex items-center justify-between">
+              <span>File Văn Bản Đính Kèm (PDF, DOCX - Có thể chọn nhiều file)</span>
+              <span v-if="selectedFiles.length > 0" class="text-[11px] text-blue-600 font-bold">Đã chọn {{ selectedFiles.length }} file</span>
+            </label>
+            
+            <input 
+              type="file" 
+              ref="fileInput" 
+              multiple
+              accept=".pdf,.doc,.docx"
+              @change="onFilesSelected"
+              class="w-full text-xs font-bold text-slate-600 bg-slate-50 border border-slate-300 rounded-xl p-2.5 cursor-pointer file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-700" 
             />
-          </div>
-        </div>
 
-        <div v-if="form.timeResolution === 'Range'" class="grid grid-cols-2 gap-4 p-3.5 bg-blue-50/60 rounded-xl border border-blue-100">
-          <div>
-            <label class="text-xs font-bold text-blue-900 uppercase">Năm Bắt Đầu</label>
-            <input type="number" v-model.number="form.startYear" class="w-full text-sm font-bold bg-white border border-blue-200 rounded-xl px-3 py-1.5" />
-          </div>
-          <div>
-            <label class="text-xs font-bold text-blue-900 uppercase">Năm Kết Thúc</label>
-            <input type="number" v-model.number="form.endYear" class="w-full text-sm font-bold bg-white border border-blue-200 rounded-xl px-3 py-1.5" />
-          </div>
-        </div>
-
-        <!-- MULTI-FILE ATTACHMENT FIELD (PDF, DOCX) -->
-        <div class="space-y-2">
-          <label class="text-xs font-bold text-slate-700 uppercase flex items-center justify-between">
-            <span>File Văn Bản Đính Kèm (PDF, DOCX - Có thể chọn nhiều file)</span>
-            <span v-if="selectedFiles.length > 0" class="text-[11px] text-blue-600 font-bold">Đã chọn {{ selectedFiles.length }} file</span>
-          </label>
-          
-          <input 
-            type="file" 
-            ref="fileInput" 
-            multiple
-            accept=".pdf,.doc,.docx"
-            @change="onFilesSelected"
-            class="w-full text-xs font-bold text-slate-600 bg-slate-50 border border-slate-300 rounded-xl p-2.5 cursor-pointer file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-600 file:text-white hover:file:bg-blue-700" 
-          />
-
-          <!-- Selected Files List -->
-          <div v-if="selectedFiles.length > 0" class="space-y-1.5 max-h-32 overflow-y-auto pr-1">
-            <div 
-              v-for="(file, idx) in selectedFiles" 
-              :key="idx"
-              class="flex items-center justify-between bg-slate-100 rounded-lg px-3 py-1.5 text-xs text-slate-700 border border-slate-200"
-            >
-              <div class="flex items-center gap-2 truncate">
-                <span class="text-blue-600 font-bold">📄</span>
-                <span class="truncate font-semibold">{{ file.name }}</span>
-                <span class="text-[10px] text-slate-400 font-mono">({{ (file.size / 1024 / 1024).toFixed(2) }} MB)</span>
+            <!-- Selected Files List -->
+            <div v-if="selectedFiles.length > 0" class="space-y-1.5 max-h-32 overflow-y-auto pr-1">
+              <div 
+                v-for="(file, idx) in selectedFiles" 
+                :key="idx"
+                class="flex items-center justify-between bg-slate-100 rounded-lg px-3 py-1.5 text-xs text-slate-700 border border-slate-200"
+              >
+                <div class="flex items-center gap-2 truncate">
+                  <span class="text-blue-600 font-bold">📄</span>
+                  <span class="truncate font-semibold">{{ file.name }}</span>
+                  <span class="text-[10px] text-slate-400 font-mono">({{ (file.size / 1024 / 1024).toFixed(2) }} MB)</span>
+                </div>
+                <button type="button" @click="removeFile(idx)" class="text-slate-400 hover:text-rose-600 font-bold px-1.5 py-0.5 rounded hover:bg-rose-50 text-xs">✕</button>
               </div>
-              <button type="button" @click="removeFile(idx)" class="text-slate-400 hover:text-rose-600 font-bold px-1.5 py-0.5 rounded hover:bg-rose-50 text-xs">✕</button>
             </div>
           </div>
         </div>
 
         <!-- Footer Actions -->
-        <div class="flex justify-end gap-3 border-t border-slate-100 pt-3">
-          <button type="button" @click="close" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Hủy</button>
+        <div class="flex justify-end gap-3 border-t border-slate-100 pt-3 shrink-0">
+          <button type="button" @click="close" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer">Hủy</button>
           <button type="submit" :disabled="isSubmitting" class="px-5 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm transition disabled:opacity-50 flex items-center gap-1.5 cursor-pointer">
             <span v-if="isSubmitting" class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
             <span>{{ isSubmitting ? (isEditing ? 'Đang lưu...' : 'Đang tạo...') : (isEditing ? 'Lưu Cập Nhật' : 'Thêm Quyết Định') }}</span>

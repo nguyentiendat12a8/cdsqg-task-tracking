@@ -198,7 +198,7 @@
     </div>
 
     <!-- Add Account Modal -->
-    <div v-if="isAddModalOpen" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div v-if="isAddModalOpen" @click.self="isAddModalOpen = false" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
       <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-xl w-full p-6 space-y-4 font-sans">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
           <h3 class="text-base font-extrabold text-slate-800">Thêm Tài Khoản Mới</h3>
@@ -283,7 +283,7 @@
     </div>
 
     <!-- Edit Account Modal -->
-    <div v-if="isEditModalOpen" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div v-if="isEditModalOpen" @click.self="isEditModalOpen = false" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
       <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-xl w-full p-6 space-y-4 font-sans">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
           <h3 class="text-base font-extrabold text-slate-800">Chỉnh Sửa Tài Khoản: {{ editUserForm.username }}</h3>

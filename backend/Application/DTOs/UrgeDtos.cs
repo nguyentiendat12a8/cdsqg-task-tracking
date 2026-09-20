@@ -6,6 +6,7 @@ namespace Cdsqg.Application.DTOs
     public class CreateTaskUrgeLogDto
     {
         public Guid GoalTaskId { get; set; }
+        public string? Title { get; set; }
         public string UrgeContent { get; set; } = string.Empty;
 
         public decimal ActualProgressPct { get; set; } = 0m;
@@ -20,6 +21,7 @@ namespace Cdsqg.Application.DTOs
         public Guid Id { get; set; }
         public Guid GoalTaskId { get; set; }
         public Guid? LeadAgencyId { get; set; }
+        public string Title { get; set; } = string.Empty;
         public string TaskCode { get; set; } = string.Empty;
         public string TaskTitle { get; set; } = string.Empty;
         public string LeadAgencyCode { get; set; } = string.Empty;
@@ -28,5 +30,6 @@ namespace Cdsqg.Application.DTOs
         public string ForecastDataJson { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
         public string CreatedBy { get; set; } = string.Empty;
+        public string? RecipientsSummary { get; set; }
     }
 }

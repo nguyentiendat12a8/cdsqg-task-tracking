@@ -34,6 +34,8 @@ builder.Services.AddControllers().AddJsonOptions(options =>
     options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
     options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+    options.JsonSerializerOptions.Converters.Add(new DateTimeUtcJsonConverter());
+    options.JsonSerializerOptions.Converters.Add(new NullableDateTimeUtcJsonConverter());
 });
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -194,6 +196,9 @@ void EnsureDatabaseSchemaUpdated(AppDbContext db)
             ALTER TABLE ""GoalTaskItems"" ADD COLUMN IF NOT EXISTS ""Group"" text NULL;
             ALTER TABLE ""GoalTaskItems"" ADD COLUMN IF NOT EXISTS ""IsOngoing"" boolean NOT NULL DEFAULT FALSE;
             ALTER TABLE ""GoalTaskItems"" ADD COLUMN IF NOT EXISTS ""Deliverables"" jsonb NOT NULL DEFAULT '[]'::jsonb;
+            ALTER TABLE ""GoalTaskItems"" ADD COLUMN IF NOT EXISTS ""AgencyDeliverables"" jsonb NOT NULL DEFAULT '{{}}'::jsonb;
+            ALTER TABLE ""ProgressLogs"" ADD COLUMN IF NOT EXISTS ""AgencyId"" uuid NULL;
+            ALTER TABLE ""ProgressLogs"" ADD COLUMN IF NOT EXISTS ""Deliverables"" jsonb NOT NULL DEFAULT '[]'::jsonb;
             UPDATE ""GoalTaskItems"" SET ""Section"" = '' WHERE ""Section"" IS NULL;
             UPDATE ""GoalTaskItems"" SET ""Group"" = '' WHERE ""Group"" IS NULL;
         ";
@@ -214,6 +219,45 @@ void EnsureDatabaseSchemaUpdated(AppDbContext db)
             );
         ";
         db.Database.ExecuteSqlRaw(sqlNotifications);
+
+        // 5. Ensure TaskUrgeLogs columns
+        string sqlTaskUrgeLogs = @"
+            ALTER TABLE ""TaskUrgeLogs"" ADD COLUMN IF NOT EXISTS ""RecipientsSummary"" text NULL;
+            ALTER TABLE ""TaskUrgeLogs"" ADD COLUMN IF NOT EXISTS ""LeadAgencyId"" uuid NULL;
+            ALTER TABLE ""TaskUrgeLogs"" ADD COLUMN IF NOT EXISTS ""Title"" text NULL;
+            UPDATE ""TaskUrgeLogs"" SET ""RecipientsSummary"" = '' WHERE ""RecipientsSummary"" IS NULL;
+        ";
+        db.Database.ExecuteSqlRaw(sqlTaskUrgeLogs);
+
+        // 6. Ensure DataImportLogs columns
+        string sqlDataImportLogs = @"
+            ALTER TABLE ""DataImportLogs"" ADD COLUMN IF NOT EXISTS ""AgencyId"" uuid NULL;
+        ";
+        db.Database.ExecuteSqlRaw(sqlDataImportLogs);
+
+        // 7. Ensure AgencyTaskExecutions table
+        string sqlAgencyTaskExecutions = @"
+            CREATE TABLE IF NOT EXISTS ""AgencyTaskExecutions"" (
+                ""Id"" uuid NOT NULL CONSTRAINT ""PK_AgencyTaskExecutions"" PRIMARY KEY,
+                ""GoalTaskId"" uuid NOT NULL CONSTRAINT ""FK_AgencyTaskExecutions_GoalTaskItems_GoalTaskId"" REFERENCES ""GoalTaskItems"" (""Id"") ON DELETE CASCADE,
+                ""AgencyId"" uuid NOT NULL CONSTRAINT ""FK_AgencyTaskExecutions_Agencies_AgencyId"" REFERENCES ""Agencies"" (""Id"") ON DELETE CASCADE,
+                ""CalculatedStatus"" text NOT NULL,
+                ""LatestProgressValue"" numeric NULL,
+                ""LatestQualitativeStatus"" text NULL,
+                ""CompletionPercentage"" numeric NOT NULL DEFAULT 0,
+                ""Deliverables"" jsonb NOT NULL DEFAULT '[]'::jsonb,
+                ""SummaryNotes"" text NULL,
+                ""AttachmentFileUrls"" jsonb NOT NULL DEFAULT '[]'::jsonb,
+                ""LastReportedAt"" timestamp without time zone NULL,
+                ""LastReportedBy"" text NULL,
+                ""CreatedAt"" timestamp without time zone NOT NULL,
+                ""UpdatedAt"" timestamp without time zone NOT NULL
+            );
+            ALTER TABLE ""AgencyTaskExecutions"" ADD COLUMN IF NOT EXISTS ""SummaryNotes"" text NULL;
+            ALTER TABLE ""AgencyTaskExecutions"" ADD COLUMN IF NOT EXISTS ""AttachmentFileUrls"" jsonb NOT NULL DEFAULT '[]'::jsonb;
+            CREATE UNIQUE INDEX IF NOT EXISTS ""IX_AgencyTaskExecutions_GoalTaskId_AgencyId"" ON ""AgencyTaskExecutions"" (""GoalTaskId"", ""AgencyId"");
+        ";
+        db.Database.ExecuteSqlRaw(sqlAgencyTaskExecutions);
     }
     catch (Exception ex)
     {
@@ -264,12 +308,15 @@ void SeedInitialData(AppDbContext db, IPasswordHasher hasher)
     }
 
     // 2. Seed Reference Units Dictionary if missing
-    if (!db.Units.Any())
+    if (!db.Units.Any(u => u.Name == "%"))
     {
-        var pctUnit = new UnitDictionary { Id = Guid.NewGuid(), Code = "PERCENT", Name = "%", DataType = UnitDataTypeEnum.Decimal };
-        var docUnit = new UnitDictionary { Id = Guid.NewGuid(), Code = "DOC", Name = "Văn bản", DataType = UnitDataTypeEnum.Text_Status };
-        db.Units.AddRange(pctUnit, docUnit);
+        db.Units.Add(new UnitDictionary { Id = Guid.NewGuid(), Code = "PERCENT", Name = "%", DataType = UnitDataTypeEnum.Decimal });
     }
+    if (!db.Units.Any(u => u.Name == "Số lượng"))
+    {
+        db.Units.Add(new UnitDictionary { Id = Guid.NewGuid(), Code = "QTY", Name = "Số lượng", DataType = UnitDataTypeEnum.Decimal });
+    }
+    db.SaveChanges();
 
     // 3. Seed Default Admin User if no users exist
     if (!db.Users.Any())
@@ -333,27 +380,40 @@ void NormalizeGoalTaskItemCodes(AppDbContext db)
 
     foreach (var group in groupedByDoc)
     {
-        int goalIdx = 1;
-        int taskIdx = 1;
+        var primaryGoals = group.Where(i => i.ItemType == ItemTypeEnum.Goal && !i.ParentId.HasValue).OrderBy(i => i.CreatedAt).ToList();
+        var primaryTasks = group.Where(i => i.ItemType == ItemTypeEnum.Task && !i.ParentId.HasValue).OrderBy(i => i.CreatedAt).ToList();
 
-        foreach (var item in group.OrderBy(i => i.CreatedAt))
+        // Check for duplicates or invalid codes
+        var goalCodes = primaryGoals.Select(g => g.Code).ToList();
+        var taskCodes = primaryTasks.Select(t => t.Code).ToList();
+
+        bool renumberGoals = goalCodes.Count != goalCodes.Distinct().Count() || primaryGoals.Any(g => string.IsNullOrWhiteSpace(g.Code) || !g.Code.StartsWith("MT-"));
+        bool renumberTasks = taskCodes.Count != taskCodes.Distinct().Count() || primaryTasks.Any(t => string.IsNullOrWhiteSpace(t.Code) || !t.Code.StartsWith("NV-"));
+
+        if (renumberGoals)
         {
-            bool isMissingDigit = string.IsNullOrWhiteSpace(item.Code) || !item.Code.Any(char.IsDigit);
-
-            if (item.ItemType == ItemTypeEnum.Goal)
+            int goalIdx = 1;
+            foreach (var item in primaryGoals)
             {
-                if (isMissingDigit)
+                var newCode = $"MT-{goalIdx:D2}";
+                if (item.Code != newCode)
                 {
-                    item.Code = $"MT-{goalIdx:D2}";
+                    item.Code = newCode;
                     updated = true;
                 }
                 goalIdx++;
             }
-            else
+        }
+
+        if (renumberTasks)
+        {
+            int taskIdx = 1;
+            foreach (var item in primaryTasks)
             {
-                if (isMissingDigit)
+                var newCode = $"NV-{taskIdx:D2}";
+                if (item.Code != newCode)
                 {
-                    item.Code = $"NV-{taskIdx:D2}";
+                    item.Code = newCode;
                     updated = true;
                 }
                 taskIdx++;
@@ -364,5 +424,50 @@ void NormalizeGoalTaskItemCodes(AppDbContext db)
     if (updated)
     {
         db.SaveChanges();
+    }
+}
+
+public class DateTimeUtcJsonConverter : System.Text.Json.Serialization.JsonConverter<DateTime>
+{
+    public override DateTime Read(ref System.Text.Json.Utf8JsonReader reader, Type typeToConvert, System.Text.Json.JsonSerializerOptions options)
+    {
+        var str = reader.GetString();
+        if (string.IsNullOrWhiteSpace(str)) return DateTime.MinValue;
+        if (DateTime.TryParse(str, out var dt))
+        {
+            return dt.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(dt, DateTimeKind.Utc) : dt.ToUniversalTime();
+        }
+        return DateTime.MinValue;
+    }
+
+    public override void Write(System.Text.Json.Utf8JsonWriter writer, DateTime value, System.Text.Json.JsonSerializerOptions options)
+    {
+        var utcValue = value.Kind == DateTimeKind.Utc ? value : DateTime.SpecifyKind(value, DateTimeKind.Utc);
+        writer.WriteStringValue(utcValue.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"));
+    }
+}
+
+public class NullableDateTimeUtcJsonConverter : System.Text.Json.Serialization.JsonConverter<DateTime?>
+{
+    public override DateTime? Read(ref System.Text.Json.Utf8JsonReader reader, Type typeToConvert, System.Text.Json.JsonSerializerOptions options)
+    {
+        var str = reader.GetString();
+        if (string.IsNullOrWhiteSpace(str)) return null;
+        if (DateTime.TryParse(str, out var dt))
+        {
+            return dt.Kind == DateTimeKind.Unspecified ? DateTime.SpecifyKind(dt, DateTimeKind.Utc) : dt.ToUniversalTime();
+        }
+        return null;
+    }
+
+    public override void Write(System.Text.Json.Utf8JsonWriter writer, DateTime? value, System.Text.Json.JsonSerializerOptions options)
+    {
+        if (!value.HasValue)
+        {
+            writer.WriteNullValue();
+            return;
+        }
+        var utcValue = value.Value.Kind == DateTimeKind.Utc ? value.Value : DateTime.SpecifyKind(value.Value, DateTimeKind.Utc);
+        writer.WriteStringValue(utcValue.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"));
     }
 }

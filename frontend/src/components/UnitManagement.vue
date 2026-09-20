@@ -123,7 +123,7 @@
     </div>
 
     <!-- Create/Edit Modal -->
-    <div v-if="isModalOpen" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div v-if="isModalOpen" @click.self="isModalOpen = false" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
       <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-xl w-full p-6 sm:p-7 space-y-4">
         <h3 class="text-lg font-bold text-slate-800 border-b border-slate-100 pb-2">
           {{ isEditing ? 'Sửa Đơn Vị Tính' : 'Thêm Đơn Vị Tính Mới' }}

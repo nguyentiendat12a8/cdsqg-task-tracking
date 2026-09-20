@@ -40,6 +40,7 @@ namespace Cdsqg.Application.DTOs
         public List<IFormFile>? EvidenceFiles { get; set; }
         public List<string>? ExistingFiles { get; set; }
         public string? CreatedBy { get; set; } = "Chuyên viên theo dõi";
+        public Guid? AgencyId { get; set; }
     }
 
     public class SubmitProgressResponseDto
@@ -71,9 +72,20 @@ namespace Cdsqg.Application.DTOs
         public int PeriodQuarter { get; set; }
         public decimal? ActualValue { get; set; }
         public string? Status { get; set; }
+        public decimal? CompletionPercentage { get; set; }
         public string? SummaryNotes { get; set; }
         public List<string> AttachmentFileUrls { get; set; } = new List<string>();
+        public List<TaskDeliverable>? Deliverables { get; set; }
         public DateTime LogDate { get; set; }
         public AlertStatusEnum CalculatedAlert { get; set; }
+        public string CreatedBy { get; set; } = string.Empty;
+        public Guid? AgencyId { get; set; }
+
+        // Before Update Snapshot fields
+        public decimal? PreviousValue { get; set; }
+        public string? PreviousStatus { get; set; }
+        public decimal? PreviousCompletionPercentage { get; set; }
+        public string? PreviousNotes { get; set; }
+        public List<TaskDeliverable>? PreviousDeliverables { get; set; }
     }
 }

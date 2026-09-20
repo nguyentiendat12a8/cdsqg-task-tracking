@@ -87,6 +87,11 @@ namespace Cdsqg.Core.Entities
         public List<TaskDeliverable> Deliverables { get; set; } = new List<TaskDeliverable>();
 
         /// <summary>
+        /// Agency-isolated Multi-Deliverables Checklist for General Tasks (Key = agencyId string, Value = List<TaskDeliverable>)
+        /// </summary>
+        public Dictionary<string, List<TaskDeliverable>> AgencyDeliverables { get; set; } = new Dictionary<string, List<TaskDeliverable>>();
+
+        /// <summary>
         /// Advanced dynamic KPI metadata stored in PostgreSQL JSONB
         /// </summary>
         public Dictionary<string, object> DynamicKPIs { get; set; } = new Dictionary<string, object>();
@@ -115,6 +120,7 @@ namespace Cdsqg.Core.Entities
         public ICollection<GoalTaskItem> SubItems { get; set; } = new List<GoalTaskItem>();
         public ICollection<TargetBaseline> Baselines { get; set; } = new List<TargetBaseline>();
         public ICollection<ProgressLog> ProgressLogs { get; set; } = new List<ProgressLog>();
+        public ICollection<AgencyTaskExecution> AgencyExecutions { get; set; } = new List<AgencyTaskExecution>();
     }
 
     public class TaskDeliverable

@@ -43,6 +43,7 @@ namespace Cdsqg.Api.Controllers
                     .Include(i => i.Unit)
                     .Include(i => i.Baselines)
                     .Include(i => i.ProgressLogs)
+                    .Include(i => i.AgencyExecutions)
                     .AsQueryable();
 
                 if (!string.IsNullOrWhiteSpace(scope) && !scope.Equals("all", StringComparison.OrdinalIgnoreCase))
@@ -100,12 +101,28 @@ namespace Cdsqg.Api.Controllers
                     {
                         isAgencyFilterActive = true;
                         allowedAgencyIds = new HashSet<Guid>();
+                        bool hasSubAgencyOnly = true;
                         foreach (var agId in validAgencyIds)
                         {
+                            var currentAg = allAgencies.FirstOrDefault(a => a.Id == agId);
+                            if (currentAg == null || !currentAg.ParentId.HasValue)
+                            {
+                                hasSubAgencyOnly = false;
+                            }
                             var childs = GetAgencyAndChildIds(agId, allAgencies);
                             foreach (var c in childs) allowedAgencyIds.Add(c);
                         }
-                        query = query.Where(i => i.LeadAgencyId == allAgenciesId || i.IsGeneralTask || allowedAgencyIds.Contains(i.LeadAgencyId));
+
+                        // Rule: General tasks ("Các bộ, ngành, địa phương") ONLY apply to parent agencies (ParentId == null).
+                        // If the filtered agency is a sub-agency (ParentId != null), DO NOT include general tasks!
+                        if (hasSubAgencyOnly)
+                        {
+                            query = query.Where(i => allowedAgencyIds.Contains(i.LeadAgencyId));
+                        }
+                        else
+                        {
+                            query = query.Where(i => i.LeadAgencyId == allAgenciesId || i.IsGeneralTask || allowedAgencyIds.Contains(i.LeadAgencyId));
+                        }
                     }
                 }
 
@@ -144,11 +161,11 @@ namespace Cdsqg.Api.Controllers
                 else if (isAgencyFilterActive && allowedAgencyIds != null)
                 {
                     var selectedSet = agencyId!.Where(id => id != Guid.Empty).ToHashSet();
-                    targetAgencies = allAgencies.Where(a => selectedSet.Contains(a.Id) || (a.ParentId.HasValue && selectedSet.Contains(a.ParentId.Value)));
+                    targetAgencies = allAgencies.Where(a => selectedSet.Contains(a.Id));
                 }
                 else
                 {
-                    targetAgencies = allAgencies.Where(a => !a.ParentId.HasValue);
+                    targetAgencies = allAgencies.Where(a => !a.ParentId.HasValue && a.Type != AgencyTypeEnum.Internal && a.Type != AgencyTypeEnum.Other);
                 }
 
                 // Exclude "ALL_AGENCIES" (Các bộ, ngành, địa phương) pseudo-agency from standalone card lists
@@ -159,14 +176,16 @@ namespace Cdsqg.Api.Controllers
                 {
                     var childIds = GetAgencyAndChildIds(agency.Id, allAgencies);
                     
-                    var agencyItems = parentAgencyId.HasValue && parentAgencyId.Value != Guid.Empty
-                        ? items.Where(i => childIds.Contains(i.LeadAgencyId)).ToList()
-                        : items.Where(i => 
+                    bool includeGeneral = !agency.ParentId.HasValue && (!parentAgencyId.HasValue || parentAgencyId.Value == Guid.Empty);
+
+                    var agencyItems = includeGeneral
+                        ? items.Where(i => 
                             childIds.Contains(i.LeadAgencyId) || 
                             i.LeadAgencyId == allAgenciesId || 
                             (i.LeadAgency != null && i.LeadAgency.Code == "ALL_AGENCIES") || 
                             i.IsGeneralTask
-                          ).ToList();
+                          ).ToList()
+                        : items.Where(i => childIds.Contains(i.LeadAgencyId)).ToList();
 
                     int aNotStarted = 0, aInProgOnTime = 0, aInProgOverdue = 0, aCompOnTime = 0, aCompOverdue = 0, aExpSoon = 0;
                     int aGNotStarted = 0, aGInProgOnTime = 0, aGInProgOverdue = 0, aGCompOnTime = 0, aGCompOverdue = 0, aGExpSoon = 0;
@@ -177,8 +196,9 @@ namespace Cdsqg.Api.Controllers
 
                     foreach (var item in agencyItems)
                     {
-                        var latestLog = item.ProgressLogs.OrderByDescending(l => l.LogDate).FirstOrDefault();
-                        var status = PlanningService.CalculateExecutionStatus(item, latestLog);
+                        var latestLog = PlanningService.GetLatestProgressLogForAgency(item, agency.Id);
+                        var agencyDeliverables = PlanningService.GetDeliverablesForAgency(item, agency.Id);
+                        var status = PlanningService.CalculateExecutionStatus(item, latestLog, agencyDeliverables);
                         bool isGoal = item.ItemType == ItemTypeEnum.Goal;
 
                         switch (status)
@@ -256,10 +276,6 @@ namespace Cdsqg.Api.Controllers
                         {
                             ministriesPerformance.Add(summaryDto);
                         }
-                    }
-                    else if (agency.Type == AgencyTypeEnum.Ministry)
-                    {
-                        ministriesPerformance.Add(summaryDto);
                     }
                     else if (agency.Type == AgencyTypeEnum.Province)
                     {
@@ -400,6 +416,7 @@ namespace Cdsqg.Api.Controllers
                     .Include(i => i.Unit)
                     .Include(i => i.Baselines)
                     .Include(i => i.ProgressLogs)
+                    .Include(i => i.AgencyExecutions)
                     .AsQueryable();
 
                 if (!string.IsNullOrWhiteSpace(scope) && !scope.Equals("all", StringComparison.OrdinalIgnoreCase))
@@ -460,13 +477,18 @@ namespace Cdsqg.Api.Controllers
                 List<GoalTaskItem> agencyItems;
                 if (agencyId != Guid.Empty)
                 {
+                    var currentAg = allAgencies.FirstOrDefault(a => a.Id == agencyId);
+                    bool includeGeneral = currentAg == null || !currentAg.ParentId.HasValue;
                     var childIds = GetAgencyAndChildIds(agencyId, allAgencies);
-                    agencyItems = baseItems.Where(i =>
-                        childIds.Contains(i.LeadAgencyId) ||
-                        i.LeadAgencyId == allAgenciesId ||
-                        (i.LeadAgency != null && i.LeadAgency.Code == "ALL_AGENCIES") ||
-                        i.IsGeneralTask
-                    ).ToList();
+
+                    agencyItems = includeGeneral
+                        ? baseItems.Where(i =>
+                            childIds.Contains(i.LeadAgencyId) ||
+                            i.LeadAgencyId == allAgenciesId ||
+                            (i.LeadAgency != null && i.LeadAgency.Code == "ALL_AGENCIES") ||
+                            i.IsGeneralTask
+                        ).ToList()
+                        : baseItems.Where(i => childIds.Contains(i.LeadAgencyId)).ToList();
                 }
                 else
                 {
@@ -475,8 +497,9 @@ namespace Cdsqg.Api.Controllers
 
                 var resultList = agencyItems.Select(item =>
                 {
-                    var latestLog = item.ProgressLogs != null ? item.ProgressLogs.OrderByDescending(l => l.LogDate).FirstOrDefault() : null;
-                    var execStatus = PlanningService.CalculateExecutionStatus(item, latestLog);
+                    var latestLog = PlanningService.GetLatestProgressLogForAgency(item, agencyId);
+                    var agencyDeliverables = PlanningService.GetDeliverablesForAgency(item, agencyId);
+                    var execStatus = PlanningService.CalculateExecutionStatus(item, latestLog, agencyDeliverables);
 
                     double? latestPercent = null;
                     double? latestValue = null;
@@ -485,6 +508,10 @@ namespace Cdsqg.Api.Controllers
                         latestPercent = (double?)latestLog.CalculatedProgressPercentage;
                         latestValue = (double?)latestLog.QuantitativeValue;
                     }
+
+                    var coordAgencies = item.CoordinatingAgencyIds != null && item.CoordinatingAgencyIds.Count > 0
+                        ? allAgencies.Where(a => item.CoordinatingAgencyIds.Contains(a.Id)).ToList()
+                        : new List<Agency>();
 
                     return new DashboardAgencyItemDto
                     {
@@ -498,6 +525,9 @@ namespace Cdsqg.Api.Controllers
                         Group = item.Group,
                         LeadAgencyId = item.LeadAgencyId,
                         LeadAgencyName = item.LeadAgency?.Name ?? (item.IsGeneralTask ? "Tất cả đơn vị (Chung)" : "Bộ Khoa học và Công nghệ"),
+                        CoordinatingAgencyIds = item.CoordinatingAgencyIds ?? new List<Guid>(),
+                        CoordinatingAgencyCodes = coordAgencies.Select(a => a.Code).ToList(),
+                        CoordinatingAgencyNames = coordAgencies.Select(a => a.Name).ToList(),
                         StartDate = item.StartDate,
                         DueDate = item.DueDate,
                         IsOngoing = item.IsOngoing,
@@ -507,7 +537,9 @@ namespace Cdsqg.Api.Controllers
                         LatestProgressValue = latestValue,
                         LatestProgressNote = latestLog?.SummaryNotes,
                         LatestProgressDate = latestLog?.LogDate,
-                        Status = execStatus.ToString()
+                        Status = execStatus.ToString(),
+                        CalculatedStatus = execStatus.ToString(),
+                        Deliverables = agencyDeliverables
                     };
                 }).ToList();
 
@@ -572,6 +604,9 @@ namespace Cdsqg.Api.Controllers
         public string? Group { get; set; }
         public Guid LeadAgencyId { get; set; }
         public string LeadAgencyName { get; set; } = string.Empty;
+        public List<Guid> CoordinatingAgencyIds { get; set; } = new List<Guid>();
+        public List<string> CoordinatingAgencyCodes { get; set; } = new List<string>();
+        public List<string> CoordinatingAgencyNames { get; set; } = new List<string>();
         public DateTime? StartDate { get; set; }
         public DateTime? DueDate { get; set; }
         public bool IsOngoing { get; set; }
@@ -582,6 +617,8 @@ namespace Cdsqg.Api.Controllers
         public string? LatestProgressNote { get; set; }
         public DateTime? LatestProgressDate { get; set; }
         public string Status { get; set; } = "NotStarted";
+        public string CalculatedStatus { get; set; } = "NotStarted";
+        public List<TaskDeliverable> Deliverables { get; set; } = new List<TaskDeliverable>();
     }
 
     public class AgencyStatusSummaryDto

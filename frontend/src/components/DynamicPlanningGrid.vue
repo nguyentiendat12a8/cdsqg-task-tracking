@@ -185,16 +185,23 @@
                 <!-- SCROLLABLE CELLS -->
 
                 <!-- Dynamic Year Target Cells with INLINE AUTO-SAVE -->
-                <td v-for="year in gridData.dynamicYears" :key="year" class="px-3 py-2 border-r border-slate-200 text-center">
+                <td 
+                  v-for="year in gridData.dynamicYears" 
+                  :key="year" 
+                  class="px-3 py-2 border-r border-slate-200 text-center transition"
+                  :class="{ 'bg-slate-100/80 opacity-40': !isYearEnabledForItem(item, year) }"
+                >
                   <template v-if="isQuantitative(item)">
                     <div class="relative">
                       <input 
                         type="number" 
                         v-model.number="item.yearlyTargets[year]" 
+                        :disabled="!isYearEnabledForItem(item, year)"
                         @change="saveYearlyTarget(item, year, $event.target.value)"
-                        placeholder="— %"
-                        class="w-full text-center font-bold text-slate-800 bg-white border border-slate-300 rounded-lg py-1 px-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition hover:border-blue-400"
+                        :placeholder="!isYearEnabledForItem(item, year) ? '—' : ((item.unitName === 'Số lượng' || item.unit?.name === 'Số lượng') ? '— Số lượng' : '— %')"
+                        class="w-full text-center font-bold text-slate-800 bg-white border border-slate-300 rounded-lg py-1 px-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition hover:border-blue-400 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed disabled:border-slate-200"
                       />
+                      <span v-if="isYearEnabledForItem(item, year) && (!item.unitName || item.unitName === '%' || item.unit?.name === '%')" class="absolute right-2 top-1.5 text-[10px] font-bold text-slate-400 pointer-events-none">%</span>
                     </div>
                   </template>
                   <template v-else>
@@ -202,6 +209,7 @@
                       v-model="item.yearlyTargets[year]" 
                       :options="gridStatusCellOptions" 
                       :isMulti="false" 
+                      :disabled="!isYearEnabledForItem(item, year)"
                       :clearable="false"
                       @change="val => saveYearlyTarget(item, year, val)" 
                       class="w-full text-xs"
@@ -273,16 +281,23 @@
                 <!-- SCROLLABLE CELLS -->
 
                 <!-- Dynamic Year Target Cells with INLINE AUTO-SAVE -->
-                <td v-for="year in gridData.dynamicYears" :key="year" class="px-3 py-2 border-r border-slate-200 text-center">
+                <td 
+                  v-for="year in gridData.dynamicYears" 
+                  :key="year" 
+                  class="px-3 py-2 border-r border-slate-200 text-center transition"
+                  :class="{ 'bg-slate-100/80 opacity-40': !isYearEnabledForItem(item, year) }"
+                >
                   <template v-if="isQuantitative(item)">
                     <div class="relative">
                       <input 
                         type="number" 
                         v-model.number="item.yearlyTargets[year]" 
+                        :disabled="!isYearEnabledForItem(item, year)"
                         @change="saveYearlyTarget(item, year, $event.target.value)"
-                        placeholder="— %"
-                        class="w-full text-center font-bold text-slate-800 bg-white border border-slate-300 rounded-lg py-1 px-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition hover:border-blue-400"
+                        :placeholder="!isYearEnabledForItem(item, year) ? '—' : ((item.unitName === 'Số lượng' || item.unit?.name === 'Số lượng') ? '— Số lượng' : '— %')"
+                        class="w-full text-center font-bold text-slate-800 bg-white border border-slate-300 rounded-lg py-1 px-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition hover:border-blue-400 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed disabled:border-slate-200"
                       />
+                      <span v-if="isYearEnabledForItem(item, year) && (!item.unitName || item.unitName === '%' || item.unit?.name === '%')" class="absolute right-2 top-1.5 text-[10px] font-bold text-slate-400 pointer-events-none">%</span>
                     </div>
                   </template>
                   <template v-else>
@@ -290,6 +305,7 @@
                       v-model="item.yearlyTargets[year]" 
                       :options="gridStatusCellOptions" 
                       :isMulti="false" 
+                      :disabled="!isYearEnabledForItem(item, year)"
                       :clearable="false"
                       @change="val => saveYearlyTarget(item, year, val)" 
                       class="w-full text-xs"
@@ -369,7 +385,7 @@
       :taskCode="selectedTaskForOverride.code"
       :taskTitle="selectedTaskForOverride.title"
       :evaluationType="selectedTaskForOverride.evaluationType"
-      :unitName="selectedTaskForOverride.unitName || '%'"
+      :unitName="selectedTaskForOverride.unitName || selectedTaskForOverride.unit?.name || '%'"
       :dynamicYears="gridData.dynamicYears"
       :existingCustomBaseline="selectedTaskForOverride.customBaseline"
       :yearlyTargets="selectedTaskForOverride.yearlyTargets"
@@ -382,6 +398,7 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
+import { authState } from '../services/auth';
 import BaselineOverrideModal from './BaselineOverrideModal.vue';
 import LoadingSpinner from './LoadingSpinner.vue';
 import SearchableSelect from './SearchableSelect.vue';
@@ -585,15 +602,49 @@ async function loadAgencies() {
 
 const goalsList = computed(() => {
   if (!gridData.value || !gridData.value.items) return [];
-  return gridData.value.items.filter(x => x.itemType === 'Goal' || x.itemType === 1 || x.itemType === '1');
+  const list = gridData.value.items.filter(x => x.itemType === 'Goal' || x.itemType === 1 || x.itemType === '1');
+  return list.sort((a, b) => new Date(b.lastUpdated || b.createdAt || 0) - new Date(a.lastUpdated || a.createdAt || 0));
 });
 
 const tasksList = computed(() => {
   if (!gridData.value || !gridData.value.items) return [];
-  return gridData.value.items.filter(x => x.itemType === 'Task' || x.itemType === 2 || x.itemType === '2');
+  const list = gridData.value.items.filter(x => x.itemType === 'Task' || x.itemType === 2 || x.itemType === '2');
+  return list.sort((a, b) => new Date(b.lastUpdated || b.createdAt || 0) - new Date(a.lastUpdated || a.createdAt || 0));
 });
 
 function filterGridItem(item) {
+  // 0. Non-Admin Focal Point Agency Scoping Filter:
+  // - Sub-Agency (ParentId != null): ONLY show items assigned to this Sub-Agency (cannot view parent agency data)
+  // - Parent Agency (ParentId == null): Show items assigned to Parent Agency AND all of its Sub-Agencies (views all)
+  if (!authState.isAdmin.value && authState.user.value?.agencyId) {
+    const userAgencyId = String(authState.user.value.agencyId).toLowerCase();
+    const userAgency = agencies.value.find(a => String(a.id).toLowerCase() === userAgencyId);
+
+    const scopedAgencyIds = [userAgencyId];
+    if (userAgency && !userAgency.parentId) {
+      const childIds = agencies.value
+        .filter(a => a.parentId && String(a.parentId).toLowerCase() === userAgencyId)
+        .map(a => String(a.id).toLowerCase());
+      scopedAgencyIds.push(...childIds);
+    }
+
+    const itemLeadId = item.leadAgencyId ? String(item.leadAgencyId).toLowerCase() : '';
+    const itemCoordIds = (item.coordinatingAgencyIds || []).map(id => String(id).toLowerCase());
+
+    const isParentAgency = !userAgency || !userAgency.parentId;
+    const isGeneral = isParentAgency && (item.isGeneralTask || item.leadAgencyCode === 'ALL_AGENCIES' || itemLeadId === '00000000-0000-0000-0000-000000009999' || (item.leadAgencyName && item.leadAgencyName.toLowerCase().trim() === 'các bộ, ngành, địa phương'));
+    const isLead = scopedAgencyIds.includes(itemLeadId);
+    const isCoord = itemCoordIds.some(id => scopedAgencyIds.includes(id));
+    const isSubMatch = item.subItems?.some(s => {
+      const sLeadId = s.leadAgencyId ? String(s.leadAgencyId).toLowerCase() : '';
+      const sCoordIds = (s.coordinatingAgencyIds || []).map(id => String(id).toLowerCase());
+      const sIsGeneral = isParentAgency && (s.isGeneralTask || s.leadAgencyCode === 'ALL_AGENCIES' || sLeadId === '00000000-0000-0000-0000-000000009999');
+      return sIsGeneral || scopedAgencyIds.includes(sLeadId) || sCoordIds.some(id => scopedAgencyIds.includes(id));
+    });
+
+    if (!isGeneral && !isLead && !isCoord && !isSubMatch) return false;
+  }
+
   // 1. Search Query Filter - Real-time debounced matching
   const q = (appliedFilters.value.searchQuery || '').toLowerCase().trim();
   if (q) {
@@ -721,6 +772,31 @@ function isQuantitative(item) {
   return item.evaluationType === 'Quantitative' || item.evaluationType === 1 || item.evaluationType === '1';
 }
 
+function isYearEnabledForItem(item, year) {
+  if (!item) return true;
+  if (item.isOngoing) return true;
+
+  const yr = Number(year);
+  let startYr = 2026;
+  let dueYr = 2030;
+
+  if (item.startDate) {
+    const dt = new Date(item.startDate);
+    if (!isNaN(dt.getTime())) startYr = dt.getFullYear();
+  } else if (item.startYear) {
+    startYr = Number(item.startYear);
+  }
+
+  if (item.dueDate) {
+    const dt = new Date(item.dueDate);
+    if (!isNaN(dt.getTime())) dueYr = dt.getFullYear();
+  } else if (item.dueYear) {
+    dueYr = Number(item.dueYear);
+  }
+
+  return yr >= startYr && yr <= dueYr;
+}
+
 function openBaselineModal(item) {
   selectedTaskForOverride.value = item;
   isBaselineModalOpen.value = true;
@@ -762,7 +838,9 @@ async function loadGridData() {
   if (!props.documentId) return;
   isLoading.value = true;
   try {
-    const res = await fetch(getApiUrl(`/api/planning/documents/${props.documentId}/grid`));
+    const currentAgencyId = authState.user.value?.agencyId || '';
+    const agencyParam = currentAgencyId ? `?agencyId=${currentAgencyId}` : '';
+    const res = await fetch(getApiUrl(`/api/planning/documents/${props.documentId}/grid${agencyParam}`));
     if (res.ok) {
       const data = await res.json();
       gridData.value = {

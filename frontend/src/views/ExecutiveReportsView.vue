@@ -74,8 +74,8 @@
 
     <!-- FILTER BAR WITH OVERLAY PANEL -->
     <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 w-full">
-      <div class="flex items-center gap-2 w-full sm:w-auto flex-1">
-        <div class="relative flex-1 max-w-md">
+      <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto flex-1">
+        <div class="relative flex-1 min-w-[200px] max-w-md">
           <input 
             :value="filterDraft.searchQuery" 
             @input="filterDraft.searchQuery = $event.target.value"
@@ -84,6 +84,18 @@
           />
           <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
         </div>
+
+        <!-- Quick Item Type Select Dropdown -->
+        <select 
+          v-model="quickItemType" 
+          @change="onQuickItemTypeChange"
+          class="py-2 px-3 text-xs bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl font-extrabold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer min-h-[36px] shadow-2xs shrink-0"
+          title="Lọc loại đối tượng (Tất cả / Mục tiêu / Nhiệm vụ)"
+        >
+          <option value="all">Tất cả (Mục tiêu & Nhiệm vụ)</option>
+          <option value="Goal">🎯 Chỉ Mục tiêu</option>
+          <option value="Task">📋 Chỉ Nhiệm vụ</option>
+        </select>
 
         <!-- OverlayPanel Advanced Filter Popover -->
         <OverlayPanel 
@@ -167,7 +179,7 @@
                 v-model="filterDraft.selectedItemTypes" 
                 :options="itemTypeOptions" 
                 :isMulti="true" 
-                label="Loại Đối Tượng" 
+                label="Loại Đối Tượng (Mục tiêu / Nhiệm vụ)" 
                 placeholder="Tất cả loại đối tượng"
               />
             </div>
@@ -409,7 +421,8 @@ import LoadingSpinner from '../components/LoadingSpinner.vue';
 import OverlayPanel from '../components/OverlayPanel.vue';
 import { getApiUrl } from '../config/api';
 import { GOAL_SECTIONS, GOAL_GROUPS, TASK_SECTIONS, TASK_GROUPS } from '../config/planningStructureConfig';
-import { exportToExcel } from '../utils/excelExport';
+import { exportToExcel, exportFormattedReportExcel } from '../utils/excelExport';
+import { authState } from '../services/auth';
 
 const activeReportType = ref('summary');
 const isLoading = ref(false);
@@ -481,13 +494,28 @@ function getPct(val, total) {
 
 function formatDate(d) {
   if (!d) return '—';
-  return new Date(d).toLocaleDateString('vi-VN');
+  try {
+    let str = String(d).trim();
+    if (!str) return '—';
+    if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+      const [y, m, day] = str.slice(0, 10).split('-');
+      return `${day}/${m}/${y}`;
+    }
+    const dateObj = new Date(str);
+    if (isNaN(dateObj.getTime())) return '—';
+    const day = String(dateObj.getUTCDate()).padStart(2, '0');
+    const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
+    const year = dateObj.getUTCFullYear();
+    return `${day}/${month}/${year}`;
+  } catch {
+    return '—';
+  }
 }
 
 function formatDateRange(sDate, dDate) {
   if (!sDate && !dDate) return '—';
-  const s = sDate ? new Date(sDate).toLocaleDateString('vi-VN') : '...';
-  const d = dDate ? new Date(dDate).toLocaleDateString('vi-VN') : '...';
+  const s = sDate ? formatDate(sDate) : '...';
+  const d = dDate ? formatDate(dDate) : '...';
   return `${s} ➔ ${d}`;
 }
 
@@ -508,6 +536,17 @@ function getStatusLabel(st) {
   return map[st] || st || 'Chưa thực hiện';
 }
 
+const quickItemType = ref('all');
+
+function onQuickItemTypeChange() {
+  if (quickItemType.value === 'all') {
+    filterDraft.value.selectedItemTypes = [];
+  } else {
+    filterDraft.value.selectedItemTypes = [quickItemType.value];
+  }
+  execFilterSearch();
+}
+
 let reportSearchTimer = null;
 let reportSearchRequestId = 0;
 let reportFetchRequestId = 0;
@@ -515,6 +554,11 @@ let reportFetchRequestId = 0;
 function execFilterSearch() {
   if (reportSearchTimer) clearTimeout(reportSearchTimer);
   reportSearchRequestId++;
+  if (filterDraft.value.selectedItemTypes?.length === 1) {
+    quickItemType.value = filterDraft.value.selectedItemTypes[0];
+  } else if (!filterDraft.value.selectedItemTypes?.length) {
+    quickItemType.value = 'all';
+  }
   appliedFilters.value = JSON.parse(JSON.stringify(filterDraft.value));
   currentPage.value = 1;
   loadReportData();
@@ -534,6 +578,7 @@ watch(() => filterDraft.value.searchQuery, (newVal) => {
 function resetReportFilters() {
   if (reportSearchTimer) clearTimeout(reportSearchTimer);
   reportSearchRequestId++;
+  quickItemType.value = 'all';
   filterDraft.value = {
     searchQuery: '',
     selectedAgencyIds: [],
@@ -551,6 +596,36 @@ function resetReportFilters() {
 }
 
 function passesCommonFilters(i) {
+  // Non-Admin Focal Point Scoping Filter:
+  if (!authState.isAdmin.value && authState.user.value?.agencyId) {
+    const userAgencyId = String(authState.user.value.agencyId).toLowerCase();
+    const userAgency = agencies.value.find(a => String(a.id).toLowerCase() === userAgencyId);
+
+    const scopedAgencyIds = [userAgencyId];
+    if (userAgency && !userAgency.parentId) {
+      const childIds = agencies.value
+        .filter(a => a.parentId && String(a.parentId).toLowerCase() === userAgencyId)
+        .map(a => String(a.id).toLowerCase());
+      scopedAgencyIds.push(...childIds);
+    }
+
+    const itemLeadId = i.leadAgencyId ? String(i.leadAgencyId).toLowerCase() : '';
+    const itemCoordIds = (i.coordinatingAgencyIds || []).map(id => String(id).toLowerCase());
+
+    const isParentAgency = !userAgency || !userAgency.parentId;
+    const isGeneral = isParentAgency && (i.isGeneralTask || i.leadAgencyCode === 'ALL_AGENCIES' || itemLeadId === '00000000-0000-0000-0000-000000009999' || (i.leadAgencyName && i.leadAgencyName.toLowerCase().trim() === 'các bộ, ngành, địa phương'));
+    const isLead = scopedAgencyIds.includes(itemLeadId);
+    const isCoord = itemCoordIds.some(id => scopedAgencyIds.includes(id));
+    const isSubMatch = i.subItems?.some(s => {
+      const sLeadId = s.leadAgencyId ? String(s.leadAgencyId).toLowerCase() : '';
+      const sCoordIds = (s.coordinatingAgencyIds || []).map(id => String(id).toLowerCase());
+      const sIsGeneral = isParentAgency && (s.isGeneralTask || s.leadAgencyCode === 'ALL_AGENCIES' || sLeadId === '00000000-0000-0000-0000-000000009999');
+      return sIsGeneral || scopedAgencyIds.includes(sLeadId) || sCoordIds.some(id => scopedAgencyIds.includes(id));
+    });
+
+    if (!isGeneral && !isLead && !isCoord && !isSubMatch) return false;
+  }
+
   if (appliedFilters.value.selectedAgencyIds?.length > 0 && !appliedFilters.value.selectedAgencyIds.includes(i.leadAgencyId)) return false;
   if (appliedFilters.value.selectedScopes?.length > 0) {
     const isGeneral = i.isGeneralTask || i.leadAgencyCode === 'ALL_AGENCIES' || i.leadAgencyId === '00000000-0000-0000-0000-000000009999';
@@ -659,6 +734,8 @@ async function loadReportData() {
     const params = new URLSearchParams();
     if (appliedFilters.value.selectedAgencyIds && appliedFilters.value.selectedAgencyIds.length > 0) {
       appliedFilters.value.selectedAgencyIds.forEach(id => params.append('agencyId', id));
+    } else if (!authState.isAdmin.value && authState.user.value?.agencyId) {
+      params.append('agencyId', authState.user.value.agencyId);
     }
     if (appliedFilters.value.selectedScopes && appliedFilters.value.selectedScopes.length === 1) {
       params.append('scope', appliedFilters.value.selectedScopes[0]);
@@ -702,27 +779,44 @@ async function loadReportData() {
 
 function exportCurrentReportToExcel() {
   let title = '';
+  let subtitle = '';
+  let kpiTitle = '';
+  let kpiSection = [];
+  let tableTitle = '';
   let headers = [];
   let rows = [];
   let fileName = '';
   let sheetName = '';
   let minColWidths = {};
 
+  const now = new Date();
+  const timeStr = `${now.toLocaleDateString('vi-VN')} ${now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
+
   if (activeReportType.value === 'summary') {
     title = "BÁO CÁO TỔNG HỢP TIẾN ĐỘ THEO CƠ QUAN / ĐƠN VỊ - QUYẾT ĐỊNH 1266/QĐ-TTg";
+    subtitle = `Thời gian xuất báo cáo: ${timeStr} | Tổng số cơ quan / địa phương: ${filteredAgencySummaries.value.length}`;
+    kpiTitle = "1. CHỈ SỐ TỔNG QUAN HỆ THỐNG CƠ QUAN / ĐƠN VỊ";
+    kpiSection = [
+      ["Tổng số cơ quan / địa phương theo dõi", filteredAgencySummaries.value.length],
+      ["Tổng số mục tiêu chiến lược", metrics.value.totalGoals || 0],
+      ["Tổng số nhiệm vụ thực thi", metrics.value.totalTasks || 0],
+      ["Tổng số hạng mục hợp nhất", (metrics.value.totalGoals || 0) + (metrics.value.totalTasks || 0)]
+    ];
+    tableTitle = "2. DANH SÁCH BỘ, NGÀNH, ĐỊA PHƯƠNG VÀ TIẾN ĐỘ THỰC HIỆN";
     fileName = "Bao_Cao_Tong_Hop_Tien_Do_Co_Quan";
     sheetName = "Tổng hợp tiến độ";
-    headers = ["STT", "Tên Cơ Quan / Địa Phương", "Tổng Mục Tiêu", "Tổng Nhiệm Vụ", "Đã Hoàn Thành", "Đang Thực Hiện", "Sắp Hết Hạn", "Quá Hạn", "Tỷ Lệ Hoàn Thành (%)"];
-    minColWidths = { 0: 8, 1: 35, 8: 22 };
+    headers = ["STT", "Tên Cơ Quan / Địa Phương", "Tổng Hạng Mục", "Mục Tiêu", "Nhiệm Vụ", "Đã Hoàn Thành", "Đang T/H (Trong Hạn)", "Sắp Tới Hạn", "Đang T/H (Quá Hạn)", "Tỷ Lệ Hoàn Thành (%)"];
+    minColWidths = { 0: 8, 1: 38, 2: 15, 3: 12, 4: 12, 5: 15, 6: 20, 7: 15, 8: 20, 9: 22 };
 
     rows = filteredAgencySummaries.value.map((ag, idx) => {
       const pct = getPct(ag.completedOnTime + ag.completedOverdue, ag.totalItems);
       return [
         idx + 1,
         ag.name || '',
+        ag.totalItems || 0,
         ag.totalGoals || 0,
         ag.totalTasks || 0,
-        ag.completedOnTime + ag.completedOverdue,
+        (ag.completedOnTime || 0) + (ag.completedOverdue || 0),
         ag.inProgressOnTime || 0,
         ag.expiringSoon || 0,
         ag.inProgressOverdue || 0,
@@ -731,10 +825,18 @@ function exportCurrentReportToExcel() {
     });
   } else if (activeReportType.value === 'urgent') {
     title = "BÁO CÁO NHIỆM VỤ CẦN GỬI THÔNG BÁO (SẮP HẾT HẠN & QUÁ HẠN) - QUYẾT ĐỊNH 1266/QĐ-TTg";
+    subtitle = `Thời gian xuất báo cáo: ${timeStr} | Tổng số nhiệm vụ cần chú ý: ${urgentItems.value.length}`;
+    kpiTitle = "1. CHỈ SỐ CẢNH BÁO TIẾN ĐỘ THỰC HIỆN";
+    kpiSection = [
+      ["Tổng số nhiệm vụ cần gửi thông báo", urgentItems.value.length],
+      ["Số lượng nhiệm vụ đang thực hiện quá hạn (🔴)", urgentItems.value.filter(i => i.calculatedStatus === 'InProgressOverdue').length],
+      ["Số lượng nhiệm vụ sắp tới hạn (🟣)", urgentItems.value.filter(i => i.calculatedStatus === 'ExpiringSoon').length]
+    ];
+    tableTitle = "2. DANH SÁCH CHI TIẾT NHIỆM VỤ CẦN GỬI THÔNG BÁO";
     fileName = "Bao_Cao_Nhiem_Vu_Can_Gui_Thong_Bao";
     sheetName = "Sắp hết hạn & Quá hạn";
-    headers = ["STT", "Mã Hạng Mục", "Loại", "Tên Mục Tiêu / Nhiệm Vụ", "Đơn Vị Chủ Trì", "Hạn Chót", "Trạng Thái Cảnh Báo"];
-    minColWidths = { 0: 8, 1: 15, 3: 50, 4: 30, 6: 25 };
+    headers = ["STT", "Mã Hạng Mục", "Loại Hạng Mục", "Tên Mục Tiêu / Nhiệm Vụ", "Đơn Vị Chủ Trì", "Hạn Chót", "Trạng Thái Cảnh Báo"];
+    minColWidths = { 0: 8, 1: 15, 2: 15, 3: 50, 4: 32, 5: 20, 6: 25 };
 
     rows = urgentItems.value.map((i, idx) => [
       idx + 1,
@@ -747,10 +849,18 @@ function exportCurrentReportToExcel() {
     ]);
   } else if (activeReportType.value === 'detail') {
     title = "BÁO CÁO CHI TIẾT TIẾN ĐỘ VÀ FILE MINH CHỨNG - QUYẾT ĐỊNH 1266/QĐ-TTg";
+    subtitle = `Thời gian xuất báo cáo: ${timeStr} | Tổng số hạng mục: ${filteredDetailItems.value.length}`;
+    kpiTitle = "1. CHỈ SỐ CẬP NHẬT TIẾN ĐỘ VÀ MINH CHỨNG";
+    kpiSection = [
+      ["Tổng số mục tiêu & nhiệm vụ theo dõi", filteredDetailItems.value.length],
+      ["Số lượng hạng mục đã có cập nhật tiến độ", filteredDetailItems.value.filter(i => i.latestProgressValue !== null && i.latestProgressValue !== undefined).length],
+      ["Số lượng hạng mục đã đính kèm file minh chứng", filteredDetailItems.value.filter(i => (i.evidenceFilesCount || 0) > 0).length]
+    ];
+    tableTitle = "2. DANH SÁCH CHI TIẾT TIẾN ĐỘ VÀ FILE MINH CHỨNG THEO HẠNG MỤC";
     fileName = "Bao_Cao_Chi_Tiet_Tien_Do_Minh_Chung";
     sheetName = "Chi tiết tiến độ";
-    headers = ["STT", "Mã Hạng Mục", "Tên Mục Tiêu / Nhiệm Vụ", "Đơn Vị Chủ Trì", "Tiến Độ Mới Nhất (%)", "Trạng Thái", "Số File Minh Chứng"];
-    minColWidths = { 0: 8, 1: 15, 2: 50, 3: 30, 4: 20, 5: 25 };
+    headers = ["STT", "Mã Hạng Mục", "Tên Mục Tiêu / Nhiệm Vụ", "Đơn Vị Chủ Trì", "Tiến Độ Mới Nhất (%)", "Trạng Thái Thực Hiện", "Số File Minh Chứng"];
+    minColWidths = { 0: 8, 1: 15, 2: 50, 3: 32, 4: 22, 5: 25, 6: 20 };
 
     rows = filteredDetailItems.value.map((i, idx) => [
       idx + 1,
@@ -763,10 +873,18 @@ function exportCurrentReportToExcel() {
     ]);
   } else if (activeReportType.value === 'scope') {
     title = "BÁO CÁO PHÂN LOẠI NHIỆM VỤ CHUNG VÀ RIÊNG - QUYẾT ĐỊNH 1266/QĐ-TTg";
+    subtitle = `Thời gian xuất báo cáo: ${timeStr} | Tổng số nhiệm vụ: ${filteredScopeItems.value.length}`;
+    kpiTitle = "1. THỐNG KÊ PHÂN LOẠI PHẠM VI NHIỆM VỤ";
+    kpiSection = [
+      ["Tổng số nhiệm vụ theo dõi", filteredScopeItems.value.length],
+      ["Số lượng nhiệm vụ phạm vi chung (Các bộ, ngành, địa phương)", filteredScopeItems.value.filter(i => i.isGeneralTask).length],
+      ["Số lượng nhiệm vụ phạm vi riêng (Giao đơn vị cụ thể)", filteredScopeItems.value.filter(i => !i.isGeneralTask).length]
+    ];
+    tableTitle = "2. DANH SÁCH PHÂN LOẠI CHI TIẾT NHIỆM VỤ THEO PHẠM VI";
     fileName = "Bao_Cao_Phan_Loai_Nhiem_Vu_Chung_Rieng";
     sheetName = "Nhiệm vụ chung & riêng";
-    headers = ["STT", "Mã Hạng Mục", "Phạm Vi Nhiệm Vụ", "Nội Dung Thực Hiện", "Đơn Vị Đầu Mối", "Thời Gian Thực Hiện", "Trạng Thái"];
-    minColWidths = { 0: 8, 1: 15, 2: 18, 3: 50, 4: 30, 5: 22, 6: 25 };
+    headers = ["STT", "Mã Hạng Mục", "Phạm Vi Nhiệm Vụ", "Nội Dung Thực Hiện", "Đơn Vị Đầu Mối", "Thời Gian Thực Hiện", "Trạng Thái Thực Hiện"];
+    minColWidths = { 0: 8, 1: 15, 2: 20, 3: 50, 4: 32, 5: 22, 6: 25 };
 
     rows = filteredScopeItems.value.map((i, idx) => [
       idx + 1,
@@ -779,8 +897,12 @@ function exportCurrentReportToExcel() {
     ]);
   }
 
-  exportToExcel({
+  exportFormattedReportExcel({
     title,
+    subtitle,
+    kpiTitle,
+    kpiSection,
+    tableTitle,
     headers,
     rows,
     fileName,

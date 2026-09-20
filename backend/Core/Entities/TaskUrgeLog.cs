@@ -27,5 +27,7 @@ namespace Cdsqg.Core.Entities
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public string CreatedBy { get; set; } = "Chuyên viên theo dõi CĐS";
+        public string? RecipientsSummary { get; set; }
+        public string? Title { get; set; }
     }
 }

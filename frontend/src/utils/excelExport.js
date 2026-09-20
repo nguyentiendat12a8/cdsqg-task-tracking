@@ -1,23 +1,146 @@
-import * as XLSX from 'xlsx';
+import XLSX from 'xlsx-js-style';
 import { toast } from 'vue3-toastify';
 
 /**
- * Cleanly export data to formatted Excel (.xlsx) with auto-fit column widths & report header.
- * 
- * @param {Object} options
- * @param {string} options.title - Main report title
- * @param {string} [options.subtitle] - Optional subtitle (defaults to timestamp)
- * @param {Array<string>} options.headers - Column header titles
- * @param {Array<Array<any>>} options.rows - Data rows
- * @param {string} options.fileName - File name prefix (without extension)
- * @param {string} [options.sheetName="Báo cáo"] - Excel sheet tab title
- * @param {Object} [options.minColWidths={}] - Map of column index to minimum character width e.g. { 1: 30, 2: 50 }
+ * Apply cell borders, colors, fonts, alignment, and row heights to a worksheet.
  */
-export function exportToExcel({
+export function styleWorksheet(ws, { numCols = 8, headerRowIndex = 3, titleRowIndex = 0 } = {}) {
+  if (!ws || !ws['!ref']) return;
+  const range = XLSX.utils.decode_range(ws['!ref']);
+  const thinBorder = {
+    top: { style: 'thin', color: { rgb: 'CBD5E1' } },
+    bottom: { style: 'thin', color: { rgb: 'CBD5E1' } },
+    left: { style: 'thin', color: { rgb: 'CBD5E1' } },
+    right: { style: 'thin', color: { rgb: 'CBD5E1' } }
+  };
+
+  const headerStyle = {
+    font: { name: 'Segoe UI', sz: 10, bold: true, color: { rgb: 'FFFFFF' } },
+    fill: { fgColor: { rgb: '1E3A8A' } }, // Navy Blue
+    alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+    border: {
+      top: { style: 'medium', color: { rgb: '0F172A' } },
+      bottom: { style: 'medium', color: { rgb: '0F172A' } },
+      left: { style: 'thin', color: { rgb: '334155' } },
+      right: { style: 'thin', color: { rgb: '334155' } }
+    }
+  };
+
+  const sectionStyle = {
+    font: { name: 'Segoe UI', sz: 11, bold: true, color: { rgb: '0F172A' } },
+    fill: { fgColor: { rgb: 'E2E8F0' } }, // Slate 200
+    alignment: { horizontal: 'left', vertical: 'center' },
+    border: {
+      top: { style: 'thin', color: { rgb: '94A3B8' } },
+      bottom: { style: 'thin', color: { rgb: '94A3B8' } },
+      left: thinBorder.left,
+      right: thinBorder.right
+    }
+  };
+
+  const titleStyle = {
+    font: { name: 'Segoe UI', sz: 13, bold: true, color: { rgb: 'FFFFFF' } },
+    fill: { fgColor: { rgb: '1E3A8A' } },
+    alignment: { horizontal: 'center', vertical: 'center' },
+    border: thinBorder
+  };
+
+  const subtitleStyle = {
+    font: { name: 'Segoe UI', sz: 10, italic: true, color: { rgb: '475569' } },
+    fill: { fgColor: { rgb: 'F1F5F9' } },
+    alignment: { horizontal: 'center', vertical: 'center' }
+  };
+
+  const kpiLabelStyle = {
+    font: { name: 'Segoe UI', sz: 10, bold: true, color: { rgb: '1E293B' } },
+    fill: { fgColor: { rgb: 'F8FAFC' } },
+    alignment: { horizontal: 'left', vertical: 'center' },
+    border: thinBorder
+  };
+
+  const kpiValueStyle = {
+    font: { name: 'Segoe UI', sz: 10, bold: true, color: { rgb: '1E3A8A' } },
+    fill: { fgColor: { rgb: 'FFFFFF' } },
+    alignment: { horizontal: 'left', vertical: 'center' },
+    border: thinBorder
+  };
+
+  for (let r = range.s.r; r <= range.e.r; r++) {
+    const firstColVal = ws[XLSX.utils.encode_cell({ r, c: 0 })]?.v;
+    const isHeaderRow = r === headerRowIndex || 
+                        firstColVal === 'STT' || 
+                        firstColVal === 'Mã Hạng Mục' || 
+                        firstColVal === 'Phạm Vi Nhiệm Vụ' ||
+                        firstColVal === 'Tổng số hạng mục' || 
+                        firstColVal === 'Loại hình';
+
+    for (let c = range.s.c; c <= range.e.c; c++) {
+      const cellRef = XLSX.utils.encode_cell({ r, c });
+      let cell = ws[cellRef];
+      if (!cell) {
+        cell = { t: 's', v: '' };
+        ws[cellRef] = cell;
+      }
+
+      const valStr = cell.v !== undefined && cell.v !== null ? String(cell.v).trim() : '';
+
+      // 1. Main Title Row
+      if (r === titleRowIndex) {
+        cell.s = titleStyle;
+      }
+      // 2. Subtitle Row
+      else if (r === titleRowIndex + 1) {
+        cell.s = subtitleStyle;
+      }
+      // 3. Section Title Rows
+      else if (/^(\d+\.|CHỈ SỐ|DANH SÁCH|BẢNG TỔNG HỢP|THỐNG KÊ)/i.test(valStr)) {
+        cell.s = sectionStyle;
+      }
+      // 4. Column Header Rows
+      else if (isHeaderRow) {
+        cell.s = headerStyle;
+      }
+      // 5. KPI Overview rows (between title and header row when not section title)
+      else if (r > 2 && r < headerRowIndex && valStr !== '' && !/^(\d+\.|CHỈ SỐ|DANH SÁCH)/i.test(firstColVal)) {
+        cell.s = c === 0 ? kpiLabelStyle : (c === 1 ? kpiValueStyle : { font: { name: 'Segoe UI', sz: 10 }, border: thinBorder });
+      }
+      // 6. Data Rows
+      else if (valStr !== '') {
+        const isEven = r % 2 === 0;
+        const isNumber = typeof cell.v === 'number';
+        cell.s = {
+          font: { name: 'Segoe UI', sz: 10, color: { rgb: '0F172A' } },
+          fill: { fgColor: { rgb: isEven ? 'F8FAFC' : 'FFFFFF' } },
+          alignment: {
+            horizontal: c === 0 ? 'center' : (isNumber ? 'right' : 'left'),
+            vertical: 'center',
+            wrapText: true
+          },
+          border: thinBorder
+        };
+      } else {
+        const isEven = r % 2 === 0;
+        cell.s = {
+          font: { name: 'Segoe UI', sz: 10 },
+          fill: { fgColor: { rgb: isEven ? 'F8FAFC' : 'FFFFFF' } },
+          border: thinBorder
+        };
+      }
+    }
+  }
+}
+
+/**
+ * Export structured Excel report with Title Banner, Subtitle, KPI section, and Data Table.
+ */
+export function exportFormattedReportExcel({
   title,
   subtitle,
-  headers,
-  rows,
+  kpiTitle = "1. CHỈ SỐ TỔNG QUAN VÀ THỐNG KÊ",
+  kpiSection = [],
+  tableTitle = "2. DANH SÁCH CHI TIẾT DỮ LIỆU BÁO CÁO",
+  headers = [],
+  rows = [],
   fileName = 'Bao_Cao_Du_Lieu',
   sheetName = 'Báo cáo',
   minColWidths = {}
@@ -28,38 +151,49 @@ export function exportToExcel({
   }
 
   const now = new Date();
-  const timeStr = `${now.toLocaleDateString('vi-VN')} ${now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+  const timeStr = `${now.toLocaleDateString('vi-VN')} ${now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
 
+  const numCols = Math.max(headers ? headers.length : 1, 3);
   const data = [];
-  
-  if (title) {
-    data.push([title.toUpperCase()]);
-  }
+
+  // Title & Subtitle
+  if (title) data.push([title.toUpperCase()]);
   data.push([subtitle || `Thời gian xuất báo cáo: ${timeStr}`]);
-  data.push([]); // Empty row separator
+  data.push([]); // blank separator
+
+  const merges = [];
+  if (numCols > 1) {
+    merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: numCols - 1 } });
+    merges.push({ s: { r: 1, c: 0 }, e: { r: 1, c: numCols - 1 } });
+  }
+
+  // Section 1: KPI Overview Section
+  if (kpiSection && kpiSection.length > 0) {
+    const kpiTitleRowIdx = data.length;
+    data.push([kpiTitle]);
+    if (numCols > 1) {
+      merges.push({ s: { r: kpiTitleRowIdx, c: 0 }, e: { r: kpiTitleRowIdx, c: numCols - 1 } });
+    }
+    kpiSection.forEach(kpi => {
+      data.push([kpi[0], kpi[1]]);
+    });
+    data.push([]); // blank separator
+  }
+
+  // Section 2: Data Table Section
+  const tableTitleRowIdx = data.length;
+  data.push([tableTitle]);
+  if (numCols > 1) {
+    merges.push({ s: { r: tableTitleRowIdx, c: 0 }, e: { r: tableTitleRowIdx, c: numCols - 1 } });
+  }
+
+  const headerRowIdx = data.length;
   data.push(headers);
 
-  const headerRowIdx = data.length - 1;
-
-  rows.forEach(row => {
-    data.push(row);
-  });
+  rows.forEach(r => data.push(r));
 
   const ws = XLSX.utils.aoa_to_sheet(data);
-
-  // Configure merged rows across all data columns for Title & Subtitle
-  const numCols = headers ? headers.length : 1;
-  const merges = [];
-
-  if (numCols > 1) {
-    if (title) {
-      merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: numCols - 1 } }); // Title merged A1:X1
-      merges.push({ s: { r: 1, c: 0 }, e: { r: 1, c: numCols - 1 } }); // Subtitle merged A2:X2
-    } else {
-      merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: numCols - 1 } }); // Subtitle merged A1:X1
-    }
-    ws['!merges'] = merges;
-  }
+  ws['!merges'] = merges;
 
   // Auto calculate fit column widths (!cols)
   const colWidths = headers.map((hdr, colIdx) => {
@@ -72,17 +206,16 @@ export function exportToExcel({
       }
     }
 
-    // Standard width calculation with padding + min/max bounds
     let calculatedWidth = Math.min(Math.max(maxLen + 4, 12), 75);
-    
     if (minColWidths[colIdx]) {
       calculatedWidth = Math.max(calculatedWidth, minColWidths[colIdx]);
     }
-    
     return calculatedWidth;
   });
 
   ws['!cols'] = colWidths.map(w => ({ wch: w }));
+
+  styleWorksheet(ws, { numCols, headerRowIndex: headerRowIdx, titleRowIndex: 0 });
 
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, sheetName);
@@ -91,5 +224,30 @@ export function exportToExcel({
   const fullFileName = `${fileName}_${dateFileStr}.xlsx`;
   
   XLSX.writeFile(wb, fullFileName);
-  toast.success("Đã xuất file Excel chuẩn định dạng thành công!");
+  toast.success("Đã xuất file Excel báo cáo thành công!");
+}
+
+/**
+ * Cleanly export basic data to formatted Excel (.xlsx).
+ */
+export function exportToExcel({
+  title,
+  subtitle,
+  headers,
+  rows,
+  fileName = 'Bao_Cao_Du_Lieu',
+  sheetName = 'Báo cáo',
+  minColWidths = {}
+}) {
+  exportFormattedReportExcel({
+    title,
+    subtitle,
+    kpiSection: [],
+    tableTitle: "DANH SÁCH CHI TIẾT DỮ LIỆU",
+    headers,
+    rows,
+    fileName,
+    sheetName,
+    minColWidths
+  });
 }

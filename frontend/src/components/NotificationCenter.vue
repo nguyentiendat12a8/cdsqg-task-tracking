@@ -1,5 +1,5 @@
 <template>
-  <div class="relative">
+  <div class="relative" ref="containerRef">
     <!-- Notification Bell Button -->
     <button 
       @click="isOpen = !isOpen"
@@ -57,9 +57,8 @@
             {{ notif.type === 'OverdueAlert' ? '⚠️' : '⏰' }}
           </div>
           <div class="flex-1 space-y-1">
-            <div class="text-xs font-bold text-slate-900">{{ notif.title }}</div>
-            <div class="text-[11px] text-slate-600 line-clamp-2 leading-relaxed">{{ notif.message }}</div>
-            <div class="text-[10px] text-slate-400 font-semibold pt-1">{{ formatDate(notif.createdAt) }}</div>
+            <div class="text-xs font-bold text-slate-900 leading-snug">{{ notif.title }}</div>
+            <div class="text-[10px] text-slate-400 font-semibold pt-0.5">{{ formatDate(notif.createdAt) }}</div>
           </div>
         </div>
       </div>
@@ -68,17 +67,31 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { getApiUrl } from '../config/api';
+import { authState } from '../services/auth';
 
+const containerRef = ref(null);
 const isOpen = ref(false);
 const unreadCount = ref(0);
 const notifications = ref([]);
 
+function handleClickOutside(e) {
+  if (containerRef.value && !containerRef.value.contains(e.target)) {
+    isOpen.value = false;
+  }
+}
+
 function formatDate(dStr) {
   if (!dStr) return '';
   try {
-    return new Date(dStr).toLocaleString('vi-VN');
+    let str = String(dStr).trim();
+    if (str.includes('T') && !str.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(str)) {
+      str += 'Z';
+    }
+    const d = new Date(str);
+    if (isNaN(d.getTime())) return dStr;
+    return d.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
   } catch {
     return dStr;
   }
@@ -86,11 +99,35 @@ function formatDate(dStr) {
 
 async function fetchNotifications() {
   try {
-    const res = await fetch(getApiUrl('/api/notification'));
+    const user = authState.user.value;
+    const isAdmin = authState.isAdmin.value;
+
+    let url = getApiUrl('/api/notification');
+    const params = new URLSearchParams();
+
+    if (user?.id) params.append('userId', user.id);
+    if (user?.agencyId) params.append('agencyId', user.agencyId);
+    if (isAdmin) params.append('isAdmin', 'true');
+
+    if (params.toString()) {
+      url += '?' + params.toString();
+    }
+
+    const res = await fetch(url);
     if (res.ok) {
       const data = await res.json();
-      notifications.value = data.items || [];
-      unreadCount.value = data.unreadCount || 0;
+      const rawItems = data.items || [];
+      const uniqueItems = [];
+      const seenKeys = new Set();
+      for (const item of rawItems) {
+        const key = `${item.title}_${item.message}_${item.createdAt?.substring(0, 19)}`;
+        if (!seenKeys.has(key)) {
+          seenKeys.add(key);
+          uniqueItems.push(item);
+        }
+      }
+      notifications.value = uniqueItems;
+      unreadCount.value = uniqueItems.filter(i => !i.isRead).length;
     }
   } catch (e) {
     // Backend offline fallback - fail silently
@@ -99,7 +136,21 @@ async function fetchNotifications() {
 
 async function markAllRead() {
   try {
-    await fetch(getApiUrl('/api/notification/read-all'), { method: 'PUT' });
+    const user = authState.user.value;
+    const isAdmin = authState.isAdmin.value;
+
+    let url = getApiUrl('/api/notification/read-all');
+    const params = new URLSearchParams();
+
+    if (user?.id) params.append('userId', user.id);
+    if (user?.agencyId) params.append('agencyId', user.agencyId);
+    if (isAdmin) params.append('isAdmin', 'true');
+
+    if (params.toString()) {
+      url += '?' + params.toString();
+    }
+
+    await fetch(url, { method: 'PUT' });
     unreadCount.value = 0;
     notifications.value.forEach(n => n.isRead = true);
   } catch (e) {}
@@ -111,9 +162,52 @@ async function clickNotification(notif) {
     await fetch(getApiUrl(`/api/notification/${notif.id}/read`), { method: 'PUT' });
   } catch (e) {}
   isOpen.value = false;
+
+  window.dispatchEvent(new CustomEvent('open-notification-detail', {
+    detail: notif
+  }));
 }
+
+let pollTimer = null;
+
+function handleNotificationSent() {
+  fetchNotifications();
+}
+
+function handleVisibilityChange() {
+  if (!document.hidden) {
+    fetchNotifications();
+  }
+}
+
+watch(isOpen, (newVal) => {
+  if (newVal) {
+    fetchNotifications();
+  }
+});
+
+watch(() => authState.user.value?.id, () => {
+  fetchNotifications();
+});
 
 onMounted(() => {
   fetchNotifications();
+  document.addEventListener('click', handleClickOutside);
+  window.addEventListener('notification-sent', handleNotificationSent);
+  document.addEventListener('visibilitychange', handleVisibilityChange);
+
+  // Real-time polling every 5 seconds
+  pollTimer = setInterval(fetchNotifications, 5000);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
+  window.removeEventListener('notification-sent', handleNotificationSent);
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
+
+  if (pollTimer) {
+    clearInterval(pollTimer);
+    pollTimer = null;
+  }
 });
 </script>

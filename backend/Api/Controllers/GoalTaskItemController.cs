@@ -104,6 +104,13 @@ namespace Cdsqg.Api.Controllers
                 var leadAgency = await _context.Agencies.FirstOrDefaultAsync(a => a.Id == dto.LeadAgencyId);
                 bool isGeneral = dto.IsGeneralTask || (leadAgency != null && leadAgency.Code == "ALL_AGENCIES");
 
+                Guid? unitIdToAssign = dto.UnitId;
+                if (!unitIdToAssign.HasValue && !string.IsNullOrWhiteSpace(dto.UnitName))
+                {
+                    var targetUnit = await _context.Units.FirstOrDefaultAsync(u => u.Name == dto.UnitName || (dto.UnitName == "%" && u.Code == "PERCENT") || (dto.UnitName == "Số lượng" && u.Code == "QTY"));
+                    if (targetUnit != null) unitIdToAssign = targetUnit.Id;
+                }
+
                 var newItem = new GoalTaskItem
                 {
                     Id = Guid.NewGuid(),
@@ -121,7 +128,7 @@ namespace Cdsqg.Api.Controllers
                     DueDate = dto.DueDate,
                     LeadAgencyId = dto.LeadAgencyId,
                     CoordinatingAgencyIds = dto.CoordinatingAgencyIds ?? new List<Guid>(),
-                    UnitId = dto.UnitId,
+                    UnitId = unitIdToAssign,
                     EvaluationType = evalType,
                     CalculationMethod = calcMethod,
                     CustomBaseline = dto.CustomBaseline ?? new Dictionary<string, string>(),
@@ -150,6 +157,8 @@ namespace Cdsqg.Api.Controllers
 
                 await _context.SaveChangesAsync();
 
+                var assignedUnit = unitIdToAssign.HasValue ? await _context.Units.FirstOrDefaultAsync(u => u.Id == unitIdToAssign.Value) : null;
+
                 return Ok(new
                 {
                     id = newItem.Id,
@@ -161,6 +170,7 @@ namespace Cdsqg.Api.Controllers
                     leadAgencyId = newItem.LeadAgencyId,
                     coordinatingAgencyIds = newItem.CoordinatingAgencyIds,
                     unitId = newItem.UnitId,
+                    unitName = assignedUnit?.Name ?? dto.UnitName ?? "%",
                     evaluationType = newItem.EvaluationType.ToString(),
                     calculationMethod = newItem.CalculationMethod.ToString(),
                     customBaseline = newItem.CustomBaseline,
@@ -185,44 +195,70 @@ namespace Cdsqg.Api.Controllers
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> DeleteItem(Guid id)
         {
-            var item = await _context.GoalTaskItems.FirstOrDefaultAsync(i => i.Id == id);
-            if (item == null)
+            try
             {
-                return NotFound(new { error = "Không tìm thấy Mục tiêu / Nhiệm vụ để xóa." });
+                var item = await _context.GoalTaskItems.FirstOrDefaultAsync(i => i.Id == id);
+                if (item == null)
+                {
+                    return NotFound(new { error = "Không tìm thấy Mục tiêu / Nhiệm vụ để xóa." });
+                }
+
+                var childSubTaskIds = await _context.GoalTaskItems
+                    .Where(sub => sub.ParentId == id)
+                    .Select(sub => sub.Id)
+                    .ToListAsync();
+
+                var allTargetIds = new List<Guid> { id };
+                allTargetIds.AddRange(childSubTaskIds);
+
+                var hasProgressLogs = await _context.ProgressLogs.AnyAsync(p => allTargetIds.Contains(p.GoalTaskId));
+
+                var latestLog = await _context.ProgressLogs
+                    .Where(p => allTargetIds.Contains(p.GoalTaskId))
+                    .OrderByDescending(p => p.LogDate)
+                    .FirstOrDefaultAsync();
+
+                var currentStatus = Cdsqg.Application.Services.PlanningService.CalculateExecutionStatus(item, latestLog);
+
+                if (hasProgressLogs || currentStatus != ExecutionStatusEnum.NotStarted)
+                {
+                    return BadRequest(new { error = "Chỉ được phép xóa Mục tiêu / Nhiệm vụ khi ở trạng thái Chưa bắt đầu (Chưa cập nhật tiến độ)." });
+                }
+
+                // Clean up any related TaskUrgeLogs, TargetBaselines, or ProgressLogs for target item & children
+                var urgeLogs = await _context.TaskUrgeLogs.Where(u => allTargetIds.Contains(u.GoalTaskId)).ToListAsync();
+                if (urgeLogs.Count > 0)
+                {
+                    _context.TaskUrgeLogs.RemoveRange(urgeLogs);
+                }
+
+                var baselines = await _context.TargetBaselines.Where(b => allTargetIds.Contains(b.GoalTaskId)).ToListAsync();
+                if (baselines.Count > 0)
+                {
+                    _context.TargetBaselines.RemoveRange(baselines);
+                }
+
+                var logs = await _context.ProgressLogs.Where(p => allTargetIds.Contains(p.GoalTaskId)).ToListAsync();
+                if (logs.Count > 0)
+                {
+                    _context.ProgressLogs.RemoveRange(logs);
+                }
+
+                if (childSubTaskIds.Count > 0)
+                {
+                    var childItems = await _context.GoalTaskItems.Where(sub => sub.ParentId == id).ToListAsync();
+                    _context.GoalTaskItems.RemoveRange(childItems);
+                }
+
+                _context.GoalTaskItems.Remove(item);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { success = true, message = $"Đã xóa thành công {item.Code}: {item.Title}" });
             }
-
-            var childSubTaskIds = await _context.GoalTaskItems
-                .Where(sub => sub.ParentId == id)
-                .Select(sub => sub.Id)
-                .ToListAsync();
-
-            var allTargetIds = new List<Guid> { id };
-            allTargetIds.AddRange(childSubTaskIds);
-
-            var hasProgressLogs = await _context.ProgressLogs.AnyAsync(p => allTargetIds.Contains(p.GoalTaskId));
-
-            var latestLog = await _context.ProgressLogs
-                .Where(p => allTargetIds.Contains(p.GoalTaskId))
-                .OrderByDescending(p => p.LogDate)
-                .FirstOrDefaultAsync();
-
-            var currentStatus = Cdsqg.Application.Services.PlanningService.CalculateExecutionStatus(item, latestLog);
-
-            if (hasProgressLogs || currentStatus != ExecutionStatusEnum.NotStarted)
+            catch (Exception ex)
             {
-                return BadRequest(new { error = "Chỉ được phép xóa Mục tiêu / Nhiệm vụ khi ở trạng thái Chưa bắt đầu (Chưa cập nhật tiến độ)." });
+                return StatusCode(500, new { error = "Không thể xóa Mục tiêu / Nhiệm vụ", details = ex.Message });
             }
-
-            if (childSubTaskIds.Any())
-            {
-                var childItems = await _context.GoalTaskItems.Where(sub => sub.ParentId == id).ToListAsync();
-                _context.GoalTaskItems.RemoveRange(childItems);
-            }
-
-            _context.GoalTaskItems.Remove(item);
-            await _context.SaveChangesAsync();
-
-            return Ok(new { success = true, message = $"Đã xóa thành công {item.Code}: {item.Title}" });
         }
 
         /// <summary>
@@ -283,6 +319,16 @@ namespace Cdsqg.Api.Controllers
                 item.LeadAgencyId = dto.LeadAgencyId;
                 item.CoordinatingAgencyIds = dto.CoordinatingAgencyIds ?? new List<Guid>();
                 item.Deliverables = dto.Deliverables ?? new List<TaskDeliverable>();
+
+                if (dto.UnitId.HasValue)
+                {
+                    item.UnitId = dto.UnitId;
+                }
+                else if (!string.IsNullOrWhiteSpace(dto.UnitName))
+                {
+                    var targetUnit = await _context.Units.FirstOrDefaultAsync(u => u.Name == dto.UnitName || (dto.UnitName == "%" && u.Code == "PERCENT"));
+                    if (targetUnit != null) item.UnitId = targetUnit.Id;
+                }
 
                 await _context.SaveChangesAsync();
 

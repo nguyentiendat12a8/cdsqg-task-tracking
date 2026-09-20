@@ -9,6 +9,7 @@
   >
     <!-- Trigger Button -->
     <button 
+      ref="triggerBtnRef"
       type="button" 
       class="px-3.5 py-1.5 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl border border-slate-200/80 transition flex items-center gap-1.5 shrink-0 cursor-pointer shadow-2xs select-none whitespace-nowrap"
       :class="{ '!bg-blue-50 !text-blue-700 !border-blue-300': isOpen || activeCount > 0 }"
@@ -32,18 +33,19 @@
     <!-- Overlay Panel Popper Content -->
     <template #popper>
       <div 
-        class="bg-white rounded-2xl shadow-2xl border border-slate-200/90 font-sans p-4 space-y-3.5 z-50 text-slate-800"
+        ref="panelRef"
+        class="bg-slate-100 rounded-2xl shadow-2xl shadow-slate-900/30 border-2 border-slate-300 font-sans p-4 space-y-3.5 z-50 text-slate-800"
         :class="panelWidthClass"
       >
         <!-- Panel Header -->
-        <div class="flex items-center justify-between border-b border-slate-100 pb-2.5">
+        <div class="flex items-center justify-between border-b border-slate-200 pb-2.5">
           <div class="flex items-center gap-2">
-            <div class="w-7 h-7 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+            <div class="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
               </svg>
             </div>
-            <h4 class="text-xs sm:text-sm font-extrabold text-slate-800 uppercase tracking-wide">
+            <h4 class="text-xs sm:text-sm font-extrabold text-slate-900 uppercase tracking-wide">
               {{ title }}
             </h4>
           </div>
@@ -51,7 +53,7 @@
           <button 
             type="button" 
             @click="closePanel" 
-            class="w-6 h-6 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 flex items-center justify-center text-xs font-bold transition cursor-pointer"
+            class="w-6 h-6 rounded-lg bg-slate-200/80 hover:bg-slate-300 text-slate-500 hover:text-slate-800 flex items-center justify-center text-xs font-bold transition cursor-pointer"
             title="Đóng panel"
           >
             ✕
@@ -64,11 +66,11 @@
         </div>
 
         <!-- Panel Footer / Actions -->
-        <div class="flex items-center justify-between gap-2 border-t border-slate-100 pt-3">
+        <div class="flex items-center justify-between gap-2 border-t border-slate-200 pt-3">
           <button 
             type="button" 
             @click="handleReset" 
-            class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-1"
+            class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-1"
           >
             <span>↺</span>
             <span>Đặt Lại</span>
@@ -78,7 +80,7 @@
             <button 
               type="button" 
               @click="closePanel" 
-              class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl transition cursor-pointer"
+              class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer"
             >
               Đóng
             </button>
@@ -98,7 +100,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 
 const props = defineProps({
   title: {
@@ -122,6 +124,8 @@ const props = defineProps({
 const emit = defineEmits(['apply', 'reset']);
 
 const isOpen = ref(false);
+const panelRef = ref(null);
+const triggerBtnRef = ref(null);
 
 const panelWidthClass = computed(() => props.widthClass);
 
@@ -137,20 +141,43 @@ function handleApply() {
 function handleReset() {
   emit('reset');
 }
+
+function handleClickOutside(e) {
+  if (!isOpen.value) return;
+  const target = e.target;
+  if (panelRef.value && panelRef.value.contains(target)) return;
+  if (triggerBtnRef.value && triggerBtnRef.value.contains(target)) return;
+  if (target.closest && (target.closest('.fixed.bg-white') || target.closest('.z-\\[9999999\\]') || target.closest('.v-popper__popper'))) return;
+
+  isOpen.value = false;
+}
+
+onMounted(() => {
+  document.addEventListener('click', handleClickOutside);
+});
+
+onUnmounted(() => {
+  document.removeEventListener('click', handleClickOutside);
+});
 </script>
 
 <style>
+.v-popper-clean-overlay,
+.v-popper-clean-overlay .v-popper__popper,
+.v-popper-clean-overlay .v-popper__wrapper,
 .v-popper-clean-overlay .v-popper__inner {
-  border-radius: 0 !important;
+  border-radius: 1rem !important;
   border: none !important;
   background: transparent !important;
   box-shadow: none !important;
   padding: 0 !important;
   outline: none !important;
+  overflow: hidden !important;
 }
 .v-popper-clean-overlay .v-popper__arrow-container,
 .v-popper-clean-overlay .v-popper__arrow-outer,
-.v-popper-clean-overlay .v-popper__arrow-inner {
+.v-popper-clean-overlay .v-popper__arrow-inner,
+.v-popper-clean-overlay .v-popper__arrow {
   display: none !important;
   visibility: hidden !important;
   opacity: 0 !important;

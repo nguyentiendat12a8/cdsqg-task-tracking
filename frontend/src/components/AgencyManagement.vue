@@ -178,7 +178,7 @@
     </div>
 
     <!-- Create/Edit Modal with Parent Selector & Contact Persons -->
-    <div v-if="isModalOpen" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div v-if="isModalOpen" @click.self="closeModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
       <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-3xl w-full p-6 sm:p-7 space-y-4 max-h-[90vh] flex flex-col">
         <h3 class="text-lg font-bold text-slate-800 border-b border-slate-100 pb-2 shrink-0">
           {{ isEditing ? 'Chỉnh Sửa Cơ Quan' : 'Thêm Cơ Quan / Đơn Vị Mới' }}
@@ -715,29 +715,29 @@ async function saveAgency() {
     }
 
     if (res.ok) {
-      toast.success(isEditing.value ? 'Cập nhật cơ quan thành công!' : 'Thêm mới cơ quan thành công!');
+      toast.success(isEditing.value ? 'Lưu thành công!' : 'Lưu thành công!');
       isModalOpen.value = false;
       await fetchAgencies();
     } else {
       const err = await res.json().catch(() => ({}));
-      toast.error(err.error || err.message || 'Lỗi khi lưu cơ quan.');
+      toast.error(err.error || err.message || 'Lưu thất bại.');
     }
   } catch (e) {
-    toast.error('Không thể kết nối máy chủ.');
+    toast.error('Lưu thất bại.');
   }
 }
 
 async function deleteAgency(agency) {
   if (agency.usedCount > 0) {
-    toast.warning(`Không thể xóa vì cơ quan "${agency.name}" đang được sử dụng bởi ${agency.usedCount} mục tiêu/nhiệm vụ.`);
+    toast.warning('Không thể xóa dữ liệu này.');
     return;
   }
 
   const confirmed = await confirmModal({
-    title: 'Xóa cơ quan / đơn vị',
-    message: `Bạn có chắc chắn muốn xóa cơ quan "${agency.name}"? Thao tác này không thể hoàn tác.`,
-    confirmText: 'Xóa cơ quan',
-    cancelText: 'Hủy bỏ',
+    title: 'Xóa dữ liệu',
+    message: 'Chắc chắn xóa dữ liệu này?',
+    confirmText: 'Xóa ngay',
+    cancelText: 'Hủy',
     type: 'danger'
   });
 
@@ -745,14 +745,13 @@ async function deleteAgency(agency) {
     try {
       const res = await fetch(getApiUrl(`/api/agencies/${agency.id}`), { method: 'DELETE' });
       if (res.ok) {
-        toast.success('Đã xóa cơ quan thành công!');
+        toast.success('Đã xóa dữ liệu thành công!');
         await fetchAgencies();
       } else {
-        const err = await res.json().catch(() => ({}));
-        toast.error(err.error || err.message || 'Lỗi khi xóa cơ quan.');
+        toast.error('Không thể xóa dữ liệu này.');
       }
     } catch (e) {
-      toast.error('Không thể kết nối máy chủ.');
+      toast.error('Không thể xóa dữ liệu này.');
     }
   }
 }

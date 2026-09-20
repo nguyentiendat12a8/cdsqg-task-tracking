@@ -1,155 +1,160 @@
 <template>
-  <div v-if="isOpen" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-xl w-full p-6 space-y-5 animate-in fade-in duration-150 max-h-[90vh] overflow-y-auto font-sans">
+  <div v-if="isOpen" @click.self="close" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-3xl sm:max-w-4xl w-full p-6 animate-in fade-in duration-150 max-h-[90vh] flex flex-col font-sans">
       
       <!-- Modal Header -->
-      <div class="flex justify-between items-start border-b border-slate-100 pb-3">
+      <div class="flex justify-between items-start border-b border-slate-100 pb-3 shrink-0">
         <div>
           <span class="text-xs font-bold text-amber-600 uppercase tracking-wider block">Thiết Lập Mốc Tiến Độ Chi Tiết Theo Quý / Tháng</span>
           <h3 class="text-lg font-bold text-slate-800 mt-0.5">{{ taskCode }} - {{ taskTitle }}</h3>
         </div>
-        <button @click="close" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1">✕</button>
+        <button @click="close" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1 cursor-pointer">✕</button>
       </div>
 
-      <!-- Year Selector & Annual Target Display -->
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-amber-50/80 p-3.5 rounded-xl border border-amber-200/80">
-        <div class="flex items-center gap-2 min-w-[220px]">
-          <SearchableSelect 
-            v-model="selectedYear" 
-            :options="yearOptions" 
-            :isMulti="false" 
-            label="NĂM CẤU HÌNH:" 
-            placeholder="Chọn năm"
-          />
+      <!-- Scrollable body content -->
+      <div class="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-1 pt-3">
+
+        <!-- Year Selector & Annual Target Display -->
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-amber-50/80 p-3.5 rounded-xl border border-amber-200/80">
+          <div class="flex items-center gap-2 min-w-[220px]">
+            <SearchableSelect 
+              v-model="selectedYear" 
+              :options="yearOptions" 
+              :isMulti="false" 
+              label="NĂM CẤU HÌNH:" 
+              placeholder="Chọn năm"
+            />
+          </div>
+
+          <div class="text-xs font-bold text-amber-900 bg-amber-100/90 px-3 py-1.5 rounded-xl border border-amber-200 shrink-0">
+            Chỉ tiêu cả năm {{ selectedYear }}: 
+            <span class="text-purple-900 font-black">{{ yearlyTargets[selectedYear] ?? 'Chưa đặt' }}</span>
+            <span v-if="isQuant" class="text-[10px] text-slate-500 font-bold ml-1">({{ unitName || '%' }})</span>
+          </div>
         </div>
 
-        <div class="text-xs font-bold text-amber-900 bg-amber-100/90 px-3 py-1.5 rounded-xl border border-amber-200 shrink-0">
-          Chỉ tiêu cả năm {{ selectedYear }}: 
-          <span class="text-purple-900 font-black">{{ yearlyTargets[selectedYear] ?? 'Chưa đặt' }}</span>
-          <span v-if="isQuant" class="text-[10px] text-slate-500 font-bold ml-1">({{ unitName || '%' }})</span>
-        </div>
-      </div>
+        <!-- Frequency Selection Checkboxes -->
+        <div class="space-y-2 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+          <label class="text-xs font-extrabold text-slate-700 uppercase block">Tick chọn tần suất thiết lập mốc chỉ tiêu bổ sung:</label>
+          <div class="flex flex-wrap gap-4 pt-1">
+            <label class="flex items-center gap-2 cursor-pointer text-xs font-extrabold text-slate-800 hover:text-amber-700">
+              <input type="checkbox" v-model="hasQuarter" class="rounded text-amber-600 focus:ring-amber-500 w-4 h-4 cursor-pointer" />
+              <span>📅 Thiết Lập Chỉ Tiêu Theo Quý (4 Quý)</span>
+            </label>
 
-      <!-- Frequency Selection Checkboxes -->
-      <div class="space-y-2 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-        <label class="text-xs font-extrabold text-slate-700 uppercase block">Tick chọn tần suất thiết lập mốc chỉ tiêu bổ sung:</label>
-        <div class="flex flex-wrap gap-4 pt-1">
-          <label class="flex items-center gap-2 cursor-pointer text-xs font-extrabold text-slate-800 hover:text-amber-700">
-            <input type="checkbox" v-model="hasQuarter" class="rounded text-amber-600 focus:ring-amber-500 w-4 h-4 cursor-pointer" />
-            <span>📅 Thiết Lập Chỉ Tiêu Theo Quý (4 Quý)</span>
-          </label>
-
-          <label class="flex items-center gap-2 cursor-pointer text-xs font-extrabold text-slate-800 hover:text-amber-700">
-            <input type="checkbox" v-model="hasMonth" class="rounded text-amber-600 focus:ring-amber-500 w-4 h-4 cursor-pointer" />
-            <span>📆 Thiết Lập Chỉ Tiêu Theo Tháng (12 Tháng)</span>
-          </label>
-        </div>
-      </div>
-
-      <!-- Sub-tabs for Quarters vs Months -->
-      <div v-if="hasQuarter && hasMonth" class="flex items-center gap-2 bg-slate-100 p-1 rounded-xl border border-slate-200">
-        <button 
-          @click="activeViewTab = 'quarterly'" 
-          :class="['flex-1 py-1.5 rounded-lg text-xs font-extrabold transition text-center', activeViewTab === 'quarterly' ? 'bg-white text-amber-700 shadow-sm' : 'text-slate-600 hover:text-slate-900']"
-        >
-          📅 Mốc Quý (Q1-Q4)
-        </button>
-
-        <button 
-          @click="activeViewTab = 'monthly'" 
-          :class="['flex-1 py-1.5 rounded-lg text-xs font-extrabold transition text-center', activeViewTab === 'monthly' ? 'bg-white text-amber-700 shadow-sm' : 'text-slate-600 hover:text-slate-900']"
-        >
-          📆 Mốc Tháng (T1-T12)
-        </button>
-      </div>
-
-      <!-- QUARTERLY MILESTONE INPUT GRID -->
-      <div v-if="hasQuarter && (!hasMonth || activeViewTab === 'quarterly')" class="space-y-2">
-        <div class="text-xs font-extrabold text-amber-900 flex items-center justify-between">
-          <span>📌 Chỉ Tiêu 4 Quý Năm {{ selectedYear }}</span>
-          <span class="text-[11px] font-normal text-slate-500">Loại: {{ isQuant ? `Định lượng (${unitName || '%'})` : 'Định tính văn bản' }}</span>
+            <label class="flex items-center gap-2 cursor-pointer text-xs font-extrabold text-slate-800 hover:text-amber-700">
+              <input type="checkbox" v-model="hasMonth" class="rounded text-amber-600 focus:ring-amber-500 w-4 h-4 cursor-pointer" />
+              <span>📆 Thiết Lập Chỉ Tiêu Theo Tháng (12 Tháng)</span>
+            </label>
+          </div>
         </div>
 
-        <div class="grid grid-cols-2 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
-          <div v-for="q in [1, 2, 3, 4]" :key="q" class="space-y-1">
-            <label class="text-xs font-bold text-slate-700">Quý {{ q }} / {{ selectedYear }} ({{ getQuarterKey(q) }})</label>
-            
-            <!-- Quantitative Number Input -->
-            <div v-if="isQuant" class="relative">
-              <input 
-                type="number" 
-                step="0.1" 
-                :value="getMilestoneVal(getQuarterKey(q))" 
-                @input="setMilestoneVal(getQuarterKey(q), $event.target.value)"
-                placeholder="—"
-                class="w-full text-xs font-bold text-slate-800 bg-white border border-slate-300 rounded-lg px-3 py-2 pr-8 focus:ring-2 focus:ring-amber-500 focus:outline-none"
-              />
-              <span class="absolute right-2.5 top-2 text-xs font-bold text-slate-400">{{ unitName || '%' }}</span>
-            </div>
+        <!-- Sub-tabs for Quarters vs Months -->
+        <div v-if="hasQuarter && hasMonth" class="flex items-center gap-2 bg-slate-100 p-1 rounded-xl border border-slate-200">
+          <button 
+            @click="activeViewTab = 'quarterly'" 
+            :class="['flex-1 py-1.5 rounded-lg text-xs font-extrabold transition text-center cursor-pointer', activeViewTab === 'quarterly' ? 'bg-white text-amber-700 shadow-sm' : 'text-slate-600 hover:text-slate-900']"
+          >
+            📅 Mốc Quý (Q1-Q4)
+          </button>
 
-            <!-- Qualitative Status Select -->
-            <div v-else>
-              <SearchableSelect 
-                :modelValue="getMilestoneVal(getQuarterKey(q)) || 'NotStarted'" 
-                @update:modelValue="val => setMilestoneVal(getQuarterKey(q), val)"
-                :options="qualitativeStatusOptions"
-                :isMulti="false"
-                placeholder="Chọn trạng thái"
-              />
+          <button 
+            @click="activeViewTab = 'monthly'" 
+            :class="['flex-1 py-1.5 rounded-lg text-xs font-extrabold transition text-center cursor-pointer', activeViewTab === 'monthly' ? 'bg-white text-amber-700 shadow-sm' : 'text-slate-600 hover:text-slate-900']"
+          >
+            📆 Mốc Tháng (T1-T12)
+          </button>
+        </div>
+
+        <!-- QUARTERLY MILESTONE INPUT GRID -->
+        <div v-if="hasQuarter && (!hasMonth || activeViewTab === 'quarterly')" class="space-y-2">
+          <div class="text-xs font-extrabold text-amber-900 flex items-center justify-between">
+            <span>📌 Chỉ Tiêu 4 Quý Năm {{ selectedYear }}</span>
+            <span class="text-[11px] font-normal text-slate-500">Loại: {{ isQuant ? `Định lượng (${unitName || '%'})` : 'Định tính văn bản' }}</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
+            <div v-for="q in [1, 2, 3, 4]" :key="q" class="space-y-1">
+              <label class="text-xs font-bold text-slate-700">Quý {{ q }} / {{ selectedYear }} ({{ getQuarterKey(q) }})</label>
+              
+              <!-- Quantitative Number Input -->
+              <div v-if="isQuant" class="relative">
+                <input 
+                  type="number" 
+                  step="0.1" 
+                  :value="getMilestoneVal(getQuarterKey(q))" 
+                  @input="setMilestoneVal(getQuarterKey(q), $event.target.value)"
+                  placeholder="—"
+                  class="w-full text-xs font-bold text-slate-800 bg-white border border-slate-300 rounded-lg px-3 py-2 pr-8 focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                />
+                <span class="absolute right-2.5 top-2 text-xs font-bold text-slate-400">{{ unitName || '%' }}</span>
+              </div>
+
+              <!-- Qualitative Status Select -->
+              <div v-else>
+                <SearchableSelect 
+                  :modelValue="getMilestoneVal(getQuarterKey(q)) || 'NotStarted'" 
+                  @update:modelValue="val => setMilestoneVal(getQuarterKey(q), val)"
+                  :options="qualitativeStatusOptions"
+                  :isMulti="false"
+                  placeholder="Chọn trạng thái"
+                />
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <!-- MONTHLY MILESTONE INPUT GRID (12 Months) -->
-      <div v-if="hasMonth && (!hasQuarter || activeViewTab === 'monthly')" class="space-y-2">
-        <div class="text-xs font-extrabold text-amber-900 flex items-center justify-between">
-          <span>📌 Chỉ Tiêu 12 Tháng Năm {{ selectedYear }}</span>
-          <span class="text-[11px] font-normal text-slate-500">Loại: {{ isQuant ? `Định lượng (${unitName || '%'})` : 'Định tính văn bản' }}</span>
-        </div>
+        <!-- MONTHLY MILESTONE INPUT GRID (12 Months) -->
+        <div v-if="hasMonth && (!hasQuarter || activeViewTab === 'monthly')" class="space-y-2">
+          <div class="text-xs font-extrabold text-amber-900 flex items-center justify-between">
+            <span>📌 Chỉ Tiêu 12 Tháng Năm {{ selectedYear }}</span>
+            <span class="text-[11px] font-normal text-slate-500">Loại: {{ isQuant ? `Định lượng (${unitName || '%'})` : 'Định tính văn bản' }}</span>
+          </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200 max-h-64 overflow-y-auto">
-          <div v-for="m in 12" :key="m" class="space-y-1">
-            <label class="text-[11px] font-bold text-slate-700">Tháng {{ m }} (T{{ m }})</label>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 bg-slate-50 p-4 rounded-xl border border-slate-200 max-h-64 overflow-y-auto">
+            <div v-for="m in 12" :key="m" class="space-y-1">
+              <label class="text-[11px] font-bold text-slate-700">Tháng {{ m }} (T{{ m }})</label>
 
-            <!-- Quantitative Number Input -->
-            <div v-if="isQuant" class="relative">
-              <input 
-                type="number" 
-                step="0.1" 
-                :value="getMilestoneVal(getMonthKey(m))" 
-                @input="setMilestoneVal(getMonthKey(m), $event.target.value)"
-                placeholder="—"
-                class="w-full text-xs font-bold text-slate-800 bg-white border border-slate-300 rounded-lg px-2 py-1.5 pr-7 focus:ring-2 focus:ring-amber-500 focus:outline-none"
-              />
-              <span class="absolute right-1.5 top-1.5 text-[10px] font-bold text-slate-400">{{ unitName || '%' }}</span>
-            </div>
+              <!-- Quantitative Number Input -->
+              <div v-if="isQuant" class="relative">
+                <input 
+                  type="number" 
+                  step="0.1" 
+                  :value="getMilestoneVal(getMonthKey(m))" 
+                  @input="setMilestoneVal(getMonthKey(m), $event.target.value)"
+                  placeholder="—"
+                  class="w-full text-xs font-bold text-slate-800 bg-white border border-slate-300 rounded-lg px-2 py-1.5 pr-7 focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                />
+                <span class="absolute right-1.5 top-1.5 text-[10px] font-bold text-slate-400">{{ unitName || '%' }}</span>
+              </div>
 
-            <!-- Qualitative Status Select -->
-            <div v-else>
-              <SearchableSelect 
-                :modelValue="getMilestoneVal(getMonthKey(m)) || 'NotStarted'" 
-                @update:modelValue="val => setMilestoneVal(getMonthKey(m), val)"
-                :options="qualitativeStatusOptions"
-                :isMulti="false"
-                placeholder="Chọn trạng thái"
-              />
+              <!-- Qualitative Status Select -->
+              <div v-else>
+                <SearchableSelect 
+                  :modelValue="getMilestoneVal(getMonthKey(m)) || 'NotStarted'" 
+                  @update:modelValue="val => setMilestoneVal(getMonthKey(m), val)"
+                  :options="qualitativeStatusOptions"
+                  :isMulti="false"
+                  placeholder="Chọn trạng thái"
+                />
+              </div>
             </div>
           </div>
         </div>
-      </div>
 
-      <div v-if="!hasQuarter && !hasMonth" class="p-6 text-center text-xs text-slate-400 font-semibold bg-slate-50 rounded-xl border border-slate-200 italic">
-        Vui lòng tick chọn ít nhất 1 tần suất (Theo Quý hoặc Theo Tháng) ở trên để thiết lập mốc chỉ tiêu. Mặc định hệ thống sẽ áp dụng chỉ tiêu Báo cáo Theo Năm.
+        <div v-if="!hasQuarter && !hasMonth" class="p-6 text-center text-xs text-slate-400 font-semibold bg-slate-50 rounded-xl border border-slate-200 italic">
+          Vui lòng tick chọn ít nhất 1 tần suất (Theo Quý hoặc Theo Tháng) ở trên để thiết lập mốc chỉ tiêu. Mặc định hệ thống sẽ áp dụng chỉ tiêu Báo cáo Theo Năm.
+        </div>
+
       </div>
 
       <!-- Footer Actions -->
-      <div class="flex justify-end gap-3 border-t border-slate-100 pt-3">
-        <button @click="close" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition">Hủy bỏ</button>
+      <div class="flex justify-end gap-3 border-t border-slate-100 pt-3 shrink-0">
+        <button @click="close" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition cursor-pointer">Hủy bỏ</button>
         <button 
           @click="saveCustomBaseline" 
           :disabled="isSaving"
-          class="px-5 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 disabled:opacity-50 rounded-xl shadow-sm transition flex items-center gap-1.5"
+          class="px-5 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-700 disabled:opacity-50 rounded-xl shadow-sm transition flex items-center gap-1.5 cursor-pointer"
         >
           <span v-if="isSaving" class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
           {{ isSaving ? 'Đang lưu...' : 'Lưu' }}

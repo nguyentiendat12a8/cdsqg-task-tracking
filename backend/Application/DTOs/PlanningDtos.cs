@@ -47,6 +47,7 @@ namespace Cdsqg.Application.DTOs
         public decimal? LatestProgressValue { get; set; }
         public string? LatestProgressStatus { get; set; }
         public DateTime? LastUpdated { get; set; }
+        public DateTime? CreatedAt { get; set; }
 
         /// <summary>
         /// 6-status execution evaluation status: NotStarted, InProgressOnTime, InProgressOverdue, CompletedOnTime, CompletedOverdue, ExpiringSoon
@@ -80,6 +81,7 @@ namespace Cdsqg.Application.DTOs
         public List<Guid> CoordinatingAgencyIds { get; set; } = new List<Guid>();
 
         public Guid? UnitId { get; set; }
+        public string? UnitName { get; set; }
         public string EvaluationType { get; set; } = "Quantitative";
         public string CalculationMethod { get; set; } = "LatestValue";
         public Dictionary<string, string>? CustomBaseline { get; set; }
@@ -110,6 +112,8 @@ namespace Cdsqg.Application.DTOs
         public DateTime? DueDate { get; set; }
         public Guid LeadAgencyId { get; set; }
         public List<Guid> CoordinatingAgencyIds { get; set; } = new List<Guid>();
+        public Guid? UnitId { get; set; }
+        public string? UnitName { get; set; }
         public List<TaskDeliverable> Deliverables { get; set; } = new List<TaskDeliverable>();
     }
 }

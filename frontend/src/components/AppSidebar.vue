@@ -99,6 +99,7 @@
               Danh sách mục tiêu
             </button>
             <button 
+              v-if="authState.isAdmin.value"
               @click="selectTab('goals-grid')"
               :class="['w-full text-left py-2 px-3 rounded-lg text-xs font-semibold transition whitespace-nowrap cursor-pointer', activeTab === 'goals-grid' ? 'text-blue-400 bg-slate-800' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50']"
             >
@@ -121,8 +122,9 @@
           <span v-if="!isCollapsed" class="truncate">Nhiệm Vụ</span>
         </button>
 
-        <!-- Báo cáo (Reports) -->
+        <!-- Báo cáo (Reports) - Admin only -->
         <button 
+          v-if="authState.isAdmin.value"
           @click="selectTab('reports')"
           :class="[
             'w-full flex items-center gap-3 py-3 rounded-xl font-bold text-xs transition-all duration-200 whitespace-nowrap overflow-hidden cursor-pointer',
@@ -156,18 +158,21 @@
           <!-- Submenu options -->
           <div v-if="isSettingsOpen && !isCollapsed" class="pl-9 pr-2 py-1.5 space-y-1">
             <button 
+              v-if="authState.isAdmin.value"
               @click="selectTab('agencies')"
               :class="['w-full text-left py-2 px-3 rounded-lg text-xs font-semibold transition whitespace-nowrap cursor-pointer', activeTab === 'agencies' ? 'text-blue-400 bg-slate-800' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50']"
             >
               Danh mục Cơ quan
             </button>
             <button 
+              v-if="false"
               @click="selectTab('units')"
               :class="['w-full text-left py-2 px-3 rounded-lg text-xs font-semibold transition whitespace-nowrap cursor-pointer', activeTab === 'units' ? 'text-blue-400 bg-slate-800' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50']"
             >
               Danh mục Đơn vị tính
             </button>
             <button 
+              v-if="authState.isAdmin.value"
               @click="selectTab('users')"
               :class="['w-full text-left py-2 px-3 rounded-lg text-xs font-semibold transition whitespace-nowrap cursor-pointer', activeTab === 'users' ? 'text-blue-400 bg-slate-800' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50']"
             >
@@ -195,6 +200,7 @@
 
 <script setup>
 import { ref, computed, watch } from 'vue';
+import { authState } from '../services/auth';
 
 const props = defineProps({
   activeTab: { type: String, default: 'dashboard' }
@@ -239,17 +245,24 @@ function onMouseLeave() {
 }
 
 function handleGoalsClick() {
+  if (!authState.isAdmin.value) {
+    selectTab('goals-list');
+    return;
+  }
   isGoalsOpen.value = !isGoalsOpen.value;
   if (isGoalsOpen.value && !props.activeTab.startsWith('goals')) {
     selectTab('goals-list');
   }
 }
 
-
 function handleSettingsClick() {
+  if (!authState.isAdmin.value) {
+    selectTab('import-history');
+    return;
+  }
   isSettingsOpen.value = !isSettingsOpen.value;
   if (isSettingsOpen.value && !['agencies', 'units', 'users', 'import-history', 'settings', 'master-data'].includes(props.activeTab)) {
-    selectTab('settings');
+    selectTab('agencies');
   }
 }
 

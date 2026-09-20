@@ -390,10 +390,10 @@ function onDocumentCreated(newDoc) {
 
 async function deleteDoc(doc) {
   const confirmed = await confirmModal({
-    title: 'Xóa văn bản / Quyết định',
-    message: `Bạn có chắc chắn muốn xóa văn bản ${doc.documentNumber}? Tất cả mục tiêu và nhiệm vụ liên quan thuộc văn bản này cũng sẽ bị xóa. Thao tác này không thể hoàn tác.`,
-    confirmText: 'Xóa văn bản',
-    cancelText: 'Hủy bỏ',
+    title: 'Xóa dữ liệu',
+    message: 'Chắc chắn xóa dữ liệu này?',
+    confirmText: 'Xóa ngay',
+    cancelText: 'Hủy',
     type: 'danger'
   });
 
@@ -402,13 +402,13 @@ async function deleteDoc(doc) {
   try {
     const res = await fetch(getApiUrl(`/api/documents/${doc.id}`), { method: 'DELETE' });
     if (res.ok) {
-      toast.success(`Đã xóa văn bản ${doc.documentNumber}`);
+      toast.success('Đã xóa dữ liệu thành công!');
       fetchDocuments();
     } else {
-      toast.error('Lỗi khi xóa văn bản.');
+      toast.error('Không thể xóa dữ liệu này.');
     }
   } catch (e) {
-    toast.error('Không thể kết nối máy chủ khi xóa văn bản.');
+    toast.error('Không thể xóa dữ liệu này.');
   }
 }
 

@@ -43,5 +43,6 @@ namespace Cdsqg.Core.Entities
 
         public string Status { get; set; } = "Thành công"; // Thành công, Thất bại, Cảnh báo
         public string SummaryNotes { get; set; } = string.Empty;
+        public Guid? AgencyId { get; set; }
     }
 }

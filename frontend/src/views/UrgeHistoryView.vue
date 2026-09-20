@@ -401,9 +401,13 @@ const latestLogDate = computed(() => {
 function formatDate(dateStr) {
   if (!dateStr) return '—';
   try {
-    const d = new Date(dateStr);
+    let str = String(dateStr).trim();
+    if (str.includes('T') && !str.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(str)) {
+      str += 'Z';
+    }
+    const d = new Date(str);
     if (isNaN(d.getTime())) return dateStr;
-    return `${d.toLocaleDateString('vi-VN')} ${d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
+    return d.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
   } catch {
     return dateStr;
   }

@@ -145,10 +145,13 @@
       </div>
 
       <!-- Right group: Agency Count Badges -->
-      <div class="text-xs text-slate-500 font-bold flex items-center gap-2.5 shrink-0 whitespace-nowrap bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/60">
+      <div v-if="!isSubAgencyUser" class="text-xs text-slate-500 font-bold flex items-center gap-2.5 shrink-0 whitespace-nowrap bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/60">
         <span>Khối Bộ/Ngành: <strong class="text-blue-700">{{ metrics.ministriesPerformance?.length ?? 0 }}</strong></span>
         <span class="text-slate-300">•</span>
         <span>Khối Địa phương: <strong class="text-emerald-700">{{ metrics.provincesPerformance?.length ?? 0 }}</strong></span>
+      </div>
+      <div v-else class="text-xs text-slate-700 font-bold flex items-center gap-2 shrink-0 whitespace-nowrap bg-blue-50/80 px-3 py-1.5 rounded-xl border border-blue-200/80">
+        <span class="text-blue-800">🏛️ {{ loggedUserAgency?.name || userAgencyName }}</span>
       </div>
     </div>
 
@@ -195,8 +198,100 @@
       </div>
     </div>
 
-    <!-- 2 Main Sections: Khối Bộ / Ngành & Khối Địa Phương (Admin View) -->
-    <div class="space-y-6 w-full">
+    <!-- Sub-Agency Dedicated Progress Dashboard Section (When logged in as Sub-Agency / Child Unit) -->
+    <div v-if="isSubAgencyUser && singleSubAgencyPerformance" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4 w-full">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+        <div>
+          <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+            🏢 Bảng Tiến Độ Thực Hiện CỦA ĐƠN VỊ: <span class="text-blue-700 font-black">{{ singleSubAgencyPerformance.name }}</span>
+          </h3>
+          <span v-if="loggedUserAgency?.parentName" class="text-xs text-slate-500 font-semibold mt-0.5 block">
+            Cơ quan quản lý trực tiếp: <strong>{{ loggedUserAgency.parentName }}</strong>
+          </span>
+        </div>
+        
+        <button 
+          @click="drilldownAgency(singleSubAgencyPerformance)" 
+          class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-2xs transition flex items-center gap-1.5 cursor-pointer shrink-0"
+        >
+          <span>📋 Xem Danh Sách Chi Tiết Nhiệm Vụ</span>
+          <span>→</span>
+        </button>
+      </div>
+
+      <!-- Big Circle Donut Chart & Status Breakdown -->
+      <div class="bg-gradient-to-br from-slate-50 to-blue-50/40 rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-4">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+          
+          <!-- Big Donut Circle Chart on Left -->
+          <div class="md:col-span-5 flex flex-col items-center justify-center p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-2">
+            <MiniStatusDonut :stats="singleSubAgencyPerformance" :size="160" :innerSize="105" :fontSize="32" />
+            <div class="text-center pt-1">
+              <div class="text-xs font-black text-slate-800">Tổng số: {{ singleSubAgencyPerformance.totalItems || 0 }} hạng mục</div>
+              <div class="flex items-center gap-2 justify-center text-[11px] font-bold text-slate-500 mt-1">
+                <span class="text-purple-800 bg-purple-50 px-2 py-0.5 rounded border border-purple-200/60">🎯 {{ singleSubAgencyPerformance.totalGoals || 0 }} Mục tiêu</span>
+                <span class="text-blue-800 bg-blue-50 px-2 py-0.5 rounded border border-blue-200/60">📋 {{ singleSubAgencyPerformance.totalTasks || 0 }} Nhiệm vụ</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 6 Status Legend Breakdown List on Right -->
+          <div class="md:col-span-7 space-y-2 font-bold text-xs">
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-white border border-slate-200">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-slate-400"></span>
+                <span class="text-slate-700">1. Chưa thực hiện</span>
+              </div>
+              <span class="font-black text-slate-900 text-sm">{{ singleSubAgencyPerformance.notStarted || 0 }}</span>
+            </div>
+
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-blue-50/70 border border-blue-200">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+                <span class="text-blue-800">2. Đang thực hiện (trong hạn)</span>
+              </div>
+              <span class="font-black text-blue-900 text-sm">{{ singleSubAgencyPerformance.inProgressOnTime || 0 }}</span>
+            </div>
+
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-rose-50/70 border border-rose-200">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-rose-500"></span>
+                <span class="text-rose-800">3. Đang thực hiện (quá hạn)</span>
+              </div>
+              <span class="font-black text-rose-900 text-sm">{{ singleSubAgencyPerformance.inProgressOverdue || 0 }}</span>
+            </div>
+
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                <span class="text-emerald-800">4. Hoàn thành (đúng hạn)</span>
+              </div>
+              <span class="font-black text-emerald-900 text-sm">{{ singleSubAgencyPerformance.completedOnTime || 0 }}</span>
+            </div>
+
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-teal-50/70 border border-teal-200">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-teal-500"></span>
+                <span class="text-teal-800">5. Hoàn thành (quá hạn)</span>
+              </div>
+              <span class="font-black text-teal-900 text-sm">{{ singleSubAgencyPerformance.completedOverdue || 0 }}</span>
+            </div>
+
+            <div class="flex items-center justify-between p-2.5 rounded-xl bg-amber-50/70 border border-amber-200">
+              <div class="flex items-center gap-2">
+                <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+                <span class="text-amber-800">6. Sắp hết hạn</span>
+              </div>
+              <span class="font-black text-amber-900 text-sm">{{ singleSubAgencyPerformance.expiringSoon || 0 }}</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- 2 Main Sections: Khối Bộ / Ngành & Khối Địa Phương (Admin / Parent Agency View) -->
+    <div v-else class="space-y-6 w-full">
       
       <!-- Section 1: Khối Bộ / Ngành -->
       <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
@@ -248,7 +343,7 @@
 
                 <div class="flex items-center justify-between gap-1.5">
                   <div class="flex items-center gap-1.5 min-w-0">
-                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
                     <span class="text-slate-600 truncate">Đang t/h trong hạn</span>
                   </div>
                   <span class="font-black text-slate-900">{{ item.inProgressOnTime || 0 }}</span>
@@ -256,7 +351,7 @@
 
                 <div class="flex items-center justify-between gap-1.5">
                   <div class="flex items-center gap-1.5 min-w-0">
-                    <span class="w-2.5 h-2.5 rounded-full bg-purple-500 shrink-0"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
                     <span class="text-slate-600 truncate">Sắp tới hạn</span>
                   </div>
                   <span class="font-black text-slate-900">{{ item.expiringSoon || 0 }}</span>
@@ -264,7 +359,7 @@
 
                 <div class="flex items-center justify-between gap-1.5">
                   <div class="flex items-center gap-1.5 min-w-0">
-                    <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-teal-500 shrink-0"></span>
                     <span class="text-slate-600 truncate">Đã h/t quá hạn</span>
                   </div>
                   <span class="font-black text-slate-900">{{ item.completedOverdue || 0 }}</span>
@@ -272,7 +367,7 @@
 
                 <div class="flex items-center justify-between gap-1.5">
                   <div class="flex items-center gap-1.5 min-w-0">
-                    <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
                     <span class="text-slate-600 truncate">Đã h/t trong hạn</span>
                   </div>
                   <span class="font-black text-slate-900">{{ item.completedOnTime || 0 }}</span>
@@ -354,7 +449,7 @@
 
                 <div class="flex items-center justify-between gap-1.5">
                   <div class="flex items-center gap-1.5 min-w-0">
-                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
                     <span class="text-slate-600 truncate">Đang t/h trong hạn</span>
                   </div>
                   <span class="font-black text-slate-900">{{ item.inProgressOnTime || 0 }}</span>
@@ -362,7 +457,7 @@
 
                 <div class="flex items-center justify-between gap-1.5">
                   <div class="flex items-center gap-1.5 min-w-0">
-                    <span class="w-2.5 h-2.5 rounded-full bg-purple-500 shrink-0"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
                     <span class="text-slate-600 truncate">Sắp tới hạn</span>
                   </div>
                   <span class="font-black text-slate-900">{{ item.expiringSoon || 0 }}</span>
@@ -370,7 +465,7 @@
 
                 <div class="flex items-center justify-between gap-1.5">
                   <div class="flex items-center gap-1.5 min-w-0">
-                    <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-teal-500 shrink-0"></span>
                     <span class="text-slate-600 truncate">Đã h/t quá hạn</span>
                   </div>
                   <span class="font-black text-slate-900">{{ item.completedOverdue || 0 }}</span>
@@ -378,7 +473,7 @@
 
                 <div class="flex items-center justify-between gap-1.5">
                   <div class="flex items-center gap-1.5 min-w-0">
-                    <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
                     <span class="text-slate-600 truncate">Đã h/t trong hạn</span>
                   </div>
                   <span class="font-black text-slate-900">{{ item.completedOnTime || 0 }}</span>
@@ -414,7 +509,7 @@
 
     <!-- Drilldown Sub-agencies, Tasks List & Contact Persons Modal -->
     <div v-if="selectedDrilldownAgency" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 font-sans">
-      <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-4xl w-full p-5 sm:p-6 space-y-4">
+      <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-6xl sm:max-w-7xl w-full p-5 sm:p-6 space-y-4">
         
         <!-- Modal Header -->
         <div class="flex items-start justify-between border-b border-slate-100 pb-3">
@@ -430,40 +525,48 @@
 
         <!-- Navigation Tabs inside Modal -->
         <div class="flex items-center gap-2 border-b border-slate-200/80 pb-2 overflow-x-auto custom-scrollbar">
+          <!-- TAB 1: Goal/Task Items Assigned to Agency -->
           <button 
-            @click="drilldownTab = 'sub-agencies'" 
-            :class="[
-              'px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shrink-0',
-              drilldownTab === 'sub-agencies' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
-            ]"
-          >
-            <span>🏛️ Đơn Vị Trực Thuộc ({{ subAgenciesList.length }})</span>
-          </button>
-          
-          <button 
-            @click="drilldownTab = 'tasks'" 
+            @click="switchDrilldownTab('tasks')" 
             :class="[
               'px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shrink-0',
               drilldownTab === 'tasks' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             ]"
           >
-            <span>📋 Danh Sách Nhiệm Vụ Được Gán ({{ agencyItemsList.length }})</span>
+            <span>📋 Danh Sách Nhiệm Vụ Được Gán ({{ isAgencyItemsLoading ? '...' : agencyItemsList.length }})</span>
           </button>
 
+          <!-- TAB 2: Sub-Agencies & Progress -->
           <button 
-            @click="drilldownTab = 'contacts'" 
+            @click="switchDrilldownTab('sub-agencies')" 
+            :class="[
+              'px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shrink-0',
+              drilldownTab === 'sub-agencies' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            ]"
+          >
+            <span>🏛️ Đơn Vị Trực Thuộc ({{ isSubAgenciesLoading ? '...' : subAgenciesList.length }})</span>
+          </button>
+          
+          <!-- TAB 3: Contact Persons -->
+          <button 
+            @click="switchDrilldownTab('contacts')" 
             :class="[
               'px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shrink-0',
               drilldownTab === 'contacts' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             ]"
           >
-            <span>📞 Cán Bộ Đầu Mối Liên Hệ ({{ allDrilldownContacts.length }})</span>
+            <span>📞 Cán Bộ Đầu Mối Liên Hệ ({{ isSubAgenciesLoading ? '...' : allDrilldownContacts.length }})</span>
           </button>
         </div>
 
-        <!-- TAB 1: Sub-Agencies & Progress -->
+        <!-- TAB 1 CONTENT: Sub-Agencies & Progress -->
         <div v-if="drilldownTab === 'sub-agencies'" class="space-y-3.5 max-h-[60vh] overflow-y-auto custom-scrollbar pr-1">
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          <!-- Loading State -->
+          <div v-if="isSubAgenciesLoading" class="p-8 text-center">
+            <LoadingSpinner size="md" message="Đang tải danh sách đơn vị trực thuộc..." />
+          </div>
+
+          <div v-else-if="subAgenciesList.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div 
               v-for="(child, index) in subAgenciesList" 
               :key="child.agencyId" 
@@ -504,7 +607,7 @@
 
                   <div class="flex items-center justify-between gap-1.5">
                     <div class="flex items-center gap-1.5 min-w-0">
-                      <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+                      <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
                       <span class="text-slate-600 truncate">Đang t/h trong hạn</span>
                     </div>
                     <span class="font-black text-slate-900">{{ child.inProgressOnTime || 0 }}</span>
@@ -512,7 +615,7 @@
 
                   <div class="flex items-center justify-between gap-1.5">
                     <div class="flex items-center gap-1.5 min-w-0">
-                      <span class="w-2.5 h-2.5 rounded-full bg-purple-500 shrink-0"></span>
+                      <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
                       <span class="text-slate-600 truncate">Sắp tới hạn</span>
                     </div>
                     <span class="font-black text-slate-900">{{ child.expiringSoon || 0 }}</span>
@@ -520,7 +623,7 @@
 
                   <div class="flex items-center justify-between gap-1.5">
                     <div class="flex items-center gap-1.5 min-w-0">
-                      <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
+                      <span class="w-2.5 h-2.5 rounded-full bg-teal-500 shrink-0"></span>
                       <span class="text-slate-600 truncate">Đã h/t quá hạn</span>
                     </div>
                     <span class="font-black text-slate-900">{{ child.completedOverdue || 0 }}</span>
@@ -528,7 +631,7 @@
 
                   <div class="flex items-center justify-between gap-1.5">
                     <div class="flex items-center gap-1.5 min-w-0">
-                      <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
+                      <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
                       <span class="text-slate-600 truncate">Đã h/t trong hạn</span>
                     </div>
                     <span class="font-black text-slate-900">{{ child.completedOnTime || 0 }}</span>
@@ -664,11 +767,8 @@
 
                     <!-- Tiến độ -->
                     <td class="px-3 py-2.5 border-r border-slate-200 text-center text-xs whitespace-nowrap">
-                      <span v-if="item.latestProgressPercent !== null && item.latestProgressPercent !== undefined" class="font-extrabold px-2 py-0.5 rounded-lg text-xs bg-blue-50 text-blue-900 border border-blue-200">
-                        {{ item.latestProgressPercent }}%
-                      </span>
-                      <span v-else-if="item.latestProgressValue !== null && item.latestProgressValue !== undefined" class="font-extrabold px-2 py-0.5 rounded-lg text-xs bg-blue-50 text-blue-900 border border-blue-200">
-                        {{ item.latestProgressValue }} {{ item.unitName || '' }}
+                      <span v-if="formatItemProgressDisplay(item) !== '—'" class="font-extrabold px-2 py-0.5 rounded-lg text-xs bg-blue-50 text-blue-900 border border-blue-200">
+                        {{ formatItemProgressDisplay(item) }}
                       </span>
                       <span v-else class="text-slate-400 italic">—</span>
                     </td>
@@ -705,7 +805,12 @@
 
         <!-- TAB 3: Contact Persons -->
         <div v-if="drilldownTab === 'contacts'" class="space-y-3 max-h-[60vh] overflow-y-auto custom-scrollbar pr-1">
-          <div v-if="allDrilldownContacts.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- Loading State -->
+          <div v-if="isSubAgenciesLoading" class="p-8 text-center">
+            <LoadingSpinner size="md" message="Đang tải danh sách cán bộ đầu mối..." />
+          </div>
+
+          <div v-else-if="allDrilldownContacts.length > 0" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div 
               v-for="(contact, index) in allDrilldownContacts" 
               :key="index"
@@ -765,9 +870,10 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { toast } from 'vue3-toastify';
-import * as XLSX from 'xlsx';
+import XLSX from 'xlsx-js-style';
+import { styleWorksheet } from '../utils/excelExport';
 import SearchableSelect from '../components/SearchableSelect.vue';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
 import MiniStatusDonut from '../components/MiniStatusDonut.vue';
@@ -853,7 +959,8 @@ const activeStatusSummary = computed(() => {
 
 const selectedDrilldownAgency = ref(null);
 const subAgenciesList = ref([]);
-const drilldownTab = ref('sub-agencies'); // 'sub-agencies' | 'tasks' | 'contacts'
+const isSubAgenciesLoading = ref(false);
+const drilldownTab = ref('tasks'); // Default Tab 1: 'tasks' | 'sub-agencies' | 'contacts'
 
 const selectedDetailItem = ref(null);
 const agencyItemsList = ref([]);
@@ -924,15 +1031,61 @@ function getStatusLabel(status) {
   }
 }
 
+function isGeneralTaskItem(item) {
+  if (!item) return false;
+  if (item.isGeneralTask) return true;
+  if (item.leadAgencyCode === 'ALL_AGENCIES') return true;
+  if (item.leadAgencyId && String(item.leadAgencyId).toLowerCase() === '00000000-0000-0000-0000-000000009999') return true;
+  if (item.leadAgencyName && item.leadAgencyName.toLowerCase().trim() === 'các bộ, ngành, địa phương') return true;
+  return false;
+}
+
 function formatDate(dateStr) {
-  if (!dateStr) return null;
+  if (!dateStr) return '—';
   try {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return null;
-    return d.toLocaleDateString('vi-VN');
+    let str = String(dateStr).trim();
+    if (!str) return '—';
+    if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+      const [y, m, d] = str.slice(0, 10).split('-');
+      return `${d}/${m}/${y}`;
+    }
+    const d = new Date(str);
+    if (isNaN(d.getTime())) return dateStr;
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const year = d.getUTCFullYear();
+    return `${day}/${month}/${year}`;
   } catch (e) {
-    return null;
+    return dateStr || '—';
   }
+}
+
+function formatItemProgressDisplay(item) {
+  if (!item) return '—';
+
+  const unit = item.unitName || item.unit?.name;
+
+  if (unit === 'Số lượng') {
+    if (item.latestProgressValue !== null && item.latestProgressValue !== undefined) {
+      return `${item.latestProgressValue}`;
+    }
+  }
+
+  if (unit && unit !== '%' && unit !== 'Số lượng') {
+    if (item.latestProgressValue !== null && item.latestProgressValue !== undefined) {
+      return `${item.latestProgressValue} ${unit}`;
+    }
+  }
+
+  if ((!unit || unit === '%') && item.latestProgressValue !== null && item.latestProgressValue !== undefined) {
+    return `${item.latestProgressValue}%`;
+  }
+
+  if (item.latestProgressPercent !== null && item.latestProgressPercent !== undefined) {
+    return `${item.latestProgressPercent}%`;
+  }
+
+  return '—';
 }
 
 const allDrilldownContacts = computed(() => {
@@ -972,6 +1125,22 @@ const allDrilldownContacts = computed(() => {
 
 const userAgencyName = computed(() => {
   return authState.user.value?.agencyName || 'Cơ quan/Bộ/Địa phương';
+});
+
+const loggedUserAgencyId = computed(() => authState.user.value?.agencyId ? String(authState.user.value.agencyId).toLowerCase() : '');
+const loggedUserAgency = computed(() => agencies.value.find(a => String(a.id).toLowerCase() === loggedUserAgencyId.value));
+const isSubAgencyUser = computed(() => !authState.isAdmin.value && !!loggedUserAgencyId.value);
+
+const singleSubAgencyPerformance = computed(() => {
+  const allPerf = [
+    ...(metrics.value.ministriesPerformance || []),
+    ...(metrics.value.provincesPerformance || [])
+  ];
+  if (loggedUserAgencyId.value) {
+    const found = allPerf.find(p => String(p.agencyId).toLowerCase() === loggedUserAgencyId.value);
+    if (found) return found;
+  }
+  return allPerf[0] || null;
 });
 
 function getPct(val, total) {
@@ -1061,18 +1230,11 @@ async function loadAgencyItems(agencyId) {
   }
 }
 
-async function drilldownAgency(agency) {
-  selectedDrilldownAgency.value = agency;
-  subAgenciesList.value = [];
-  agencyItemsList.value = [];
-  modalSearchKeyword.value = '';
-  modalItemTypeFilter.value = 'all';
-  modalStatusFilter.value = 'all';
-  drilldownTab.value = 'sub-agencies';
-
+async function loadSubAgencies(parentAgencyId) {
+  isSubAgenciesLoading.value = true;
   try {
     const params = new URLSearchParams();
-    params.append('parentAgencyId', agency.agencyId);
+    params.append('parentAgencyId', parentAgencyId);
     if (dashboardFilter.value && dashboardFilter.value !== 'all') {
       const itemType = dashboardFilter.value === 'goals' ? 'Goal' : 'Task';
       params.append('itemType', itemType);
@@ -1095,16 +1257,68 @@ async function drilldownAgency(agency) {
       const data = await res.json();
       subAgenciesList.value = [...(data.ministriesPerformance || []), ...(data.provincesPerformance || [])];
     }
-  } catch (e) {}
-
-  await loadAgencyItems(agency.agencyId);
-
-  if (subAgenciesList.value.length === 0) {
-    drilldownTab.value = 'tasks';
+  } catch (e) {
+    console.error('Lỗi khi tải đơn vị trực thuộc:', e);
+  } finally {
+    isSubAgenciesLoading.value = false;
   }
 }
 
+async function switchDrilldownTab(tab) {
+  drilldownTab.value = tab;
+  if (!selectedDrilldownAgency.value) return;
+
+  if (tab === 'tasks') {
+    if (agencyItemsList.value.length === 0 && !isAgencyItemsLoading.value) {
+      await loadAgencyItems(selectedDrilldownAgency.value.agencyId);
+    }
+  } else if (tab === 'sub-agencies' || tab === 'contacts') {
+    if (subAgenciesList.value.length === 0 && !isSubAgenciesLoading.value) {
+      await loadSubAgencies(selectedDrilldownAgency.value.agencyId);
+    }
+  }
+}
+
+async function drilldownAgency(agency) {
+  selectedDrilldownAgency.value = agency;
+  subAgenciesList.value = [];
+  agencyItemsList.value = [];
+  modalSearchKeyword.value = '';
+  modalItemTypeFilter.value = 'all';
+  modalStatusFilter.value = 'all';
+  drilldownTab.value = 'tasks'; // Default Tab 1: Assigned Tasks
+
+  // Set loading states immediately so header tab badges display (...) loading indicator instead of (0)
+  isAgencyItemsLoading.value = true;
+  isSubAgenciesLoading.value = true;
+
+  // Immediately load both assigned tasks list and sub-agencies metrics concurrently 
+  // so all tab totals (Tasks, Sub-agencies, Contacts) are accurate right on popup open
+  await Promise.all([
+    loadAgencyItems(agency.agencyId),
+    loadSubAgencies(agency.agencyId)
+  ]);
+}
+
 const isExportingExcel = ref(false);
+
+function getStatusLabelClean(status) {
+  switch (status) {
+    case 'InProgressOverdue':
+      return 'Đang t/h quá hạn';
+    case 'InProgressOnTime':
+      return 'Đang t/h trong hạn';
+    case 'ExpiringSoon':
+      return 'Sắp tới hạn';
+    case 'CompletedOverdue':
+      return 'Đã h/t quá hạn';
+    case 'CompletedOnTime':
+      return 'Đã h/t trong hạn';
+    case 'NotStarted':
+    default:
+      return 'Chưa thực hiện';
+  }
+}
 
 async function exportDashboardExcelReport() {
   isExportingExcel.value = true;
@@ -1143,16 +1357,15 @@ async function exportDashboardExcelReport() {
         "STT",
         "Loại hình",
         "Tên Bộ / Ngành / Địa phương",
-        "Mã số",
         "Tổng số",
         "Mục tiêu",
         "Nhiệm vụ",
-        "🔴 Đang T/H quá hạn",
-        "🟢 Đang T/H trong hạn",
-        "🟣 Sắp tới hạn",
-        "🟠 Đã H/T quá hạn",
-        "🔵 Đã H/T trong hạn",
-        "⚪ Chưa thực hiện",
+        "Đang T/H quá hạn",
+        "Đang T/H trong hạn",
+        "Sắp tới hạn",
+        "Đã H/T quá hạn",
+        "Đã H/T trong hạn",
+        "Chưa thực hiện",
         "Cán bộ đầu mối chính"
       ]
     ];
@@ -1164,7 +1377,6 @@ async function exportDashboardExcelReport() {
         idx + 1,
         ag.type === 'Ministry' ? 'Bộ / Ngành' : 'Địa phương',
         ag.name,
-        ag.code,
         ag.totalItems || 0,
         ag.totalGoals || 0,
         ag.totalTasks || 0,
@@ -1179,11 +1391,29 @@ async function exportDashboardExcelReport() {
     });
 
     const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
-    wsSummary['!cols'] = [
-      { wch: 6 }, { wch: 15 }, { wch: 35 }, { wch: 12 }, { wch: 10 },
-      { wch: 10 }, { wch: 10 }, { wch: 18 }, { wch: 18 }, { wch: 14 },
-      { wch: 16 }, { wch: 16 }, { wch: 14 }, { wch: 30 }
+    wsSummary['!merges'] = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: 12 } },
+      { s: { r: 1, c: 0 }, e: { r: 1, c: 12 } },
+      { s: { r: 3, c: 0 }, e: { r: 3, c: 12 } },
+      { s: { r: 8, c: 0 }, e: { r: 8, c: 12 } }
     ];
+    wsSummary['!cols'] = [
+      { wch: 6 },  // STT
+      { wch: 15 }, // Loại hình
+      { wch: 40 }, // Tên Bộ / Ngành / Địa phương
+      { wch: 12 }, // Tổng số
+      { wch: 12 }, // Mục tiêu
+      { wch: 12 }, // Nhiệm vụ
+      { wch: 18 }, // Đang T/H quá hạn
+      { wch: 18 }, // Đang T/H trong hạn
+      { wch: 16 }, // Sắp tới hạn
+      { wch: 16 }, // Đã H/T quá hạn
+      { wch: 16 }, // Đã H/T trong hạn
+      { wch: 16 }, // Chưa thực hiện
+      { wch: 35 }  // Cán bộ đầu mối chính
+    ];
+
+    styleWorksheet(wsSummary, { numCols: 13, headerRowIndex: 9, titleRowIndex: 0 });
     XLSX.utils.book_append_sheet(wb, wsSummary, "TỔNG HỢP CHUNG");
 
     const usedSheetNames = new Set(["TỔNG HỢP CHUNG"]);
@@ -1267,15 +1497,15 @@ async function exportDashboardExcelReport() {
         [`Thời gian xuất: ${timeStr} | Loại hình: ${ag.type === 'Ministry' ? 'Bộ / Ngành' : 'Địa phương'}`],
         [],
         ["1. THÔNG TIN CHUNG VÀ TỔNG HỢP TIẾN ĐỘ THỰC HIỆN CỦA ĐƠN VỊ"],
-        ["Tên đơn vị:", ag.name, "", "Mã đơn vị:", ag.code],
+        ["Tên đơn vị:", ag.name],
         ["Cán bộ đầu mối chính:", mainContactStr],
         ["Đơn vị trực thuộc:", subAgencies.length > 0 ? `${subAgencies.length} đơn vị trực thuộc` : "Không có đơn vị trực thuộc"],
         [],
         ["BẢNG TỔNG HỢP TRẠNG THÁI TIẾN ĐỘ CỦA ĐƠN VỊ"],
         [
           "Tổng số hạng mục", "Mục tiêu", "Nhiệm vụ",
-          "🔴 Đang T/H quá hạn", "🟢 Đang T/H trong hạn", "🟣 Sắp tới hạn",
-          "🟠 Đã H/T quá hạn", "🔵 Đã H/T trong hạn", "⚪ Chưa thực hiện"
+          "Đang T/H quá hạn", "Đang T/H trong hạn", "Sắp tới hạn",
+          "Đã H/T quá hạn", "Đã H/T trong hạn", "Chưa thực hiện"
         ],
         [
           ag.totalItems || 0, ag.totalGoals || 0, ag.totalTasks || 0,
@@ -1285,19 +1515,26 @@ async function exportDashboardExcelReport() {
         []
       ];
 
+      const merges = [
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } },
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 7 } },
+        { s: { r: 3, c: 0 }, e: { r: 3, c: 7 } },
+        { s: { r: 8, c: 0 }, e: { r: 8, c: 7 } }
+      ];
+
       // Table 2: Sub-agencies progress summary
       if (subAgencies.length > 0) {
+        const rowIdx = sheetRows.length;
+        merges.push({ s: { r: rowIdx, c: 0 }, e: { r: rowIdx, c: 7 } });
         sheetRows.push(["2. TỔNG SỐ MỤC TIÊU, NHIỆM VỤ THEO TRẠNG THÁI CỦA TỪNG ĐƠN VỊ TRỰC THUỘC"]);
         sheetRows.push([
-          "STT", "Tên Đơn Vị Trực Thuộc", "Mã Số", "Tổng Số", "Mục Tiêu", "Nhiệm Vụ",
-          "🔴 Đang T/H quá hạn", "🟢 Đang T/H trong hạn", "🟣 Sắp tới hạn",
-          "🟠 Đã H/T quá hạn", "🔵 Đã H/T trong hạn", "⚪ Chưa thực hiện"
+          "STT", "Tên Đơn Vị Trực Thuộc", "Tổng Số", "Mục Tiêu", "Nhiệm Vụ",
+          "Đang T/H quá hạn", "Đang T/H trong hạn", "Sắp tới hạn"
         ]);
         subAgencies.forEach((sub, sIdx) => {
           sheetRows.push([
-            sIdx + 1, sub.name, sub.code, sub.totalItems || 0, sub.totalGoals || 0, sub.totalTasks || 0,
-            sub.inProgressOverdue || 0, sub.inProgressOnTime || 0, sub.expiringSoon || 0,
-            sub.completedOverdue || 0, sub.completedOnTime || 0, sub.notStarted || 0
+            sIdx + 1, sub.name, sub.totalItems || 0, sub.totalGoals || 0, sub.totalTasks || 0,
+            sub.inProgressOverdue || 0, sub.inProgressOnTime || 0, sub.expiringSoon || 0
           ]);
         });
         sheetRows.push([]);
@@ -1305,23 +1542,23 @@ async function exportDashboardExcelReport() {
 
       // Table 3: Goals List
       const secGoal = subAgencies.length > 0 ? "3" : "2";
+      const goalRowIdx = sheetRows.length;
+      merges.push({ s: { r: goalRowIdx, c: 0 }, e: { r: goalRowIdx, c: 7 } });
       sheetRows.push([`${secGoal}. DANH SÁCH MỤC TIÊU CỦA ĐƠN VỊ (${goalsList.length} mục tiêu)`]);
       if (goalsList.length > 0) {
         sheetRows.push([
-          "STT", "Mã Số", "Tên Mục Tiêu", "Cơ Quan Chủ Trì", "Phạm Vi", "Lĩnh Vực / Nhóm",
+          "STT", "Tên Mục Tiêu", "Cơ Quan Chủ Trì", "Phạm Vi", "Lĩnh Vực / Nhóm",
           "Thời Gian / Hạn Chót", "Tiến Độ Hiện Tại", "Trạng Thái Thực Hiện"
         ]);
         goalsList.forEach((g, gIdx) => {
-          let dateStr = g.isOngoing ? 'Hằng năm' : (g.dueDate ? new Date(g.dueDate).toLocaleDateString('vi-VN') : '—');
-          let progStr = g.latestProgressPercent !== null && g.latestProgressPercent !== undefined 
-            ? `${g.latestProgressPercent}%` 
-            : (g.latestProgressValue !== null && g.latestProgressValue !== undefined ? `${g.latestProgressValue} ${g.unitName || ''}` : 'Chưa cập nhật');
+          let dateStr = g.isOngoing ? 'Hằng năm' : (g.dueDate ? formatDate(g.dueDate) : '—');
+          let progStr = formatItemProgressDisplay(g);
 
           sheetRows.push([
-            gIdx + 1, g.code, g.title, g.leadAgencyName,
+            gIdx + 1, g.title, g.leadAgencyName,
             g.isGeneralTask ? 'Phạm vi chung' : 'Phạm vi riêng',
             [g.section, g.group].filter(Boolean).join(' - ') || '—',
-            dateStr, progStr, getStatusLabel(g.status)
+            dateStr, progStr, getStatusLabelClean(g.status)
           ]);
         });
       } else {
@@ -1331,23 +1568,23 @@ async function exportDashboardExcelReport() {
 
       // Table 4: Tasks List
       const secTask = subAgencies.length > 0 ? "4" : "3";
+      const taskRowIdx = sheetRows.length;
+      merges.push({ s: { r: taskRowIdx, c: 0 }, e: { r: taskRowIdx, c: 7 } });
       sheetRows.push([`${secTask}. DANH SÁCH NHIỆM VỤ CỦA ĐƠN VỊ (${tasksList.length} nhiệm vụ)`]);
       if (tasksList.length > 0) {
         sheetRows.push([
-          "STT", "Mã Số", "Tên Nhiệm Vụ", "Cơ Quan Chủ Trì", "Phạm Vi", "Lĩnh Vực / Nhóm",
+          "STT", "Tên Nhiệm Vụ", "Cơ Quan Chủ Trì", "Phạm Vi", "Lĩnh Vực / Nhóm",
           "Thời Gian / Hạn Chót", "Tiến Độ Hiện Tại", "Trạng Thái Thực Hiện"
         ]);
         tasksList.forEach((t, tIdx) => {
-          let dateStr = t.isOngoing ? 'Hằng năm' : (t.dueDate ? new Date(t.dueDate).toLocaleDateString('vi-VN') : '—');
-          let progStr = t.latestProgressPercent !== null && t.latestProgressPercent !== undefined 
-            ? `${t.latestProgressPercent}%` 
-            : (t.latestProgressValue !== null && t.latestProgressValue !== undefined ? `${t.latestProgressValue} ${t.unitName || ''}` : 'Chưa cập nhật');
+          let dateStr = t.isOngoing ? 'Hằng năm' : (t.dueDate ? formatDate(t.dueDate) : '—');
+          let progStr = formatItemProgressDisplay(t);
 
           sheetRows.push([
-            tIdx + 1, t.code, t.title, t.leadAgencyName,
+            tIdx + 1, t.title, t.leadAgencyName,
             t.isGeneralTask ? 'Phạm vi chung' : 'Phạm vi riêng',
             [t.section, t.group].filter(Boolean).join(' - ') || '—',
-            dateStr, progStr, getStatusLabel(t.status)
+            dateStr, progStr, getStatusLabelClean(t.status)
           ]);
         });
       } else {
@@ -1357,6 +1594,8 @@ async function exportDashboardExcelReport() {
 
       // Table 5: Contact Persons List
       const secContact = subAgencies.length > 0 ? "5" : "4";
+      const contactRowIdx = sheetRows.length;
+      merges.push({ s: { r: contactRowIdx, c: 0 }, e: { r: contactRowIdx, c: 7 } });
       sheetRows.push([`${secContact}. DANH SÁCH CÁN BỘ ĐẦU MỐI LIÊN HỆ (${contactList.length} cán bộ)`]);
       if (contactList.length > 0) {
         sheetRows.push(["STT", "Họ và Tên", "Chức Danh", "Phòng Ban", "Điện Thoại", "Email", "Thuộc Đơn Vị"]);
@@ -1371,10 +1610,19 @@ async function exportDashboardExcelReport() {
       }
 
       const ws = XLSX.utils.aoa_to_sheet(sheetRows);
+      ws['!merges'] = merges;
       ws['!cols'] = [
-        { wch: 6 }, { wch: 14 }, { wch: 45 }, { wch: 25 }, { wch: 15 },
-        { wch: 25 }, { wch: 20 }, { wch: 18 }, { wch: 22 }
+        { wch: 6 },  // STT
+        { wch: 55 }, // Tên Hạng Mục / Tên Đơn Vị / Tên Cán Bộ
+        { wch: 28 }, // Cơ Quan Chủ Trì / Chức Danh
+        { wch: 18 }, // Phạm Vi / Phòng Ban
+        { wch: 25 }, // Lĩnh Vực - Nhóm / Điện Thoại
+        { wch: 20 }, // Thời Gian / Email
+        { wch: 18 }, // Tiến Độ / Thuộc Đơn Vị
+        { wch: 25 }  // Trạng Thái
       ];
+
+      styleWorksheet(ws, { numCols: 8, headerRowIndex: 9, titleRowIndex: 0 });
       XLSX.utils.book_append_sheet(wb, ws, sheetName);
     }
 
@@ -1388,10 +1636,6 @@ async function exportDashboardExcelReport() {
     isExportingExcel.value = false;
   }
 }
-
-watch(dashboardFilter, () => {
-  loadDashboardMetrics();
-});
 
 onMounted(() => {
   loadAgencies();

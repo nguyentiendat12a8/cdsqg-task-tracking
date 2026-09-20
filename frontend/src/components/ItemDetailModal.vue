@@ -1,6 +1,6 @@
 <template>
-  <div v-if="isOpen" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-4xl w-full p-6 space-y-4 font-sans max-h-[92vh] flex flex-col">
+  <div v-if="isOpen" @click.self="close" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-6xl sm:max-w-7xl w-full p-6 space-y-4 font-sans max-h-[92vh] flex flex-col">
       
       <!-- Modal Header -->
       <div class="flex justify-between items-center border-b border-slate-100 pb-2.5 shrink-0">
@@ -67,7 +67,7 @@
             <div class="border-t border-slate-200/60 pt-2">
               <span class="text-slate-500 font-semibold uppercase block text-[10px]">Đơn Vị Chủ Trì</span>
               <span class="font-medium text-slate-800 mt-0.5 block">
-                🏛️ {{ item?.leadAgencyName || '—' }} <span v-if="item?.leadAgencyCode">({{ item.leadAgencyCode }})</span>
+                🏛️ {{ item?.leadAgencyName || '—' }}
               </span>
             </div>
 
@@ -136,60 +136,119 @@
           </div>
         </div>
 
-        <!-- TAB 2: Report History -->
-        <div v-if="activeTab === 'reports'" class="space-y-3">
+        <!-- TAB 2: Report History (2-Column Before vs After Update Layout) -->
+        <div v-if="activeTab === 'reports'" class="space-y-4">
+          
+          <!-- Agency Filter Bar (Shown for Admin or General Tasks when multiple agencies have reported) -->
+          <div v-if="(authState.isAdmin.value || item?.isGeneralTask) && availableAgenciesInHistory.length > 1" class="flex flex-wrap items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-200 gap-2 text-xs">
+            <div class="flex items-center gap-2 font-bold text-slate-700">
+              <span>🏛️ Lọc theo đơn vị báo cáo:</span>
+            </div>
+            <select 
+              v-model="selectedAgencyFilter" 
+              @change="loadHistories" 
+              class="text-xs font-bold text-slate-800 bg-white border border-slate-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-500 focus:outline-none cursor-pointer"
+            >
+              <option value="">Tất cả các đơn vị ({{ rawReportHistory.length }} lượt báo cáo)</option>
+              <option v-for="ag in availableAgenciesInHistory" :key="ag.id" :value="ag.id">
+                {{ ag.name }} ({{ ag.count }} lượt)
+              </option>
+            </select>
+          </div>
+
           <LoadingSpinner v-if="isLoadingReports" text="Đang tải lịch sử báo cáo..." padding="py-6" />
 
           <div v-else-if="reportHistory.length === 0" class="py-10 text-center bg-slate-50 rounded-2xl border border-slate-200 text-slate-400 text-xs font-semibold italic">
             📭 Chưa có lượt báo cáo tiến độ nào được ghi nhận cho nhiệm vụ này.
           </div>
 
-          <div v-else class="space-y-2.5">
+          <div v-else class="space-y-4">
             <div 
-              v-for="rep in reportHistory" 
-              :key="rep.progressLogId || rep.id"
-              class="bg-slate-50/90 border border-slate-200 rounded-xl p-3.5 space-y-2 text-xs hover:border-blue-300 transition"
+              v-for="(rep, idx) in reportHistory" 
+              :key="rep.progressLogId || rep.id || idx"
+              class="bg-white border border-slate-200 rounded-2xl p-4 space-y-3 text-xs shadow-xs hover:border-blue-300 transition"
             >
-              <div class="flex justify-between items-center border-b border-slate-200/80 pb-2">
+              <!-- History Log Card Header -->
+              <div class="flex flex-wrap justify-between items-center border-b border-slate-100 pb-2.5 gap-2">
                 <div class="flex items-center gap-2">
-                  <span class="px-2 py-0.5 bg-blue-100 text-blue-800 rounded font-black">
-                    Kỳ Báo Cáo Quý {{ rep.quarter || rep.periodQuarter || 1 }}/{{ rep.year || 2026 }}
+                  <span class="px-2.5 py-0.5 bg-blue-600 text-white rounded-md font-extrabold text-[11px]">
+                    Lần {{ reportHistory.length - idx }}
                   </span>
-                  <span class="text-slate-500 font-semibold">
+                  <span class="px-2 py-0.5 bg-blue-50 text-blue-800 border border-blue-200 rounded-md font-bold text-[11px]">
+                    Kỳ: {{ formatPeriodLabel(rep) }}
+                  </span>
+                  <span class="text-slate-500 font-semibold text-[11px]">
                     🕒 {{ formatDate(rep.logDate) }}
                   </span>
                 </div>
-                <span class="text-slate-600 font-bold">
-                  Người báo cáo: <strong class="text-slate-800">{{ rep.createdBy || 'Đơn vị chủ trì' }}</strong>
-                </span>
-              </div>
-
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
-                <div>
-                  <span class="text-slate-400 font-bold block text-[10px] uppercase">Kết Quả Tiến Độ</span>
-                  <span v-if="rep.actualValue !== null && rep.actualValue !== undefined" class="font-black text-blue-700 text-sm">
-                    {{ rep.actualValue }} %
-                  </span>
-                  <span v-else class="font-bold text-slate-800 text-xs">
-                    {{ rep.qualitativeStatus || 'Đã cập nhật báo cáo' }}
-                  </span>
-                </div>
-
-                <div v-if="rep.attachmentFileUrl">
-                  <span class="text-slate-400 font-bold block text-[10px] uppercase">File Minh Chứng Đính Kèm</span>
-                  <a 
-                    :href="getApiUrl(rep.attachmentFileUrl)" 
-                    target="_blank" 
-                    class="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 font-extrabold text-xs underline mt-0.5"
-                  >
-                    📎 {{ rep.attachmentFileName || 'Tải file minh chứng' }}
-                  </a>
+                <div class="text-slate-600 font-semibold text-xs">
+                  ✍️ Cán bộ báo cáo: <strong class="text-slate-900 font-bold">{{ rep.createdBy || 'Đơn vị chủ trì' }}</strong>
                 </div>
               </div>
 
-              <div v-if="rep.notes" class="bg-white p-2.5 rounded-lg border border-slate-200 text-slate-700 font-medium">
-                📌 <strong>Ghi chú / Nội dung:</strong> {{ rep.notes }}
+              <!-- Single Clean Updated Report Info Card -->
+              <div class="bg-blue-50/40 border border-blue-200/80 rounded-xl p-3.5 space-y-2.5">
+                <!-- Quantitative value or qualitative status after update -->
+                <div class="space-y-1">
+                  <span class="text-[10px] font-bold text-blue-700 uppercase block">Trạng Thái / Tiến Độ Ghi Nhận</span>
+                  <div class="font-black text-blue-900 text-sm">
+                    {{ formatReportProgressValue(rep) }}
+                  </div>
+                </div>
+
+                <!-- Deliverables status after update -->
+                <div v-if="rep.deliverables && rep.deliverables.length > 0" class="space-y-1 pt-1.5 border-t border-blue-100">
+                  <span class="text-[10px] font-bold text-blue-800 uppercase block">📋 Tiến Độ Danh Mục Sản Phẩm Đầu Ra ({{ rep.deliverables.length }})</span>
+                  <div class="space-y-1 max-h-44 overflow-y-auto pr-1 custom-scrollbar">
+                    <div 
+                      v-for="(del, dIdx) in rep.deliverables" 
+                      :key="dIdx"
+                      class="bg-white p-2 rounded-lg border border-blue-100 text-[11px] space-y-0.5 shadow-2xs"
+                    >
+                      <div class="flex justify-between font-bold text-slate-900">
+                        <span class="truncate pr-1">{{ dIdx + 1 }}. {{ del.title }}</span>
+                        <span :class="['px-1.5 py-0.2 rounded text-[10px] shrink-0 font-bold', getDeliverableStatusClass(del.currentStatus)]">
+                          {{ getDeliverableStatusLabel(del.currentStatus) }}
+                        </span>
+                      </div>
+                      <div v-if="del.documentNumber" class="text-[10px] text-blue-800 font-semibold">
+                        📄 Số VB: <strong class="text-blue-950 font-bold">{{ del.documentNumber }}</strong>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Notes / Explanation after update -->
+                <div v-if="rep.summaryNotes || rep.notes" class="bg-white p-2.5 rounded-lg border border-blue-100 text-[11px] text-slate-800 font-medium leading-relaxed">
+                  📌 <strong>Ghi chú / Giải trình:</strong> {{ rep.summaryNotes || rep.notes }}
+                </div>
+
+                <!-- Evidence file attachments -->
+                <div v-if="rep.attachmentFileUrls && rep.attachmentFileUrls.length > 0" class="pt-1 space-y-1">
+                  <span class="text-[10px] font-bold text-purple-900 uppercase block">📄 File Minh Chứng Đính Kèm ({{ rep.attachmentFileUrls.length }})</span>
+                  <div class="space-y-1">
+                    <div v-for="(fileUrl, fIdx) in rep.attachmentFileUrls" :key="fIdx" class="flex items-center justify-between text-[11px] bg-white p-1.5 rounded-lg border border-purple-100">
+                      <a 
+                        :href="getApiUrl(fileUrl)" 
+                        target="_blank" 
+                        class="text-purple-700 hover:underline font-semibold truncate flex items-center gap-1 min-w-0 flex-1"
+                      >
+                        <span>📎</span>
+                        <span class="truncate">{{ formatFileName(fileUrl) }}</span>
+                      </a>
+                      <a 
+                        :href="getApiUrl(fileUrl)" 
+                        target="_blank" 
+                        download
+                        class="text-[10px] font-bold text-purple-700 bg-purple-50 hover:bg-purple-600 hover:text-white px-2 py-0.5 rounded transition cursor-pointer shrink-0 ml-1"
+                      >
+                        Tải về
+                      </a>
+                    </div>
+                  </div>
+                </div>
               </div>
+
             </div>
           </div>
         </div>
@@ -208,7 +267,7 @@
               :key="notif.id"
               class="bg-amber-50/50 border border-amber-200 rounded-xl p-4 space-y-2 text-xs"
             >
-              <div class="flex justify-between items-center border-b border-amber-200/70 pb-2">
+              <div class="flex flex-wrap items-center justify-between border-b border-amber-200/70 pb-2 gap-2">
                 <div class="flex items-center gap-2">
                   <span class="px-2.5 py-0.5 bg-amber-200 text-amber-900 rounded-full font-black">
                     🔔 Thông Báo
@@ -218,8 +277,18 @@
                   </span>
                 </div>
                 <span class="text-slate-600 font-bold">
-                  Người gửi: <strong class="text-slate-800">{{ notif.createdBy || 'Chuyên viên CĐS' }}</strong>
+                  ✍️ Người gửi: <strong class="text-slate-900">{{ notif.createdBy || 'Chuyên viên CĐS' }}</strong>
                 </span>
+              </div>
+
+              <div v-if="notif.title" class="text-xs text-amber-950 bg-amber-100/60 px-3 py-2 rounded-lg font-bold border border-amber-200/80 flex items-start gap-1.5 leading-snug">
+                <span class="shrink-0 text-amber-900">📌 <strong>Tiêu đề:</strong></span>
+                <span class="font-extrabold text-slate-900">{{ notif.title }}</span>
+              </div>
+
+              <div v-if="notif.recipientsSummary" class="text-[11px] text-amber-950 bg-amber-100/70 px-3 py-1.5 rounded-lg font-bold flex items-start gap-1.5 leading-snug">
+                <span class="shrink-0">👥 <strong>Đầu mối / Người nhận:</strong></span>
+                <span>{{ notif.recipientsSummary }}</span>
               </div>
 
               <div class="prose max-w-none text-xs text-slate-800 bg-white p-3 rounded-lg border border-amber-100" v-html="notif.urgeContent"></div>
@@ -232,12 +301,14 @@
       <!-- Modal Footer -->
       <div class="flex items-center justify-between border-t border-slate-100 pt-3 shrink-0">
         <button 
+          v-if="canEditItem(item)"
           type="button" 
           @click="onEditClick" 
           class="px-4 py-2 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition cursor-pointer flex items-center gap-1.5 shadow-2xs"
         >
           ✏️ Chỉnh Sửa {{ item?.itemType === 'Goal' ? 'Mục Tiêu' : 'Nhiệm Vụ' }}
         </button>
+        <div v-else></div>
         <button 
           type="button" 
           @click="close" 
@@ -255,10 +326,12 @@
 import { ref, computed, watch } from 'vue';
 import LoadingSpinner from './LoadingSpinner.vue';
 import { getApiUrl } from '../config/api';
+import { authState } from '../services/auth';
 
 const props = defineProps({
   isOpen: { type: Boolean, default: false },
-  item: { type: Object, default: null }
+  item: { type: Object, default: null },
+  initialTab: { type: String, default: 'info' }
 });
 
 const emit = defineEmits(['close', 'edit']);
@@ -268,8 +341,31 @@ function onEditClick() {
   emit('edit', props.item);
 }
 
+function canEditItem(item) {
+  if (!item) return false;
+  if (!authState.isAdmin.value) return false;
+
+  const st = item.calculatedStatus || item.status;
+  if (st && st !== 'NotStarted' && st !== '1. Chưa thực hiện') {
+    return false;
+  }
+
+  if (reportHistory.value && reportHistory.value.length > 0) {
+    return false;
+  }
+
+  if (item.progressLogs && item.progressLogs.length > 0) {
+    return false;
+  }
+
+  return true;
+}
+
 const activeTab = ref('info');
 const reportHistory = ref([]);
+const rawReportHistory = ref([]);
+const availableAgenciesInHistory = ref([]);
+const selectedAgencyFilter = ref('');
 const notificationHistory = ref([]);
 const isLoadingReports = ref(false);
 const isLoadingNotifications = ref(false);
@@ -285,19 +381,78 @@ const coordinatingNamesDisplay = computed(() => {
   return '—';
 });
 
+function formatPeriodLabel(rep) {
+  if (!rep) return 'Toàn thời gian';
+  if (rep.periodQuarter && rep.periodQuarter > 0) {
+    return `Quý ${rep.periodQuarter}/${rep.periodYear || rep.year || 2026}`;
+  }
+  return `Năm ${rep.periodYear || rep.year || 2026}`;
+}
+
+function formatReportProgressValue(rep) {
+  if (!rep) return '—';
+  const unitName = props.item?.unitName || props.item?.unit?.name || '%';
+  const val = (rep.actualValue !== null && rep.actualValue !== undefined)
+    ? rep.actualValue
+    : (rep.completionPercentage !== null && rep.completionPercentage !== undefined ? rep.completionPercentage : null);
+
+  if (val !== null && val !== undefined) {
+    if (unitName === 'Số lượng') {
+      return `${val}`;
+    }
+    return `${val}%`;
+  }
+
+  if (rep.status) {
+    return getStatusLabel(rep.status);
+  }
+
+  return '—';
+}
+
+function formatFileName(fullPath) {
+  if (!fullPath) return 'File minh chứng';
+  const rawFileName = fullPath.split(/[/\\]/).pop() || fullPath;
+  const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}_/i;
+  return rawFileName.replace(guidRegex, '');
+}
+
 function formatDateRange(sDate, dDate) {
   if (!sDate && !dDate) return '—';
-  const s = sDate ? new Date(sDate).toLocaleDateString('vi-VN') : '...';
-  const d = dDate ? new Date(dDate).toLocaleDateString('vi-VN') : '...';
+  const s = sDate ? formatDateOnly(sDate) : '...';
+  const d = dDate ? formatDateOnly(dDate) : '...';
   return `${s} ➔ ${d}`;
+}
+
+function formatDateOnly(dateStr) {
+  if (!dateStr) return '—';
+  try {
+    let str = String(dateStr).trim();
+    if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+      const [y, m, d] = str.slice(0, 10).split('-');
+      return `${d}/${m}/${y}`;
+    }
+    const d = new Date(str);
+    if (isNaN(d.getTime())) return dateStr;
+    const day = String(d.getUTCDate()).padStart(2, '0');
+    const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+    const year = d.getUTCFullYear();
+    return `${day}/${month}/${year}`;
+  } catch {
+    return dateStr;
+  }
 }
 
 function formatDate(dateStr) {
   if (!dateStr) return '—';
   try {
-    const d = new Date(dateStr);
+    let str = String(dateStr).trim();
+    if (str.includes('T') && !str.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(str)) {
+      str += 'Z';
+    }
+    const d = new Date(str);
     if (isNaN(d.getTime())) return dateStr;
-    return `${d.toLocaleDateString('vi-VN')} ${d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
+    return d.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
   } catch {
     return dateStr;
   }
@@ -357,9 +512,34 @@ async function loadHistories() {
   // 1. Fetch Report History
   isLoadingReports.value = true;
   try {
-    const res = await fetch(getApiUrl(`/api/execution/tasks/${taskId}/progress-history`));
+    // Admin reads all agencies' progress history unless a specific filter is selected
+    // Non-admin agency users default to their own agencyId
+    let userAgId = authState.isAdmin.value 
+      ? selectedAgencyFilter.value 
+      : (selectedAgencyFilter.value || authState.user.value?.agencyId || '');
+
+    const queryStr = userAgId ? `?agencyId=${userAgId}` : '';
+    const res = await fetch(getApiUrl(`/api/execution/tasks/${taskId}/progress-history${queryStr}`));
     if (res.ok) {
-      reportHistory.value = await res.json();
+      const data = await res.json();
+      reportHistory.value = data;
+
+      // Extract available unique agencies for the filter dropdown if viewing all
+      if (!selectedAgencyFilter.value) {
+        rawReportHistory.value = data;
+        const agencyMap = new Map();
+        data.forEach(rep => {
+          if (rep.agencyId) {
+            const agName = rep.createdBy || 'Đơn vị báo cáo';
+            if (!agencyMap.has(rep.agencyId)) {
+              agencyMap.set(rep.agencyId, { id: rep.agencyId, name: agName, count: 1 });
+            } else {
+              agencyMap.get(rep.agencyId).count++;
+            }
+          }
+        });
+        availableAgenciesInHistory.value = Array.from(agencyMap.values());
+      }
     } else {
       reportHistory.value = [];
     }
@@ -385,9 +565,10 @@ async function loadHistories() {
   }
 }
 
-watch(() => [props.isOpen, props.item], ([isOpen, item]) => {
+watch(() => [props.isOpen, props.item, props.initialTab], ([isOpen, item, tab]) => {
   if (isOpen && item) {
-    activeTab.value = 'info';
+    selectedAgencyFilter.value = '';
+    activeTab.value = tab || 'info';
     loadHistories();
   }
 }, { immediate: true });

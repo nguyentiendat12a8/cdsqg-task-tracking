@@ -13,8 +13,8 @@ namespace Cdsqg.Application.Services
     public interface IExecutionService
     {
         Task<SubmitProgressResponseDto> SubmitProgressAsync(Guid taskId, SubmitProgressRequestDto dto);
-        Task<GetProgressLogResponseDto?> GetProgressLogAsync(Guid taskId, int year, int quarter);
-        Task<List<GetProgressLogResponseDto>> GetTaskProgressHistoryAsync(Guid taskId);
+        Task<GetProgressLogResponseDto?> GetProgressLogAsync(Guid taskId, int year, int quarter, Guid? agencyId = null);
+        Task<List<GetProgressLogResponseDto>> GetTaskProgressHistoryAsync(Guid taskId, Guid? agencyId = null);
         Task<TaskUrgeLogResponseDto> CreateUrgeLogAsync(CreateTaskUrgeLogDto dto);
         Task<List<TaskUrgeLogResponseDto>> GetTaskUrgeHistoryAsync(Guid taskId);
         Task<List<TaskUrgeLogResponseDto>> GetAllUrgeLogsAsync();
@@ -35,6 +35,7 @@ namespace Cdsqg.Application.Services
         public async Task<SubmitProgressResponseDto> SubmitProgressAsync(Guid taskId, SubmitProgressRequestDto dto)
         {
             var task = await _context.GoalTaskItems
+                .Include(t => t.LeadAgency)
                 .Include(t => t.Baselines)
                 .Include(t => t.ProgressLogs)
                 .FirstOrDefaultAsync(t => t.Id == taskId);
@@ -176,15 +177,37 @@ namespace Cdsqg.Application.Services
 
             string primaryFileUrl = uploadedUrls.FirstOrDefault() ?? string.Empty;
 
+            Guid? reportingAgencyId = dto.AgencyId;
+            if (!reportingAgencyId.HasValue || reportingAgencyId.Value == Guid.Empty)
+            {
+                reportingAgencyId = task.LeadAgencyId;
+            }
+
             if (dto.Deliverables != null && dto.Deliverables.Count > 0)
             {
-                task.Deliverables = dto.Deliverables;
+                if (task.IsGeneralTask && reportingAgencyId.HasValue && reportingAgencyId.Value != Guid.Empty)
+                {
+                    string key = reportingAgencyId.Value.ToString().ToLower();
+                    task.AgencyDeliverables ??= new Dictionary<string, List<TaskDeliverable>>();
+                    task.AgencyDeliverables[key] = dto.Deliverables;
+                    _context.Entry(task).Property(t => t.AgencyDeliverables).IsModified = true;
+                }
+                else
+                {
+                    task.Deliverables = dto.Deliverables;
+                    _context.Entry(task).Property(t => t.Deliverables).IsModified = true;
+                }
             }
+
+            string createdBy = !string.IsNullOrWhiteSpace(dto.CreatedBy) && dto.CreatedBy != "Chuyên viên theo dõi" && dto.CreatedBy != "System User"
+                ? dto.CreatedBy
+                : (task.LeadAgency?.Name ?? "Đơn vị chủ trì");
 
             // 5. Save Progress Log to Database
             var progressLog = new ProgressLog
             {
                 GoalTaskId = task.Id,
+                AgencyId = reportingAgencyId,
                 PeriodYear = dto.PeriodYear,
                 PeriodQuarter = dto.PeriodQuarter,
                 LogDate = DateTime.UtcNow,
@@ -192,12 +215,63 @@ namespace Cdsqg.Application.Services
                 QualitativeStatus = dto.Status,
                 SummaryNotes = dto.SummaryNotes ?? string.Empty,
                 CalculatedProgressPercentage = completionPercentage,
-                AttachmentFileUrls = uploadedUrls,
+                AttachmentFileUrls = uploadedUrls ?? new List<string>(),
+                Deliverables = dto.Deliverables ?? new List<TaskDeliverable>(),
                 CalculatedAlert = alertStatus,
-                CreatedBy = dto.CreatedBy ?? string.Empty
+                CreatedBy = createdBy
             };
 
             _context.ProgressLogs.Add(progressLog);
+
+            // 6. Update or create AgencyTaskExecution for clean 1-to-1 or 1-to-N tracking per agency
+            if (reportingAgencyId.HasValue && reportingAgencyId.Value != Guid.Empty)
+            {
+                var execution = await _context.AgencyTaskExecutions
+                    .FirstOrDefaultAsync(e => e.GoalTaskId == task.Id && e.AgencyId == reportingAgencyId.Value);
+
+                bool isNewExecution = false;
+                if (execution == null)
+                {
+                    execution = new AgencyTaskExecution
+                    {
+                        GoalTaskId = task.Id,
+                        AgencyId = reportingAgencyId.Value,
+                        Deliverables = dto.Deliverables ?? new List<TaskDeliverable>(),
+                        AttachmentFileUrls = uploadedUrls ?? new List<string>()
+                    };
+                    _context.AgencyTaskExecutions.Add(execution);
+                    isNewExecution = true;
+                }
+
+                if (dto.Deliverables != null && dto.Deliverables.Count > 0)
+                {
+                    execution.Deliverables = dto.Deliverables;
+                    if (!isNewExecution)
+                    {
+                        _context.Entry(execution).Property(e => e.Deliverables).IsModified = true;
+                    }
+                }
+                execution.CalculatedStatus = PlanningService.CalculateExecutionStatus(task, progressLog, execution.Deliverables);
+                execution.LatestProgressValue = actualCalculatedVal;
+                execution.LatestQualitativeStatus = dto.Status;
+                execution.CompletionPercentage = completionPercentage;
+                execution.SummaryNotes = dto.SummaryNotes;
+                if (uploadedUrls.Count > 0)
+                {
+                    execution.AttachmentFileUrls = uploadedUrls;
+                    if (!isNewExecution)
+                    {
+                        _context.Entry(execution).Property(e => e.AttachmentFileUrls).IsModified = true;
+                    }
+                }
+                execution.LastReportedAt = DateTime.UtcNow;
+                execution.LastReportedBy = createdBy;
+
+                if (!isNewExecution)
+                {
+                    _context.Entry(execution).State = EntityState.Modified;
+                }
+            }
 
             if (uploadedUrls.Count > 0)
             {
@@ -211,7 +285,8 @@ namespace Cdsqg.Application.Services
                     TotalGoalsCreated = 0,
                     TotalTasksCreated = 0,
                     Status = "Thành công",
-                    SummaryNotes = $"Minh chứng báo cáo tiến độ {task.Code}: {task.Title}"
+                    SummaryNotes = $"Minh chứng báo cáo tiến độ {task.Code}: {task.Title}",
+                    AgencyId = task.LeadAgencyId
                 };
                 _context.DataImportLogs.Add(importLog);
             }
@@ -237,10 +312,23 @@ namespace Cdsqg.Application.Services
             };
         }
 
-        public async Task<GetProgressLogResponseDto?> GetProgressLogAsync(Guid taskId, int year, int quarter)
+        public async Task<GetProgressLogResponseDto?> GetProgressLogAsync(Guid taskId, int year, int quarter, Guid? agencyId = null)
         {
-            var log = await _context.ProgressLogs
-                .Where(l => l.GoalTaskId == taskId && l.PeriodYear == year && l.PeriodQuarter == quarter)
+            var task = await _context.GoalTaskItems.FirstOrDefaultAsync(t => t.Id == taskId);
+
+            var query = _context.ProgressLogs
+                .Where(l => l.GoalTaskId == taskId && l.PeriodYear == year && l.PeriodQuarter == quarter);
+
+            if (task != null && task.IsGeneralTask && agencyId.HasValue && agencyId.Value != Guid.Empty)
+            {
+                query = query.Where(l => l.AgencyId == agencyId.Value);
+            }
+            else if (agencyId.HasValue && agencyId.Value != Guid.Empty)
+            {
+                query = query.Where(l => l.AgencyId == agencyId.Value || l.AgencyId == null);
+            }
+
+            var log = await query
                 .OrderByDescending(l => l.LogDate)
                 .FirstOrDefaultAsync();
 
@@ -254,33 +342,144 @@ namespace Cdsqg.Application.Services
                 PeriodQuarter = log.PeriodQuarter,
                 ActualValue = log.QuantitativeValue,
                 Status = log.QualitativeStatus?.ToString(),
+                CompletionPercentage = log.CalculatedProgressPercentage,
                 SummaryNotes = log.SummaryNotes,
                 AttachmentFileUrls = log.AttachmentFileUrls ?? new List<string>(),
+                Deliverables = log.Deliverables,
                 LogDate = log.LogDate,
                 CalculatedAlert = log.CalculatedAlert
             };
         }
 
-        public async Task<List<GetProgressLogResponseDto>> GetTaskProgressHistoryAsync(Guid taskId)
+        public async Task<List<GetProgressLogResponseDto>> GetTaskProgressHistoryAsync(Guid taskId, Guid? agencyId = null)
         {
-            var logs = await _context.ProgressLogs
-                .Where(p => p.GoalTaskId == taskId)
-                .OrderByDescending(p => p.LogDate)
-                .ToListAsync();
+            var task = await _context.GoalTaskItems
+                .Include(t => t.LeadAgency)
+                .FirstOrDefaultAsync(t => t.Id == taskId);
 
-            return logs.Select(log => new GetProgressLogResponseDto
+            string defaultAgencyName = task?.LeadAgency?.Name ?? "Đơn vị chủ trì";
+
+            var query = _context.ProgressLogs
+                .Include(p => p.Agency)
+                .Where(p => p.GoalTaskId == taskId)
+                .AsQueryable();
+
+            if (task != null && task.IsGeneralTask && agencyId.HasValue && agencyId.Value != Guid.Empty)
             {
-                Id = log.Id,
-                TaskId = log.GoalTaskId,
-                PeriodYear = log.PeriodYear,
-                PeriodQuarter = log.PeriodQuarter,
-                ActualValue = log.QuantitativeValue,
-                Status = log.QualitativeStatus?.ToString(),
-                SummaryNotes = log.SummaryNotes,
-                AttachmentFileUrls = log.AttachmentFileUrls ?? new List<string>(),
-                LogDate = log.LogDate,
-                CalculatedAlert = log.CalculatedAlert
-            }).ToList();
+                query = query.Where(p => p.AgencyId == agencyId.Value || p.AgencyId == null);
+            }
+            else if (agencyId.HasValue && agencyId.Value != Guid.Empty)
+            {
+                query = query.Where(p => p.AgencyId == agencyId.Value || p.AgencyId == null);
+            }
+
+            var logsAsc = await query.OrderBy(p => p.LogDate).ToListAsync();
+
+            var dtos = new List<GetProgressLogResponseDto>();
+            var lastLogPerAgency = new Dictionary<string, ProgressLog>();
+
+            List<TaskDeliverable>? GetInitialDeliverablesForAgency(Guid? agId)
+            {
+                if (task == null) return null;
+                if (task.IsGeneralTask && agId.HasValue && agId.Value != Guid.Empty && task.AgencyDeliverables != null)
+                {
+                    string key = agId.Value.ToString().ToLower();
+                    if (task.AgencyDeliverables.TryGetValue(key, out var agDels) && agDels != null)
+                    {
+                        return agDels;
+                    }
+                }
+                return task.Deliverables;
+            }
+
+            for (int i = 0; i < logsAsc.Count; i++)
+            {
+                var log = logsAsc[i];
+                string agencyKey = log.AgencyId.HasValue ? log.AgencyId.Value.ToString().ToLower() : "default";
+
+                string createdByStr = log.CreatedBy;
+                if (log.Agency != null && !string.IsNullOrWhiteSpace(log.Agency.Name))
+                {
+                    if (string.IsNullOrWhiteSpace(createdByStr) ||
+                        createdByStr == "System User" ||
+                        createdByStr == "Chuyên viên theo dõi" ||
+                        createdByStr == "Đơn vị chủ trì")
+                    {
+                        createdByStr = log.Agency.Name;
+                    }
+                    else if (!createdByStr.StartsWith(log.Agency.Name))
+                    {
+                        createdByStr = $"{log.Agency.Name} ({createdByStr})";
+                    }
+                }
+                else if (string.IsNullOrWhiteSpace(createdByStr) ||
+                    createdByStr == "System User" ||
+                    createdByStr == "Chuyên viên theo dõi" ||
+                    createdByStr == "Đơn vị chủ trì")
+                {
+                    createdByStr = defaultAgencyName;
+                }
+
+                decimal? prevValue = null;
+                string? prevStatus = "NotStarted";
+                decimal? prevPercentage = 0m;
+                string? prevNotes = null;
+                List<TaskDeliverable>? prevDeliverables = null;
+
+                if (lastLogPerAgency.TryGetValue(agencyKey, out var prevLog))
+                {
+                    prevValue = prevLog.QuantitativeValue;
+                    prevStatus = prevLog.QualitativeStatus?.ToString();
+                    prevPercentage = prevLog.CalculatedProgressPercentage;
+                    prevNotes = prevLog.SummaryNotes;
+                    prevDeliverables = prevLog.Deliverables;
+                }
+                else
+                {
+                    var initialDeliverables = GetInitialDeliverablesForAgency(log.AgencyId);
+                    if (initialDeliverables != null && initialDeliverables.Count > 0)
+                    {
+                        prevDeliverables = initialDeliverables.Select(d => new TaskDeliverable
+                        {
+                            Id = d.Id,
+                            Title = d.Title,
+                            DueDate = d.DueDate,
+                            CurrentStatus = "NotStarted",
+                            DocumentNumber = "",
+                            PromulgationDate = null
+                        }).ToList();
+                    }
+                }
+
+                dtos.Add(new GetProgressLogResponseDto
+                {
+                    Id = log.Id,
+                    TaskId = log.GoalTaskId,
+                    AgencyId = log.AgencyId,
+                    PeriodYear = log.PeriodYear,
+                    PeriodQuarter = log.PeriodQuarter,
+                    ActualValue = log.QuantitativeValue,
+                    Status = log.QualitativeStatus?.ToString(),
+                    CompletionPercentage = log.CalculatedProgressPercentage,
+                    SummaryNotes = log.SummaryNotes,
+                    AttachmentFileUrls = log.AttachmentFileUrls ?? new List<string>(),
+                    Deliverables = log.Deliverables,
+                    LogDate = log.LogDate,
+                    CalculatedAlert = log.CalculatedAlert,
+                    CreatedBy = createdByStr,
+
+                    PreviousValue = prevValue,
+                    PreviousStatus = prevStatus,
+                    PreviousCompletionPercentage = prevPercentage,
+                    PreviousNotes = prevNotes,
+                    PreviousDeliverables = prevDeliverables
+                });
+
+                lastLogPerAgency[agencyKey] = log;
+            }
+
+            dtos.Reverse();
+            return dtos;
         }
 
         public async Task<TaskUrgeLogResponseDto> CreateUrgeLogAsync(CreateTaskUrgeLogDto dto)
@@ -307,6 +506,7 @@ namespace Cdsqg.Application.Services
             {
                 GoalTaskId = task.Id,
                 LeadAgencyId = task.LeadAgencyId,
+                Title = !string.IsNullOrWhiteSpace(dto.Title) ? dto.Title : $"[Đôn đốc] V/v Thực hiện nhiệm vụ: {task.Code} - {task.Title}",
                 TaskCode = task.Code,
                 TaskTitle = task.Title,
                 UrgeContent = dto.UrgeContent,
@@ -322,6 +522,7 @@ namespace Cdsqg.Application.Services
             {
                 Id = urgeLog.Id,
                 GoalTaskId = task.Id,
+                Title = urgeLog.Title ?? "",
                 TaskCode = task.Code,
                 TaskTitle = task.Title,
                 LeadAgencyCode = task.LeadAgency?.Code ?? string.Empty,
@@ -329,7 +530,8 @@ namespace Cdsqg.Application.Services
                 UrgeContent = urgeLog.UrgeContent,
                 ForecastDataJson = urgeLog.ForecastDataJson,
                 CreatedAt = urgeLog.CreatedAt,
-                CreatedBy = urgeLog.CreatedBy
+                CreatedBy = urgeLog.CreatedBy,
+                RecipientsSummary = urgeLog.RecipientsSummary
             };
         }
 
@@ -346,6 +548,7 @@ namespace Cdsqg.Application.Services
                 Id = l.Id,
                 GoalTaskId = l.GoalTaskId,
                 LeadAgencyId = l.LeadAgencyId,
+                Title = !string.IsNullOrWhiteSpace(l.Title) ? l.Title : (!string.IsNullOrWhiteSpace(l.TaskTitle) ? $"[Thông báo] V/v Thực hiện nhiệm vụ: {l.TaskCode} - {l.TaskTitle}" : "Thông báo đôn đốc nhiệm vụ"),
                 TaskCode = l.TaskCode,
                 TaskTitle = l.TaskTitle,
                 LeadAgencyCode = l.LeadAgency?.Code ?? string.Empty,
@@ -353,7 +556,8 @@ namespace Cdsqg.Application.Services
                 UrgeContent = l.UrgeContent,
                 ForecastDataJson = l.ForecastDataJson,
                 CreatedAt = l.CreatedAt,
-                CreatedBy = l.CreatedBy
+                CreatedBy = l.CreatedBy,
+                RecipientsSummary = l.RecipientsSummary ?? string.Empty
             }).ToList();
         }
 
@@ -369,6 +573,7 @@ namespace Cdsqg.Application.Services
                 Id = l.Id,
                 GoalTaskId = l.GoalTaskId,
                 LeadAgencyId = l.LeadAgencyId,
+                Title = !string.IsNullOrWhiteSpace(l.Title) ? l.Title : (!string.IsNullOrWhiteSpace(l.TaskTitle) ? $"[Thông báo] V/v Thực hiện nhiệm vụ: {l.TaskCode} - {l.TaskTitle}" : "Thông báo đôn đốc nhiệm vụ"),
                 TaskCode = l.TaskCode,
                 TaskTitle = l.TaskTitle,
                 LeadAgencyCode = l.LeadAgency?.Code ?? string.Empty,
@@ -376,7 +581,8 @@ namespace Cdsqg.Application.Services
                 UrgeContent = l.UrgeContent,
                 ForecastDataJson = l.ForecastDataJson,
                 CreatedAt = l.CreatedAt,
-                CreatedBy = l.CreatedBy
+                CreatedBy = l.CreatedBy,
+                RecipientsSummary = l.RecipientsSummary ?? string.Empty
             }).ToList();
         }
 
@@ -393,6 +599,7 @@ namespace Cdsqg.Application.Services
                 Id = l.Id,
                 GoalTaskId = l.GoalTaskId,
                 LeadAgencyId = l.LeadAgencyId,
+                Title = !string.IsNullOrWhiteSpace(l.Title) ? l.Title : (!string.IsNullOrWhiteSpace(l.TaskTitle) ? $"[Thông báo] V/v Thực hiện nhiệm vụ: {l.TaskCode} - {l.TaskTitle}" : "Thông báo đôn đốc nhiệm vụ"),
                 TaskCode = l.TaskCode,
                 TaskTitle = l.TaskTitle,
                 LeadAgencyCode = l.LeadAgency?.Code ?? string.Empty,

@@ -1,20 +1,21 @@
 /**
- * Converts API error responses (including ASP.NET Core ValidationProblemDetails and custom error objects)
- * into human-readable Vietnamese error messages.
+ * Converts API error responses into clean, concise, human-readable Vietnamese messages.
  */
-export function parseApiError(err, fallbackMessage = 'Có lỗi xảy ra, vui lòng thử lại.') {
+export function parseApiError(err, fallbackMessage = 'Lưu thất bại.') {
   if (!err) return fallbackMessage;
 
-  if (typeof err === 'string') return err;
+  if (typeof err === 'string') {
+    return sanitizeErrorMessage(err, fallbackMessage);
+  }
 
   // Custom error message from backend
   if (err.error && typeof err.error === 'string') {
-    return translateEnglishMessage(err.error);
+    return sanitizeErrorMessage(err.error, fallbackMessage);
   }
 
   // Standard message field
   if (err.message && typeof err.message === 'string' && err.message !== 'One or more validation errors occurred.') {
-    return translateEnglishMessage(err.message);
+    return sanitizeErrorMessage(err.message, fallbackMessage);
   }
 
   // ASP.NET Core ValidationProblemDetails dictionary (err.errors)
@@ -36,16 +37,41 @@ export function parseApiError(err, fallbackMessage = 'Có lỗi xảy ra, vui l�
   // ASP.NET Title field fallback
   if (err.title && typeof err.title === 'string') {
     if (err.title === 'One or more validation errors occurred.') {
-      return 'Dữ liệu nhập vào chưa đầy đủ hoặc không hợp lệ. Vui lòng kiểm tra lại các trường thông tin.';
+      return 'Dữ liệu nhập vào chưa đầy đủ hoặc không hợp lệ. Vui lòng kiểm tra lại.';
     }
-    return translateEnglishMessage(err.title);
+    return sanitizeErrorMessage(err.title, fallbackMessage);
   }
 
   return fallbackMessage;
 }
 
+function sanitizeErrorMessage(rawMsg, fallbackMessage) {
+  if (!rawMsg || typeof rawMsg !== 'string') return fallbackMessage;
+
+  const lower = rawMsg.toLowerCase();
+  
+  // Intercept any technical / stack trace / raw database error strings
+  if (
+    lower.includes('database') ||
+    lower.includes('expected to affect') ||
+    lower.includes('exception') ||
+    lower.includes('sql') ||
+    lower.includes('ef core') ||
+    lower.includes('concurrency') ||
+    lower.includes('internal server error') ||
+    lower.includes('system.') ||
+    lower.includes('linkid=') ||
+    lower.includes('failed to fetch') ||
+    lower.includes('networkerror')
+  ) {
+    return fallbackMessage || 'Có lỗi xảy ra, vui lòng thử lại.';
+  }
+
+  return translateEnglishMessage(rawMsg, fallbackMessage);
+}
+
 function formatFieldError(fieldName, originalMsg) {
-  if (!fieldName) return translateEnglishMessage(originalMsg);
+  if (!fieldName) return translateEnglishMessage(originalMsg, 'Trường dữ liệu không hợp lệ.');
   
   const fieldLabel = getFieldLabel(fieldName);
   const lowerMsg = originalMsg.toLowerCase();
@@ -57,20 +83,19 @@ function formatFieldError(fieldName, originalMsg) {
     return `${fieldLabel} không hợp lệ`;
   }
 
-  return `${fieldLabel}: ${translateEnglishMessage(originalMsg)}`;
+  return `${fieldLabel} không hợp lệ`;
 }
 
 function getFieldLabel(fieldName) {
   if (!fieldName) return 'Trường dữ liệu';
   
-  // Handle array property names like Deliverables[0].Title
   const matchArray = fieldName.match(/Deliverables\[(\d+)\]\.(.+)/i);
   if (matchArray) {
     const idx = parseInt(matchArray[1]) + 1;
     const prop = matchArray[2].toLowerCase();
-    if (prop === 'title') return `Sản phẩm đầu ra #${idx} (Tên sản phẩm/văn bản)`;
-    if (prop === 'duedate') return `Sản phẩm đầu ra #${idx} (Hạn chót)`;
-    return `Sản phẩm đầu ra #${idx}`;
+    if (prop === 'title') return `Sản phẩm #${idx}`;
+    if (prop === 'duedate') return `Hạn chót sản phẩm #${idx}`;
+    return `Sản phẩm #${idx}`;
   }
 
   const name = fieldName.toLowerCase();
@@ -79,24 +104,26 @@ function getFieldLabel(fieldName) {
   if (name.includes('coordinatingagency')) return 'Cơ quan phối hợp';
   if (name.includes('startdate')) return 'Ngày bắt đầu';
   if (name.includes('duedate')) return 'Ngày hoàn thành';
-  if (name.includes('deliverables')) return 'Danh mục sản phẩm đầu ra';
-  if (name.includes('code')) return 'Mã mục tiêu / nhiệm vụ';
-  if (name.includes('section')) return 'Mục';
-  if (name.includes('group')) return 'Nhóm trọng tâm';
+  if (name.includes('deliverables')) return 'Danh mục sản phẩm';
+  if (name.includes('code')) return 'Mã nhiệm vụ';
 
-  return `Trường '${fieldName}'`;
+  return 'Thông tin nhập vào';
 }
 
-function translateEnglishMessage(msg) {
-  if (!msg) return '';
+function translateEnglishMessage(msg, fallbackMessage = 'Lưu thất bại.') {
+  if (!msg) return fallbackMessage;
   if (msg === 'One or more validation errors occurred.') {
-    return 'Dữ liệu nhập vào chưa đầy đủ hoặc không hợp lệ. Vui lòng kiểm tra các trường thông tin.';
+    return 'Dữ liệu nhập vào chưa đầy đủ hoặc không hợp lệ.';
   }
   if (msg.includes('The Title field is required')) {
     return 'Tên mục tiêu / nhiệm vụ không được để trống.';
   }
   if (msg.includes('The LeadAgencyId field is required')) {
     return 'Vui lòng chọn đơn vị chủ trì.';
+  }
+  // If the message is in English (contains mostly ASCII Latin characters without Vietnamese diacritics)
+  if (/^[a-zA-Z0-9\s.,!?:;'"()-]+$/.test(msg.trim())) {
+    return fallbackMessage;
   }
   return msg;
 }

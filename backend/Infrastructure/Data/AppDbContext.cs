@@ -20,6 +20,7 @@ namespace Cdsqg.Infrastructure.Data
         public DbSet<DataImportLog> DataImportLogs => Set<DataImportLog>();
         public DbSet<User> Users => Set<User>();
         public DbSet<Notification> Notifications => Set<Notification>();
+        public DbSet<AgencyTaskExecution> AgencyTaskExecutions => Set<AgencyTaskExecution>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -160,6 +161,13 @@ namespace Cdsqg.Infrastructure.Data
                           v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
                           v => JsonSerializer.Deserialize<List<TaskDeliverable>>(v, (JsonSerializerOptions?)null) ?? new List<TaskDeliverable>()
                       );
+
+                entity.Property(e => e.AgencyDeliverables)
+                      .HasColumnType("jsonb")
+                      .HasConversion(
+                          v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                          v => JsonSerializer.Deserialize<Dictionary<string, List<TaskDeliverable>>>(v, (JsonSerializerOptions?)null) ?? new Dictionary<string, List<TaskDeliverable>>()
+                      );
             });
 
             // ----------------------------------------------------
@@ -193,9 +201,51 @@ namespace Cdsqg.Infrastructure.Data
                           v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null) ?? new List<string>()
                       );
 
+                entity.Property(e => e.Deliverables)
+                      .HasColumnType("jsonb")
+                      .HasConversion(
+                          v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                          v => JsonSerializer.Deserialize<List<TaskDeliverable>>(v, (JsonSerializerOptions?)null) ?? new List<TaskDeliverable>()
+                      );
+
                 entity.HasOne(e => e.GoalTaskItem)
                       .WithMany(g => g.ProgressLogs)
                       .HasForeignKey(e => e.GoalTaskId)
+                      .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            // ----------------------------------------------------
+            // AGENCY TASK EXECUTION CONFIGURATION
+            // ----------------------------------------------------
+            modelBuilder.Entity<AgencyTaskExecution>(entity =>
+            {
+                entity.HasKey(e => e.Id);
+                entity.HasIndex(e => new { e.GoalTaskId, e.AgencyId }).IsUnique();
+                entity.Property(e => e.CalculatedStatus).HasConversion<string>();
+                entity.Property(e => e.LatestQualitativeStatus).HasConversion<string>();
+
+                entity.Property(e => e.Deliverables)
+                      .HasColumnType("jsonb")
+                      .HasConversion(
+                          v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                          v => JsonSerializer.Deserialize<List<TaskDeliverable>>(v, (JsonSerializerOptions?)null) ?? new List<TaskDeliverable>()
+                      );
+
+                entity.Property(e => e.AttachmentFileUrls)
+                      .HasColumnType("jsonb")
+                      .HasConversion(
+                          v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                          v => JsonSerializer.Deserialize<List<string>>(v, (JsonSerializerOptions?)null) ?? new List<string>()
+                      );
+
+                entity.HasOne(e => e.GoalTaskItem)
+                      .WithMany(g => g.AgencyExecutions)
+                      .HasForeignKey(e => e.GoalTaskId)
+                      .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasOne(e => e.Agency)
+                      .WithMany()
+                      .HasForeignKey(e => e.AgencyId)
                       .OnDelete(DeleteBehavior.Cascade);
             });
         }

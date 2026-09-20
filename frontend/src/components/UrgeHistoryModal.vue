@@ -1,6 +1,6 @@
 <template>
-  <div v-if="isOpen" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-3xl w-full p-6 space-y-5 animate-in fade-in duration-150 font-sans max-h-[85vh] flex flex-col">
+  <div v-if="isOpen" @click.self="close" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-4xl sm:max-w-5xl w-full p-6 space-y-5 animate-in fade-in duration-150 font-sans max-h-[85vh] flex flex-col">
       
       <!-- Modal Header -->
       <div class="flex justify-between items-start border-b border-slate-100 pb-3 shrink-0">
@@ -42,7 +42,7 @@
           </div>
 
           <div class="flex items-center justify-between text-[11px] text-slate-500 font-semibold pt-1">
-            <span>Cơ quan nhận thông báo: <span class="font-bold text-slate-800">{{ log.leadAgencyName || log.leadAgencyCode }}</span></span>
+            <span>👥 Người nhận: <span class="font-bold text-slate-800">{{ log.recipientsSummary || log.leadAgencyName || log.leadAgencyCode }}</span></span>
             <span class="text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">Đã lưu CSDL</span>
           </div>
         </div>
@@ -75,8 +75,13 @@ const isLoading = ref(true);
 function formatDate(dateStr) {
   if (!dateStr) return '—';
   try {
-    const d = new Date(dateStr);
-    return `${d.toLocaleDateString('vi-VN')} ${d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
+    let str = String(dateStr).trim();
+    if (str.includes('T') && !str.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(str)) {
+      str += 'Z';
+    }
+    const d = new Date(str);
+    if (isNaN(d.getTime())) return dateStr;
+    return d.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
   } catch {
     return dateStr;
   }

@@ -225,6 +225,7 @@ namespace Cdsqg.Api.Controllers
                     } : null,
                     coordinatingAgencyIds = item.CoordinatingAgencyIds,
                     unitId = item.UnitId,
+                    unitName = item.Unit?.Name ?? "%",
                     unit = item.Unit != null ? new
                     {
                         id = item.Unit.Id,
@@ -346,6 +347,7 @@ namespace Cdsqg.Api.Controllers
                     } : null,
                     coordinatingAgencyIds = item.CoordinatingAgencyIds,
                     unitId = item.UnitId,
+                    unitName = item.Unit?.Name ?? "%",
                     unit = item.Unit != null ? new
                     {
                         id = item.Unit.Id,
@@ -555,6 +557,8 @@ namespace Cdsqg.Api.Controllers
         public async Task<IActionResult> GetImportHistory(
             [FromQuery] string? search = null,
             [FromQuery] string? category = null,
+            [FromQuery] Guid? agencyId = null,
+            [FromQuery] bool isAdmin = false,
             [FromQuery] int? pageNumber = null,
             [FromQuery] int? pageSize = null)
         {
@@ -565,6 +569,70 @@ namespace Cdsqg.Api.Controllers
                     .ToListAsync();
 
                 IEnumerable<DataImportLog> filtered = logs;
+
+                if (!isAdmin && agencyId.HasValue && agencyId.Value != Guid.Empty)
+                {
+                    var agencyObj = await _context.Agencies.FindAsync(agencyId.Value);
+                    var scopedAgencyIds = new System.Collections.Generic.List<Guid> { agencyId.Value };
+
+                    if (agencyObj != null && !agencyObj.ParentId.HasValue)
+                    {
+                        var childIds = await _context.Agencies.Where(a => a.ParentId == agencyId.Value && a.IsActive).Select(a => a.Id).ToListAsync();
+                        scopedAgencyIds.AddRange(childIds);
+                    }
+
+                    var agencyTaskCodes = await _context.GoalTaskItems
+                        .Where(t => scopedAgencyIds.Contains(t.LeadAgencyId))
+                        .Select(t => t.Code.ToLower())
+                        .ToListAsync();
+
+                    string agencyName = agencyObj?.Name?.ToLower() ?? "";
+                    string agencyCode = agencyObj?.Code?.ToLower() ?? "";
+
+                    filtered = filtered.Where(l =>
+                    {
+                        if (l.AgencyId.HasValue) return scopedAgencyIds.Contains(l.AgencyId.Value);
+
+                        if (!string.IsNullOrWhiteSpace(l.SummaryNotes))
+                        {
+                            var summaryLower = l.SummaryNotes.ToLower();
+                            if (agencyTaskCodes.Any(code => !string.IsNullOrEmpty(code) && summaryLower.Contains(code)))
+                            {
+                                return true;
+                            }
+                            if (!string.IsNullOrEmpty(agencyName) && summaryLower.Contains(agencyName))
+                            {
+                                return true;
+                            }
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(l.ImportedBy))
+                        {
+                            var importedByLower = l.ImportedBy.ToLower();
+                            if (!string.IsNullOrEmpty(agencyName) && importedByLower.Contains(agencyName))
+                            {
+                                return true;
+                            }
+                            if (!string.IsNullOrEmpty(agencyCode) && importedByLower.Contains(agencyCode))
+                            {
+                                return true;
+                            }
+                        }
+
+                        return false;
+                    });
+                }
+                else if (!isAdmin && (!agencyId.HasValue || agencyId.Value == Guid.Empty))
+                {
+                    return Ok(new
+                    {
+                        items = new System.Collections.Generic.List<DataImportLog>(),
+                        totalCount = 0,
+                        pageNumber = 1,
+                        pageSize = pageSize ?? 10,
+                        totalPages = 1
+                    });
+                }
 
                 if (!string.IsNullOrWhiteSpace(category))
                 {
@@ -603,7 +671,7 @@ namespace Cdsqg.Api.Controllers
                         totalCount,
                         pageNumber = pNum,
                         pageSize = pSize,
-                        totalPages
+                        totalPages = Math.Max(1, totalPages)
                     });
                 }
 

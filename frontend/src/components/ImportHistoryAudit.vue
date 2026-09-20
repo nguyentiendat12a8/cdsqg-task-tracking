@@ -222,6 +222,7 @@ import { exportToExcel } from '../utils/excelExport';
 import LoadingSpinner from './LoadingSpinner.vue';
 import OverlayPanel from './OverlayPanel.vue';
 import { getApiUrl } from '../config/api';
+import { authState } from '../services/auth';
 
 const importCategoryOptions = ref([
   { value: 'Minh chứng quyết định', label: 'Minh chứng quyết định' },
@@ -444,9 +445,19 @@ async function loadImportHistory() {
   const currentRequestId = ++importFetchRequestId;
   isLoading.value = true;
   try {
+    const user = authState.user.value;
+    const isAdmin = authState.isAdmin.value;
+
     const url = new URL(getApiUrl('/api/documents/import-history'));
     url.searchParams.append('pageNumber', currentPage.value);
     url.searchParams.append('pageSize', pageSize.value);
+
+    if (isAdmin) {
+      url.searchParams.append('isAdmin', 'true');
+    } else if (user?.agencyId) {
+      url.searchParams.append('agencyId', user.agencyId);
+    }
+
     if (appliedSearchQuery.value.trim()) {
       url.searchParams.append('search', appliedSearchQuery.value.trim());
     }
@@ -479,6 +490,11 @@ async function loadImportHistory() {
     }
   }
 }
+
+watch(() => authState.user.value?.agencyId, () => {
+  currentPage.value = 1;
+  loadImportHistory();
+});
 
 onMounted(() => {
   loadSavedQuery();

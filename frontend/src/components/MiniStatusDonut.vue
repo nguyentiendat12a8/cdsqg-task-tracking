@@ -44,19 +44,19 @@ const conicGradient = computed(() => {
     return 'conic-gradient(#e2e8f0 0% 100%)';
   }
 
-  // Exact colors matching user reference image:
-  // 1. Đang t/h quá hạn (Red)
-  // 2. Đang t/h trong hạn (Bright Green)
-  // 3. Sắp tới hạn (Purple)
-  // 4. Đã h/t quá hạn (Amber/Orange)
-  // 5. Đã h/t trong hạn (Blue)
-  // 6. Chưa thực hiện (Slate)
+  // Exact colors matching application standard status legend:
+  // 1. Đang t/h quá hạn (Red: #ef4444)
+  // 2. Đang t/h trong hạn (Blue: #3b82f6)
+  // 3. Sắp tới hạn (Amber: #f59e0b)
+  // 4. Đã h/t quá hạn (Teal: #14b8a6)
+  // 5. Đã h/t trong hạn (Emerald Green: #10b981)
+  // 6. Chưa thực hiện (Slate Gray: #94a3b8)
   const segments = [
     { count: props.stats.inProgressOverdue || 0, color: '#ef4444' }, 
-    { count: props.stats.inProgressOnTime || 0, color: '#22c55e' },  
-    { count: props.stats.expiringSoon || 0, color: '#a855f7' },      
-    { count: props.stats.completedOverdue || 0, color: '#f59e0b' },  
-    { count: props.stats.completedOnTime || 0, color: '#3b82f6' },   
+    { count: props.stats.inProgressOnTime || 0, color: '#3b82f6' },  
+    { count: props.stats.expiringSoon || 0, color: '#f59e0b' },      
+    { count: props.stats.completedOverdue || 0, color: '#14b8a6' },  
+    { count: props.stats.completedOnTime || 0, color: '#10b981' },   
     { count: props.stats.notStarted || 0, color: '#94a3b8' }         
   ];
 

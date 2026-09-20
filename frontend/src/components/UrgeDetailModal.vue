@@ -1,6 +1,6 @@
 <template>
-  <div v-if="isOpen && log" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-3xl w-full p-6 space-y-5 animate-in fade-in duration-150 font-sans max-h-[90vh] flex flex-col">
+  <div v-if="isOpen && log" @click.self="close" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-4xl sm:max-w-5xl w-full p-6 space-y-5 animate-in fade-in duration-150 font-sans max-h-[90vh] flex flex-col">
       
       <!-- Modal Header -->
       <div class="flex justify-between items-start border-b border-slate-100 pb-3 shrink-0">
@@ -19,9 +19,9 @@
         <!-- Info & Metadata Card -->
         <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
           <div>
-            <span class="text-slate-500 font-medium">Cơ quan nhận thông báo: </span>
+            <span class="text-slate-500 font-medium">👥 Đầu mối / Người nhận: </span>
             <span class="font-extrabold text-slate-900 px-2 py-0.5 bg-blue-100 text-blue-900 rounded border border-blue-200">
-              🏢 {{ log.leadAgencyName || log.leadAgencyCode || 'Cơ quan chủ trì' }}
+              {{ log.recipientsSummary || log.leadAgencyName || log.leadAgencyCode || 'Đơn vị nhận' }}
             </span>
           </div>
 

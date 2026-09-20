@@ -1,9 +1,9 @@
 using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Cdsqg.Application.DTOs;
 using Cdsqg.Application.Services;
-
 using System.Linq;
 
 namespace Cdsqg.Api.Controllers
@@ -13,10 +13,12 @@ namespace Cdsqg.Api.Controllers
     public class ExecutionController : ControllerBase
     {
         private readonly IExecutionService _executionService;
+        private readonly Cdsqg.Infrastructure.Data.AppDbContext _context;
 
-        public ExecutionController(IExecutionService executionService)
+        public ExecutionController(IExecutionService executionService, Cdsqg.Infrastructure.Data.AppDbContext context)
         {
             _executionService = executionService;
+            _context = context;
         }
 
         /// <summary>
@@ -52,7 +54,9 @@ namespace Cdsqg.Api.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "Lỗi hệ thống khi cập nhật tiến độ: " + ex.Message, error = ex.Message });
+                var fullErr = ex.ToString();
+                Console.WriteLine("[ERROR SubmitProgress] " + fullErr);
+                return StatusCode(500, new { message = "Lỗi hệ thống khi cập nhật tiến độ: " + (ex.InnerException?.Message ?? ex.Message), error = ex.Message });
             }
         }
 
@@ -66,12 +70,13 @@ namespace Cdsqg.Api.Controllers
             [FromQuery] int year = 2026, 
             [FromQuery] int? period = null, 
             [FromQuery] int? periodQuarter = null, 
-            [FromQuery] int? quarter = null)
+            [FromQuery] int? quarter = null,
+            [FromQuery] Guid? agencyId = null)
         {
             try
             {
                 int q = periodQuarter ?? quarter ?? period ?? 1;
-                var log = await _executionService.GetProgressLogAsync(taskId, year, q);
+                var log = await _executionService.GetProgressLogAsync(taskId, year, q, agencyId);
                 if (log == null)
                 {
                     return Ok(null);
@@ -89,11 +94,11 @@ namespace Cdsqg.Api.Controllers
         /// Lấy toàn bộ lịch sử các lượt báo cáo tiến độ đã gửi của một nhiệm vụ.
         /// </summary>
         [HttpGet("tasks/{taskId:guid}/progress-history")]
-        public async Task<IActionResult> GetTaskProgressHistory(Guid taskId)
+        public async Task<IActionResult> GetTaskProgressHistory(Guid taskId, [FromQuery] Guid? agencyId = null)
         {
             try
             {
-                var history = await _executionService.GetTaskProgressHistoryAsync(taskId);
+                var history = await _executionService.GetTaskProgressHistoryAsync(taskId, agencyId);
                 return Ok(history);
             }
             catch (Exception ex)
@@ -177,10 +182,18 @@ namespace Cdsqg.Api.Controllers
                     ).ToList();
                 }
 
-                // 2. Filter by Lead Agency ID
+                // 2. Filter by Lead Agency ID with hierarchy support
                 if (agencyId.HasValue && agencyId.Value != Guid.Empty)
                 {
-                    logs = logs.Where(l => l.LeadAgencyId == agencyId.Value).ToList();
+                    var agencyObj = await _context.Agencies.FindAsync(agencyId.Value);
+                    var scopedAgencyIds = new System.Collections.Generic.List<Guid> { agencyId.Value };
+                    if (agencyObj != null && !agencyObj.ParentId.HasValue)
+                    {
+                        var childIds = await _context.Agencies.Where(a => a.ParentId == agencyId.Value && a.IsActive).Select(a => a.Id).ToListAsync();
+                        scopedAgencyIds.AddRange(childIds);
+                    }
+
+                    logs = logs.Where(l => l.LeadAgencyId.HasValue && scopedAgencyIds.Contains(l.LeadAgencyId.Value)).ToList();
                 }
 
                 // 3. Filter by From Date (Từ ngày đôn đốc)

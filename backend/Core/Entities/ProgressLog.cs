@@ -42,11 +42,16 @@ namespace Cdsqg.Core.Entities
         /// </summary>
         public List<string> AttachmentFileUrls { get; set; } = new List<string>();
 
+        public List<TaskDeliverable>? Deliverables { get; set; }
+
         /// <summary>
         /// Trạng thái cảnh báo tự động: Green (On track), Yellow (Warning), Red (Overdue)
         /// </summary>
         public AlertStatusEnum CalculatedAlert { get; set; } = AlertStatusEnum.Green;
 
         public string CreatedBy { get; set; } = "System User";
+
+        public Guid? AgencyId { get; set; }
+        public Agency? Agency { get; set; }
     }
 }
