@@ -192,16 +192,16 @@
                   :class="{ 'bg-slate-100/80 opacity-40': !isYearEnabledForItem(item, year) }"
                 >
                   <template v-if="isQuantitative(item)">
-                    <div class="relative">
+                    <div class="relative flex items-center">
                       <input 
                         type="number" 
                         v-model.number="item.yearlyTargets[year]" 
                         :disabled="!isYearEnabledForItem(item, year)"
                         @change="saveYearlyTarget(item, year, $event.target.value)"
-                        :placeholder="!isYearEnabledForItem(item, year) ? '—' : ((item.unitName === 'Số lượng' || item.unit?.name === 'Số lượng') ? '— Số lượng' : '— %')"
-                        class="w-full text-center font-bold text-slate-800 bg-white border border-slate-300 rounded-lg py-1 px-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition hover:border-blue-400 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed disabled:border-slate-200"
+                        placeholder="—"
+                        class="w-full text-center font-bold text-slate-800 bg-white border border-slate-300 rounded-lg py-1 pl-2 pr-6 focus:ring-2 focus:ring-blue-500 focus:outline-none transition hover:border-blue-400 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed disabled:border-slate-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
-                      <span v-if="isYearEnabledForItem(item, year) && (!item.unitName || item.unitName === '%' || item.unit?.name === '%')" class="absolute right-2 top-1.5 text-[10px] font-bold text-slate-400 pointer-events-none">%</span>
+                      <span v-if="isYearEnabledForItem(item, year) && (!item.unitName || item.unitName === '%' || item.unit?.name === '%')" class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 pointer-events-none">%</span>
                     </div>
                   </template>
                   <template v-else>
@@ -288,16 +288,16 @@
                   :class="{ 'bg-slate-100/80 opacity-40': !isYearEnabledForItem(item, year) }"
                 >
                   <template v-if="isQuantitative(item)">
-                    <div class="relative">
+                    <div class="relative flex items-center">
                       <input 
                         type="number" 
                         v-model.number="item.yearlyTargets[year]" 
                         :disabled="!isYearEnabledForItem(item, year)"
                         @change="saveYearlyTarget(item, year, $event.target.value)"
-                        :placeholder="!isYearEnabledForItem(item, year) ? '—' : ((item.unitName === 'Số lượng' || item.unit?.name === 'Số lượng') ? '— Số lượng' : '— %')"
-                        class="w-full text-center font-bold text-slate-800 bg-white border border-slate-300 rounded-lg py-1 px-2 focus:ring-2 focus:ring-blue-500 focus:outline-none transition hover:border-blue-400 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed disabled:border-slate-200"
+                        placeholder="—"
+                        class="w-full text-center font-bold text-slate-800 bg-white border border-slate-300 rounded-lg py-1 pl-2 pr-6 focus:ring-2 focus:ring-blue-500 focus:outline-none transition hover:border-blue-400 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed disabled:border-slate-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
-                      <span v-if="isYearEnabledForItem(item, year) && (!item.unitName || item.unitName === '%' || item.unit?.name === '%')" class="absolute right-2 top-1.5 text-[10px] font-bold text-slate-400 pointer-events-none">%</span>
+                      <span v-if="isYearEnabledForItem(item, year) && (!item.unitName || item.unitName === '%' || item.unit?.name === '%')" class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 pointer-events-none">%</span>
                     </div>
                   </template>
                   <template v-else>
@@ -629,20 +629,23 @@ function filterGridItem(item) {
     }
 
     const itemLeadId = item.leadAgencyId ? String(item.leadAgencyId).toLowerCase() : '';
+    const itemAssignedId = item.assignedAgencyId ? String(item.assignedAgencyId).toLowerCase() : '';
     const itemCoordIds = (item.coordinatingAgencyIds || []).map(id => String(id).toLowerCase());
 
     const isParentAgency = !userAgency || !userAgency.parentId;
     const isGeneral = isParentAgency && (item.isGeneralTask || item.leadAgencyCode === 'ALL_AGENCIES' || itemLeadId === '00000000-0000-0000-0000-000000009999' || (item.leadAgencyName && item.leadAgencyName.toLowerCase().trim() === 'các bộ, ngành, địa phương'));
     const isLead = scopedAgencyIds.includes(itemLeadId);
+    const isAssigned = itemAssignedId && scopedAgencyIds.includes(itemAssignedId);
     const isCoord = itemCoordIds.some(id => scopedAgencyIds.includes(id));
     const isSubMatch = item.subItems?.some(s => {
       const sLeadId = s.leadAgencyId ? String(s.leadAgencyId).toLowerCase() : '';
+      const sAssignedId = s.assignedAgencyId ? String(s.assignedAgencyId).toLowerCase() : '';
       const sCoordIds = (s.coordinatingAgencyIds || []).map(id => String(id).toLowerCase());
       const sIsGeneral = isParentAgency && (s.isGeneralTask || s.leadAgencyCode === 'ALL_AGENCIES' || sLeadId === '00000000-0000-0000-0000-000000009999');
-      return sIsGeneral || scopedAgencyIds.includes(sLeadId) || sCoordIds.some(id => scopedAgencyIds.includes(id));
+      return sIsGeneral || scopedAgencyIds.includes(sLeadId) || (sAssignedId && scopedAgencyIds.includes(sAssignedId)) || sCoordIds.some(id => scopedAgencyIds.includes(id));
     });
 
-    if (!isGeneral && !isLead && !isCoord && !isSubMatch) return false;
+    if (!isGeneral && !isLead && !isAssigned && !isCoord && !isSubMatch) return false;
   }
 
   // 1. Search Query Filter - Real-time debounced matching

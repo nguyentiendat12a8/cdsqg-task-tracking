@@ -19,6 +19,7 @@ namespace Cdsqg.Application.Services
         Task<List<TaskUrgeLogResponseDto>> GetTaskUrgeHistoryAsync(Guid taskId);
         Task<List<TaskUrgeLogResponseDto>> GetAllUrgeLogsAsync();
         Task<TaskUrgeLogResponseDto?> GetUrgeLogByIdAsync(Guid logId);
+        Task<ImportProgressBulkResponseDto> ImportProgressBulkAsync(ImportProgressBulkRequestDto dto);
     }
 
     public class ExecutionService : IExecutionService
@@ -178,12 +179,41 @@ namespace Cdsqg.Application.Services
             string primaryFileUrl = uploadedUrls.FirstOrDefault() ?? string.Empty;
 
             Guid? reportingAgencyId = dto.AgencyId;
+            var reportingAgencyObj = reportingAgencyId.HasValue ? await _context.Agencies.FirstOrDefaultAsync(a => a.Id == reportingAgencyId.Value) : null;
+            
+            bool isAdmin = dto.CreatedBy != null && (dto.CreatedBy.ToLower().Contains("admin") || dto.CreatedBy.ToLower().Contains("quản trị"));
+            bool isLevel3Subordinate = false;
+            if (!isAdmin)
+            {
+                if (reportingAgencyObj != null && reportingAgencyObj.ParentId.HasValue)
+                {
+                    isLevel3Subordinate = true;
+                }
+                else if (task.AssignedAgencyId.HasValue)
+                {
+                    var assignedAg = await _context.Agencies.FirstOrDefaultAsync(a => a.Id == task.AssignedAgencyId.Value);
+                    if (assignedAg != null && assignedAg.ParentId.HasValue)
+                    {
+                        isLevel3Subordinate = true;
+                        if (!reportingAgencyId.HasValue || reportingAgencyId.Value == Guid.Empty)
+                        {
+                            reportingAgencyId = task.AssignedAgencyId;
+                            reportingAgencyObj = assignedAg;
+                        }
+                    }
+                }
+            }
+
             if (!reportingAgencyId.HasValue || reportingAgencyId.Value == Guid.Empty)
             {
                 reportingAgencyId = task.LeadAgencyId;
             }
 
-            if (dto.Deliverables != null && dto.Deliverables.Count > 0)
+            var initialApprovalStatus = isLevel3Subordinate ? ApprovalStatusEnum.Pending : ApprovalStatusEnum.Approved;
+
+            // ONLY mutate entity deliverables immediately if automatically Approved (e.g. submitted by Level 2 or Admin).
+            // If Pending Level 2 approval, deliverables are saved only in the ProgressLog record until approved.
+            if (initialApprovalStatus == ApprovalStatusEnum.Approved && dto.Deliverables != null && dto.Deliverables.Count > 0)
             {
                 if (task.IsGeneralTask && reportingAgencyId.HasValue && reportingAgencyId.Value != Guid.Empty)
                 {
@@ -201,7 +231,7 @@ namespace Cdsqg.Application.Services
 
             string createdBy = !string.IsNullOrWhiteSpace(dto.CreatedBy) && dto.CreatedBy != "Chuyên viên theo dõi" && dto.CreatedBy != "System User"
                 ? dto.CreatedBy
-                : (task.LeadAgency?.Name ?? "Đơn vị chủ trì");
+                : (reportingAgencyObj?.Name ?? task.LeadAgency?.Name ?? "Đơn vị chủ trì");
 
             // 5. Save Progress Log to Database
             var progressLog = new ProgressLog
@@ -218,10 +248,27 @@ namespace Cdsqg.Application.Services
                 AttachmentFileUrls = uploadedUrls ?? new List<string>(),
                 Deliverables = dto.Deliverables ?? new List<TaskDeliverable>(),
                 CalculatedAlert = alertStatus,
-                CreatedBy = createdBy
+                CreatedBy = createdBy,
+                ApprovalStatus = initialApprovalStatus
             };
 
             _context.ProgressLogs.Add(progressLog);
+
+            // Create notification for parent agency if submitted by Level 3
+            if (isLevel3Subordinate && reportingAgencyObj?.ParentId.HasValue == true)
+            {
+                var notification = new Notification
+                {
+                    Id = Guid.NewGuid(),
+                    AgencyId = reportingAgencyObj.ParentId.Value,
+                    Title = "Báo cáo tiến độ mới chờ duyệt",
+                    Message = $"{reportingAgencyObj.Name} đã gửi báo cáo tiến độ cho nhiệm vụ {task.Code}: {task.Title}. Vui lòng xem xét và phê duyệt.",
+                    Type = "PROGRESS_APPROVAL",
+                    IsRead = false,
+                    CreatedAt = DateTime.UtcNow
+                };
+                _context.Notifications.Add(notification);
+            }
 
             // 6. Update or create AgencyTaskExecution for clean 1-to-1 or 1-to-N tracking per agency
             if (reportingAgencyId.HasValue && reportingAgencyId.Value != Guid.Empty)
@@ -237,12 +284,14 @@ namespace Cdsqg.Application.Services
                         GoalTaskId = task.Id,
                         AgencyId = reportingAgencyId.Value,
                         Deliverables = dto.Deliverables ?? new List<TaskDeliverable>(),
-                        AttachmentFileUrls = uploadedUrls ?? new List<string>()
+                        AttachmentFileUrls = uploadedUrls ?? new List<string>(),
+                        ApprovalStatus = initialApprovalStatus
                     };
                     _context.AgencyTaskExecutions.Add(execution);
                     isNewExecution = true;
                 }
 
+                execution.ApprovalStatus = initialApprovalStatus;
                 if (dto.Deliverables != null && dto.Deliverables.Count > 0)
                 {
                     execution.Deliverables = dto.Deliverables;
@@ -364,13 +413,30 @@ namespace Cdsqg.Application.Services
                 .Where(p => p.GoalTaskId == taskId)
                 .AsQueryable();
 
-            if (task != null && task.IsGeneralTask && agencyId.HasValue && agencyId.Value != Guid.Empty)
+            if (agencyId.HasValue && agencyId.Value != Guid.Empty)
             {
-                query = query.Where(p => p.AgencyId == agencyId.Value || p.AgencyId == null);
-            }
-            else if (agencyId.HasValue && agencyId.Value != Guid.Empty)
-            {
-                query = query.Where(p => p.AgencyId == agencyId.Value || p.AgencyId == null);
+                var subAgencyIds = await _context.Agencies
+                    .Where(a => a.ParentId == agencyId.Value)
+                    .Select(a => a.Id)
+                    .ToListAsync();
+
+                bool isLeadOrAssigned = task != null && (
+                    (task.LeadAgencyId == agencyId.Value) ||
+                    (task.AssignedAgencyId.HasValue && task.AssignedAgencyId.Value == agencyId.Value)
+                );
+
+                if (isLeadOrAssigned || subAgencyIds.Count > 0 || (task != null && task.IsGeneralTask))
+                {
+                    var allowedAgencyIds = new HashSet<Guid>(subAgencyIds) { agencyId.Value };
+                    if (task != null) allowedAgencyIds.Add(task.LeadAgencyId);
+                    if (task?.AssignedAgencyId.HasValue == true) allowedAgencyIds.Add(task.AssignedAgencyId.Value);
+
+                    query = query.Where(p => p.AgencyId == null || allowedAgencyIds.Contains(p.AgencyId.Value));
+                }
+                else
+                {
+                    query = query.Where(p => p.AgencyId == agencyId.Value || p.AgencyId == null);
+                }
             }
 
             var logsAsc = await query.OrderBy(p => p.LogDate).ToListAsync();
@@ -467,6 +533,10 @@ namespace Cdsqg.Application.Services
                     LogDate = log.LogDate,
                     CalculatedAlert = log.CalculatedAlert,
                     CreatedBy = createdByStr,
+                    ApprovalStatus = log.ApprovalStatus.ToString(),
+                    RejectionReason = log.RejectionReason,
+                    ApprovedBy = log.ApprovedBy,
+                    ApprovedAt = log.ApprovedAt,
 
                     PreviousValue = prevValue,
                     PreviousStatus = prevStatus,
@@ -609,6 +679,145 @@ namespace Cdsqg.Application.Services
                 CreatedAt = l.CreatedAt,
                 CreatedBy = l.CreatedBy
             };
+        }
+
+        public async Task<ImportProgressBulkResponseDto> ImportProgressBulkAsync(ImportProgressBulkRequestDto dto)
+        {
+            var response = new ImportProgressBulkResponseDto();
+            if (dto?.Items == null || dto.Items.Count == 0)
+            {
+                return response;
+            }
+
+            var userAgency = dto.UserAgencyId.HasValue && dto.UserAgencyId.Value != Guid.Empty
+                ? await _context.Agencies.FirstOrDefaultAsync(a => a.Id == dto.UserAgencyId.Value)
+                : null;
+
+            bool isAdmin = dto.UserRole?.Equals("Admin", StringComparison.OrdinalIgnoreCase) == true;
+            bool isLevel2 = userAgency != null && !userAgency.ParentId.HasValue;
+            bool isLevel3 = userAgency != null && userAgency.ParentId.HasValue;
+
+            foreach (var item in dto.Items)
+            {
+                if (string.IsNullOrWhiteSpace(item.Code))
+                    continue;
+
+                var task = await _context.GoalTaskItems
+                    .Include(t => t.LeadAgency)
+                    .Include(t => t.Baselines)
+                    .Include(t => t.ProgressLogs)
+                    .FirstOrDefaultAsync(t => t.Code.ToLower() == item.Code.Trim().ToLower());
+
+                if (task == null)
+                {
+                    response.Results.Add(new ImportProgressResultItemDto
+                    {
+                        Code = item.Code,
+                        Title = "N/A",
+                        Success = false,
+                        Message = $"Không tìm thấy mục tiêu/nhiệm vụ với mã '{item.Code}'."
+                    });
+                    response.FailureCount++;
+                    continue;
+                }
+
+                // Permission check
+                bool hasPermission = false;
+                if (isAdmin)
+                {
+                    hasPermission = true;
+                }
+                else if (isLevel2)
+                {
+                    if (task.LeadAgencyId == userAgency!.Id || task.IsGeneralTask || task.LeadAgency?.ParentId == userAgency.Id)
+                    {
+                        hasPermission = true;
+                    }
+                    else if (task.AssignedAgencyId.HasValue)
+                    {
+                        var childAgencyIds = await _context.Agencies
+                            .Where(a => a.ParentId == userAgency.Id)
+                            .Select(a => a.Id)
+                            .ToListAsync();
+                        if (childAgencyIds.Contains(task.AssignedAgencyId.Value))
+                        {
+                            hasPermission = true;
+                        }
+                    }
+                }
+                else if (isLevel3)
+                {
+                    if (task.AssignedAgencyId == userAgency!.Id || task.LeadAgencyId == userAgency.Id)
+                    {
+                        hasPermission = true;
+                    }
+                }
+
+                if (!hasPermission)
+                {
+                    response.Results.Add(new ImportProgressResultItemDto
+                    {
+                        Code = task.Code,
+                        Title = task.Title,
+                        Success = false,
+                        Message = "Tài khoản không có quyền cập nhật tiến độ cho mục tiêu/nhiệm vụ này."
+                    });
+                    response.FailureCount++;
+                    continue;
+                }
+
+                var submitDto = new SubmitProgressRequestDto
+                {
+                    PeriodYear = item.PeriodYear > 0 ? item.PeriodYear : 2026,
+                    PeriodQuarter = item.PeriodQuarter,
+                    PeriodType = item.PeriodQuarter > 0 ? "Quarterly" : "Yearly",
+                    Value = item.Value,
+                    Status = item.Status,
+                    SummaryNotes = item.SummaryNotes ?? string.Empty,
+                    AgencyId = userAgency?.Id ?? task.LeadAgencyId,
+                    CreatedBy = userAgency?.Name ?? "Import Excel"
+                };
+
+                try
+                {
+                    var submitResult = await SubmitProgressAsync(task.Id, submitDto);
+                    bool isPending = submitResult.ApprovalStatus == "Pending";
+
+                    response.Results.Add(new ImportProgressResultItemDto
+                    {
+                        Code = task.Code,
+                        Title = task.Title,
+                        Success = true,
+                        Message = isPending
+                            ? "Đã gửi báo cáo tiến độ, đang chờ Cấp 2 phê duyệt."
+                            : "Cập nhật tiến độ thành công.",
+                        ApprovalStatus = submitResult.ApprovalStatus
+                    });
+
+                    if (isPending)
+                    {
+                        response.PendingCount++;
+                    }
+                    else
+                    {
+                        response.SuccessCount++;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    response.Results.Add(new ImportProgressResultItemDto
+                    {
+                        Code = task.Code,
+                        Title = task.Title,
+                        Success = false,
+                        Message = "Lỗi khi lưu tiến độ: " + ex.Message
+                    });
+                    response.FailureCount++;
+                }
+            }
+
+            response.TotalProcessed = dto.Items.Count;
+            return response;
         }
     }
 }

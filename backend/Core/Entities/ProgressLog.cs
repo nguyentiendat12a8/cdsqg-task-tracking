@@ -53,5 +53,18 @@ namespace Cdsqg.Core.Entities
 
         public Guid? AgencyId { get; set; }
         public Agency? Agency { get; set; }
+
+        /// <summary>
+        /// Trạng thái phê duyệt báo cáo tiến độ (Approved = 1, Pending = 2, Rejected = 3)
+        /// </summary>
+        public ApprovalStatusEnum ApprovalStatus { get; set; } = ApprovalStatusEnum.Approved;
+
+        /// <summary>
+        /// Lý do từ chối (nếu có)
+        /// </summary>
+        public string? RejectionReason { get; set; }
+
+        public string? ApprovedBy { get; set; }
+        public DateTime? ApprovedAt { get; set; }
     }
 }

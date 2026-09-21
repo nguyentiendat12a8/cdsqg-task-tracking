@@ -56,6 +56,12 @@ namespace Cdsqg.Core.Entities
         public Agency? LeadAgency { get; set; }
 
         /// <summary>
+        /// Đơn vị trực thuộc được giao nhiệm vụ (Optional)
+        /// </summary>
+        public Guid? AssignedAgencyId { get; set; }
+        public Agency? AssignedAgency { get; set; }
+
+        /// <summary>
         /// Mảng UUID các Cơ quan phối hợp (Mapped to PostgreSQL JSONB column)
         /// </summary>
         public List<Guid> CoordinatingAgencyIds { get; set; } = new List<Guid>();

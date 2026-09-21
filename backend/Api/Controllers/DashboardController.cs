@@ -117,11 +117,11 @@ namespace Cdsqg.Api.Controllers
                         // If the filtered agency is a sub-agency (ParentId != null), DO NOT include general tasks!
                         if (hasSubAgencyOnly)
                         {
-                            query = query.Where(i => allowedAgencyIds.Contains(i.LeadAgencyId));
+                            query = query.Where(i => allowedAgencyIds.Contains(i.LeadAgencyId) || (i.AssignedAgencyId.HasValue && allowedAgencyIds.Contains(i.AssignedAgencyId.Value)));
                         }
                         else
                         {
-                            query = query.Where(i => i.LeadAgencyId == allAgenciesId || i.IsGeneralTask || allowedAgencyIds.Contains(i.LeadAgencyId));
+                            query = query.Where(i => i.LeadAgencyId == allAgenciesId || i.IsGeneralTask || allowedAgencyIds.Contains(i.LeadAgencyId) || (i.AssignedAgencyId.HasValue && allowedAgencyIds.Contains(i.AssignedAgencyId.Value)));
                         }
                     }
                 }
@@ -181,11 +181,12 @@ namespace Cdsqg.Api.Controllers
                     var agencyItems = includeGeneral
                         ? items.Where(i => 
                             childIds.Contains(i.LeadAgencyId) || 
+                            (i.AssignedAgencyId.HasValue && childIds.Contains(i.AssignedAgencyId.Value)) ||
                             i.LeadAgencyId == allAgenciesId || 
                             (i.LeadAgency != null && i.LeadAgency.Code == "ALL_AGENCIES") || 
                             i.IsGeneralTask
                           ).ToList()
-                        : items.Where(i => childIds.Contains(i.LeadAgencyId)).ToList();
+                        : items.Where(i => childIds.Contains(i.LeadAgencyId) || (i.AssignedAgencyId.HasValue && childIds.Contains(i.AssignedAgencyId.Value))).ToList();
 
                     int aNotStarted = 0, aInProgOnTime = 0, aInProgOverdue = 0, aCompOnTime = 0, aCompOverdue = 0, aExpSoon = 0;
                     int aGNotStarted = 0, aGInProgOnTime = 0, aGInProgOverdue = 0, aGCompOnTime = 0, aGCompOverdue = 0, aGExpSoon = 0;
@@ -484,11 +485,12 @@ namespace Cdsqg.Api.Controllers
                     agencyItems = includeGeneral
                         ? baseItems.Where(i =>
                             childIds.Contains(i.LeadAgencyId) ||
+                            (i.AssignedAgencyId.HasValue && childIds.Contains(i.AssignedAgencyId.Value)) ||
                             i.LeadAgencyId == allAgenciesId ||
                             (i.LeadAgency != null && i.LeadAgency.Code == "ALL_AGENCIES") ||
                             i.IsGeneralTask
                         ).ToList()
-                        : baseItems.Where(i => childIds.Contains(i.LeadAgencyId)).ToList();
+                        : baseItems.Where(i => childIds.Contains(i.LeadAgencyId) || (i.AssignedAgencyId.HasValue && childIds.Contains(i.AssignedAgencyId.Value))).ToList();
                 }
                 else
                 {
@@ -513,6 +515,10 @@ namespace Cdsqg.Api.Controllers
                         ? allAgencies.Where(a => item.CoordinatingAgencyIds.Contains(a.Id)).ToList()
                         : new List<Agency>();
 
+                    var assignedAgency = item.AssignedAgencyId.HasValue
+                        ? allAgencies.FirstOrDefault(a => a.Id == item.AssignedAgencyId.Value)
+                        : null;
+
                     return new DashboardAgencyItemDto
                     {
                         Id = item.Id,
@@ -525,6 +531,9 @@ namespace Cdsqg.Api.Controllers
                         Group = item.Group,
                         LeadAgencyId = item.LeadAgencyId,
                         LeadAgencyName = item.LeadAgency?.Name ?? (item.IsGeneralTask ? "Tất cả đơn vị (Chung)" : "Bộ Khoa học và Công nghệ"),
+                        AssignedAgencyId = item.AssignedAgencyId,
+                        AssignedAgencyCode = assignedAgency?.Code,
+                        AssignedAgencyName = assignedAgency?.Name,
                         CoordinatingAgencyIds = item.CoordinatingAgencyIds ?? new List<Guid>(),
                         CoordinatingAgencyCodes = coordAgencies.Select(a => a.Code).ToList(),
                         CoordinatingAgencyNames = coordAgencies.Select(a => a.Name).ToList(),
@@ -604,6 +613,9 @@ namespace Cdsqg.Api.Controllers
         public string? Group { get; set; }
         public Guid LeadAgencyId { get; set; }
         public string LeadAgencyName { get; set; } = string.Empty;
+        public Guid? AssignedAgencyId { get; set; }
+        public string? AssignedAgencyCode { get; set; }
+        public string? AssignedAgencyName { get; set; }
         public List<Guid> CoordinatingAgencyIds { get; set; } = new List<Guid>();
         public List<string> CoordinatingAgencyCodes { get; set; } = new List<string>();
         public List<string> CoordinatingAgencyNames { get; set; } = new List<string>();

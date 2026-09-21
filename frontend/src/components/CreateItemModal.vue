@@ -49,11 +49,24 @@
               v-model="form.leadAgencyId" 
               :options="leadAgencyOptions" 
               :isMulti="false" 
-              label="Đơn Vị Chủ Trì" 
+              label="Đơn Vị Chủ Trì (Bộ/Ngành/Địa phương)" 
               placeholder="-- Chọn Đơn vị Chủ trì --"
             />
           </div>
 
+          <div>
+            <SearchableSelect 
+              v-model="form.assignedAgencyId" 
+              :options="assignedAgencyOptions" 
+              :isMulti="false" 
+              label="Giao Đơn Vị Trực Thuộc" 
+              placeholder="-- Chọn Đơn vị trực thuộc --"
+              :disabled="!form.leadAgencyId || assignedAgencyOptions.length === 0"
+            />
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
           <div>
             <SearchableSelect 
               v-model="form.unitId" 
@@ -64,16 +77,16 @@
               @change="onUnitChanged"
             />
           </div>
-        </div>
 
-        <div>
-          <SearchableSelect 
-            v-model="form.coordinatingAgencyIds" 
-            :options="coordinatingAgencyOptions" 
-            :isMulti="true" 
-            label="Cơ Quan Phối Hợp" 
-            placeholder="-- Chọn các cơ quan phối hợp --"
-          />
+          <div>
+            <SearchableSelect 
+              v-model="form.coordinatingAgencyIds" 
+              :options="coordinatingAgencyOptions" 
+              :isMulti="true" 
+              label="Cơ Quan Phối Hợp" 
+              placeholder="-- Chọn các cơ quan phối hợp --"
+            />
+          </div>
         </div>
 
         <!-- Is Ongoing / Continuous Task Toggle -->
@@ -206,12 +219,21 @@ const errorMessage = ref(null);
 const isCoordinatingDropdownOpen = ref(false);
 
 const leadAgencyOptions = computed(() => {
-  return agencies.value.map(ag => {
-    if (ag.code === 'ALL_AGENCIES') {
-      return { value: ag.id, label: `🌐 ${ag.name}` };
-    }
-    return { value: ag.id, label: ag.name };
-  });
+  return agencies.value
+    .filter(ag => ag.code === 'ALL_AGENCIES' || (ag.type !== 3 && !ag.parentId))
+    .map(ag => {
+      if (ag.code === 'ALL_AGENCIES') {
+        return { value: ag.id, label: `🌐 ${ag.name}` };
+      }
+      return { value: ag.id, label: ag.name };
+    });
+});
+
+const assignedAgencyOptions = computed(() => {
+  if (!form.value.leadAgencyId) return [];
+  return agencies.value
+    .filter(ag => ag.parentId === form.value.leadAgencyId)
+    .map(ag => ({ value: ag.id, label: ag.name }));
 });
 
 const coordinatingAgencyOptions = computed(() => {
@@ -229,6 +251,11 @@ watch(() => form.value.leadAgencyId, (newId) => {
     form.value.isGeneralTask = true;
   } else {
     form.value.isGeneralTask = false;
+  }
+  // Reset assigned agency if it's not a child of new lead agency
+  if (form.value.assignedAgencyId) {
+    const isChild = agencies.value.some(a => a.id === form.value.assignedAgencyId && a.parentId === newId);
+    if (!isChild) form.value.assignedAgencyId = '';
   }
 }, { immediate: true });
 
@@ -257,13 +284,15 @@ function onUnitChanged() {
 }
 
 function resetForm() {
+  const firstLevel2 = agencies.value.find(ag => !ag.parentId || ag.code === 'ALL_AGENCIES');
   form.value = {
     documentId: props.documentId,
     itemType: props.itemType,
     code: '',
     title: '',
     category: 'Chính phủ số',
-    leadAgencyId: agencies.value.length > 0 ? agencies.value[0].id : '',
+    leadAgencyId: firstLevel2 ? firstLevel2.id : (agencies.value.length > 0 ? agencies.value[0].id : ''),
+    assignedAgencyId: '',
     coordinatingAgencyIds: [],
     unitId: units.value.length > 0 ? units.value[0].id : '',
     evaluationType: 'Quantitative',

@@ -62,12 +62,17 @@ namespace Cdsqg.Application.DTOs
         public List<string> AttachmentFileUrls { get; set; } = new List<string>();
         public DateTime LogDate { get; set; } = DateTime.UtcNow;
         public string Message { get; set; } = string.Empty;
+
+        public string ApprovalStatus { get; set; } = "Approved";
+        public string? RejectionReason { get; set; }
     }
 
     public class GetProgressLogResponseDto
     {
         public Guid Id { get; set; }
         public Guid TaskId { get; set; }
+        public string TaskCode { get; set; } = string.Empty;
+        public string TaskTitle { get; set; } = string.Empty;
         public int PeriodYear { get; set; }
         public int PeriodQuarter { get; set; }
         public decimal? ActualValue { get; set; }
@@ -80,6 +85,12 @@ namespace Cdsqg.Application.DTOs
         public AlertStatusEnum CalculatedAlert { get; set; }
         public string CreatedBy { get; set; } = string.Empty;
         public Guid? AgencyId { get; set; }
+        public string AgencyName { get; set; } = string.Empty;
+
+        public string ApprovalStatus { get; set; } = "Approved";
+        public string? RejectionReason { get; set; }
+        public string? ApprovedBy { get; set; }
+        public DateTime? ApprovedAt { get; set; }
 
         // Before Update Snapshot fields
         public decimal? PreviousValue { get; set; }
@@ -87,5 +98,45 @@ namespace Cdsqg.Application.DTOs
         public decimal? PreviousCompletionPercentage { get; set; }
         public string? PreviousNotes { get; set; }
         public List<TaskDeliverable>? PreviousDeliverables { get; set; }
+    }
+
+    public class RejectProgressRequestDto
+    {
+        public string? Reason { get; set; }
+    }
+
+    public class ImportProgressBulkItemDto
+    {
+        public string Code { get; set; } = string.Empty;
+        public decimal? Value { get; set; }
+        public TextStatusEnum? Status { get; set; }
+        public string? SummaryNotes { get; set; }
+        public int PeriodYear { get; set; } = 2026;
+        public int PeriodQuarter { get; set; } = 0;
+    }
+
+    public class ImportProgressBulkRequestDto
+    {
+        public Guid? UserAgencyId { get; set; }
+        public string? UserRole { get; set; } = string.Empty;
+        public List<ImportProgressBulkItemDto> Items { get; set; } = new List<ImportProgressBulkItemDto>();
+    }
+
+    public class ImportProgressResultItemDto
+    {
+        public string Code { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public bool Success { get; set; }
+        public string Message { get; set; } = string.Empty;
+        public string ApprovalStatus { get; set; } = "Approved";
+    }
+
+    public class ImportProgressBulkResponseDto
+    {
+        public int TotalProcessed { get; set; }
+        public int SuccessCount { get; set; }
+        public int PendingCount { get; set; }
+        public int FailureCount { get; set; }
+        public List<ImportProgressResultItemDto> Results { get; set; } = new List<ImportProgressResultItemDto>();
     }
 }

@@ -197,8 +197,15 @@ void EnsureDatabaseSchemaUpdated(AppDbContext db)
             ALTER TABLE ""GoalTaskItems"" ADD COLUMN IF NOT EXISTS ""IsOngoing"" boolean NOT NULL DEFAULT FALSE;
             ALTER TABLE ""GoalTaskItems"" ADD COLUMN IF NOT EXISTS ""Deliverables"" jsonb NOT NULL DEFAULT '[]'::jsonb;
             ALTER TABLE ""GoalTaskItems"" ADD COLUMN IF NOT EXISTS ""AgencyDeliverables"" jsonb NOT NULL DEFAULT '{{}}'::jsonb;
+            ALTER TABLE ""GoalTaskItems"" ADD COLUMN IF NOT EXISTS ""AssignedAgencyId"" uuid NULL;
+
             ALTER TABLE ""ProgressLogs"" ADD COLUMN IF NOT EXISTS ""AgencyId"" uuid NULL;
             ALTER TABLE ""ProgressLogs"" ADD COLUMN IF NOT EXISTS ""Deliverables"" jsonb NOT NULL DEFAULT '[]'::jsonb;
+            ALTER TABLE ""ProgressLogs"" ADD COLUMN IF NOT EXISTS ""ApprovalStatus"" integer NOT NULL DEFAULT 1;
+            ALTER TABLE ""ProgressLogs"" ADD COLUMN IF NOT EXISTS ""RejectionReason"" text NULL;
+            ALTER TABLE ""ProgressLogs"" ADD COLUMN IF NOT EXISTS ""ApprovedBy"" text NULL;
+            ALTER TABLE ""ProgressLogs"" ADD COLUMN IF NOT EXISTS ""ApprovedAt"" timestamp without time zone NULL;
+
             UPDATE ""GoalTaskItems"" SET ""Section"" = '' WHERE ""Section"" IS NULL;
             UPDATE ""GoalTaskItems"" SET ""Group"" = '' WHERE ""Group"" IS NULL;
         ";
@@ -255,6 +262,9 @@ void EnsureDatabaseSchemaUpdated(AppDbContext db)
             );
             ALTER TABLE ""AgencyTaskExecutions"" ADD COLUMN IF NOT EXISTS ""SummaryNotes"" text NULL;
             ALTER TABLE ""AgencyTaskExecutions"" ADD COLUMN IF NOT EXISTS ""AttachmentFileUrls"" jsonb NOT NULL DEFAULT '[]'::jsonb;
+            ALTER TABLE ""AgencyTaskExecutions"" ADD COLUMN IF NOT EXISTS ""AssignedAgencyId"" uuid NULL;
+            ALTER TABLE ""AgencyTaskExecutions"" ADD COLUMN IF NOT EXISTS ""ApprovalStatus"" integer NOT NULL DEFAULT 1;
+            ALTER TABLE ""AgencyTaskExecutions"" ADD COLUMN IF NOT EXISTS ""RejectionReason"" text NULL;
             CREATE UNIQUE INDEX IF NOT EXISTS ""IX_AgencyTaskExecutions_GoalTaskId_AgencyId"" ON ""AgencyTaskExecutions"" (""GoalTaskId"", ""AgencyId"");
         ";
         db.Database.ExecuteSqlRaw(sqlAgencyTaskExecutions);
@@ -365,6 +375,21 @@ void SeedInitialData(AppDbContext db, IPasswordHasher hasher)
         {
             item.DocumentId = targetDocId;
         }
+    }
+
+    // Fix existing Level 3 progress logs that were incorrectly marked as Approved
+    var subAgencyIds = db.Agencies.Where(a => a.ParentId.HasValue).Select(a => a.Id).ToList();
+    var assignedTaskIds = db.GoalTaskItems.Where(i => i.AssignedAgencyId.HasValue).Select(i => i.Id).ToList();
+    var misMarkedLogs = db.ProgressLogs
+        .Where(p => p.ApprovalStatus == ApprovalStatusEnum.Approved &&
+                    ((p.AgencyId.HasValue && subAgencyIds.Contains(p.AgencyId.Value)) || assignedTaskIds.Contains(p.GoalTaskId)))
+        .ToList();
+
+    foreach (var log in misMarkedLogs)
+    {
+        log.ApprovalStatus = ApprovalStatusEnum.Pending;
+        log.ApprovedBy = null;
+        log.ApprovedAt = null;
     }
 
     db.SaveChanges();

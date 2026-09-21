@@ -199,93 +199,219 @@
     </div>
 
     <!-- Sub-Agency Dedicated Progress Dashboard Section (When logged in as Sub-Agency / Child Unit) -->
-    <div v-if="isSubAgencyUser && singleSubAgencyPerformance" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4 w-full">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
-        <div>
-          <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
-            🏢 Bảng Tiến Độ Thực Hiện CỦA ĐƠN VỊ: <span class="text-blue-700 font-black">{{ singleSubAgencyPerformance.name }}</span>
-          </h3>
-          <span v-if="loggedUserAgency?.parentName" class="text-xs text-slate-500 font-semibold mt-0.5 block">
-            Cơ quan quản lý trực tiếp: <strong>{{ loggedUserAgency.parentName }}</strong>
-          </span>
+    <div v-if="isSubAgencyUser" class="space-y-4 w-full">
+      <!-- 1. Progress of Level 2 Agency Itself -->
+      <div v-if="singleSubAgencyPerformance" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4 w-full">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+          <div>
+            <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+              🏢 Bảng Tiến Độ Thực Hiện CỦA ĐƠN VỊ: <span class="text-blue-700 font-black">{{ singleSubAgencyPerformance.name }}</span>
+            </h3>
+            <span v-if="loggedUserAgency?.parentName" class="text-xs text-slate-500 font-semibold mt-0.5 block">
+              Cơ quan quản lý trực tiếp: <strong>{{ loggedUserAgency.parentName }}</strong>
+            </span>
+          </div>
+          
+          <button 
+            @click="drilldownAgency(singleSubAgencyPerformance)" 
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-2xs transition flex items-center gap-1.5 cursor-pointer shrink-0"
+          >
+            <span>📋 Xem Danh Sách Chi Tiết Nhiệm Vụ</span>
+            <span>→</span>
+          </button>
         </div>
-        
-        <button 
-          @click="drilldownAgency(singleSubAgencyPerformance)" 
-          class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-2xs transition flex items-center gap-1.5 cursor-pointer shrink-0"
-        >
-          <span>📋 Xem Danh Sách Chi Tiết Nhiệm Vụ</span>
-          <span>→</span>
-        </button>
+
+        <!-- Big Circle Donut Chart & Status Breakdown -->
+        <div class="bg-gradient-to-br from-slate-50 to-blue-50/40 rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-4">
+          <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+            
+            <!-- Big Donut Circle Chart on Left -->
+            <div class="md:col-span-5 flex flex-col items-center justify-center p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-2">
+              <MiniStatusDonut :stats="singleSubAgencyPerformance" :size="160" :innerSize="105" :fontSize="32" />
+              <div class="text-center pt-1">
+                <div class="text-xs font-black text-slate-800">Tổng số: {{ singleSubAgencyPerformance.totalItems || 0 }} hạng mục</div>
+                <div class="flex items-center gap-2 justify-center text-[11px] font-bold text-slate-500 mt-1">
+                  <span class="text-purple-800 bg-purple-50 px-2 py-0.5 rounded border border-purple-200/60">🎯 {{ singleSubAgencyPerformance.totalGoals || 0 }} Mục tiêu</span>
+                  <span class="text-blue-800 bg-blue-50 px-2 py-0.5 rounded border border-blue-200/60">📋 {{ singleSubAgencyPerformance.totalTasks || 0 }} Nhiệm vụ</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- 6 Status Legend Breakdown List on Right -->
+            <div class="md:col-span-7 space-y-2 font-bold text-xs">
+              <div class="flex items-center justify-between p-2.5 rounded-xl bg-white border border-slate-200">
+                <div class="flex items-center gap-2">
+                  <span class="w-3 h-3 rounded-full bg-slate-400"></span>
+                  <span class="text-slate-700">1. Chưa thực hiện</span>
+                </div>
+                <span class="font-black text-slate-900 text-sm">{{ singleSubAgencyPerformance.notStarted || 0 }}</span>
+              </div>
+
+              <div class="flex items-center justify-between p-2.5 rounded-xl bg-blue-50/70 border border-blue-200">
+                <div class="flex items-center gap-2">
+                  <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+                  <span class="text-blue-800">2. Đang thực hiện (trong hạn)</span>
+                </div>
+                <span class="font-black text-blue-900 text-sm">{{ singleSubAgencyPerformance.inProgressOnTime || 0 }}</span>
+              </div>
+
+              <div class="flex items-center justify-between p-2.5 rounded-xl bg-rose-50/70 border border-rose-200">
+                <div class="flex items-center gap-2">
+                  <span class="w-3 h-3 rounded-full bg-rose-500"></span>
+                  <span class="text-rose-800">3. Đang thực hiện (quá hạn)</span>
+                </div>
+                <span class="font-black text-rose-900 text-sm">{{ singleSubAgencyPerformance.inProgressOverdue || 0 }}</span>
+              </div>
+
+              <div class="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200">
+                <div class="flex items-center gap-2">
+                  <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+                  <span class="text-emerald-800">4. Hoàn thành (đúng hạn)</span>
+                </div>
+                <span class="font-black text-emerald-900 text-sm">{{ singleSubAgencyPerformance.completedOnTime || 0 }}</span>
+              </div>
+
+              <div class="flex items-center justify-between p-2.5 rounded-xl bg-teal-50/70 border border-teal-200">
+                <div class="flex items-center gap-2">
+                  <span class="w-3 h-3 rounded-full bg-teal-500"></span>
+                  <span class="text-teal-800">5. Hoàn thành (quá hạn)</span>
+                </div>
+                <span class="font-black text-teal-900 text-sm">{{ singleSubAgencyPerformance.completedOverdue || 0 }}</span>
+              </div>
+
+              <div class="flex items-center justify-between p-2.5 rounded-xl bg-amber-50/70 border border-amber-200">
+                <div class="flex items-center gap-2">
+                  <span class="w-3 h-3 rounded-full bg-amber-500"></span>
+                  <span class="text-amber-800">6. Sắp hết hạn</span>
+                </div>
+                <span class="font-black text-amber-900 text-sm">{{ singleSubAgencyPerformance.expiringSoon || 0 }}</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
       </div>
 
-      <!-- Big Circle Donut Chart & Status Breakdown -->
-      <div class="bg-gradient-to-br from-slate-50 to-blue-50/40 rounded-2xl border border-slate-200 p-5 shadow-2xs space-y-4">
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-          
-          <!-- Big Donut Circle Chart on Left -->
-          <div class="md:col-span-5 flex flex-col items-center justify-center p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-2">
-            <MiniStatusDonut :stats="singleSubAgencyPerformance" :size="160" :innerSize="105" :fontSize="32" />
-            <div class="text-center pt-1">
-              <div class="text-xs font-black text-slate-800">Tổng số: {{ singleSubAgencyPerformance.totalItems || 0 }} hạng mục</div>
-              <div class="flex items-center gap-2 justify-center text-[11px] font-bold text-slate-500 mt-1">
-                <span class="text-purple-800 bg-purple-50 px-2 py-0.5 rounded border border-purple-200/60">🎯 {{ singleSubAgencyPerformance.totalGoals || 0 }} Mục tiêu</span>
-                <span class="text-blue-800 bg-blue-50 px-2 py-0.5 rounded border border-blue-200/60">📋 {{ singleSubAgencyPerformance.totalTasks || 0 }} Nhiệm vụ</span>
+      <!-- 2. Subordinate Child Agencies Progress Block (Khối Các Đơn Vị Trực Thuộc) -->
+      <div class="bg-white p-4.5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4 w-full">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div>
+            <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+              🏛️ Khối Các Đơn Vị Trực Thuộc
+            </h3>
+            <p class="text-xs text-slate-500 font-semibold mt-0.5">
+              Thống kê tiến độ thực hiện nhiệm vụ các đơn vị trực thuộc (Đã sắp xếp theo tổng số nhiệm vụ giảm dần)
+            </p>
+          </div>
+          <span class="text-xs font-extrabold text-blue-700 bg-blue-50 px-3 py-1 rounded-xl border border-blue-200/60">
+            {{ userSubAgenciesPerformance?.length ?? 0 }} Đơn vị trực thuộc
+          </span>
+        </div>
+
+        <div v-if="userSubAgenciesPerformance?.length" class="space-y-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-3.5">
+            <div 
+              v-for="(item, index) in visibleSubAgencies" 
+              :key="item.agencyId"
+              @click="drilldownAgency(item)"
+              class="bg-white rounded-2xl border border-slate-200/90 p-3.5 shadow-2xs hover:shadow-md transition-all duration-200 cursor-pointer space-y-3 group flex flex-col justify-between"
+            >
+              <!-- Card Header: Agency Name & Blue Index Badge -->
+              <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
+                <div class="min-w-0 flex-1">
+                  <h4 class="text-xs sm:text-sm font-extrabold text-slate-800 group-hover:text-blue-600 transition leading-snug truncate" :title="item.name">
+                    {{ item.name }}
+                  </h4>
+                </div>
+
+                <div class="w-7 h-7 bg-blue-600 text-white font-black text-xs rounded-xl flex items-center justify-center shrink-0 shadow-2xs">
+                  {{ index + 1 }}
+                </div>
+              </div>
+
+              <!-- Card Body: Donut Chart on Left, Legend Breakdown List on Right -->
+              <div class="flex items-center gap-3 py-0.5">
+                <!-- Donut Chart -->
+                <div class="shrink-0 flex items-center justify-center">
+                  <MiniStatusDonut :stats="item" :size="84" :innerSize="54" :fontSize="18" />
+                </div>
+
+                <!-- 5-6 Status Legend List -->
+                <div class="flex-1 min-w-0 space-y-1 text-[10px] font-bold">
+                  <div class="flex items-center justify-between gap-1.5">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <span class="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0"></span>
+                      <span class="text-slate-600 truncate">Đang t/h quá hạn</span>
+                    </div>
+                    <span class="font-black text-slate-900">{{ item.inProgressOverdue || 0 }}</span>
+                  </div>
+
+                  <div class="flex items-center justify-between gap-1.5">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
+                      <span class="text-slate-600 truncate">Đang t/h trong hạn</span>
+                    </div>
+                    <span class="font-black text-slate-900">{{ item.inProgressOnTime || 0 }}</span>
+                  </div>
+
+                  <div class="flex items-center justify-between gap-1.5">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
+                      <span class="text-slate-600 truncate">Sắp tới hạn</span>
+                    </div>
+                    <span class="font-black text-slate-900">{{ item.expiringSoon || 0 }}</span>
+                  </div>
+
+                  <div class="flex items-center justify-between gap-1.5">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <span class="w-2.5 h-2.5 rounded-full bg-teal-500 shrink-0"></span>
+                      <span class="text-slate-600 truncate">Đã h/t quá hạn</span>
+                    </div>
+                    <span class="font-black text-slate-900">{{ item.completedOverdue || 0 }}</span>
+                  </div>
+
+                  <div class="flex items-center justify-between gap-1.5">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+                      <span class="text-slate-600 truncate">Đã h/t trong hạn</span>
+                    </div>
+                    <span class="font-black text-slate-900">{{ item.completedOnTime || 0 }}</span>
+                  </div>
+
+                  <div class="flex items-center justify-between gap-1.5" v-if="item.notStarted > 0">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <span class="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0"></span>
+                      <span class="text-slate-600 truncate">Chưa thực hiện</span>
+                    </div>
+                    <span class="font-black text-slate-900">{{ item.notStarted || 0 }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card Footer: Sub-badges -->
+              <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-bold">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-purple-800 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200/60">🎯 {{ item.totalGoals || 0 }}</span>
+                  <span class="text-blue-800 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200/60">📋 {{ item.totalTasks || 0 }}</span>
+                </div>
+                <span class="text-blue-600 group-hover:underline">Chi tiết →</span>
               </div>
             </div>
           </div>
 
-          <!-- 6 Status Legend Breakdown List on Right -->
-          <div class="md:col-span-7 space-y-2 font-bold text-xs">
-            <div class="flex items-center justify-between p-2.5 rounded-xl bg-white border border-slate-200">
-              <div class="flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-slate-400"></span>
-                <span class="text-slate-700">1. Chưa thực hiện</span>
-              </div>
-              <span class="font-black text-slate-900 text-sm">{{ singleSubAgencyPerformance.notStarted || 0 }}</span>
-            </div>
-
-            <div class="flex items-center justify-between p-2.5 rounded-xl bg-blue-50/70 border border-blue-200">
-              <div class="flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-blue-500"></span>
-                <span class="text-blue-800">2. Đang thực hiện (trong hạn)</span>
-              </div>
-              <span class="font-black text-blue-900 text-sm">{{ singleSubAgencyPerformance.inProgressOnTime || 0 }}</span>
-            </div>
-
-            <div class="flex items-center justify-between p-2.5 rounded-xl bg-rose-50/70 border border-rose-200">
-              <div class="flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-rose-500"></span>
-                <span class="text-rose-800">3. Đang thực hiện (quá hạn)</span>
-              </div>
-              <span class="font-black text-rose-900 text-sm">{{ singleSubAgencyPerformance.inProgressOverdue || 0 }}</span>
-            </div>
-
-            <div class="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200">
-              <div class="flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
-                <span class="text-emerald-800">4. Hoàn thành (đúng hạn)</span>
-              </div>
-              <span class="font-black text-emerald-900 text-sm">{{ singleSubAgencyPerformance.completedOnTime || 0 }}</span>
-            </div>
-
-            <div class="flex items-center justify-between p-2.5 rounded-xl bg-teal-50/70 border border-teal-200">
-              <div class="flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-teal-500"></span>
-                <span class="text-teal-800">5. Hoàn thành (quá hạn)</span>
-              </div>
-              <span class="font-black text-teal-900 text-sm">{{ singleSubAgencyPerformance.completedOverdue || 0 }}</span>
-            </div>
-
-            <div class="flex items-center justify-between p-2.5 rounded-xl bg-amber-50/70 border border-amber-200">
-              <div class="flex items-center gap-2">
-                <span class="w-3 h-3 rounded-full bg-amber-500"></span>
-                <span class="text-amber-800">6. Sắp hết hạn</span>
-              </div>
-              <span class="font-black text-amber-900 text-sm">{{ singleSubAgencyPerformance.expiringSoon || 0 }}</span>
-            </div>
+          <!-- Expand / Collapse Button -->
+          <div v-if="(userSubAgenciesPerformance?.length || 0) > 6" class="pt-2 text-center border-t border-slate-100">
+            <button 
+              @click="isSubAgenciesExpanded = !isSubAgenciesExpanded" 
+              class="px-5 py-2 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
+            >
+              <span>{{ isSubAgenciesExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${userSubAgenciesPerformance.length - 6} Đơn vị trực thuộc khác)` }}</span>
+            </button>
           </div>
+        </div>
 
+        <div v-else class="p-8 text-center text-xs text-slate-400 italic font-semibold bg-slate-50/50 rounded-xl border border-slate-200/60">
+          Chưa có đơn vị trực thuộc nào được giao nhiệm vụ.
         </div>
       </div>
     </div>
@@ -304,98 +430,110 @@
           </span>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-3.5">
-          <div 
-            v-for="(item, index) in metrics.ministriesPerformance" 
-            :key="item.agencyId"
-            @click="drilldownAgency(item)"
-            class="bg-white rounded-2xl border border-slate-200/90 p-3.5 shadow-2xs hover:shadow-md transition-all duration-200 cursor-pointer space-y-3 group flex flex-col justify-between"
-          >
-            <!-- Card Header: Agency Name & Blue Index Badge -->
-            <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
-              <div class="min-w-0 flex-1">
-                <h4 class="text-xs sm:text-sm font-extrabold text-slate-800 group-hover:text-blue-600 transition leading-snug truncate">
-                  {{ item.name }}
-                </h4>
-              </div>
-
-              <div class="w-7 h-7 bg-blue-600 text-white font-black text-xs rounded-xl flex items-center justify-center shrink-0 shadow-2xs">
-                {{ index + 1 }}
-              </div>
-            </div>
-
-            <!-- Card Body: Donut Chart on Left, Legend Breakdown List on Right -->
-            <div class="flex items-center gap-3 py-0.5">
-              <!-- Donut Chart -->
-              <div class="shrink-0 flex items-center justify-center">
-                <MiniStatusDonut :stats="item" :size="84" :innerSize="54" :fontSize="18" />
-              </div>
-
-              <!-- 5-6 Status Legend List -->
-              <div class="flex-1 min-w-0 space-y-1 text-[10px] font-bold">
-                <div class="flex items-center justify-between gap-1.5">
-                  <div class="flex items-center gap-1.5 min-w-0">
-                    <span class="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0"></span>
-                    <span class="text-slate-600 truncate">Đang t/h quá hạn</span>
-                  </div>
-                  <span class="font-black text-slate-900">{{ item.inProgressOverdue || 0 }}</span>
+        <div v-if="metrics.ministriesPerformance?.length" class="space-y-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-3.5">
+            <div 
+              v-for="(item, index) in visibleMinistries" 
+              :key="item.agencyId"
+              @click="drilldownAgency(item)"
+              class="bg-white rounded-2xl border border-slate-200/90 p-3.5 shadow-2xs hover:shadow-md transition-all duration-200 cursor-pointer space-y-3 group flex flex-col justify-between"
+            >
+              <!-- Card Header: Agency Name & Blue Index Badge -->
+              <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
+                <div class="min-w-0 flex-1">
+                  <h4 class="text-xs sm:text-sm font-extrabold text-slate-800 group-hover:text-blue-600 transition leading-snug truncate">
+                    {{ item.name }}
+                  </h4>
                 </div>
 
-                <div class="flex items-center justify-between gap-1.5">
-                  <div class="flex items-center gap-1.5 min-w-0">
-                    <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
-                    <span class="text-slate-600 truncate">Đang t/h trong hạn</span>
-                  </div>
-                  <span class="font-black text-slate-900">{{ item.inProgressOnTime || 0 }}</span>
-                </div>
-
-                <div class="flex items-center justify-between gap-1.5">
-                  <div class="flex items-center gap-1.5 min-w-0">
-                    <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
-                    <span class="text-slate-600 truncate">Sắp tới hạn</span>
-                  </div>
-                  <span class="font-black text-slate-900">{{ item.expiringSoon || 0 }}</span>
-                </div>
-
-                <div class="flex items-center justify-between gap-1.5">
-                  <div class="flex items-center gap-1.5 min-w-0">
-                    <span class="w-2.5 h-2.5 rounded-full bg-teal-500 shrink-0"></span>
-                    <span class="text-slate-600 truncate">Đã h/t quá hạn</span>
-                  </div>
-                  <span class="font-black text-slate-900">{{ item.completedOverdue || 0 }}</span>
-                </div>
-
-                <div class="flex items-center justify-between gap-1.5">
-                  <div class="flex items-center gap-1.5 min-w-0">
-                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
-                    <span class="text-slate-600 truncate">Đã h/t trong hạn</span>
-                  </div>
-                  <span class="font-black text-slate-900">{{ item.completedOnTime || 0 }}</span>
-                </div>
-
-                <div class="flex items-center justify-between gap-1.5" v-if="item.notStarted > 0">
-                  <div class="flex items-center gap-1.5 min-w-0">
-                    <span class="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0"></span>
-                    <span class="text-slate-600 truncate">Chưa thực hiện</span>
-                  </div>
-                  <span class="font-black text-slate-900">{{ item.notStarted || 0 }}</span>
+                <div class="w-7 h-7 bg-blue-600 text-white font-black text-xs rounded-xl flex items-center justify-center shrink-0 shadow-2xs">
+                  {{ index + 1 }}
                 </div>
               </div>
-            </div>
 
-            <!-- Card Footer: Sub-badges -->
-            <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-bold">
-              <div class="flex items-center gap-1.5">
-                <span class="text-purple-800 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200/60">🎯 {{ item.totalGoals || 0 }}</span>
-                <span class="text-blue-800 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200/60">📋 {{ item.totalTasks || 0 }}</span>
+              <!-- Card Body: Donut Chart on Left, Legend Breakdown List on Right -->
+              <div class="flex items-center gap-3 py-0.5">
+                <!-- Donut Chart -->
+                <div class="shrink-0 flex items-center justify-center">
+                  <MiniStatusDonut :stats="item" :size="84" :innerSize="54" :fontSize="18" />
+                </div>
+
+                <!-- 5-6 Status Legend List -->
+                <div class="flex-1 min-w-0 space-y-1 text-[10px] font-bold">
+                  <div class="flex items-center justify-between gap-1.5">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <span class="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0"></span>
+                      <span class="text-slate-600 truncate">Đang t/h quá hạn</span>
+                    </div>
+                    <span class="font-black text-slate-900">{{ item.inProgressOverdue || 0 }}</span>
+                  </div>
+
+                  <div class="flex items-center justify-between gap-1.5">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
+                      <span class="text-slate-600 truncate">Đang t/h trong hạn</span>
+                    </div>
+                    <span class="font-black text-slate-900">{{ item.inProgressOnTime || 0 }}</span>
+                  </div>
+
+                  <div class="flex items-center justify-between gap-1.5">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
+                      <span class="text-slate-600 truncate">Sắp tới hạn</span>
+                    </div>
+                    <span class="font-black text-slate-900">{{ item.expiringSoon || 0 }}</span>
+                  </div>
+
+                  <div class="flex items-center justify-between gap-1.5">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <span class="w-2.5 h-2.5 rounded-full bg-teal-500 shrink-0"></span>
+                      <span class="text-slate-600 truncate">Đã h/t quá hạn</span>
+                    </div>
+                    <span class="font-black text-slate-900">{{ item.completedOverdue || 0 }}</span>
+                  </div>
+
+                  <div class="flex items-center justify-between gap-1.5">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+                      <span class="text-slate-600 truncate">Đã h/t trong hạn</span>
+                    </div>
+                    <span class="font-black text-slate-900">{{ item.completedOnTime || 0 }}</span>
+                  </div>
+
+                  <div class="flex items-center justify-between gap-1.5" v-if="item.notStarted > 0">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <span class="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0"></span>
+                      <span class="text-slate-600 truncate">Chưa thực hiện</span>
+                    </div>
+                    <span class="font-black text-slate-900">{{ item.notStarted || 0 }}</span>
+                  </div>
+                </div>
               </div>
-              <span class="text-blue-600 group-hover:underline">Chi tiết →</span>
+
+              <!-- Card Footer: Sub-badges -->
+              <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-bold">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-purple-800 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200/60">🎯 {{ item.totalGoals || 0 }}</span>
+                  <span class="text-blue-800 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200/60">📋 {{ item.totalTasks || 0 }}</span>
+                </div>
+                <span class="text-blue-600 group-hover:underline">Chi tiết →</span>
+              </div>
             </div>
           </div>
 
-          <div v-if="!metrics.ministriesPerformance?.length" class="col-span-full p-8 text-center text-xs text-slate-400 italic font-semibold">
-            Không có dữ liệu Bộ/Ngành.
+          <!-- Expand / Collapse Button -->
+          <div v-if="(metrics.ministriesPerformance?.length || 0) > 6" class="pt-2 text-center border-t border-slate-100">
+            <button 
+              @click="isMinistriesExpanded = !isMinistriesExpanded" 
+              class="px-5 py-2 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
+            >
+              <span>{{ isMinistriesExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${metrics.ministriesPerformance.length - 6} Bộ/Ngành khác)` }}</span>
+            </button>
           </div>
+        </div>
+
+        <div v-if="!metrics.ministriesPerformance?.length" class="p-8 text-center text-xs text-slate-400 italic font-semibold">
+          Không có dữ liệu Bộ/Ngành.
         </div>
       </div>
 
@@ -410,94 +548,107 @@
           </span>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-3.5">
-          <div 
-            v-for="(item, index) in metrics.provincesPerformance" 
-            :key="item.agencyId"
-            @click="drilldownAgency(item)"
-            class="bg-white rounded-2xl border border-slate-200/90 p-3.5 shadow-2xs hover:shadow-md transition-all duration-200 cursor-pointer space-y-3 group flex flex-col justify-between"
-          >
-            <!-- Card Header: Agency Name & Blue Index Badge -->
-            <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
-              <div class="min-w-0 flex-1">
-                <h4 class="text-xs sm:text-sm font-extrabold text-slate-800 group-hover:text-emerald-700 transition leading-snug truncate">
-                  {{ item.name }}
-                </h4>
-              </div>
-
-              <div class="w-7 h-7 bg-blue-600 text-white font-black text-xs rounded-xl flex items-center justify-center shrink-0 shadow-2xs">
-                {{ index + 1 }}
-              </div>
-            </div>
-
-            <!-- Card Body: Donut Chart on Left, Legend Breakdown List on Right -->
-            <div class="flex items-center gap-3 py-0.5">
-              <!-- Donut Chart -->
-              <div class="shrink-0 flex items-center justify-center">
-                <MiniStatusDonut :stats="item" :size="84" :innerSize="54" :fontSize="18" />
-              </div>
-
-              <!-- 5-6 Status Legend List -->
-              <div class="flex-1 min-w-0 space-y-1 text-[10px] font-bold">
-                <div class="flex items-center justify-between gap-1.5">
-                  <div class="flex items-center gap-1.5 min-w-0">
-                    <span class="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0"></span>
-                    <span class="text-slate-600 truncate">Đang t/h quá hạn</span>
-                  </div>
-                  <span class="font-black text-slate-900">{{ item.inProgressOverdue || 0 }}</span>
+        <div v-if="metrics.provincesPerformance?.length" class="space-y-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-3.5">
+            <div 
+              v-for="(item, index) in visibleProvinces" 
+              :key="item.agencyId"
+              @click="drilldownAgency(item)"
+              class="bg-white rounded-2xl border border-slate-200/90 p-3.5 shadow-2xs hover:shadow-md transition-all duration-200 cursor-pointer space-y-3 group flex flex-col justify-between"
+            >
+              <!-- Card Header: Agency Name & Blue Index Badge -->
+              <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
+                <div class="min-w-0 flex-1">
+                  <h4 class="text-xs sm:text-sm font-extrabold text-slate-800 group-hover:text-emerald-700 transition leading-snug truncate">
+                    {{ item.name }}
+                  </h4>
                 </div>
 
-                <div class="flex items-center justify-between gap-1.5">
-                  <div class="flex items-center gap-1.5 min-w-0">
-                    <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
-                    <span class="text-slate-600 truncate">Đang t/h trong hạn</span>
-                  </div>
-                  <span class="font-black text-slate-900">{{ item.inProgressOnTime || 0 }}</span>
-                </div>
-
-                <div class="flex items-center justify-between gap-1.5">
-                  <div class="flex items-center gap-1.5 min-w-0">
-                    <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
-                    <span class="text-slate-600 truncate">Sắp tới hạn</span>
-                  </div>
-                  <span class="font-black text-slate-900">{{ item.expiringSoon || 0 }}</span>
-                </div>
-
-                <div class="flex items-center justify-between gap-1.5">
-                  <div class="flex items-center gap-1.5 min-w-0">
-                    <span class="w-2.5 h-2.5 rounded-full bg-teal-500 shrink-0"></span>
-                    <span class="text-slate-600 truncate">Đã h/t quá hạn</span>
-                  </div>
-                  <span class="font-black text-slate-900">{{ item.completedOverdue || 0 }}</span>
-                </div>
-
-                <div class="flex items-center justify-between gap-1.5">
-                  <div class="flex items-center gap-1.5 min-w-0">
-                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
-                    <span class="text-slate-600 truncate">Đã h/t trong hạn</span>
-                  </div>
-                  <span class="font-black text-slate-900">{{ item.completedOnTime || 0 }}</span>
-                </div>
-
-                <div class="flex items-center justify-between gap-1.5" v-if="item.notStarted > 0">
-                  <div class="flex items-center gap-1.5 min-w-0">
-                    <span class="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0"></span>
-                    <span class="text-slate-600 truncate">Chưa thực hiện</span>
-                  </div>
-                  <span class="font-black text-slate-900">{{ item.notStarted || 0 }}</span>
+                <div class="w-7 h-7 bg-blue-600 text-white font-black text-xs rounded-xl flex items-center justify-center shrink-0 shadow-2xs">
+                  {{ index + 1 }}
                 </div>
               </div>
-            </div>
 
-            <!-- Card Footer: Sub-badges -->
-            <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-bold">
-              <div class="flex items-center gap-1.5">
-                <span class="text-purple-800 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200/60">🎯 {{ item.totalGoals || 0 }}</span>
-                <span class="text-blue-800 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200/60">📋 {{ item.totalTasks || 0 }}</span>
+              <!-- Card Body: Donut Chart on Left, Legend Breakdown List on Right -->
+              <div class="flex items-center gap-3 py-0.5">
+                <!-- Donut Chart -->
+                <div class="shrink-0 flex items-center justify-center">
+                  <MiniStatusDonut :stats="item" :size="84" :innerSize="54" :fontSize="18" />
+                </div>
+
+                <!-- 5-6 Status Legend List -->
+                <div class="flex-1 min-w-0 space-y-1 text-[10px] font-bold">
+                  <div class="flex items-center justify-between gap-1.5">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <span class="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0"></span>
+                      <span class="text-slate-600 truncate">Đang t/h quá hạn</span>
+                    </div>
+                    <span class="font-black text-slate-900">{{ item.inProgressOverdue || 0 }}</span>
+                  </div>
+
+                  <div class="flex items-center justify-between gap-1.5">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
+                      <span class="text-slate-600 truncate">Đang t/h trong hạn</span>
+                    </div>
+                    <span class="font-black text-slate-900">{{ item.inProgressOnTime || 0 }}</span>
+                  </div>
+
+                  <div class="flex items-center justify-between gap-1.5">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
+                      <span class="text-slate-600 truncate">Sắp tới hạn</span>
+                    </div>
+                    <span class="font-black text-slate-900">{{ item.expiringSoon || 0 }}</span>
+                  </div>
+
+                  <div class="flex items-center justify-between gap-1.5">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <span class="w-2.5 h-2.5 rounded-full bg-teal-500 shrink-0"></span>
+                      <span class="text-slate-600 truncate">Đã h/t quá hạn</span>
+                    </div>
+                    <span class="font-black text-slate-900">{{ item.completedOverdue || 0 }}</span>
+                  </div>
+
+                  <div class="flex items-center justify-between gap-1.5">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+                      <span class="text-slate-600 truncate">Đã h/t trong hạn</span>
+                    </div>
+                    <span class="font-black text-slate-900">{{ item.completedOnTime || 0 }}</span>
+                  </div>
+
+                  <div class="flex items-center justify-between gap-1.5" v-if="item.notStarted > 0">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <span class="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0"></span>
+                      <span class="text-slate-600 truncate">Chưa thực hiện</span>
+                    </div>
+                    <span class="font-black text-slate-900">{{ item.notStarted || 0 }}</span>
+                  </div>
+                </div>
               </div>
-              <span class="text-emerald-700 group-hover:underline">Chi tiết →</span>
+
+              <!-- Card Footer: Sub-badges -->
+              <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-bold">
+                <div class="flex items-center gap-1.5">
+                  <span class="text-purple-800 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200/60">🎯 {{ item.totalGoals || 0 }}</span>
+                  <span class="text-blue-800 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200/60">📋 {{ item.totalTasks || 0 }}</span>
+                </div>
+                <span class="text-emerald-700 group-hover:underline">Chi tiết →</span>
+              </div>
             </div>
           </div>
+
+          <!-- Expand / Collapse Button -->
+          <div v-if="(metrics.provincesPerformance?.length || 0) > 6" class="pt-2 text-center border-t border-slate-100">
+            <button 
+              @click="isProvincesExpanded = !isProvincesExpanded" 
+              class="px-5 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
+            >
+              <span>{{ isProvincesExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${metrics.provincesPerformance.length - 6} Địa phương khác)` }}</span>
+            </button>
+          </div>
+        </div>
 
           <div v-if="!metrics.provincesPerformance?.length" class="col-span-full p-8 text-center text-xs text-slate-400 italic font-semibold">
             Không có dữ liệu Địa phương.
@@ -858,7 +1009,6 @@
 
       </div>
     </div>
-    </div>
 
     <!-- Item Detail Modal -->
     <ItemDetailModal 
@@ -957,6 +1107,28 @@ const activeStatusSummary = computed(() => {
   return metrics.value.statusSummary || {};
 });
 
+const userSubAgenciesPerformance = ref([]);
+const isMinistriesExpanded = ref(false);
+const isProvincesExpanded = ref(false);
+const isSubAgenciesExpanded = ref(false);
+
+const visibleMinistries = computed(() => {
+  const list = metrics.value.ministriesPerformance || [];
+  if (isMinistriesExpanded.value || list.length <= 6) return list;
+  return list.slice(0, 6);
+});
+
+const visibleProvinces = computed(() => {
+  const list = metrics.value.provincesPerformance || [];
+  if (isProvincesExpanded.value || list.length <= 6) return list;
+  return list.slice(0, 6);
+});
+
+const visibleSubAgencies = computed(() => {
+  const list = userSubAgenciesPerformance.value || [];
+  if (isSubAgenciesExpanded.value || list.length <= 6) return list;
+  return list.slice(0, 6);
+});
 const selectedDrilldownAgency = ref(null);
 const subAgenciesList = ref([]);
 const isSubAgenciesLoading = ref(false);
@@ -1186,9 +1358,52 @@ async function loadDashboardMetrics() {
 
     const queryString = params.toString();
     const url = getApiUrl(`/api/dashboard/metrics${queryString ? '?' + queryString : ''}`);
-    const res = await fetch(url);
-    if (res.ok) {
+    
+    // Concurrently fetch subordinate units performance if user has agencyId
+    let fetchSubPromise = Promise.resolve(null);
+    if (!authState.isAdmin.value && authState.user.value?.agencyId) {
+      const subParams = new URLSearchParams();
+      subParams.append('parentAgencyId', authState.user.value.agencyId);
+      if (dashboardFilter.value && dashboardFilter.value !== 'all') {
+        subParams.append('itemType', dashboardFilter.value === 'goals' ? 'Goal' : 'Task');
+      }
+      if (selectedScopes.value && selectedScopes.value.length === 1) {
+        subParams.append('scope', selectedScopes.value[0]);
+      }
+      if (selectedSections.value && selectedSections.value.length > 0) {
+        selectedSections.value.forEach(sec => subParams.append('section', sec));
+      }
+      if (selectedGroups.value && selectedGroups.value.length > 0) {
+        selectedGroups.value.forEach(grp => subParams.append('group', grp));
+      }
+      if (fromYear.value) subParams.append('fromYear', fromYear.value);
+      if (toYear.value) subParams.append('toYear', toYear.value);
+      if (isOngoingOnly.value) subParams.append('isOngoing', 'true');
+
+      fetchSubPromise = fetch(getApiUrl(`/api/dashboard/metrics?${subParams.toString()}`));
+    }
+
+    const [res, subRes] = await Promise.all([
+      fetch(url),
+      fetchSubPromise
+    ]);
+
+    if (res && res.ok) {
       metrics.value = await res.json();
+    }
+
+    if (subRes && subRes.ok) {
+      const subData = await subRes.json();
+      const rawSubList = [...(subData.ministriesPerformance || []), ...(subData.provincesPerformance || [])];
+      // Sort by totalItems (goals + tasks) descending so units with most items are at the top
+      userSubAgenciesPerformance.value = rawSubList.sort((a, b) => {
+        const totalA = a.totalItems ?? ((a.totalGoals || 0) + (a.totalTasks || 0));
+        const totalB = b.totalItems ?? ((b.totalGoals || 0) + (b.totalTasks || 0));
+        if (totalB !== totalA) {
+          return totalB - totalA;
+        }
+        return (a.name || '').localeCompare(b.name || '', 'vi');
+      });
     }
   } catch (e) {
     // Silent catch

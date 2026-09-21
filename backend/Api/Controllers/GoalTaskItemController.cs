@@ -127,6 +127,7 @@ namespace Cdsqg.Api.Controllers
                     StartDate = dto.StartDate,
                     DueDate = dto.DueDate,
                     LeadAgencyId = dto.LeadAgencyId,
+                    AssignedAgencyId = dto.AssignedAgencyId,
                     CoordinatingAgencyIds = dto.CoordinatingAgencyIds ?? new List<Guid>(),
                     UnitId = unitIdToAssign,
                     EvaluationType = evalType,
@@ -168,6 +169,7 @@ namespace Cdsqg.Api.Controllers
                     title = newItem.Title,
                     category = newItem.Category,
                     leadAgencyId = newItem.LeadAgencyId,
+                    assignedAgencyId = newItem.AssignedAgencyId,
                     coordinatingAgencyIds = newItem.CoordinatingAgencyIds,
                     unitId = newItem.UnitId,
                     unitName = assignedUnit?.Name ?? dto.UnitName ?? "%",
@@ -179,18 +181,56 @@ namespace Cdsqg.Api.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { error = "Lỗi khi tạo Mục tiêu / Nhiệm vụ", details = ex.Message });
+                return StatusCode(500, new { error = "Không thể tạo mới Mục tiêu / Nhiệm vụ", details = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// POST /api/planning/items/{id}/assign
+        /// Giao nhiệm vụ cho đơn vị trực thuộc (Cấp 3).
+        /// </summary>
+        [HttpPost("{id:guid}/assign")]
+        public async Task<IActionResult> AssignItem(Guid id, [FromBody] AssignGoalTaskItemRequestDto dto)
+        {
+            try
+            {
+                var item = await _context.GoalTaskItems.FirstOrDefaultAsync(i => i.Id == id);
+                if (item == null)
+                {
+                    return NotFound(new { error = "Không tìm thấy Mục tiêu / Nhiệm vụ để giao." });
+                }
+
+                if (dto.AssignedAgencyId.HasValue && dto.AssignedAgencyId.Value != Guid.Empty)
+                {
+                    var assignedAgency = await _context.Agencies.FirstOrDefaultAsync(a => a.Id == dto.AssignedAgencyId.Value);
+                    if (assignedAgency == null)
+                    {
+                        return BadRequest(new { error = "Không tìm thấy đơn vị trực thuộc được chọn." });
+                    }
+                    if (!assignedAgency.ParentId.HasValue)
+                    {
+                        return BadRequest(new { error = "Đơn vị được chọn phải là đơn vị trực thuộc (Cấp 3)." });
+                    }
+                    item.AssignedAgencyId = dto.AssignedAgencyId.Value;
+                }
+                else
+                {
+                    item.AssignedAgencyId = null;
+                }
+
+                await _context.SaveChangesAsync();
+                return Ok(new { success = true, message = "Đã giao cho đơn vị trực thuộc thành công." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Không thể giao đơn vị trực thuộc", details = ex.Message });
             }
         }
 
         /// <summary>
         /// DELETE /api/planning/items/{id}
-        /// Xóa một Mục tiêu (1A) hoặc Nhiệm vụ (1B) hoặc Sub-Task.
-        /// Chỉ cho phép xóa khi chưa có báo cáo tiến độ.
-        /// <summary>
-        /// DELETE /api/planning/items/{id}
-        /// Xóa một Mục tiêu (1A) hoặc Nhiệm vụ (1B) hoặc Sub-Task.
-        /// Chỉ cho phép xóa khi ở trạng thái Chưa bắt đầu (Chưa có báo cáo/cập nhật tiến độ).
+        /// Xóa một Mục tiêu (1A), Nhiệm vụ (1B) hoặc Sub-Task.
+        /// Chỉ cho phép xóa khi ở trạng thái Chưa bắt đầu (chưa cập nhật tiến độ).
         /// </summary>
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> DeleteItem(Guid id)
@@ -317,6 +357,7 @@ namespace Cdsqg.Api.Controllers
                 item.StartDate = dto.StartDate;
                 item.DueDate = dto.DueDate;
                 item.LeadAgencyId = dto.LeadAgencyId;
+                item.AssignedAgencyId = dto.AssignedAgencyId;
                 item.CoordinatingAgencyIds = dto.CoordinatingAgencyIds ?? new List<Guid>();
                 item.Deliverables = dto.Deliverables ?? new List<TaskDeliverable>();
 

@@ -19,7 +19,12 @@ namespace Cdsqg.Core.Entities
         public Guid AgencyId { get; set; }
         public Agency? Agency { get; set; }
 
+        public Guid? AssignedAgencyId { get; set; }
+        public Agency? AssignedAgency { get; set; }
+
         public ExecutionStatusEnum CalculatedStatus { get; set; } = ExecutionStatusEnum.NotStarted;
+        public ApprovalStatusEnum ApprovalStatus { get; set; } = ApprovalStatusEnum.Approved;
+        public string? RejectionReason { get; set; }
 
         public decimal? LatestProgressValue { get; set; }
         public TextStatusEnum? LatestQualitativeStatus { get; set; }

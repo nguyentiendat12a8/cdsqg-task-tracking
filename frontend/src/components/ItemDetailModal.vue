@@ -72,6 +72,20 @@
             </div>
 
             <div class="border-t border-slate-200/60 pt-2">
+              <span class="text-slate-500 font-semibold uppercase block text-[10px]">Đơn Vị Trực Thuộc Được Giao</span>
+              <span class="font-medium text-slate-800 mt-0.5 block flex items-center justify-between">
+                <span>🏢 {{ item?.assignedAgencyName || 'Chưa giao đơn vị trực thuộc' }}</span>
+                <button 
+                  v-if="canAssignTask" 
+                  @click="openAssignModal" 
+                  class="px-2.5 py-1 bg-blue-600 hover:bg-blue-700 text-white font-bold text-[11px] rounded-lg transition shadow-2xs inline-flex items-center gap-1 cursor-pointer shrink-0 ml-2"
+                >
+                  ⚡ Giao đơn vị trực thuộc
+                </button>
+              </span>
+            </div>
+
+            <div class="border-t border-slate-200/60 pt-2">
               <span class="text-slate-500 font-semibold uppercase block text-[10px]">Đơn Vị Phối Hợp</span>
               <span class="font-medium text-slate-800 mt-0.5 block">
                 🤝 {{ coordinatingNamesDisplay }}
@@ -170,7 +184,7 @@
             >
               <!-- History Log Card Header -->
               <div class="flex flex-wrap justify-between items-center border-b border-slate-100 pb-2.5 gap-2">
-                <div class="flex items-center gap-2">
+                <div class="flex items-center gap-2 flex-wrap">
                   <span class="px-2.5 py-0.5 bg-blue-600 text-white rounded-md font-extrabold text-[11px]">
                     Lần {{ reportHistory.length - idx }}
                   </span>
@@ -180,9 +194,38 @@
                   <span class="text-slate-500 font-semibold text-[11px]">
                     🕒 {{ formatDate(rep.logDate) }}
                   </span>
+
+                  <!-- Approval Status Badge -->
+                  <span v-if="rep.approvalStatus === 'Pending' || rep.approvalStatus === '2'" class="px-2.5 py-0.5 bg-amber-100 text-amber-900 border border-amber-300 rounded-md font-extrabold text-[11px] animate-pulse">
+                    ⏳ Chờ duyệt (Cấp 2 phê duyệt)
+                  </span>
+                  <span v-else-if="rep.approvalStatus === 'Rejected' || rep.approvalStatus === '3'" class="px-2.5 py-0.5 bg-rose-100 text-rose-900 border border-rose-300 rounded-md font-extrabold text-[11px]" :title="rep.rejectionReason">
+                    ❌ Từ chối: {{ rep.rejectionReason || 'Chưa đạt yêu cầu' }}
+                  </span>
+                  <span v-else class="px-2.5 py-0.5 bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-md font-extrabold text-[11px]">
+                    ✅ Đã duyệt
+                  </span>
                 </div>
-                <div class="text-slate-600 font-semibold text-xs">
-                  ✍️ Cán bộ báo cáo: <strong class="text-slate-900 font-bold">{{ rep.createdBy || 'Đơn vị chủ trì' }}</strong>
+                <div class="flex items-center gap-2">
+                  <div class="text-slate-600 font-semibold text-xs">
+                    ✍️ Cán bộ báo cáo: <strong class="text-slate-900 font-bold">{{ rep.createdBy || rep.agencyName || 'Đơn vị chủ trì' }}</strong>
+                  </div>
+
+                  <!-- Action Buttons for Parent Agency to Approve / Reject -->
+                  <div v-if="(rep.approvalStatus === 'Pending' || rep.approvalStatus === '2') && canApproveProgress" class="flex items-center gap-1.5 ml-2">
+                    <button 
+                      @click="approveProgressLog(rep.id || rep.progressLogId)" 
+                      class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] rounded-lg shadow-2xs transition cursor-pointer"
+                    >
+                      ✓ Duyệt
+                    </button>
+                    <button 
+                      @click="openRejectModal(rep.id || rep.progressLogId)" 
+                      class="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] rounded-lg shadow-2xs transition cursor-pointer"
+                    >
+                      ✕ Từ chối
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -319,11 +362,69 @@
       </div>
 
     </div>
+
+    <!-- Modal Giao Nhiệm Vụ cho Đơn Vị Trực Thuộc -->
+    <div v-if="isAssignModalOpen" @click.self="isAssignModalOpen = false" class="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-5 space-y-4">
+        <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+          <h4 class="font-bold text-slate-800 text-sm">⚡ Giao Đơn Vị Trực Thuộc</h4>
+          <button @click="isAssignModalOpen = false" class="text-slate-400 hover:text-slate-600">✕</button>
+        </div>
+        <div class="space-y-3">
+          <p class="text-xs text-slate-600">Chọn đơn vị trực thuộc để giao cho <strong>{{ item?.code }}: {{ item?.title }}</strong>:</p>
+          <div v-if="isLoadingSubAgencies" class="py-4 text-center">
+            <LoadingSpinner size="sm" message="Đang tải danh sách đơn vị..." />
+          </div>
+          <div v-else-if="subAgencyOptions.length === 0" class="p-3 bg-amber-50 text-amber-800 text-xs rounded-xl border border-amber-200">
+            Cơ quan chủ trì <strong>{{ item?.leadAgencyName }}</strong> hiện chưa có đơn vị trực thuộc nào trong hệ thống.
+          </div>
+          <select 
+            v-else
+            v-model="selectedSubAgencyId" 
+            class="w-full text-xs font-bold text-slate-800 bg-slate-50 border border-slate-300 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">-- Bỏ giao (Chưa giao đơn vị trực thuộc) --</option>
+            <option v-for="sub in subAgencyOptions" :key="sub.id" :value="sub.id">
+              🏢 {{ sub.name }}
+            </option>
+          </select>
+        </div>
+        <div class="flex justify-end gap-2 border-t border-slate-100 pt-3">
+          <button @click="isAssignModalOpen = false" class="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-xl font-bold">Hủy</button>
+          <button @click="submitAssignTask" class="px-4 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-2xs">Lưu Giao Đơn Vị Trực Thuộc</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal Từ Chối Báo Cáo Tiến Độ -->
+    <div v-if="isRejectModalOpen" @click.self="isRejectModalOpen = false" class="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-5 space-y-4">
+        <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+          <h4 class="font-bold text-rose-700 text-sm">❌ Từ Chối Báo Cáo Tiến Độ</h4>
+          <button @click="isRejectModalOpen = false" class="text-slate-400 hover:text-slate-600">✕</button>
+        </div>
+        <div class="space-y-3">
+          <p class="text-xs text-slate-600">Điền lý do từ chối báo cáo tiến độ từ đơn vị trực thuộc (Option):</p>
+          <textarea 
+            v-model="rejectionReasonInput" 
+            rows="3" 
+            placeholder="Nhập lý do từ chối (e.g. Số liệu chưa đầy đủ, file minh chứng không hợp lệ...)" 
+            class="w-full text-xs font-medium bg-slate-50 border border-slate-300 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-rose-500"
+          ></textarea>
+        </div>
+        <div class="flex justify-end gap-2 border-t border-slate-100 pt-3">
+          <button @click="isRejectModalOpen = false" class="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-xl font-bold">Hủy</button>
+          <button @click="submitRejectProgressLog" class="px-4 py-1.5 text-xs bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-2xs">Xác Nhận Từ Chối</button>
+        </div>
+      </div>
+    </div>
+
   </div>
 </template>
 
 <script setup>
 import { ref, computed, watch } from 'vue';
+import { toast } from 'vue3-toastify';
 import LoadingSpinner from './LoadingSpinner.vue';
 import { getApiUrl } from '../config/api';
 import { authState } from '../services/auth';
@@ -565,10 +666,133 @@ async function loadHistories() {
   }
 }
 
+
+const isAssignModalOpen = ref(false);
+const selectedSubAgencyId = ref('');
+const subAgencyOptions = ref([]);
+const isLoadingSubAgencies = ref(false);
+
+const isRejectModalOpen = ref(false);
+const rejectTargetLogId = ref(null);
+const rejectionReasonInput = ref('');
+
+const userAgencyId = computed(() => authState.user.value?.agencyId ? String(authState.user.value.agencyId).toLowerCase() : '');
+
+const canAssignTask = computed(() => {
+  if (!props.item) return false;
+  if (authState.isAdmin.value) return true;
+  if (userAgencyId.value && props.item.leadAgencyId && String(props.item.leadAgencyId).toLowerCase() === userAgencyId.value) {
+    return true;
+  }
+  return false;
+});
+
+const canApproveProgress = computed(() => {
+  if (!props.item) return false;
+  if (authState.isAdmin.value) return true;
+  if (userAgencyId.value && props.item.leadAgencyId && String(props.item.leadAgencyId).toLowerCase() === userAgencyId.value) {
+    return true;
+  }
+  return false;
+});
+
+async function openAssignModal() {
+  if (!props.item) return;
+  isAssignModalOpen.value = true;
+  isLoadingSubAgencies.value = true;
+  selectedSubAgencyId.value = props.item.assignedAgencyId || '';
+  try {
+    const res = await fetch(getApiUrl('/api/agencies'));
+    if (res.ok) {
+      const data = await res.json();
+      const allAgencies = Array.isArray(data) ? data : (data.items || []);
+      const userAgencyId = authState.user.value?.agencyId || authState.currentAgency.value?.id;
+      const targetLeadId = props.item.leadAgencyId;
+
+      subAgencyOptions.value = allAgencies.filter(a => 
+        a.parentId && (
+          (targetLeadId && String(a.parentId).toLowerCase() === String(targetLeadId).toLowerCase()) ||
+          (userAgencyId && String(a.parentId).toLowerCase() === String(userAgencyId).toLowerCase())
+        )
+      );
+    }
+  } catch (e) {
+    toast.error('Không thể tải danh sách đơn vị trực thuộc.');
+  } finally {
+    isLoadingSubAgencies.value = false;
+  }
+}
+
+async function submitAssignTask() {
+  if (!props.item) return;
+  const taskId = props.item.taskId || props.item.id;
+  try {
+    const res = await fetch(getApiUrl(`/api/planning/items/${taskId}/assign`), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ assignedAgencyId: selectedSubAgencyId.value || null })
+    });
+
+    if (res.ok) {
+      toast.success('Đã giao cho đơn vị trực thuộc thành công.');
+      const selectedSub = subAgencyOptions.value.find(s => s.id === selectedSubAgencyId.value);
+      props.item.assignedAgencyId = selectedSubAgencyId.value || null;
+      props.item.assignedAgencyName = selectedSub ? selectedSub.name : null;
+      isAssignModalOpen.value = false;
+    } else {
+      const err = await res.json().catch(() => ({}));
+      toast.error(err.error || 'Giao đơn vị trực thuộc thất bại.');
+    }
+  } catch (e) {
+    toast.error('Lỗi kết nối khi giao đơn vị trực thuộc.');
+  }
+}
+
+async function approveProgressLog(logId) {
+  if (!logId) return;
+  try {
+    const res = await fetch(getApiUrl(`/api/execution/approve/${logId}`), { method: 'POST' });
+    if (res.ok) {
+      toast.success('Đã phê duyệt báo cáo tiến độ thành công!');
+      loadHistories();
+    } else {
+      toast.error('Phê duyệt thất bại.');
+    }
+  } catch (e) {
+    toast.error('Lỗi khi phê duyệt báo cáo.');
+  }
+}
+
+function openRejectModal(logId) {
+  rejectTargetLogId.value = logId;
+  rejectionReasonInput.value = '';
+  isRejectModalOpen.value = true;
+}
+
+async function submitRejectProgressLog() {
+  if (!rejectTargetLogId.value) return;
+  try {
+    const res = await fetch(getApiUrl(`/api/execution/reject/${rejectTargetLogId.value}`), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason: rejectionReasonInput.value || 'Chưa đạt yêu cầu' })
+    });
+    if (res.ok) {
+      toast.info('Đã từ chối báo cáo tiến độ.');
+      isRejectModalOpen.value = false;
+      loadHistories();
+    } else {
+      toast.error('Từ chối thất bại.');
+    }
+  } catch (e) {
+    toast.error('Lỗi khi từ chối báo cáo.');
+  }
+}
+
 watch(() => [props.isOpen, props.item, props.initialTab], ([isOpen, item, tab]) => {
   if (isOpen && item) {
     selectedAgencyFilter.value = '';
-    activeTab.value = tab || 'info';
+    activeTab.value = (tab === 'history' ? 'reports' : tab) || 'info';
     loadHistories();
   }
 }, { immediate: true });

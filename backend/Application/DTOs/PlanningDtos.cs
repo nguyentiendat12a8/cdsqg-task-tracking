@@ -35,6 +35,9 @@ namespace Cdsqg.Application.DTOs
         public Guid LeadAgencyId { get; set; }
         public string LeadAgencyCode { get; set; } = string.Empty;
         public string LeadAgencyName { get; set; } = string.Empty;
+        public Guid? AssignedAgencyId { get; set; }
+        public string? AssignedAgencyCode { get; set; }
+        public string? AssignedAgencyName { get; set; }
         public List<Guid> CoordinatingAgencyIds { get; set; } = new List<Guid>();
         public List<string> CoordinatingAgencyCodes { get; set; } = new List<string>();
         public List<string> CoordinatingAgencyNames { get; set; } = new List<string>();
@@ -48,6 +51,8 @@ namespace Cdsqg.Application.DTOs
         public string? LatestProgressStatus { get; set; }
         public DateTime? LastUpdated { get; set; }
         public DateTime? CreatedAt { get; set; }
+
+        public bool HasPendingApproval { get; set; } = false;
 
         /// <summary>
         /// 6-status execution evaluation status: NotStarted, InProgressOnTime, InProgressOverdue, CompletedOnTime, CompletedOverdue, ExpiringSoon
@@ -78,6 +83,7 @@ namespace Cdsqg.Application.DTOs
         public DateTime? DueDate { get; set; }
 
         public Guid LeadAgencyId { get; set; }
+        public Guid? AssignedAgencyId { get; set; }
         public List<Guid> CoordinatingAgencyIds { get; set; } = new List<Guid>();
 
         public Guid? UnitId { get; set; }
@@ -111,9 +117,15 @@ namespace Cdsqg.Application.DTOs
         public DateTime? StartDate { get; set; }
         public DateTime? DueDate { get; set; }
         public Guid LeadAgencyId { get; set; }
+        public Guid? AssignedAgencyId { get; set; }
         public List<Guid> CoordinatingAgencyIds { get; set; } = new List<Guid>();
         public Guid? UnitId { get; set; }
         public string? UnitName { get; set; }
         public List<TaskDeliverable> Deliverables { get; set; } = new List<TaskDeliverable>();
+    }
+
+    public class AssignGoalTaskItemRequestDto
+    {
+        public Guid? AssignedAgencyId { get; set; }
     }
 }

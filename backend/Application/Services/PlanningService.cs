@@ -135,6 +135,13 @@ namespace Cdsqg.Application.Services
                     LeadAgencyId = item.LeadAgencyId,
                     LeadAgencyCode = item.LeadAgency?.Code ?? string.Empty,
                     LeadAgencyName = item.LeadAgency?.Name ?? string.Empty,
+                    AssignedAgencyId = item.AssignedAgencyId,
+                    AssignedAgencyCode = item.AssignedAgencyId.HasValue && agenciesMap.ContainsKey(item.AssignedAgencyId.Value)
+                        ? agenciesMap[item.AssignedAgencyId.Value].Code
+                        : null,
+                    AssignedAgencyName = item.AssignedAgencyId.HasValue && agenciesMap.ContainsKey(item.AssignedAgencyId.Value)
+                        ? agenciesMap[item.AssignedAgencyId.Value].Name
+                        : null,
                     CoordinatingAgencyIds = item.CoordinatingAgencyIds,
                     CoordinatingAgencyCodes = coordAgencies.Select(a => a.Code).ToList(),
                     CoordinatingAgencyNames = coordAgencies.Select(a => a.Name).ToList(),
@@ -146,6 +153,7 @@ namespace Cdsqg.Application.Services
                     LatestProgressStatus = latestLog?.QualitativeStatus?.ToString(),
                     LastUpdated = latestLog?.LogDate ?? item.LastUpdated ?? item.CreatedAt,
                     CreatedAt = item.CreatedAt,
+                    HasPendingApproval = item.ProgressLogs != null && item.ProgressLogs.Any(l => l.ApprovalStatus == ApprovalStatusEnum.Pending),
                     CalculatedStatus = status.ToString(),
                     CustomBaseline = item.CustomBaseline ?? new Dictionary<string, string>(),
                     Deliverables = agencyDeliverables,
@@ -417,9 +425,11 @@ namespace Cdsqg.Application.Services
         {
             if (item?.ProgressLogs == null || !item.ProgressLogs.Any()) return null;
 
+            var approvedLogs = item.ProgressLogs.Where(l => l.ApprovalStatus == ApprovalStatusEnum.Approved);
+
             if (item.IsGeneralTask && agencyId.HasValue && agencyId.Value != Guid.Empty)
             {
-                var agencyLog = item.ProgressLogs
+                var agencyLog = approvedLogs
                     .Where(l => l.AgencyId == agencyId.Value)
                     .OrderByDescending(l => l.LogDate)
                     .FirstOrDefault();
@@ -427,7 +437,7 @@ namespace Cdsqg.Application.Services
                 return agencyLog;
             }
 
-            return item.ProgressLogs.OrderByDescending(l => l.LogDate).FirstOrDefault();
+            return approvedLogs.OrderByDescending(l => l.LogDate).FirstOrDefault();
         }
 
         public static ExecutionStatusEnum CalculateExecutionStatus(GoalTaskItem item, ProgressLog? latestLog, List<TaskDeliverable>? customDeliverables = null)
@@ -459,20 +469,6 @@ namespace Cdsqg.Application.Services
                 isCompleted = deliverables.All(d => 
                     string.Equals(d.CurrentStatus, "Completed", StringComparison.OrdinalIgnoreCase) || 
                     string.Equals(d.CurrentStatus, "4", StringComparison.OrdinalIgnoreCase));
-
-                if (!isCompleted)
-                {
-                    bool hasOverdueDeliverable = deliverables.Any(d => 
-                        d.DueDate.HasValue && 
-                        now.Date > d.DueDate.Value.Date && 
-                        !string.Equals(d.CurrentStatus, "Completed", StringComparison.OrdinalIgnoreCase) &&
-                        !string.Equals(d.CurrentStatus, "4", StringComparison.OrdinalIgnoreCase));
-
-                    if (hasOverdueDeliverable || (item.DueDate.HasValue && now.Date > item.DueDate.Value.Date))
-                    {
-                        return ExecutionStatusEnum.InProgressOverdue;
-                    }
-                }
             }
             else if (item.EvaluationType == EvaluationTypeEnum.Quantitative)
             {
@@ -501,25 +497,56 @@ namespace Cdsqg.Application.Services
                 return ExecutionStatusEnum.CompletedOnTime;
             }
 
-            if (deliverables != null && deliverables.Any())
-            {
-                bool hasStarted = deliverables.Any(d => 
-                    !string.Equals(d.CurrentStatus, "NotStarted", StringComparison.OrdinalIgnoreCase) && 
-                    !string.Equals(d.CurrentStatus, "1", StringComparison.OrdinalIgnoreCase));
+            bool hasStarted = false;
 
-                if (!hasStarted && (latestLog == null || latestLog.QualitativeStatus == TextStatusEnum.NotStarted))
+            if (item.StartDate.HasValue && now.Date < item.StartDate.Value.Date)
+            {
+                hasStarted = false;
+            }
+            else
+            {
+                if (deliverables != null && deliverables.Any())
                 {
-                    if (item.DueDate.HasValue && now.Date > item.DueDate.Value.Date) return ExecutionStatusEnum.InProgressOverdue;
-                    return ExecutionStatusEnum.NotStarted;
+                    hasStarted = deliverables.Any(d => 
+                        !string.Equals(d.CurrentStatus, "NotStarted", StringComparison.OrdinalIgnoreCase) && 
+                        !string.Equals(d.CurrentStatus, "1", StringComparison.OrdinalIgnoreCase) &&
+                        !string.IsNullOrEmpty(d.CurrentStatus));
+                }
+
+                if (!hasStarted && latestLog != null)
+                {
+                    if (latestLog.QualitativeStatus != null && latestLog.QualitativeStatus != TextStatusEnum.NotStarted)
+                    {
+                        hasStarted = true;
+                    }
+                    else if (latestLog.QuantitativeValue > 0 || (latestLog.CalculatedProgressPercentage.HasValue && latestLog.CalculatedProgressPercentage.Value > 0))
+                    {
+                        hasStarted = true;
+                    }
                 }
             }
-            else if (latestLog == null || (latestLog.QuantitativeValue == 0 && (latestLog.QualitativeStatus == null || latestLog.QualitativeStatus == TextStatusEnum.NotStarted)))
+
+            if (!hasStarted)
             {
-                if (item.DueDate.HasValue && now.Date > item.DueDate.Value.Date) return ExecutionStatusEnum.InProgressOverdue;
                 return ExecutionStatusEnum.NotStarted;
             }
 
-            if (item.DueDate.HasValue && now.Date > item.DueDate.Value.Date)
+            bool isOverdue = false;
+            if (deliverables != null && deliverables.Any())
+            {
+                isOverdue = deliverables.Any(d => 
+                    d.DueDate.HasValue && 
+                    now.Date > d.DueDate.Value.Date && 
+                    !string.Equals(d.CurrentStatus, "Completed", StringComparison.OrdinalIgnoreCase) &&
+                    !string.Equals(d.CurrentStatus, "4", StringComparison.OrdinalIgnoreCase));
+            }
+
+            if (!isOverdue && item.DueDate.HasValue && now.Date > item.DueDate.Value.Date)
+            {
+                isOverdue = true;
+            }
+
+            if (isOverdue)
             {
                 return ExecutionStatusEnum.InProgressOverdue;
             }

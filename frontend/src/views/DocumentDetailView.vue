@@ -10,14 +10,23 @@
           </h2>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
           <button 
-            @click="exportDocumentItemsToExcel"
+            @click="handleExportProgressReport"
             class="px-3.5 py-2 text-slate-700 hover:text-slate-900 font-bold text-xs rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200/80 transition shadow-2xs flex items-center gap-1.5 cursor-pointer"
-            title="Xuất danh sách hiện tại ra file Excel"
+            title="Xuất file mẫu Excel báo cáo tiến độ để điền thông tin"
           >
             <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-            <span>Xuất Excel</span>
+            <span>Xuất Excel Báo Cáo Tiến Độ</span>
+          </button>
+
+          <button 
+            @click="isProgressImportModalOpen = true"
+            class="px-3.5 py-2 text-emerald-800 hover:text-emerald-950 font-bold text-xs rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition shadow-2xs flex items-center gap-1.5 cursor-pointer"
+            title="Import file Excel chứa tiến độ thực hiện mới vào hệ thống"
+          >
+            <svg class="w-4 h-4 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+            <span>Import Báo Cáo Tiến Độ</span>
           </button>
 
           <button 
@@ -158,6 +167,7 @@
                   {{ filterItemType === 'Goal' ? 'Tên Mục Tiêu' : (filterItemType === 'Task' ? 'Tên Nhiệm Vụ' : 'Tên Mục Tiêu / Nhiệm Vụ') }}
                 </th>
                 <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[150px] w-[150px] max-w-[150px]">Cơ Quan Chủ Trì</th>
+                <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[170px] w-[170px] max-w-[170px]">Giao Đơn Vị Trực Thuộc</th>
                 <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[160px] w-[160px] max-w-[160px]">Cơ Quan Phối Hợp</th>
                 <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 whitespace-nowrap min-w-[150px]">Thời Gian thực hiện</th>
                 <th class="px-3 py-2.5 border-r border-slate-200 text-center bg-slate-100 whitespace-nowrap min-w-[120px]">Tiến Độ</th>
@@ -195,6 +205,15 @@
                   <td class="px-3 py-2.5 border-r border-slate-200 font-bold text-slate-800 text-xs leading-relaxed min-w-[150px] w-[150px] max-w-[150px]">
                     {{ item.leadAgencyName }}
                   </td>
+                  <td class="px-3 py-2.5 border-r border-slate-200 font-semibold text-slate-800 text-xs leading-relaxed min-w-[170px] w-[170px] max-w-[170px]" @click.stop>
+                    <span v-if="item.assignedAgencyName" class="text-blue-700 font-extrabold flex items-center gap-1" :title="`Đã giao cho: ${item.assignedAgencyName}`">
+                      🏢 {{ item.assignedAgencyName }}
+                    </span>
+                    <span v-else-if="canAssignTask(item)" @click.stop="openAssignModalFromList(item)" class="text-blue-600 hover:text-blue-800 font-bold italic cursor-pointer flex items-center gap-1 hover:underline" title="Bấm để giao cho đơn vị trực thuộc">
+                      ⚡ Chờ giao...
+                    </span>
+                    <span v-else class="text-slate-400 italic">—</span>
+                  </td>
                   <td class="px-3 py-2.5 border-r border-slate-200 font-medium text-slate-700 text-xs leading-relaxed min-w-[160px]">
                     <template v-if="item.coordinatingAgencyNames && item.coordinatingAgencyNames.length > 0">
                       {{ item.coordinatingAgencyNames.join(', ') }}
@@ -214,17 +233,25 @@
                   </td>
                   <td class="px-3 py-2.5 border-r border-slate-200 text-center text-xs whitespace-nowrap">
                     <span v-if="authState.isAdmin.value && isGeneralTaskOrAllAgencies(item)" class="text-slate-400 font-semibold italic">—</span>
+                    <span v-else-if="item.hasPendingApproval && !canUpdateProgress(item)" class="font-extrabold px-2 py-0.5 rounded-lg text-xs bg-amber-50 text-amber-800 border border-amber-200 animate-pulse" title="Báo cáo mới đang chờ Cấp 2 phê duyệt">
+                      ⏳ Chờ Cấp 2 duyệt
+                    </span>
                     <span v-else :class="['font-extrabold px-2 py-0.5 rounded-lg text-xs', item.latestProgressValue !== null && item.latestProgressValue !== undefined ? 'bg-blue-50 text-blue-900 border border-blue-200' : (item.latestProgressStatus ? 'bg-slate-100 text-slate-800' : 'text-slate-400 italic')]">
                       {{ formatProgressDisplay(item) }}
                     </span>
                   </td>
                   <td class="px-3 py-2.5 border-r border-slate-200 text-center whitespace-nowrap">
-                    <span v-if="authState.isAdmin.value && isGeneralTaskOrAllAgencies(item)" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-500 italic border border-slate-200">
-                      —
-                    </span>
-                    <span v-else :class="['px-2.5 py-0.5 rounded-full text-xs font-bold shadow-2xs inline-block whitespace-nowrap', getStatusBadgeClass(item.calculatedStatus)]">
-                      {{ getStatusLabel(item.calculatedStatus) }}
-                    </span>
+                    <div class="flex flex-col items-center gap-1">
+                      <span v-if="authState.isAdmin.value && isGeneralTaskOrAllAgencies(item)" class="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-500 italic border border-slate-200">
+                        —
+                      </span>
+                      <span v-else :class="['px-2.5 py-0.5 rounded-full text-xs font-bold shadow-2xs inline-block whitespace-nowrap', getStatusBadgeClass(item.calculatedStatus)]">
+                        {{ getStatusLabel(item.calculatedStatus) }}
+                      </span>
+                      <span v-if="item.hasPendingApproval" class="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-amber-100 text-amber-900 border border-amber-300 animate-pulse cursor-pointer" @click.stop="openItemDetailModal(item, 'history')" title="Có báo cáo tiến độ mới chờ Cấp 2 phê duyệt. Bấm để xem chi tiết.">
+                        ⏳ Báo cáo chờ duyệt
+                      </span>
+                    </div>
                   </td>
                   <td class="px-3 py-2.5 text-center whitespace-nowrap" @click.stop>
                     <div class="inline-flex items-center justify-center gap-1.5 whitespace-nowrap">
@@ -268,7 +295,17 @@
                         </button>
 
                         <template #popper="{ hide }">
-                          <div class="py-1.5 w-44 bg-white rounded-xl shadow-xl border border-slate-200 text-xs font-semibold space-y-0.5" @click.stop>
+                          <div class="py-1.5 w-48 bg-white rounded-xl shadow-xl border border-slate-200 text-xs font-semibold space-y-0.5" @click.stop>
+                            <button 
+                              v-if="canAssignTask(item)"
+                              @click="openAssignModalFromList(item); hide()" 
+                              class="w-full text-left px-3 py-2 flex items-center gap-2 transition text-blue-700 hover:bg-blue-50 cursor-pointer"
+                              title="Giao cho đơn vị trực thuộc"
+                            >
+                              <svg class="w-4 h-4 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                              <span>Giao đơn vị trực thuộc</span>
+                            </button>
+
                             <button 
                               v-if="authState.isAdmin.value && !hasProgress(item)"
                               @click="openEditModal(item); hide()" 
@@ -333,6 +370,15 @@
                   </td>
                   <td class="px-3 py-2 border-r border-slate-200 font-semibold text-slate-700 min-w-[150px] w-[150px] max-w-[150px]">
                     {{ sub.leadAgencyName }}
+                  </td>
+                  <td class="px-3 py-2 border-r border-slate-200 font-semibold text-slate-700 text-xs min-w-[170px] w-[170px] max-w-[170px]" @click.stop>
+                    <span v-if="sub.assignedAgencyName" class="text-blue-700 font-extrabold flex items-center gap-1" :title="`Đã giao cho: ${sub.assignedAgencyName}`">
+                      🏢 {{ sub.assignedAgencyName }}
+                    </span>
+                    <span v-else-if="canAssignTask(sub)" @click.stop="openAssignModalFromList(sub)" class="text-blue-600 hover:text-blue-800 font-bold italic cursor-pointer flex items-center gap-1 hover:underline" title="Bấm để giao cho đơn vị trực thuộc">
+                      ⚡ Chờ giao...
+                    </span>
+                    <span v-else class="text-slate-400 italic">—</span>
                   </td>
                   <td class="px-3 py-2 border-r border-slate-200 font-medium text-slate-600 text-xs leading-relaxed min-w-[160px]">
                     <template v-if="sub.coordinatingAgencyNames && sub.coordinatingAgencyNames.length > 0">
@@ -605,16 +651,26 @@
             </p>
           </div>
 
-          <!-- Lead Agency & Coordinating Agencies -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- Lead Agency, Assigned Sub-Agency & Coordinating Agencies -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <SearchableSelect 
                 v-model="createForm.leadAgencyId" 
                 :options="leadAgencyOptions" 
                 :isMulti="false" 
                 :required="true"
-                label="Đơn Vị Chủ Trì" 
+                label="Đơn Vị Chủ Trì (Cấp 2)" 
                 placeholder="-- Chọn đơn vị chủ trì --"
+              />
+            </div>
+            <div>
+              <SearchableSelect 
+                v-model="createForm.assignedAgencyId" 
+                :options="createAssignedAgencyOptions" 
+                :isMulti="false" 
+                label="Giao Đơn Vị Trực Thuộc" 
+                placeholder="-- Chọn đơn vị trực thuộc --"
+                :disabled="!createForm.leadAgencyId || createAssignedAgencyOptions.length === 0"
               />
             </div>
             <div>
@@ -834,16 +890,26 @@
             </div>
           </div>
 
-          <!-- Lead Agency & Coordinating Agencies -->
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <!-- Lead Agency, Assigned Sub-Agency & Coordinating Agencies -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <SearchableSelect 
                 v-model="editForm.leadAgencyId" 
                 :options="leadAgencyOptions" 
                 :isMulti="false" 
                 :required="true"
-                label="Đơn Vị Chủ Trì" 
+                label="Đơn Vị Chủ Trì (Cấp 2)" 
                 placeholder="-- Chọn đơn vị chủ trì --"
+              />
+            </div>
+            <div>
+              <SearchableSelect 
+                v-model="editForm.assignedAgencyId" 
+                :options="editAssignedAgencyOptions" 
+                :isMulti="false" 
+                label="Giao Đơn Vị Trực Thuộc" 
+                placeholder="-- Chọn đơn vị trực thuộc --"
+                :disabled="!editForm.leadAgencyId || editAssignedAgencyOptions.length === 0"
               />
             </div>
             <div>
@@ -930,6 +996,47 @@
       @edit="openEditModal"
     />
 
+    <!-- Modal Giao Nhiệm Vụ cho Đơn Vị Trực Thuộc từ Danh Sách -->
+    <div v-if="isAssignModalOpen" @click.self="isAssignModalOpen = false" class="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-5 space-y-4 font-sans">
+        <div class="flex justify-between items-center border-b border-slate-100 pb-2">
+          <h4 class="font-bold text-slate-800 text-sm">⚡ Giao Đơn Vị Trực Thuộc</h4>
+          <button @click="isAssignModalOpen = false" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
+        </div>
+        <div class="space-y-3">
+          <p class="text-xs text-slate-600">Chọn đơn vị trực thuộc để giao cho <strong>{{ assignItemTarget?.code }}: {{ assignItemTarget?.title }}</strong>:</p>
+          <div v-if="assignSubAgencyOptions.length === 0" class="p-3 bg-amber-50 text-amber-800 text-xs rounded-xl border border-amber-200 font-semibold">
+            Cơ quan chủ trì <strong>{{ assignItemTarget?.leadAgencyName || 'này' }}</strong> hiện chưa có đơn vị trực thuộc nào trong hệ thống.
+          </div>
+          <select 
+            v-else
+            v-model="selectedSubAgencyId" 
+            class="w-full text-xs font-bold text-slate-800 bg-slate-50 border border-slate-300 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-blue-500"
+          >
+            <option value="">-- Bỏ giao (Chưa giao đơn vị trực thuộc) --</option>
+            <option v-for="sub in assignSubAgencyOptions" :key="sub.id" :value="sub.id">
+              🏢 {{ sub.name }}
+            </option>
+          </select>
+        </div>
+        <div class="flex justify-end gap-2 border-t border-slate-100 pt-3">
+          <button @click="isAssignModalOpen = false" class="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-xl font-bold cursor-pointer">Hủy</button>
+          <button @click="submitAssignTaskFromList" class="px-4 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-2xs cursor-pointer">Lưu Giao Đơn Vị Trực Thuộc</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress Import Modal -->
+    <ProgressImportModal
+      :isOpen="isProgressImportModalOpen"
+      :items="rawItemsList"
+      :agencyId="userAgencyId"
+      :userRole="userRoleStr"
+      :currentAgency="currentUserAgencyObj"
+      @close="isProgressImportModalOpen = false"
+      @imported="handleProgressImported"
+    />
+
   </div>
 </template>
 
@@ -942,13 +1049,14 @@ import DynamicPlanningGrid from '../components/DynamicPlanningGrid.vue';
 import SearchableSelect from '../components/SearchableSelect.vue';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
 import ProgressUpdateModal from '../components/ProgressUpdateModal.vue';
+import ProgressImportModal from '../components/ProgressImportModal.vue';
 import SendNotificationModal from '../components/SendNotificationModal.vue';
 import ItemDetailModal from '../components/ItemDetailModal.vue';
 import DatePicker from '../components/DatePicker.vue';
 import OverlayPanel from '../components/OverlayPanel.vue';
 import { getApiUrl } from '../config/api';
 import { GOAL_SECTIONS, GOAL_GROUPS, TASK_SECTIONS, TASK_GROUPS } from '../config/planningStructureConfig';
-import { exportToExcel } from '../utils/excelExport';
+import { exportToExcel, exportProgressReportTemplate } from '../utils/excelExport';
 import { parseApiError } from '../utils/errorUtils';
 
 const props = defineProps({
@@ -972,8 +1080,26 @@ watch(() => [props.subTab, props.filterItemType], ([newSubTab, itemType]) => {
   }
 }, { immediate: true });
 
+const userAgencyId = computed(() => authState.user.value?.agencyId || authState.user.value?.agency?.id || null);
+const userRoleStr = computed(() => authState.user.value?.role || (authState.isAdmin.value ? 'Admin' : 'Level2'));
+const currentUserAgencyObj = computed(() => authState.user.value?.agency || null);
+
 const isProgressModalOpen = ref(false);
 const selectedTaskForProgress = ref(null);
+const isProgressImportModalOpen = ref(false);
+
+function handleExportProgressReport() {
+  exportProgressReportTemplate({
+    items: filteredItems.value || [],
+    currentAgency: currentUserAgencyObj.value,
+    userRole: userRoleStr.value,
+    fileName: `Bao_Cao_Tien_Do_${props.filterItemType === 'Goal' ? 'Muc_Tieu' : 'Nhiem_Vu'}`
+  });
+}
+
+function handleProgressImported() {
+  fetchDocumentData();
+}
 
 const isNotificationModalOpen = ref(false);
 const selectedItemForNotification = ref(null);
@@ -1082,6 +1208,7 @@ const createForm = ref({
   startDate: '',
   dueDate: '',
   leadAgencyId: '',
+  assignedAgencyId: '',
   coordinatingAgencyIds: [],
   deliverables: []
 });
@@ -1101,6 +1228,7 @@ const editForm = ref({
   startDate: '',
   dueDate: '',
   leadAgencyId: '',
+  assignedAgencyId: '',
   coordinatingAgencyIds: [],
   deliverables: []
 });
@@ -1153,12 +1281,28 @@ const agencyOptions = computed(() => {
 });
 
 const leadAgencyOptions = computed(() => {
-  return agencies.value.map(ag => {
-    if (ag.code === 'ALL_AGENCIES') {
-      return { value: ag.id, label: `🌐 ${ag.name} (Tất cả đơn vị)` };
-    }
-    return { value: ag.id, label: ag.name };
-  });
+  return agencies.value
+    .filter(ag => ag.code === 'ALL_AGENCIES' || (ag.type !== 3 && !ag.parentId))
+    .map(ag => {
+      if (ag.code === 'ALL_AGENCIES') {
+        return { value: ag.id, label: `🌐 ${ag.name} (Tất cả đơn vị)` };
+      }
+      return { value: ag.id, label: ag.name };
+    });
+});
+
+const createAssignedAgencyOptions = computed(() => {
+  if (!createForm.value.leadAgencyId) return [];
+  return agencies.value
+    .filter(ag => ag.parentId === createForm.value.leadAgencyId)
+    .map(ag => ({ value: ag.id, label: ag.name }));
+});
+
+const editAssignedAgencyOptions = computed(() => {
+  if (!editForm.value.leadAgencyId) return [];
+  return agencies.value
+    .filter(ag => ag.parentId === editForm.value.leadAgencyId)
+    .map(ag => ({ value: ag.id, label: ag.name }));
 });
 
 const coordinatingAgencyOptions = computed(() => {
@@ -1177,7 +1321,18 @@ watch(() => createForm.value.leadAgencyId, (newId) => {
   } else {
     createForm.value.isGeneralTask = false;
   }
+  if (createForm.value.assignedAgencyId) {
+    const isChild = agencies.value.some(a => a.id === createForm.value.assignedAgencyId && a.parentId === newId);
+    if (!isChild) createForm.value.assignedAgencyId = '';
+  }
 }, { immediate: true });
+
+watch(() => editForm.value.leadAgencyId, (newId) => {
+  if (editForm.value.assignedAgencyId) {
+    const isChild = agencies.value.some(a => a.id === editForm.value.assignedAgencyId && a.parentId === newId);
+    if (!isChild) editForm.value.assignedAgencyId = '';
+  }
+});
 
 const yearOptions = computed(() => [2026, 2027, 2028, 2029, 2030].map(y => ({ value: y, label: String(y) })));
 const pageSizeOptions = ref([10, 25, 50, 100].map(n => ({ value: n, label: String(n) })));
@@ -1306,7 +1461,9 @@ function canUpdateProgress(item) {
   // thì chỉ áp dụng cho đơn vị cha (ParentId == null)
   if (isParentAgency && isGeneralTaskOrAllAgencies(item)) return true;
 
-  return item.leadAgencyId && String(item.leadAgencyId).toLowerCase() === userAgencyId;
+  const isLead = item.leadAgencyId && String(item.leadAgencyId).toLowerCase() === userAgencyId;
+  const isAssigned = item.assignedAgencyId && String(item.assignedAgencyId).toLowerCase() === userAgencyId;
+  return isLead || isAssigned;
 }
 
 function isCoordinatingOnly(item) {
@@ -1322,8 +1479,9 @@ function isCoordinatingOnly(item) {
   if (isParentAgency && isGeneralTaskOrAllAgencies(item)) return false;
 
   const isLead = item.leadAgencyId && String(item.leadAgencyId).toLowerCase() === userAgencyId;
+  const isAssigned = item.assignedAgencyId && String(item.assignedAgencyId).toLowerCase() === userAgencyId;
   const isCoord = item.coordinatingAgencyIds && item.coordinatingAgencyIds.some(id => String(id).toLowerCase() === userAgencyId);
-  return !isLead && isCoord;
+  return !isLead && !isAssigned && isCoord;
 }
 
 const filteredList = computed(() => {
@@ -1347,19 +1505,22 @@ const filteredList = computed(() => {
 
     list = list.filter(i => {
       const itemLeadId = i.leadAgencyId ? String(i.leadAgencyId).toLowerCase() : '';
+      const itemAssignedId = i.assignedAgencyId ? String(i.assignedAgencyId).toLowerCase() : '';
       const itemCoordIds = (i.coordinatingAgencyIds || []).map(id => String(id).toLowerCase());
 
       const isGeneral = isParentAgency && isGeneralTaskOrAllAgencies(i);
       const isLead = scopedAgencyIds.includes(itemLeadId);
+      const isAssigned = itemAssignedId && scopedAgencyIds.includes(itemAssignedId);
       const isCoord = itemCoordIds.some(id => scopedAgencyIds.includes(id));
       const isSubMatch = i.subItems?.some(s => {
         const sLeadId = s.leadAgencyId ? String(s.leadAgencyId).toLowerCase() : '';
+        const sAssignedId = s.assignedAgencyId ? String(s.assignedAgencyId).toLowerCase() : '';
         const sCoordIds = (s.coordinatingAgencyIds || []).map(id => String(id).toLowerCase());
         const sIsGeneral = isParentAgency && isGeneralTaskOrAllAgencies(s);
-        return sIsGeneral || scopedAgencyIds.includes(sLeadId) || sCoordIds.some(id => scopedAgencyIds.includes(id));
+        return sIsGeneral || scopedAgencyIds.includes(sLeadId) || (sAssignedId && scopedAgencyIds.includes(sAssignedId)) || sCoordIds.some(id => scopedAgencyIds.includes(id));
       });
 
-      return isGeneral || isLead || isCoord || isSubMatch;
+      return isGeneral || isLead || isAssigned || isCoord || isSubMatch;
     });
   }
 
@@ -1469,6 +1630,7 @@ function exportDocumentItemsToExcel() {
     "Mã",
     isGoal ? "Tên Mục Tiêu" : "Tên Nhiệm Vụ",
     "Cơ Quan Chủ Trì",
+    "Giao Đơn Vị Trực Thuộc",
     "Cơ Quan Phối Hợp",
     "Thời Gian Thực Hiện",
     "Tiến Độ Hiện Tại (%)",
@@ -1480,10 +1642,11 @@ function exportDocumentItemsToExcel() {
     1: 15,
     2: 50,
     3: 30,
-    4: 25,
-    5: 22,
-    6: 18,
-    7: 22
+    4: 28,
+    5: 25,
+    6: 22,
+    7: 18,
+    8: 22
   };
 
   const rows = filteredList.value.map((item, idx) => {
@@ -1502,6 +1665,7 @@ function exportDocumentItemsToExcel() {
       item.code || '',
       item.title || '',
       item.leadAgencyName || '',
+      item.assignedAgencyName || '—',
       item.cooperatingAgencies || '',
       dateStr,
       progStr,
@@ -1575,6 +1739,7 @@ function openCreateModal(type) {
     startDate: '',
     dueDate: '',
     leadAgencyId: agencies.value[0]?.id || '',
+    assignedAgencyId: '',
     coordinatingAgencyIds: [],
     deliverables: []
   };
@@ -1596,6 +1761,7 @@ function openCreateSubTaskModal(parentItem) {
     startDate: parentItem.startDate ? new Date(parentItem.startDate).toISOString().split('T')[0] : '',
     dueDate: parentItem.dueDate ? new Date(parentItem.dueDate).toISOString().split('T')[0] : '',
     leadAgencyId: parentItem.leadAgencyId || agencies.value[0]?.id || '',
+    assignedAgencyId: '',
     coordinatingAgencyIds: [],
     deliverables: []
   };
@@ -1675,6 +1841,7 @@ async function submitCreateItem() {
       startDate: startDateIso,
       dueDate: dueDateIso,
       leadAgencyId: createForm.value.leadAgencyId,
+      assignedAgencyId: createForm.value.assignedAgencyId || null,
       coordinatingAgencyIds: createForm.value.coordinatingAgencyIds || [],
       evaluationType: createItemType.value === 'Goal' ? 'Quantitative' : 'Qualitative',
       deliverables: createForm.value.deliverables || []
@@ -1710,6 +1877,87 @@ function openProgressModal(item) {
   }
   selectedTaskForProgress.value = item;
   isProgressModalOpen.value = true;
+}
+
+const isAssignModalOpen = ref(false);
+const assignItemTarget = ref(null);
+const selectedSubAgencyId = ref('');
+const assignSubAgencyOptions = computed(() => {
+  if (!assignItemTarget.value) return [];
+  const targetLeadId = assignItemTarget.value.leadAgencyId;
+  const userAgencyId = authState.user.value?.agencyId || authState.user.value?.agency?.id || null;
+  const isGeneral = assignItemTarget.value.isGeneralTask || assignItemTarget.value.leadAgencyCode === 'ALL_AGENCIES' || targetLeadId === '00000000-0000-0000-0000-000000009999';
+
+  if (isGeneral) {
+    if (authState.isAdmin.value) {
+      return agencies.value.filter(a => a.parentId != null);
+    }
+    if (userAgencyId) {
+      return agencies.value.filter(a => String(a.parentId).toLowerCase() === String(userAgencyId).toLowerCase());
+    }
+    return agencies.value.filter(a => a.parentId != null);
+  }
+
+  if (targetLeadId) {
+    const list = agencies.value.filter(a => a.parentId && String(a.parentId).toLowerCase() === String(targetLeadId).toLowerCase());
+    if (list.length > 0) return list;
+  }
+
+  if (userAgencyId) {
+    const list = agencies.value.filter(a => a.parentId && String(a.parentId).toLowerCase() === String(userAgencyId).toLowerCase());
+    if (list.length > 0) return list;
+  }
+
+  return agencies.value.filter(a => a.parentId != null);
+});
+
+function canAssignTask(item) {
+  if (!item) return false;
+  if (authState.isAdmin.value) return true;
+  const userAgencyId = authState.user.value?.agencyId || authState.user.value?.agency?.id;
+  if (userAgencyId && (String(userAgencyId).toLowerCase() === String(item.leadAgencyId).toLowerCase() || item.isGeneralTask || item.leadAgencyCode === 'ALL_AGENCIES')) {
+    return true;
+  }
+  return false;
+}
+
+function openAssignModalFromList(item) {
+  assignItemTarget.value = item;
+  selectedSubAgencyId.value = item.assignedAgencyId || '';
+  isAssignModalOpen.value = true;
+}
+
+async function submitAssignTaskFromList() {
+  if (!assignItemTarget.value) return;
+  try {
+    const targetId = assignItemTarget.value.taskId || assignItemTarget.value.id;
+    const res = await fetch(getApiUrl(`/api/planning/items/${targetId}/assign`), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ assignedAgencyId: selectedSubAgencyId.value || null })
+    });
+    if (res.ok) {
+      toast.success('Cập nhật giao đơn vị trực thuộc thành công!');
+      const selectedSub = agencies.value.find(a => a.id === selectedSubAgencyId.value);
+      assignItemTarget.value.assignedAgencyId = selectedSubAgencyId.value || null;
+      assignItemTarget.value.assignedAgencyName = selectedSub ? selectedSub.name : null;
+      isAssignModalOpen.value = false;
+      
+      try {
+        await fetchDocumentData();
+        if (activeSubTab.value === 'grid' && planningGridRef.value?.loadGridData) {
+          await planningGridRef.value.loadGridData();
+        }
+      } catch (refreshErr) {
+        console.warn('Không thể làm mới danh sách sau khi giao nhiệm vụ:', refreshErr);
+      }
+    } else {
+      const errData = await res.json().catch(() => ({}));
+      toast.error(errData.error || 'Lỗi khi cập nhật giao đơn vị trực thuộc.');
+    }
+  } catch (e) {
+    toast.error('Không thể kết nối máy chủ.');
+  }
 }
 
 function openNotificationModal(item) {
@@ -1832,6 +2080,7 @@ function openEditModal(item) {
     startDate: sDate,
     dueDate: dDate,
     leadAgencyId: item.leadAgencyId || agencies.value[0]?.id || '',
+    assignedAgencyId: item.assignedAgencyId || '',
     coordinatingAgencyIds: item.coordinatingAgencyIds ? [...item.coordinatingAgencyIds] : [],
     deliverables: item.deliverables ? JSON.parse(JSON.stringify(item.deliverables)) : []
   };
@@ -1928,6 +2177,7 @@ async function submitEditItem() {
       startDate: startDateIso,
       dueDate: dueDateIso,
       leadAgencyId: editForm.value.leadAgencyId,
+      assignedAgencyId: editForm.value.assignedAgencyId || null,
       coordinatingAgencyIds: editForm.value.coordinatingAgencyIds || [],
       deliverables: editForm.value.deliverables || []
     };
