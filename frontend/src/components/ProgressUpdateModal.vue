@@ -14,6 +14,15 @@
       <form @submit.prevent="submitProgress" class="flex-1 flex flex-col min-h-0 pt-3">
         
         <div class="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-4">
+          <!-- Pending Approval Warning Banner -->
+          <div v-if="hasPendingApproval" class="p-3.5 bg-amber-50 text-amber-900 border border-amber-300/80 rounded-xl text-xs font-bold flex items-start gap-2.5 leading-relaxed shadow-2xs">
+            <span class="text-base leading-none">⏳</span>
+            <div>
+              <strong class="font-extrabold">Nhiệm vụ này đang ở trạng thái Chờ duyệt:</strong>
+              <span class="font-medium text-amber-950 block mt-0.5"> Báo cáo tiến độ trước đó đang chờ Cấp 2 xem xét phê duyệt hoặc từ chối. Bạn không thể gửi báo cáo tiến độ mới cho tới khi cấp trên duyệt xong.</span>
+            </div>
+          </div>
+
           <!-- Period Selection Bar (Yearly default, Quarterly, Monthly) -->
           <div class="space-y-2 bg-slate-50 p-3.5 rounded-xl border border-slate-200 relative">
             <div v-if="isLoadingExisting" class="absolute inset-0 bg-white/80 backdrop-blur-2xs rounded-xl flex items-center justify-center gap-2 z-10 text-xs font-bold text-blue-700">
@@ -261,8 +270,8 @@
           <button type="button" @click="close" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Hủy</button>
           <button 
             type="submit" 
-            :disabled="isSubmitting"
-            class="px-5 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-xl shadow-sm transition flex items-center gap-1.5"
+            :disabled="isSubmitting || hasPendingApproval"
+            :class="['px-5 py-2.5 text-xs font-bold text-white rounded-xl shadow-2xs transition flex items-center gap-1.5 cursor-pointer', (isSubmitting || hasPendingApproval) ? 'bg-slate-400 cursor-not-allowed opacity-60' : 'bg-blue-600 hover:bg-blue-700']"
           >
             <span v-if="isSubmitting" class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
             {{ isSubmitting ? 'Đang gửi...' : 'Gửi Báo Cáo Tiến Độ' }}
@@ -292,7 +301,8 @@ const props = defineProps({
   evaluationType: { type: String, default: 'Quantitative' },
   unitName: { type: String, default: '%' },
   customBaseline: { type: Object, default: () => ({}) },
-  deliverables: { type: Array, default: () => [] }
+  deliverables: { type: Array, default: () => [] },
+  hasPendingApproval: { type: Boolean, default: false }
 });
 
 const localDeliverables = ref([]);
@@ -329,8 +339,8 @@ const monthOptions = Array.from({ length: 12 }, (_, i) => ({
 const qualitativeStatusOptions = [
   { value: 'NotStarted', label: 'Chưa thực hiện' },
   { value: 'Drafting', label: 'Đang xây dựng / Soạn thảo' },
-  { value: 'Reviewing', label: 'Đang xin ý kiến / Báo cáo' },
-  { value: 'Completed', label: 'Đã hoàn thành ban hành' }
+  { value: 'Reviewing', label: 'Đang xin ý kiến / Thẩm định' },
+  { value: 'Completed', label: 'Đã hoàn thành / Ban hành' }
 ];
 
 function getQualitativeStatusLabel(val) {
@@ -461,6 +471,16 @@ async function fetchExistingProgress() {
           form.value.notes = data.summaryNotes || '';
           existingFiles.value = data.attachmentFileUrls || [];
           selectedFiles.value = [];
+          if (Array.isArray(data.deliverables) && data.deliverables.length > 0) {
+            localDeliverables.value = data.deliverables.map(d => ({
+              id: d.id || d.Id || '',
+              title: d.title || d.Title || '',
+              dueDate: d.dueDate || d.DueDate || null,
+              currentStatus: d.currentStatus || d.CurrentStatus || 'NotStarted',
+              documentNumber: d.documentNumber || d.DocumentNumber || '',
+              promulgationDate: d.promulgationDate || d.PromulgationDate || null
+            }));
+          }
           initialSnapshot.value = captureSnapshot();
           return;
         }
@@ -531,6 +551,10 @@ function close() {
 async function submitProgress() {
   if (authState.isAdmin.value) {
     toast.warning("Tài khoản Quản trị viên (Admin) không thực hiện cập nhật tiến độ. Thao tác này dành cho tài khoản cán bộ đầu mối của các Cơ quan / Bộ / Ngành.");
+    return;
+  }
+  if (props.hasPendingApproval) {
+    toast.warning("Nhiệm vụ này đang ở trạng thái Chờ duyệt. Vui lòng chờ Cấp 2 phê duyệt hoặc từ chối trước khi gửi báo cáo mới.");
     return;
   }
 

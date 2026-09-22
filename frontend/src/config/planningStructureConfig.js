@@ -31,3 +31,28 @@ export const YEAR_LIST = [
   { value: 2029, label: 'Năm 2029' },
   { value: 2030, label: 'Năm 2030' }
 ];
+
+export const QUALITATIVE_STATUS_OPTIONS = [
+  { value: 'NotStarted', label: 'Chưa thực hiện' },
+  { value: 'Drafting', label: 'Đang xây dựng / Soạn thảo' },
+  { value: 'Reviewing', label: 'Đang xin ý kiến / Thẩm định' },
+  { value: 'Completed', label: 'Đã hoàn thành / Ban hành' }
+];
+
+export const QUALITATIVE_STATUS_MAP = {
+  'NotStarted': 'Chưa thực hiện',
+  '1': 'Chưa thực hiện',
+  'Drafting': 'Đang xây dựng / Soạn thảo',
+  '2': 'Đang xây dựng / Soạn thảo',
+  'Reviewing': 'Đang xin ý kiến / Thẩm định',
+  '3': 'Đang xin ý kiến / Thẩm định',
+  'Submitted': 'Đang xin ý kiến / Thẩm định',
+  'Completed': 'Đã hoàn thành / Ban hành',
+  '4': 'Đã hoàn thành / Ban hành'
+};
+
+export function getQualitativeStatusLabel(status) {
+  if (!status) return 'Chưa thực hiện';
+  return QUALITATIVE_STATUS_MAP[status] || status;
+}
+

@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Cdsqg.Application.DTOs;
 using Cdsqg.Application.Services;
+using Cdsqg.Core.Entities;
 using System.Linq;
 
 namespace Cdsqg.Api.Controllers
@@ -369,11 +370,42 @@ namespace Cdsqg.Api.Controllers
                     {
                         execution.ApprovalStatus = Cdsqg.Core.Enums.ApprovalStatusEnum.Approved;
                         execution.RejectionReason = null;
+                        execution.LatestProgressValue = log.QuantitativeValue;
+                        execution.LatestQualitativeStatus = log.QualitativeStatus;
+                        execution.CompletionPercentage = log.CalculatedProgressPercentage ?? 0m;
+                        execution.SummaryNotes = log.SummaryNotes;
+                        execution.AttachmentFileUrls = log.AttachmentFileUrls ?? new System.Collections.Generic.List<string>();
+                        if (log.Deliverables != null && log.Deliverables.Count > 0)
+                        {
+                            execution.Deliverables = log.Deliverables;
+                        }
                         if (log.GoalTaskItem != null)
                         {
                             execution.CalculatedStatus = Cdsqg.Application.Services.PlanningService.CalculateExecutionStatus(log.GoalTaskItem, log, execution.Deliverables);
                         }
                     }
+                }
+
+                // Create notification for reporting agency (Level 3)
+                if (log.AgencyId.HasValue && log.AgencyId.Value != Guid.Empty)
+                {
+                    var taskItem = log.GoalTaskItem ?? await _context.GoalTaskItems.FirstOrDefaultAsync(t => t.Id == log.GoalTaskId);
+                    var taskCode = taskItem?.Code ?? "Nhiệm vụ";
+                    var taskTitle = taskItem?.Title ?? "";
+                    var approverName = !string.IsNullOrWhiteSpace(log.ApprovedBy) ? log.ApprovedBy : "Cơ quan cấp trên";
+
+                    var notif = new Notification
+                    {
+                        Id = Guid.NewGuid(),
+                        AgencyId = log.AgencyId.Value,
+                        Title = "Báo cáo tiến độ đã được phê duyệt",
+                        Message = $"Báo cáo tiến độ cho nhiệm vụ {taskCode}: {taskTitle} đã được {approverName} phê duyệt.",
+                        Type = "PROGRESS_APPROVED",
+                        IsRead = false,
+                        LinkUrl = taskItem != null ? $"/document-detail?taskId={taskItem.Id}&tab=reports" : null,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    _context.Notifications.Add(notif);
                 }
 
                 await _context.SaveChangesAsync();
@@ -415,7 +447,81 @@ namespace Cdsqg.Api.Controllers
                     {
                         execution.ApprovalStatus = Cdsqg.Core.Enums.ApprovalStatusEnum.Rejected;
                         execution.RejectionReason = log.RejectionReason;
+
+                        // Revert execution metrics to latest APPROVED log (if any)
+                        var lastApprovedLog = await _context.ProgressLogs
+                            .Where(p => p.GoalTaskId == log.GoalTaskId && p.AgencyId == log.AgencyId.Value && p.ApprovalStatus == Cdsqg.Core.Enums.ApprovalStatusEnum.Approved)
+                            .OrderByDescending(p => p.LogDate)
+                            .FirstOrDefaultAsync();
+
+                        var taskItemForRevert = await _context.GoalTaskItems.FirstOrDefaultAsync(t => t.Id == log.GoalTaskId);
+
+                        if (lastApprovedLog != null)
+                        {
+                            execution.LatestProgressValue = lastApprovedLog.QuantitativeValue;
+                            execution.LatestQualitativeStatus = lastApprovedLog.QualitativeStatus;
+                            execution.CompletionPercentage = lastApprovedLog.CalculatedProgressPercentage ?? 0m;
+                            execution.SummaryNotes = lastApprovedLog.SummaryNotes;
+                            execution.AttachmentFileUrls = lastApprovedLog.AttachmentFileUrls ?? new System.Collections.Generic.List<string>();
+                            if (lastApprovedLog.Deliverables != null && lastApprovedLog.Deliverables.Count > 0)
+                            {
+                                execution.Deliverables = lastApprovedLog.Deliverables;
+                            }
+                            if (taskItemForRevert != null)
+                            {
+                                execution.CalculatedStatus = Cdsqg.Application.Services.PlanningService.CalculateExecutionStatus(taskItemForRevert, lastApprovedLog, execution.Deliverables);
+                            }
+                        }
+                        else
+                        {
+                            execution.LatestProgressValue = null;
+                            execution.LatestQualitativeStatus = Cdsqg.Core.Enums.TextStatusEnum.NotStarted;
+                            execution.CompletionPercentage = 0m;
+                            execution.SummaryNotes = null;
+                            execution.AttachmentFileUrls = new System.Collections.Generic.List<string>();
+                            if (taskItemForRevert?.Deliverables != null)
+                            {
+                                execution.Deliverables = taskItemForRevert.Deliverables.Select(d => new Cdsqg.Core.Entities.TaskDeliverable
+                                {
+                                    Id = d.Id,
+                                    Title = d.Title,
+                                    DueDate = d.DueDate,
+                                    CurrentStatus = "NotStarted",
+                                    DocumentNumber = null,
+                                    PromulgationDate = null,
+                                    AttachmentUrl = null,
+                                    AttachmentName = null
+                                }).ToList();
+                            }
+                            if (taskItemForRevert != null)
+                            {
+                                execution.CalculatedStatus = Cdsqg.Core.Enums.ExecutionStatusEnum.NotStarted;
+                            }
+                        }
                     }
+                }
+
+                // Create notification for reporting agency (Level 3)
+                if (log.AgencyId.HasValue && log.AgencyId.Value != Guid.Empty)
+                {
+                    var taskItem = await _context.GoalTaskItems.FirstOrDefaultAsync(t => t.Id == log.GoalTaskId);
+                    var taskCode = taskItem?.Code ?? "Nhiệm vụ";
+                    var taskTitle = taskItem?.Title ?? "";
+                    var approverName = !string.IsNullOrWhiteSpace(log.ApprovedBy) ? log.ApprovedBy : "Cơ quan cấp trên";
+                    var reasonText = !string.IsNullOrWhiteSpace(log.RejectionReason) ? log.RejectionReason : "Chưa đạt yêu cầu";
+
+                    var notif = new Notification
+                    {
+                        Id = Guid.NewGuid(),
+                        AgencyId = log.AgencyId.Value,
+                        Title = "Báo cáo tiến độ bị từ chối phê duyệt",
+                        Message = $"Báo cáo tiến độ cho nhiệm vụ {taskCode}: {taskTitle} đã bị {approverName} từ chối. Lý do: {reasonText}.",
+                        Type = "PROGRESS_REJECTED",
+                        IsRead = false,
+                        LinkUrl = taskItem != null ? $"/document-detail?taskId={taskItem.Id}&tab=reports" : null,
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    _context.Notifications.Add(notif);
                 }
 
                 await _context.SaveChangesAsync();

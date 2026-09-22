@@ -8,7 +8,7 @@
           <span class="text-xs font-bold text-blue-600 uppercase tracking-wider block">
             {{ isEditing ? 'Chỉnh Sửa Văn Bản Chỉ Đạo' : 'Thêm Mới Quyết Định / Văn Bản Chỉ Đạo' }}
           </span>
-          <h3 class="text-lg font-extrabold text-slate-800">
+          <h3 class="text-lg font-bold text-slate-800">
             {{ isEditing ? 'Cập Nhật Quyết Định / Văn Bản Chỉ Đạo' : 'Thêm Quyết Định' }}
           </h3>
         </div>

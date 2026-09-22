@@ -9,7 +9,7 @@
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
           </span>
           <div>
-            <h3 class="text-sm sm:text-base font-extrabold text-slate-900">
+            <h3 class="text-sm sm:text-base font-bold text-slate-800">
               Import Báo Cáo Tiến Độ Từ File Excel
             </h3>
             <p class="text-xs text-slate-500 font-semibold mt-0.5">
@@ -268,17 +268,17 @@ function mapQualitativeStatus(str) {
 
 function mapQualitativeStatusDisplay(statusKey) {
   switch (statusKey) {
-    case 'Completed': return '🟢 Đã hoàn thành';
-    case 'Reviewing': return '🔵 Đang trình duyệt';
-    case 'Drafting': return '🟡 Đang soạn thảo';
+    case 'Drafting': return '🟡 Đang xây dựng / Soạn thảo';
+    case 'Reviewing': return '🔵 Đang xin ý kiến / Thẩm định';
+    case 'Completed': return '🟢 Đã hoàn thành / Ban hành';
     case 'NotStarted': default: return '⚪ Chưa thực hiện';
   }
 }
 
 function checkUserPermission(task) {
   if (!task) return false;
-  const role = props.userRole || '';
-  const isAdmin = role.toLowerCase() === 'admin';
+  const role = props.userRole !== null && props.userRole !== undefined ? String(props.userRole).toLowerCase() : '';
+  const isAdmin = role === 'admin' || role === '1';
   const currAgId = props.agencyId ? String(props.agencyId).toLowerCase() : null;
 
   if (isAdmin) return true;

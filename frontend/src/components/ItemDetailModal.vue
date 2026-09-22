@@ -74,7 +74,7 @@
             <div class="border-t border-slate-200/60 pt-2">
               <span class="text-slate-500 font-semibold uppercase block text-[10px]">Đơn Vị Trực Thuộc Được Giao</span>
               <span class="font-medium text-slate-800 mt-0.5 block flex items-center justify-between">
-                <span>🏢 {{ item?.assignedAgencyName || 'Chưa giao đơn vị trực thuộc' }}</span>
+                <span>{{ item?.assignedAgencyName || 'Chưa giao đơn vị trực thuộc' }}</span>
                 <button 
                   v-if="canAssignTask" 
                   @click="openAssignModal" 
@@ -118,32 +118,32 @@
                 {{ getStatusLabel(item?.calculatedStatus) }}
               </span>
             </div>
+          </div>
 
-            <!-- Multi-Deliverables Checklist Display -->
-            <div v-if="item?.deliverables && item.deliverables.length > 0" class="border-t border-slate-200/80 pt-3 space-y-2">
-              <h4 class="text-xs font-extrabold text-blue-900 uppercase flex items-center gap-1.5">
-                <span>📋 Danh Mục Sản Phẩm Đầu Ra Dự Kiến ({{ item.deliverables.length }} sản phẩm)</span>
-              </h4>
-              <div class="space-y-2">
-                <div 
-                  v-for="(del, idx) in item.deliverables" 
-                  :key="idx" 
-                  class="bg-slate-50 p-2.5 rounded-xl border border-slate-200/80 space-y-1 text-xs"
-                >
-                  <div class="flex items-center justify-between font-bold text-slate-800">
-                    <span class="text-slate-900 font-extrabold">{{ idx + 1 }}. {{ del.title }}</span>
-                    <span :class="['px-2 py-0.5 rounded-full text-[10px] font-black', getDeliverableStatusClass(del.currentStatus)]">
-                      {{ getDeliverableStatusLabel(del.currentStatus) }}
-                    </span>
-                  </div>
-                  <div class="flex flex-wrap items-center gap-3 text-[11px] text-slate-600 font-semibold pt-0.5">
-                    <span v-if="del.dueDate" class="flex items-center gap-1">
-                      📅 Hạn chót: <strong class="text-slate-800">{{ formatDate(del.dueDate) }}</strong>
-                    </span>
-                    <span v-if="del.documentNumber" class="flex items-center gap-1 text-blue-700 font-bold">
-                      📄 Văn bản: <strong>{{ del.documentNumber }}</strong>
-                    </span>
-                  </div>
+          <!-- Multi-Deliverables Checklist Display (Dedicated 100% Full-Width Block) -->
+          <div v-if="item?.deliverables && item.deliverables.length > 0" class="bg-white p-4 rounded-2xl border border-slate-200 space-y-3 shadow-2xs">
+            <h4 class="text-xs font-extrabold text-blue-900 uppercase flex items-center gap-1.5">
+              <span>📋 Danh Mục Sản Phẩm Đầu Ra Dự Kiến ({{ item.deliverables.length }} sản phẩm)</span>
+            </h4>
+            <div class="space-y-2">
+              <div 
+                v-for="(del, idx) in item.deliverables" 
+                :key="idx" 
+                class="bg-slate-50/80 p-3 rounded-xl border border-slate-200/80 space-y-1.5 text-xs hover:border-blue-300 transition"
+              >
+                <div class="flex items-center justify-between font-bold text-slate-800 gap-3">
+                  <span class="text-slate-900 font-extrabold flex-1 min-w-0 text-xs leading-snug">{{ idx + 1 }}. {{ del.title }}</span>
+                  <span :class="['px-3 py-1 rounded-full text-[10px] font-black shrink-0 whitespace-nowrap shadow-2xs', getDeliverableStatusClass(del.currentStatus)]">
+                    {{ getDeliverableStatusLabel(del.currentStatus) }}
+                  </span>
+                </div>
+                <div v-if="del.dueDate || del.documentNumber" class="flex flex-wrap items-center gap-4 text-[11px] text-slate-600 font-semibold pt-1 border-t border-slate-200/60 mt-1">
+                  <span v-if="del.dueDate" class="flex items-center gap-1">
+                    📅 Hạn chót: <strong class="text-slate-800">{{ formatDate(del.dueDate) }}</strong>
+                  </span>
+                  <span v-if="del.documentNumber" class="flex items-center gap-1 text-blue-700 font-bold">
+                    📄 Văn bản: <strong class="text-blue-950 font-bold">{{ del.documentNumber }}</strong>
+                  </span>
                 </div>
               </div>
             </div>
@@ -189,7 +189,7 @@
                     Lần {{ reportHistory.length - idx }}
                   </span>
                   <span class="px-2 py-0.5 bg-blue-50 text-blue-800 border border-blue-200 rounded-md font-bold text-[11px]">
-                    Kỳ: {{ formatPeriodLabel(rep) }}
+                    {{ formatPeriodLabel(rep) }}
                   </span>
                   <span class="text-slate-500 font-semibold text-[11px]">
                     🕒 {{ formatDate(rep.logDate) }}
@@ -197,7 +197,7 @@
 
                   <!-- Approval Status Badge -->
                   <span v-if="rep.approvalStatus === 'Pending' || rep.approvalStatus === '2'" class="px-2.5 py-0.5 bg-amber-100 text-amber-900 border border-amber-300 rounded-md font-extrabold text-[11px] animate-pulse">
-                    ⏳ Chờ duyệt (Cấp 2 phê duyệt)
+                    ⏳ Chờ duyệt
                   </span>
                   <span v-else-if="rep.approvalStatus === 'Rejected' || rep.approvalStatus === '3'" class="px-2.5 py-0.5 bg-rose-100 text-rose-900 border border-rose-300 rounded-md font-extrabold text-[11px]" :title="rep.rejectionReason">
                     ❌ Từ chối: {{ rep.rejectionReason || 'Chưa đạt yêu cầu' }}
@@ -378,16 +378,18 @@
           <div v-else-if="subAgencyOptions.length === 0" class="p-3 bg-amber-50 text-amber-800 text-xs rounded-xl border border-amber-200">
             Cơ quan chủ trì <strong>{{ item?.leadAgencyName }}</strong> hiện chưa có đơn vị trực thuộc nào trong hệ thống.
           </div>
-          <select 
-            v-else
-            v-model="selectedSubAgencyId" 
-            class="w-full text-xs font-bold text-slate-800 bg-slate-50 border border-slate-300 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-blue-500"
-          >
-            <option value="">-- Bỏ giao (Chưa giao đơn vị trực thuộc) --</option>
-            <option v-for="sub in subAgencyOptions" :key="sub.id" :value="sub.id">
-              🏢 {{ sub.name }}
-            </option>
-          </select>
+          <div v-else class="space-y-1">
+            <SearchableSelect
+              v-model="selectedSubAgencyId"
+              :options="[
+                { value: '', label: '— Bỏ giao (Chưa giao đơn vị trực thuộc) —' },
+                ...subAgencyOptions.map(sub => ({ value: sub.id, label: sub.name }))
+              ]"
+              :isMulti="false"
+              :clearable="false"
+              placeholder="— Bỏ giao (Chưa giao đơn vị trực thuộc) —"
+            />
+          </div>
         </div>
         <div class="flex justify-end gap-2 border-t border-slate-100 pt-3">
           <button @click="isAssignModalOpen = false" class="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-xl font-bold">Hủy</button>
@@ -426,6 +428,7 @@
 import { ref, computed, watch } from 'vue';
 import { toast } from 'vue3-toastify';
 import LoadingSpinner from './LoadingSpinner.vue';
+import SearchableSelect from './SearchableSelect.vue';
 import { getApiUrl } from '../config/api';
 import { authState } from '../services/auth';
 
@@ -586,10 +589,14 @@ function getStatusBadgeClass(st) {
 function getDeliverableStatusLabel(st) {
   const map = {
     'NotStarted': 'Chưa thực hiện',
-    'Drafting': 'Đang soạn thảo',
-    'Reviewing': 'Đang trình/Thẩm định',
-    'Submitted': 'Đã trình ban hành',
-    'Completed': 'Đã hoàn thành/Ban hành'
+    '1': 'Chưa thực hiện',
+    'Drafting': 'Đang xây dựng / Soạn thảo',
+    '2': 'Đang xây dựng / Soạn thảo',
+    'Reviewing': 'Đang xin ý kiến / Thẩm định',
+    '3': 'Đang xin ý kiến / Thẩm định',
+    'Submitted': 'Đang xin ý kiến / Thẩm định',
+    'Completed': 'Đã hoàn thành / Ban hành',
+    '4': 'Đã hoàn thành / Ban hành'
   };
   return map[st] || st || 'Chưa thực hiện';
 }
@@ -706,15 +713,30 @@ async function openAssignModal() {
     if (res.ok) {
       const data = await res.json();
       const allAgencies = Array.isArray(data) ? data : (data.items || []);
-      const userAgencyId = authState.user.value?.agencyId || authState.currentAgency.value?.id;
-      const targetLeadId = props.item.leadAgencyId;
+      const userAgencyId = authState.user.value?.agencyId || authState.user.value?.agency?.id || authState.currentAgency?.value?.id;
+      
+      let targetLeadId = props.item.leadAgencyId || props.item.agencyId || (props.item.leadAgency && props.item.leadAgency.id);
+      if (!targetLeadId && props.item.leadAgencyName) {
+        const leadAg = allAgencies.find(a => a.name && a.name.trim().toLowerCase() === props.item.leadAgencyName.trim().toLowerCase());
+        if (leadAg) {
+          targetLeadId = leadAg.id;
+        }
+      }
 
-      subAgencyOptions.value = allAgencies.filter(a => 
-        a.parentId && (
-          (targetLeadId && String(a.parentId).toLowerCase() === String(targetLeadId).toLowerCase()) ||
-          (userAgencyId && String(a.parentId).toLowerCase() === String(userAgencyId).toLowerCase())
-        )
-      );
+      let filtered = [];
+      if (targetLeadId) {
+        filtered = allAgencies.filter(a => a.parentId && String(a.parentId).toLowerCase() === String(targetLeadId).toLowerCase());
+      }
+
+      if (filtered.length === 0 && userAgencyId) {
+        filtered = allAgencies.filter(a => a.parentId && String(a.parentId).toLowerCase() === String(userAgencyId).toLowerCase());
+      }
+
+      if (filtered.length === 0 && (authState.isAdmin.value || props.item.isGeneralTask)) {
+        filtered = allAgencies.filter(a => a.parentId != null && a.parentId !== '' && String(a.parentId) !== '00000000-0000-0000-0000-000000000000');
+      }
+
+      subAgencyOptions.value = filtered;
     }
   } catch (e) {
     toast.error('Không thể tải danh sách đơn vị trực thuộc.');

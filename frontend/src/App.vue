@@ -13,7 +13,7 @@
       <AppSidebar 
         :activeTab="currentTab" 
         @navigate="switchTab" 
-        class="shrink-0 h-full sticky top-0 z-40"
+        class="shrink-0 h-full sticky top-0 z-50"
       />
 
       <!-- Main Content Area -->
@@ -23,7 +23,7 @@
         <AppHeader 
           :user="authState.user.value" 
           @logout="handleLogout" 
-          class="shrink-0 sticky top-0 z-40"
+          class="shrink-0 sticky top-0 z-20"
         />
 
         <!-- Scrollable Dynamic View Content -->
@@ -141,13 +141,26 @@ async function handleOpenNotificationDetail(event) {
   const notif = event.detail;
   if (!notif) return;
 
-  const linkUrl = notif.linkUrl || '';
+  const linkUrl = notif.linkUrl || notif.LinkUrl || '';
+  const notifType = notif.type || notif.Type || '';
+
   const guidMatch = linkUrl.match(/(?:taskId|goalId|itemId)=([a-f0-9-]+)/i) || linkUrl.match(/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i);
   const targetId = guidMatch ? guidMatch[1] : null;
 
   const titleAndMsg = (notif.title || '') + ' ' + (notif.message || '');
   const codeMatch = titleAndMsg.match(/(NV-\d+|MT-\d+|SUB-\d+)/i);
   const targetCode = codeMatch ? codeMatch[1].toUpperCase() : null;
+
+  const tabParamMatch = linkUrl.match(/[?&](?:tab|initialTab)=([^&]+)/i);
+  let targetTab = tabParamMatch ? tabParamMatch[1] : null;
+
+  if (!targetTab) {
+    if (notifType.toUpperCase().includes('PROGRESS')) {
+      targetTab = 'reports';
+    } else {
+      targetTab = 'notifications';
+    }
+  }
 
   try {
     const docId = '12660000-0000-0000-0000-000000001266';
@@ -202,7 +215,7 @@ async function handleOpenNotificationDetail(event) {
 
       setTimeout(() => {
         window.dispatchEvent(new CustomEvent('open-target-item-detail', {
-          detail: { item: targetItem, initialTab: 'notifications' }
+          detail: { item: targetItem, initialTab: targetTab }
         }));
       }, 150);
     }

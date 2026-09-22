@@ -4,7 +4,7 @@
     <!-- Top Bar -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-slate-100 pb-3">
       <div>
-        <h2 class="text-lg sm:text-xl font-extrabold text-slate-800 flex items-center gap-2">
+        <h2 class="text-lg sm:text-xl font-bold text-slate-800 flex items-center gap-2">
           <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m3 0h14"/></svg>
           Danh Mục Cơ Quan & Đơn Vị Trực Thuộc
         </h2>
@@ -28,9 +28,9 @@
     <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden w-full flex flex-col">
       
       <!-- Search Bar -->
-      <div class="flex items-center justify-between gap-4 p-3 border-b border-slate-200 bg-slate-50/60 w-full">
-        <div class="flex items-center gap-2 flex-1 max-w-md">
-          <div class="relative w-full">
+      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 border-b border-slate-200 bg-slate-50/60 w-full">
+        <div class="flex items-center gap-2 flex-1 min-w-0 max-w-md">
+          <div class="relative w-full min-w-[180px]">
             <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             <input 
               :value="searchDraft" 
@@ -51,12 +51,12 @@
         <LoadingSpinner v-if="isLoading" text="Đang tải danh mục cơ quan..." />
 
         <table v-else class="w-full text-left text-sm text-slate-700 border-collapse">
-          <thead class="bg-slate-100 text-xs text-slate-600 uppercase font-extrabold border-b border-slate-200 sticky top-0 z-10">
+          <thead class="bg-slate-100 text-xs text-slate-600 uppercase font-bold border-b border-slate-200 sticky top-0 z-10">
             <tr>
-              <th class="px-3.5 py-2.5 border-r border-slate-200 bg-slate-100">Cấu Trúc Cây Cơ Quan & Đơn Vị Trực Thuộc</th>
-              <th class="px-3.5 py-2.5 border-r border-slate-200 bg-slate-100 text-center w-40">Phân Loại</th>
-              <th class="px-3.5 py-2.5 border-r border-slate-200 bg-slate-100 text-center w-52">Thông Tin Đầu Mối Liên Hệ</th>
-              <th class="px-3.5 py-2.5 text-center bg-slate-100 whitespace-nowrap w-24">Thao Tác</th>
+              <th class="px-4 py-3 border-r border-slate-200 bg-slate-100 min-w-[320px] w-auto">Cấu Trúc Cây Cơ Quan & Đơn Vị Trực Thuộc</th>
+              <th class="px-4 py-3 border-r border-slate-200 bg-slate-100 text-center min-w-[180px] w-48 whitespace-nowrap">Phân Loại</th>
+              <th class="px-4 py-3 border-r border-slate-200 bg-slate-100 text-center min-w-[280px] w-72 whitespace-nowrap">Thông Tin Đầu Mối Liên Hệ</th>
+              <th class="px-4 py-3 text-center bg-slate-100 whitespace-nowrap min-w-[110px] w-28">Thao Tác</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
@@ -66,7 +66,7 @@
               class="hover:bg-blue-50/40 transition text-xs"
             >
               <!-- Hierarchy Tree Node Column -->
-              <td class="px-3.5 py-2.5 border-r border-slate-200">
+              <td class="px-4 py-3 border-r border-slate-200 min-w-[320px]">
                 <div class="flex items-center gap-2" :style="{ paddingLeft: `${row.level * 24}px` }">
                   <button 
                     v-if="row.hasChildren"
@@ -83,29 +83,29 @@
                   </span>
 
                   <!-- Name -->
-                  <span class="text-xs font-bold text-slate-900 truncate">
+                  <span class="text-xs font-normal text-slate-800 truncate">
                     {{ row.name }}
                   </span>
 
-                  <span v-if="row.hasChildren" class="text-[10px] font-extrabold text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded-full shrink-0">
+                  <span v-if="row.hasChildren" class="text-[10px] font-medium text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded-full shrink-0">
                     {{ row.children.length }} đơn vị con
                   </span>
                 </div>
               </td>
 
               <!-- Agency Type Badge -->
-              <td class="px-4 py-2.5 border-r border-slate-200 text-center">
-                <span :class="['px-2.5 py-1 rounded-full text-xs font-extrabold', getTypeBadgeClass(row)]">
+              <td class="px-4 py-3 border-r border-slate-200 text-center min-w-[180px] w-48">
+                <span :class="['px-2.5 py-1 rounded-full text-xs font-medium', getTypeBadgeClass(row)]">
                   {{ getTypeLabel(row) }}
                 </span>
               </td>
 
               <!-- Contact Persons Column (Clickable Badge Button to View Details) -->
-              <td class="px-3.5 py-2.5 border-r border-slate-200 text-center">
+              <td class="px-4 py-3 border-r border-slate-200 text-center min-w-[280px] w-72">
                 <button 
                   v-if="row.contactPersons && row.contactPersons.length > 0"
                   @click="openContactPersonsModal(row)"
-                  class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs rounded-xl transition border border-blue-200 inline-flex items-center gap-1.5 shadow-2xs cursor-pointer"
+                  class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium text-xs rounded-xl transition border border-blue-200 inline-flex items-center gap-1.5 shadow-2xs cursor-pointer"
                   title="Click để xem chi tiết cán bộ đầu mối liên hệ"
                 >
                   <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
@@ -115,7 +115,7 @@
               </td>
 
               <!-- Actions -->
-              <td class="px-4 py-2.5 text-center space-x-1 whitespace-nowrap">
+              <td class="px-4 py-3 text-center space-x-1 whitespace-nowrap min-w-[110px] w-28">
                 <button @click="openEditModal(row)" class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition inline-flex items-center cursor-pointer" title="Sửa">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                 </button>
@@ -135,8 +135,8 @@
       </div>
 
       <!-- Server Pagination Controls -->
-      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50/70 p-3.5 border-t border-slate-200/80 text-xs text-slate-600 font-semibold">
-        <div class="flex items-center gap-3 whitespace-nowrap flex-wrap sm:flex-nowrap">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-3 bg-slate-50/70 p-3.5 border-t border-slate-200/80 text-xs text-slate-600 font-semibold w-full">
+        <div class="flex items-center gap-3 whitespace-nowrap flex-wrap justify-center sm:justify-start">
           <span class="whitespace-nowrap">Hiển thị <span class="font-extrabold text-slate-900">{{ totalCount > 0 ? (pageNumber - 1) * pageSize + 1 : 0 }} - {{ Math.min(pageNumber * pageSize, totalCount) }}</span> trên tổng số <span class="font-extrabold text-slate-900">{{ totalCount }}</span> cơ quan / đơn vị</span>
           
           <div class="flex items-center gap-1.5 border-l border-slate-200 pl-3 whitespace-nowrap">
@@ -152,7 +152,7 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-2 shrink-0 whitespace-nowrap">
+        <div class="flex items-center gap-2 shrink-0 whitespace-nowrap flex-wrap justify-center">
           <button 
             @click="changePage(pageNumber - 1)" 
             :disabled="pageNumber <= 1"
@@ -323,7 +323,7 @@
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
             </span>
             <div>
-              <h3 class="text-base font-extrabold text-slate-900">Danh Sách Cán Bộ Đầu Mối</h3>
+              <h3 class="text-base font-bold text-slate-800">Danh Sách Cán Bộ Đầu Mối</h3>
               <p class="text-xs text-blue-700 font-bold mt-0.5">{{ selectedAgencyForContacts?.name }}</p>
             </div>
           </div>

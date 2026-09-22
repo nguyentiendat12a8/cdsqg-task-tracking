@@ -8,7 +8,7 @@
           <span class="p-2 bg-rose-600 text-white rounded-xl shadow-sm font-black text-base">
             ⚡
           </span>
-          <h1 class="text-xl font-extrabold tracking-tight text-slate-800">Lịch Sử Thông Báo & Chỉ Đạo Tiến Độ</h1>
+          <h1 class="text-xl font-bold text-slate-800">Lịch Sử Thông Báo & Chỉ Đạo Tiến Độ</h1>
         </div>
         <p class="text-xs text-slate-500 mt-1">Tổng hợp nhật ký chỉ đạo, thông báo nhiệm vụ từ Lãnh đạo cấp cao</p>
       </div>
@@ -95,10 +95,20 @@
               <div>
                 <SearchableSelect 
                   v-model="selectedAgencyIds" 
-                  :options="agencyOptions" 
+                  :options="leadAgencyOptions" 
                   :isMulti="true" 
-                  label="Cơ Quan Nhận Thông Báo" 
-                  placeholder="Tất cả cơ quan / Bộ ngành"
+                  label="Cơ Quan Chủ Trì" 
+                  placeholder="Tất cả cơ quan chủ trì"
+                />
+              </div>
+
+              <div>
+                <SearchableSelect 
+                  v-model="selectedSubAgencyIds" 
+                  :options="subAgencyOptions" 
+                  :isMulti="true" 
+                  label="Đơn Vị Trực Thuộc" 
+                  placeholder="Tất cả đơn vị trực thuộc"
                 />
               </div>
 
@@ -246,6 +256,31 @@ const appliedSearchQuery = ref('');
 
 const selectedAgencyIds = ref([]);
 const appliedAgencyIds = ref([]);
+const selectedSubAgencyIds = ref([]);
+const appliedSubAgencyIds = ref([]);
+
+const leadAgencyOptions = computed(() => {
+  return agencies.value
+    .filter(ag => ag.code === 'ALL_AGENCIES' || (ag.type !== 3 && !ag.parentId))
+    .map(ag => {
+      if (ag.code === 'ALL_AGENCIES') {
+        return { value: ag.id, label: `🌐 ${ag.name} (Tất cả đơn vị)` };
+      }
+      return { value: ag.id, label: ag.name };
+    });
+});
+
+const subAgencyOptions = computed(() => {
+  return agencies.value
+    .filter(ag => ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000')
+    .map(ag => {
+      const parentAg = agencies.value.find(p => p.id === ag.parentId);
+      return {
+        value: ag.id,
+        label: parentAg ? `${ag.name} (Trực thuộc ${parentAg.name})` : ag.name
+      };
+    });
+});
 
 const fromDate = ref('');
 const appliedFromDate = ref('');
@@ -256,6 +291,7 @@ const appliedToDate = ref('');
 const activeFilterCount = computed(() => {
   let count = 0;
   if (selectedAgencyIds.value?.length) count++;
+  if (selectedSubAgencyIds.value?.length) count++;
   if (fromDate.value || toDate.value) count++;
   return count;
 });
@@ -300,7 +336,8 @@ async function loadAgencies() {
   try {
     const res = await fetch(getApiUrl('/api/agencies'));
     if (res.ok) {
-      agencies.value = await res.json();
+      const data = await res.json();
+      agencies.value = Array.isArray(data) ? data : (data.items || []);
     }
   } catch (e) {
     console.error('Failed to load agencies:', e);
@@ -315,6 +352,7 @@ function execSearch() {
   urgeFetchRequestId++;
   appliedSearchQuery.value = searchQueryDraft.value;
   appliedAgencyIds.value = [...selectedAgencyIds.value];
+  appliedSubAgencyIds.value = [...selectedSubAgencyIds.value];
   appliedFromDate.value = fromDate.value;
   appliedToDate.value = toDate.value;
   currentPage.value = 1;
@@ -340,6 +378,8 @@ function resetSearch() {
   appliedSearchQuery.value = '';
   selectedAgencyIds.value = [];
   appliedAgencyIds.value = [];
+  selectedSubAgencyIds.value = [];
+  appliedSubAgencyIds.value = [];
   fromDate.value = '';
   appliedFromDate.value = '';
   toDate.value = '';
@@ -447,6 +487,9 @@ async function loadLogs() {
     }
     if (appliedAgencyIds.value && appliedAgencyIds.value.length > 0) {
       url.searchParams.append('agencyId', appliedAgencyIds.value[0]);
+    }
+    if (appliedSubAgencyIds.value && appliedSubAgencyIds.value.length > 0) {
+      url.searchParams.append('subAgencyId', appliedSubAgencyIds.value[0]);
     }
     if (appliedFromDate.value) {
       url.searchParams.append('fromDate', appliedFromDate.value);

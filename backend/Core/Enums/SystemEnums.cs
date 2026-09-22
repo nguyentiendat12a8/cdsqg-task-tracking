@@ -43,10 +43,10 @@ namespace Cdsqg.Core.Enums
 
     public enum TextStatusEnum
     {
-        NotStarted = 1, // Chưa thực hiện (Not Started)
+        NotStarted = 1, // Chưa thực hiện (NotStarted)
         Drafting = 2,   // Đang xây dựng / Soạn thảo (Drafting)
-        Reviewing = 3,  // Đang xin ý kiến / Đánh giá (Reviewing)
-        Completed = 4   // Đã hoàn thành (Completed)
+        Reviewing = 3,  // Đang xin ý kiến / Thẩm định (Reviewing)
+        Completed = 4   // Đã hoàn thành / Ban hành (Completed)
     }
 
     public enum AlertStatusEnum

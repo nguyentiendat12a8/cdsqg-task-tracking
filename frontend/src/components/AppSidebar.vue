@@ -1,7 +1,7 @@
 <template>
   <div 
     :class="[
-      'relative h-full shrink-0 z-40 transition-all duration-300 ease-in-out',
+      'relative h-full shrink-0 z-50 transition-all duration-300 ease-in-out',
       isManualCollapsed ? 'w-20' : 'w-64'
     ]"
     @mouseenter="onMouseEnter"
@@ -10,7 +10,7 @@
     <aside 
       :class="[
         'bg-slate-900 text-slate-300 transition-all duration-300 ease-in-out flex flex-col border-r border-slate-800 h-full overflow-hidden select-none',
-        isManualCollapsed ? 'absolute left-0 top-0 z-50 shadow-2xl' : 'relative z-30 shadow-xl',
+        isManualCollapsed ? 'absolute left-0 top-0 z-50 shadow-2xl' : 'relative z-50 shadow-xl',
         isCollapsed ? 'w-20' : 'w-64'
       ]"
     >
@@ -208,7 +208,7 @@ const props = defineProps({
 
 const emit = defineEmits(['navigate']);
 
-const isManualCollapsed = ref(false);
+const isManualCollapsed = ref(true);
 const isHovered = ref(false);
 let hoverTimer = null;
 

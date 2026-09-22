@@ -8,7 +8,7 @@
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
         </span>
         <div>
-          <h1 class="text-xl font-extrabold text-slate-800">Quản Trị Tài Khoản Người Dùng</h1>
+          <h1 class="text-xl font-bold text-slate-800">Quản Trị Tài Khoản Người Dùng</h1>
           <p class="text-xs text-slate-500 mt-0.5">Quản lý danh sách tài khoản, phân quyền truy cập và gán cơ quan chủ trì</p>
         </div>
       </div>
@@ -26,10 +26,10 @@
     <div class="border border-slate-200/80 rounded-2xl bg-white overflow-hidden shadow-sm flex flex-col w-full">
       
       <!-- Filter & Search Bar -->
-      <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 bg-slate-50/60 border-b border-slate-200/80 w-full">
-        <div class="flex items-center gap-2 flex-1 max-w-xl">
+      <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3 bg-slate-50/60 border-b border-slate-200/80 w-full">
+        <div class="flex flex-wrap items-center gap-2 flex-1 min-w-0">
           <!-- Search Input -->
-          <div class="relative flex-1">
+          <div class="relative flex-1 min-w-[200px]">
             <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             <input 
               :value="searchInput" 
@@ -62,10 +62,20 @@
               <div>
                 <SearchableSelect 
                   v-model="selectedAgencyFilters" 
-                  :options="agencyOptions" 
+                  :options="leadAgencyOptions" 
                   :isMulti="true" 
                   label="Cơ Quan Chủ Trì" 
-                  placeholder="Tất cả cơ quan" 
+                  placeholder="Tất cả cơ quan chủ trì" 
+                />
+              </div>
+
+              <div>
+                <SearchableSelect 
+                  v-model="selectedSubAgencyFilters" 
+                  :options="subAgencyOptions" 
+                  :isMulti="true" 
+                  label="Đơn Vị Trực Thuộc" 
+                  placeholder="Tất cả đơn vị trực thuộc" 
                 />
               </div>
             </div>
@@ -99,11 +109,11 @@
               :key="u.id" 
               class="hover:bg-blue-50/40 transition"
             >
-              <td class="px-4 py-3 border-r border-slate-200 font-bold text-slate-900 text-xs whitespace-nowrap">
+              <td class="px-4 py-3 border-r border-slate-200 font-normal text-slate-800 text-xs whitespace-nowrap">
                 {{ u.username }}
               </td>
 
-              <td class="px-4 py-3 border-r border-slate-200 font-semibold text-xs text-slate-800">
+              <td class="px-4 py-3 border-r border-slate-200 font-normal text-xs text-slate-800">
                 {{ u.fullName }}
               </td>
 
@@ -112,20 +122,20 @@
               </td>
 
               <td class="px-4 py-3 border-r border-slate-200 text-center whitespace-nowrap">
-                <span :class="['px-2.5 py-1 rounded-full text-xs font-extrabold', getRoleBadgeClass(u.role)]">
+                <span :class="['px-2.5 py-1 rounded-full text-xs font-medium', getRoleBadgeClass(u.role)]">
                   {{ getRoleLabel(u.role) }}
                 </span>
               </td>
 
-              <td class="px-4 py-3 border-r border-slate-200 text-xs font-semibold text-slate-700">
-                <span v-if="u.agencyName" class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded border border-blue-200 font-bold">
+              <td class="px-4 py-3 border-r border-slate-200 text-xs font-normal text-slate-700">
+                <span v-if="u.agencyName" class="px-2 py-0.5 bg-blue-50 text-blue-700 rounded border border-blue-200 font-normal">
                   {{ u.agencyName }}
                 </span>
                 <span v-else class="text-slate-400 italic">Tất cả (Admin)</span>
               </td>
 
               <td class="px-4 py-3 border-r border-slate-200 text-center whitespace-nowrap">
-                <span :class="['px-2.5 py-0.5 rounded-full text-[11px] font-black', u.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800']">
+                <span :class="['px-2.5 py-0.5 rounded-full text-[11px] font-medium', u.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800']">
                   {{ u.isActive ? 'Hoạt động' : 'Đã khóa' }}
                 </span>
               </td>
@@ -155,8 +165,8 @@
       </div>
 
       <!-- Attached Pagination Bar -->
-      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50/70 p-3.5 border-t border-slate-200/80 text-xs text-slate-600 font-semibold">
-        <div class="flex items-center gap-3 whitespace-nowrap flex-wrap sm:flex-nowrap">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-3 bg-slate-50/70 p-3.5 border-t border-slate-200/80 text-xs text-slate-600 font-semibold w-full">
+        <div class="flex items-center gap-3 whitespace-nowrap flex-wrap justify-center sm:justify-start">
           <span class="whitespace-nowrap">Hiển thị <span class="font-extrabold text-slate-900">{{ totalCount > 0 ? (pageNumber - 1) * pageSize + 1 : 0 }} - {{ Math.min(pageNumber * pageSize, totalCount) }}</span> trên tổng số <span class="font-extrabold text-slate-900">{{ totalCount }}</span> tài khoản</span>
           
           <div class="flex items-center gap-1.5 border-l border-slate-200 pl-3 whitespace-nowrap">
@@ -172,7 +182,7 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-2 shrink-0 whitespace-nowrap">
+        <div class="flex items-center gap-2 shrink-0 whitespace-nowrap flex-wrap justify-center">
           <button 
             @click="changePage(pageNumber - 1)" 
             :disabled="pageNumber <= 1"
@@ -201,7 +211,7 @@
     <div v-if="isAddModalOpen" @click.self="isAddModalOpen = false" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
       <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-xl w-full p-6 space-y-4 font-sans">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-          <h3 class="text-base font-extrabold text-slate-800">Thêm Tài Khoản Mới</h3>
+          <h3 class="text-base font-bold text-slate-800">Thêm Tài Khoản Mới</h3>
           <button @click="isAddModalOpen = false" class="text-slate-400 hover:text-slate-600 font-bold text-lg cursor-pointer">✕</button>
         </div>
 
@@ -286,7 +296,7 @@
     <div v-if="isEditModalOpen" @click.self="isEditModalOpen = false" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
       <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-xl w-full p-6 space-y-4 font-sans">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-          <h3 class="text-base font-extrabold text-slate-800">Chỉnh Sửa Tài Khoản: {{ editUserForm.username }}</h3>
+          <h3 class="text-base font-bold text-slate-800">Chỉnh Sửa Tài Khoản: {{ editUserForm.username }}</h3>
           <button @click="isEditModalOpen = false" class="text-slate-400 hover:text-slate-600 font-bold text-lg cursor-pointer">✕</button>
         </div>
 
@@ -349,7 +359,7 @@
     <div v-if="isResetModalOpen" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
       <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-sm w-full p-6 space-y-4 font-sans">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-          <h3 class="text-base font-extrabold text-slate-800">🔑 Đặt Mật Khẩu Mới</h3>
+          <h3 class="text-base font-bold text-slate-800">🔑 Đặt Mật Khẩu Mới</h3>
           <button @click="isResetModalOpen = false" class="text-slate-400 hover:text-slate-600 font-bold text-lg cursor-pointer">✕</button>
         </div>
 
@@ -411,11 +421,13 @@ const searchInput = ref('');
 const searchQuery = ref('');
 const selectedRoleFilters = ref([]);
 const selectedAgencyFilters = ref([]);
+const selectedSubAgencyFilters = ref([]);
 
 const activeFilterCount = computed(() => {
   let count = 0;
   if (selectedRoleFilters.value?.length) count++;
   if (selectedAgencyFilters.value?.length) count++;
+  if (selectedSubAgencyFilters.value?.length) count++;
   return count;
 });
 
@@ -433,6 +445,24 @@ const agencyOptions = computed(() => {
   return agencies.value
     .filter(ag => ag.code !== 'ALL_AGENCIES')
     .map(ag => ({ value: ag.id, label: ag.name }));
+});
+
+const leadAgencyOptions = computed(() => {
+  return agencies.value
+    .filter(ag => ag.code !== 'ALL_AGENCIES' && (ag.type !== 3 && !ag.parentId))
+    .map(ag => ({ value: ag.id, label: ag.name }));
+});
+
+const subAgencyOptions = computed(() => {
+  return agencies.value
+    .filter(ag => ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000')
+    .map(ag => {
+      const parentAg = agencies.value.find(p => p.id === ag.parentId);
+      return {
+        value: ag.id,
+        label: parentAg ? `${ag.name} (Trực thuộc ${parentAg.name})` : ag.name
+      };
+    });
 });
 
 const pageNumber = ref(1);
@@ -519,6 +549,9 @@ async function fetchUsers() {
     if (selectedAgencyFilters.value && selectedAgencyFilters.value.length > 0) {
       url.searchParams.append('agencyId', selectedAgencyFilters.value[0]);
     }
+    if (selectedSubAgencyFilters.value && selectedSubAgencyFilters.value.length > 0) {
+      url.searchParams.append('subAgencyId', selectedSubAgencyFilters.value[0]);
+    }
 
     const res = await fetch(url);
     if (res.ok) {
@@ -558,8 +591,9 @@ function resetSearch() {
   userFetchRequestId++;
   searchInput.value = '';
   searchQuery.value = '';
-  selectedRoleFilter.value = 'all';
-  selectedAgencyFilter.value = 'all';
+  selectedRoleFilters.value = [];
+  selectedAgencyFilters.value = [];
+  selectedSubAgencyFilters.value = [];
   pageNumber.value = 1;
   fetchUsers();
 }

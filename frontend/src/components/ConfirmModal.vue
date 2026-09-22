@@ -38,7 +38,7 @@
 
             <!-- Modal Body Text -->
             <div class="flex-1 min-w-0">
-              <h3 class="text-base sm:text-lg font-extrabold text-slate-800 leading-snug">
+              <h3 class="text-base sm:text-lg font-bold text-slate-800 leading-snug">
                 {{ confirmState.title.value }}
               </h3>
               <p class="text-xs sm:text-sm text-slate-600 mt-1.5 leading-relaxed break-words">

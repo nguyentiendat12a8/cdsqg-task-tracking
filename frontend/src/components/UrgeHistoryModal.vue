@@ -6,7 +6,7 @@
       <div class="flex justify-between items-start border-b border-slate-100 pb-3 shrink-0">
         <div>
           <span class="text-xs font-bold text-blue-600 uppercase tracking-wider block">Nhật Ký & Lịch Sử Thông Báo</span>
-          <h3 class="text-lg font-extrabold text-slate-800">📜 Lịch Sử Các Văn Bản Thông Báo</h3>
+          <h3 class="text-lg font-bold text-slate-800">📜 Lịch Sử Các Văn Bản Thông Báo</h3>
         </div>
         <button @click="close" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1">✕</button>
       </div>

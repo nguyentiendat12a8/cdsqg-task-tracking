@@ -4,10 +4,10 @@
     <!-- Header -->
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-100 pb-4 gap-4">
       <div>
-        <h2 class="text-lg font-extrabold text-slate-800 flex items-center gap-2">
+        <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
           📥 Thống Kê Lịch Sử Nạp Dữ Liệu File
         </h2>
-        <p class="text-xs text-slate-500 mt-0.5">Theo dõi chi tiết các file dữ liệu (JSON, PDF, Word, Excel) đã nạp vào hệ thống</p>
+        <p class="text-xs text-slate-500 mt-0.5">Theo dõi chi tiết các file dữ liệu (PDF, Word, Excel) đã nạp vào hệ thống</p>
       </div>
 
       <div class="flex items-center gap-2 shrink-0">
@@ -89,18 +89,15 @@
               <th class="px-3 py-3 border-r border-slate-200 text-center w-12 bg-slate-100 shrink-0">STT</th>
               <th class="px-4 py-3 border-r border-slate-200 min-w-[260px] bg-slate-100">Tên File Dữ Liệu Thực Tế</th>
               <th class="px-4 py-3 border-r border-slate-200 min-w-[170px] bg-slate-100 whitespace-nowrap">Phân Loại Dữ Liệu</th>
-              <th class="px-4 py-3 border-r border-slate-200 min-w-[120px] bg-slate-100 whitespace-nowrap">Định Dạng</th>
               <th class="px-4 py-3 border-r border-slate-200 min-w-[140px] bg-slate-100 whitespace-nowrap">Người Thực Hiện</th>
               <th class="px-4 py-3 border-r border-slate-200 min-w-[140px] bg-slate-100 whitespace-nowrap">Thời Gian Nạp</th>
-              <th class="px-4 py-3 border-r border-slate-200 text-center min-w-[90px] bg-slate-100 whitespace-nowrap">Mục Tiêu</th>
-              <th class="px-4 py-3 border-r border-slate-200 text-center min-w-[90px] bg-slate-100 whitespace-nowrap">Nhiệm Vụ</th>
               <th class="px-4 py-3 border-r border-slate-200 text-center min-w-[110px] bg-slate-100 whitespace-nowrap">Trạng Thái</th>
               <th class="px-4 py-3 min-w-[200px] bg-slate-100">Ghi Chú Chi Tiết</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-200">
             <tr v-for="(log, idx) in logs" :key="log.id" class="hover:bg-slate-50 transition">
-              <td class="px-3 py-3 border-r border-slate-200 text-center text-xs font-extrabold text-slate-500">
+              <td class="px-3 py-3 border-r border-slate-200 text-center text-xs font-normal text-slate-500">
                 {{ (currentPage - 1) * pageSize + idx + 1 }}
               </td>
 
@@ -110,7 +107,7 @@
                   <div 
                     v-for="(fItem, fIdx) in parseCleanFileList(log)" 
                     :key="fIdx"
-                    class="flex items-center text-xs font-bold leading-snug"
+                    class="flex items-center text-xs font-normal leading-snug"
                   >
                     <a 
                       :href="fItem.url"
@@ -119,7 +116,7 @@
                       :title="`Click để tải về file: ${fItem.cleanName}`"
                     >
                       <span class="text-blue-500 shrink-0">📄</span>
-                      <span class="group-hover:underline">{{ fItem.cleanName }}</span>
+                      <span class="group-hover:underline font-normal">{{ fItem.cleanName }}</span>
                       <svg class="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 shrink-0 transition-opacity opacity-70 group-hover:opacity-100 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
                       </svg>
@@ -132,48 +129,31 @@
               </td>
 
               <!-- Data Category -->
-              <td class="px-4 py-3 border-r border-slate-200 text-xs font-bold whitespace-nowrap">
-                <span :class="['px-2.5 py-1 rounded-full border text-xs font-extrabold inline-block', getCategoryBadgeClass(log.category || log.fileType)]">
+              <td class="px-4 py-3 border-r border-slate-200 text-xs font-normal whitespace-nowrap">
+                <span :class="['px-2.5 py-1 rounded-full border text-xs font-medium inline-block', getCategoryBadgeClass(log.category || log.fileType)]">
                   {{ getCategoryLabel(log.category || log.fileType) }}
                 </span>
               </td>
 
-              <!-- File Format / Type -->
-              <td class="px-4 py-3 border-r border-slate-200 text-xs font-bold text-purple-700 whitespace-nowrap">
-                <span class="px-2 py-0.5 bg-purple-50 border border-purple-100 rounded text-xs">
-                  {{ log.fileType || 'JSON' }}
-                </span>
-              </td>
-
               <!-- Imported By -->
-              <td class="px-4 py-3 border-r border-slate-200 text-xs font-bold text-slate-700 whitespace-nowrap">
+              <td class="px-4 py-3 border-r border-slate-200 text-xs font-normal text-slate-700 whitespace-nowrap">
                 {{ log.importedBy || 'Chuyên viên' }}
               </td>
 
               <!-- Imported Date -->
-              <td class="px-4 py-3 border-r border-slate-200 text-xs font-medium text-slate-500 whitespace-nowrap">
+              <td class="px-4 py-3 border-r border-slate-200 text-xs font-normal text-slate-500 whitespace-nowrap">
                 {{ formatDate(log.importedAt) }}
-              </td>
-
-              <!-- Created Goals -->
-              <td class="px-4 py-3 border-r border-slate-200 text-center font-extrabold text-purple-900 text-xs">
-                {{ log.totalGoalsCreated }}
-              </td>
-
-              <!-- Created Tasks -->
-              <td class="px-4 py-3 border-r border-slate-200 text-center font-extrabold text-blue-900 text-xs">
-                {{ log.totalTasksCreated }}
               </td>
 
               <!-- Status -->
               <td class="px-4 py-3 border-r border-slate-200 text-center text-xs whitespace-nowrap">
-                <span :class="['px-2.5 py-0.5 rounded-full font-bold', log.status === 'Thành công' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-rose-100 text-rose-800 border border-rose-200']">
+                <span :class="['px-2.5 py-0.5 rounded-full font-medium', log.status === 'Thành công' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' : 'bg-rose-100 text-rose-800 border border-rose-200']">
                   {{ log.status }}
                 </span>
               </td>
 
               <!-- Notes -->
-              <td class="px-4 py-3 text-xs text-slate-600 leading-relaxed">
+              <td class="px-4 py-3 text-xs text-slate-600 leading-relaxed font-normal">
                 {{ log.summaryNotes || 'Khởi tạo thành công' }}
               </td>
             </tr>
@@ -396,8 +376,8 @@ function resetSearch() {
 }
 
 function exportExcel() {
-  const headers = ["STT", "Tên File Dữ Liệu Thực Tế", "Phân Loại Dữ Liệu", "Định Dạng", "Người Thực Hiện", "Thời Gian Nạp", "Mục Tiêu Tạo", "Nhiệm Vụ Tạo", "Trạng Thái", "Ghi Chú Chi Tiết"];
-  const minColWidths = { 0: 8, 1: 45, 2: 25, 3: 12, 4: 20, 5: 20, 6: 15, 7: 15, 8: 18, 9: 50 };
+  const headers = ["STT", "Tên File Dữ Liệu Thực Tế", "Phân Loại Dữ Liệu", "Người Thực Hiện", "Thời Gian Nạp", "Trạng Thái", "Ghi Chú Chi Tiết"];
+  const minColWidths = { 0: 8, 1: 45, 2: 25, 3: 20, 4: 20, 5: 18, 6: 50 };
 
   const rows = logs.value.map((log, idx) => {
     const cleanFiles = parseCleanFileList(log).map(f => f.cleanName).join("; ");
@@ -405,11 +385,8 @@ function exportExcel() {
       idx + 1,
       cleanFiles || log.fileName || '',
       getCategoryLabel(log.category || log.fileType),
-      log.fileType || 'JSON',
       log.importedBy || 'Chuyên viên',
       formatDate(log.importedAt),
-      log.totalGoalsCreated || 0,
-      log.totalTasksCreated || 0,
       log.status || '',
       log.summaryNotes || ''
     ];

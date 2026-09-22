@@ -118,6 +118,16 @@ namespace Cdsqg.Application.Services
                     ? item.SubItems.OrderBy(s => s.CreatedAt).Select(s => MapItemDto(s)).ToList()
                     : new List<PlanningGridItemDto>();
 
+                decimal? latestValue = latestLog?.QuantitativeValue;
+                if (latestValue == null && agencyDeliverables != null && agencyDeliverables.Count > 0)
+                {
+                    decimal delivPct = ExecutionService.CalculateDeliverablesCompletionPercentage(agencyDeliverables);
+                    if (delivPct > 0)
+                    {
+                        latestValue = delivPct;
+                    }
+                }
+
                 return new PlanningGridItemDto
                 {
                     TaskId = item.Id,
@@ -149,7 +159,7 @@ namespace Cdsqg.Application.Services
                     EvaluationType = item.EvaluationType.ToString(),
                     UnitName = item.Unit?.Name ?? "%",
                     CalculationMethod = item.CalculationMethod.ToString(),
-                    LatestProgressValue = latestLog?.QuantitativeValue,
+                    LatestProgressValue = latestValue,
                     LatestProgressStatus = latestLog?.QualitativeStatus?.ToString(),
                     LastUpdated = latestLog?.LogDate ?? item.LastUpdated ?? item.CreatedAt,
                     CreatedAt = item.CreatedAt,

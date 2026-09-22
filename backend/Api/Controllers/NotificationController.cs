@@ -90,6 +90,8 @@ namespace Cdsqg.Api.Controllers
             });
         }
 
+        [HttpPut("{id}/read")]
+        [HttpPost("{id}/read")]
         [HttpGet("{id}/read")]
         public async Task<IActionResult> MarkAsRead(Guid id)
         {
@@ -157,6 +159,10 @@ namespace Cdsqg.Api.Controllers
             var createdNotifications = new System.Collections.Generic.List<Notification>();
             var recipientNames = new System.Collections.Generic.List<string>();
 
+            string? resolvedLinkUrl = !string.IsNullOrWhiteSpace(dto.LinkUrl)
+                ? dto.LinkUrl
+                : (dto.TaskId.HasValue ? $"/document-detail?taskId={dto.TaskId}{(!string.IsNullOrWhiteSpace(dto.InitialTab) ? $"&tab={dto.InitialTab}" : "")}" : null);
+
             if (targetUserIds.Any())
             {
                 // Send to specific target user IDs or fallback agency IDs
@@ -172,7 +178,7 @@ namespace Cdsqg.Api.Controllers
                         Message = dto.Message,
                         Type = string.IsNullOrWhiteSpace(dto.Type) ? "TaskReminder" : dto.Type,
                         IsRead = false,
-                        LinkUrl = dto.TaskId.HasValue ? $"/document-detail?taskId={dto.TaskId}" : null,
+                        LinkUrl = resolvedLinkUrl,
                         CreatedAt = DateTime.UtcNow
                     };
                     _db.Notifications.Add(notif);
@@ -198,7 +204,7 @@ namespace Cdsqg.Api.Controllers
                             Message = dto.Message,
                             Type = string.IsNullOrWhiteSpace(dto.Type) ? "TaskReminder" : dto.Type,
                             IsRead = false,
-                            LinkUrl = dto.TaskId.HasValue ? $"/document-detail?taskId={dto.TaskId}" : null,
+                            LinkUrl = resolvedLinkUrl,
                             CreatedAt = DateTime.UtcNow
                         };
                         _db.Notifications.Add(agNotif);
@@ -234,7 +240,7 @@ namespace Cdsqg.Api.Controllers
                         Message = dto.Message,
                         Type = string.IsNullOrWhiteSpace(dto.Type) ? "TaskReminder" : dto.Type,
                         IsRead = false,
-                        LinkUrl = dto.TaskId.HasValue ? $"/document-detail?taskId={dto.TaskId}" : null,
+                        LinkUrl = resolvedLinkUrl,
                         CreatedAt = DateTime.UtcNow
                     };
                     _db.Notifications.Add(notif);
@@ -384,6 +390,8 @@ namespace Cdsqg.Api.Controllers
         public bool SendToLeadAgency { get; set; } = true;
         public string? CreatedBy { get; set; }
         public string? RecipientsSummary { get; set; }
+        public string? LinkUrl { get; set; }
+        public string? InitialTab { get; set; }
     }
 
     public class RecipientOptionDto

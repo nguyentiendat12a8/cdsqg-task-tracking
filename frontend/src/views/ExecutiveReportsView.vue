@@ -9,7 +9,7 @@
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           </span>
           <div>
-            <h2 class="text-sm sm:text-base font-extrabold tracking-tight text-slate-800">
+            <h2 class="text-sm sm:text-base font-bold text-slate-800">
               Trung Tâm Báo Cáo & Xuất Dữ Liệu Excel
             </h2>
           </div>
@@ -110,10 +110,20 @@
             <div>
               <SearchableSelect 
                 v-model="filterDraft.selectedAgencyIds" 
-                :options="agencyOptions" 
+                :options="leadAgencyOptions" 
                 :isMulti="true" 
-                label="Cơ Quan / Đơn Vị" 
-                placeholder="Tất cả cơ quan / đơn vị"
+                label="Cơ Quan Chủ Trì" 
+                placeholder="Tất cả cơ quan chủ trì"
+              />
+            </div>
+
+            <div>
+              <SearchableSelect 
+                v-model="filterDraft.selectedSubAgencyIds" 
+                :options="subAgencyOptions" 
+                :isMulti="true" 
+                label="Đơn Vị Trực Thuộc" 
+                placeholder="Tất cả đơn vị trực thuộc"
               />
             </div>
 
@@ -122,7 +132,7 @@
                 v-model="filterDraft.selectedScopes" 
                 :options="reportScopeOptions" 
                 :isMulti="true" 
-                label="Phạm Vi (Chung - Riêng)" 
+                label="Phạm Vi" 
                 placeholder="Tất cả phạm vi"
               />
             </div>
@@ -254,7 +264,7 @@
               </td>
               <td class="p-3 font-semibold text-slate-900">
                 <VTooltip theme="custom-dark" placement="top" :delay="{ show: 1500, hide: 0 }">
-                  <div class="line-clamp-5 font-semibold text-slate-900 leading-relaxed cursor-help">
+                  <div class="line-clamp-2 font-semibold text-slate-900 leading-relaxed cursor-help">
                     {{ item.title }}
                   </div>
                   <template #popper>
@@ -298,7 +308,7 @@
               <td class="p-3 font-extrabold text-indigo-700">{{ item.code }}</td>
               <td class="p-3 font-semibold text-slate-900">
                 <VTooltip theme="custom-dark" placement="top" :delay="{ show: 1500, hide: 0 }">
-                  <div class="line-clamp-5 font-semibold text-slate-900 leading-relaxed cursor-help">
+                  <div class="line-clamp-2 font-semibold text-slate-900 leading-relaxed cursor-help">
                     {{ item.title }}
                   </div>
                   <template #popper>
@@ -357,7 +367,7 @@
               </td>
               <td class="p-3 font-semibold text-slate-900">
                 <VTooltip theme="custom-dark" placement="top" :delay="{ show: 1500, hide: 0 }">
-                  <div class="line-clamp-5 font-semibold text-slate-900 leading-relaxed cursor-help">
+                  <div class="line-clamp-2 font-semibold text-slate-900 leading-relaxed cursor-help">
                     {{ item.title }}
                   </div>
                   <template #popper>
@@ -433,6 +443,7 @@ const metrics = ref({});
 const filterDraft = ref({
   searchQuery: '',
   selectedAgencyIds: [],
+  selectedSubAgencyIds: [],
   selectedScopes: [],
   selectedItemTypes: [],
   selectedSections: [],
@@ -445,6 +456,7 @@ const filterDraft = ref({
 const appliedFilters = ref({
   searchQuery: '',
   selectedAgencyIds: [],
+  selectedSubAgencyIds: [],
   selectedScopes: [],
   selectedItemTypes: [],
   selectedSections: [],
@@ -465,6 +477,7 @@ const pageSize = ref(10);
 const activeFilterCount = computed(() => {
   let count = 0;
   if (filterDraft.value.selectedAgencyIds?.length) count++;
+  if (filterDraft.value.selectedSubAgencyIds?.length) count++;
   if (filterDraft.value.selectedScopes?.length) count++;
   if (filterDraft.value.selectedSections?.length) count++;
   if (filterDraft.value.selectedGroups?.length) count++;
@@ -475,6 +488,29 @@ const activeFilterCount = computed(() => {
 
 const agencyOptions = computed(() => {
   return agencies.value.map(ag => ({ value: ag.id, label: ag.name }));
+});
+
+const leadAgencyOptions = computed(() => {
+  return agencies.value
+    .filter(ag => ag.code === 'ALL_AGENCIES' || (ag.type !== 3 && !ag.parentId))
+    .map(ag => {
+      if (ag.code === 'ALL_AGENCIES') {
+        return { value: ag.id, label: `🌐 ${ag.name} (Tất cả đơn vị)` };
+      }
+      return { value: ag.id, label: ag.name };
+    });
+});
+
+const subAgencyOptions = computed(() => {
+  return agencies.value
+    .filter(ag => ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000')
+    .map(ag => {
+      const parentAg = agencies.value.find(p => p.id === ag.parentId);
+      return {
+        value: ag.id,
+        label: parentAg ? `${ag.name} (Trực thuộc ${parentAg.name})` : ag.name
+      };
+    });
 });
 
 const yearOptions = computed(() => [2026, 2027, 2028, 2029, 2030].map(y => ({ value: y, label: String(y) })));
@@ -582,6 +618,7 @@ function resetReportFilters() {
   filterDraft.value = {
     searchQuery: '',
     selectedAgencyIds: [],
+    selectedSubAgencyIds: [],
     selectedScopes: [],
     selectedItemTypes: [],
     selectedSections: [],
@@ -630,6 +667,7 @@ function passesCommonFilters(i) {
   }
 
   if (appliedFilters.value.selectedAgencyIds?.length > 0 && !appliedFilters.value.selectedAgencyIds.includes(i.leadAgencyId)) return false;
+  if (appliedFilters.value.selectedSubAgencyIds?.length > 0 && !appliedFilters.value.selectedSubAgencyIds.includes(i.assignedAgencyId)) return false;
   if (appliedFilters.value.selectedScopes?.length > 0) {
     const isGeneral = i.isGeneralTask || i.leadAgencyCode === 'ALL_AGENCIES' || i.leadAgencyId === '00000000-0000-0000-0000-000000009999';
     const matchGen = appliedFilters.value.selectedScopes.includes('general') && isGeneral;
@@ -661,9 +699,12 @@ function passesCommonFilters(i) {
 }
 
 const filteredAgencySummaries = computed(() => {
-  const list = [...(metrics.value.ministriesPerformance || []), ...(metrics.value.provincesPerformance || [])];
+  let list = [...(metrics.value.ministriesPerformance || []), ...(metrics.value.provincesPerformance || [])];
   if (appliedFilters.value.selectedAgencyIds && appliedFilters.value.selectedAgencyIds.length > 0) {
-    return list.filter(a => appliedFilters.value.selectedAgencyIds.includes(a.agencyId));
+    list = list.filter(a => appliedFilters.value.selectedAgencyIds.includes(a.agencyId));
+  }
+  if (appliedFilters.value.selectedSubAgencyIds && appliedFilters.value.selectedSubAgencyIds.length > 0) {
+    list = list.filter(a => appliedFilters.value.selectedSubAgencyIds.includes(a.agencyId));
   }
   return list;
 });
@@ -838,8 +879,8 @@ function exportCurrentReportToExcel() {
     tableTitle = "2. DANH SÁCH CHI TIẾT NHIỆM VỤ CẦN GỬI THÔNG BÁO";
     fileName = "Bao_Cao_Nhiem_Vu_Can_Gui_Thong_Bao";
     sheetName = "Sắp hết hạn & Quá hạn";
-    headers = ["STT", "Mã Hạng Mục", "Loại Hạng Mục", "Tên Mục Tiêu / Nhiệm Vụ", "Đơn Vị Chủ Trì", "Hạn Chót", "Trạng Thái Cảnh Báo"];
-    minColWidths = { 0: 8, 1: 15, 2: 15, 3: 50, 4: 32, 5: 20, 6: 25 };
+    headers = ["STT", "Mã Hạng Mục", "Loại Hạng Mục", "Tên Mục Tiêu / Nhiệm Vụ", "Đơn Vị Chủ Trì", "Giao Đơn Vị Trực Thuộc", "Hạn Chót", "Trạng Thái Cảnh Báo"];
+    minColWidths = { 0: 8, 1: 15, 2: 15, 3: 45, 4: 28, 5: 28, 6: 20, 7: 25 };
 
     rows = urgentItems.value.map((i, idx) => [
       idx + 1,
@@ -847,6 +888,7 @@ function exportCurrentReportToExcel() {
       i.itemType === 'Goal' ? 'Mục tiêu' : 'Nhiệm vụ',
       i.title || '',
       i.leadAgencyName || '',
+      i.assignedAgencyName || '—',
       formatDate(i.dueDate),
       getStatusLabel(i.calculatedStatus)
     ]);
@@ -862,18 +904,30 @@ function exportCurrentReportToExcel() {
     tableTitle = "2. DANH SÁCH CHI TIẾT TIẾN ĐỘ VÀ FILE MINH CHỨNG THEO HẠNG MỤC";
     fileName = "Bao_Cao_Chi_Tiet_Tien_Do_Minh_Chung";
     sheetName = "Chi tiết tiến độ";
-    headers = ["STT", "Mã Hạng Mục", "Tên Mục Tiêu / Nhiệm Vụ", "Đơn Vị Chủ Trì", "Tiến Độ Mới Nhất (%)", "Trạng Thái Thực Hiện", "Số File Minh Chứng"];
-    minColWidths = { 0: 8, 1: 15, 2: 50, 3: 32, 4: 22, 5: 25, 6: 20 };
+    headers = ["STT", "Mã Hạng Mục", "Tên Mục Tiêu / Nhiệm Vụ", "Đơn Vị Chủ Trì", "Giao Đơn Vị Trực Thuộc", "Tiến Độ Mới Nhất", "Trạng Thái Thực Hiện", "Số File Minh Chứng"];
+    minColWidths = { 0: 8, 1: 15, 2: 45, 3: 28, 4: 28, 5: 22, 6: 25, 7: 20 };
 
-    rows = filteredDetailItems.value.map((i, idx) => [
-      idx + 1,
-      i.code || '',
-      i.title || '',
-      i.leadAgencyName || '',
-      i.latestProgressValue !== null && i.latestProgressValue !== undefined ? `${i.latestProgressValue}%` : 'Chưa cập nhật',
-      getStatusLabel(i.calculatedStatus),
-      i.evidenceFilesCount || 0
-    ]);
+    rows = filteredDetailItems.value.map((i, idx) => {
+      const unit = i.unitName || i.unit?.name || '%';
+      let progStr = 'Chưa cập nhật';
+      if (i.latestProgressValue !== null && i.latestProgressValue !== undefined) {
+        if (unit === 'Số lượng') progStr = `${i.latestProgressValue}`;
+        else if (unit === '%') progStr = `${i.latestProgressValue}%`;
+        else progStr = `${i.latestProgressValue} ${unit}`;
+      } else if (i.latestProgressStatus) {
+        progStr = i.latestProgressStatus;
+      }
+      return [
+        idx + 1,
+        i.code || '',
+        i.title || '',
+        i.leadAgencyName || '',
+        i.assignedAgencyName || '—',
+        progStr,
+        getStatusLabel(i.calculatedStatus),
+        i.evidenceFilesCount || 0
+      ];
+    });
   } else if (activeReportType.value === 'scope') {
     title = "BÁO CÁO PHÂN LOẠI NHIỆM VỤ CHUNG VÀ RIÊNG - QUYẾT ĐỊNH 1266/QĐ-TTg";
     subtitle = `Thời gian xuất báo cáo: ${timeStr} | Tổng số nhiệm vụ: ${filteredScopeItems.value.length}`;
@@ -886,8 +940,8 @@ function exportCurrentReportToExcel() {
     tableTitle = "2. DANH SÁCH PHÂN LOẠI CHI TIẾT NHIỆM VỤ THEO PHẠM VI";
     fileName = "Bao_Cao_Phan_Loai_Nhiem_Vu_Chung_Rieng";
     sheetName = "Nhiệm vụ chung & riêng";
-    headers = ["STT", "Mã Hạng Mục", "Phạm Vi Nhiệm Vụ", "Nội Dung Thực Hiện", "Đơn Vị Đầu Mối", "Thời Gian Thực Hiện", "Trạng Thái Thực Hiện"];
-    minColWidths = { 0: 8, 1: 15, 2: 20, 3: 50, 4: 32, 5: 22, 6: 25 };
+    headers = ["STT", "Mã Hạng Mục", "Phạm Vi Nhiệm Vụ", "Nội Dung Thực Hiện", "Đơn Vị Đầu Mối", "Giao Đơn Vị Trực Thuộc", "Thời Gian Thực Hiện", "Trạng Thái Thực Hiện"];
+    minColWidths = { 0: 8, 1: 15, 2: 20, 3: 45, 4: 28, 5: 28, 6: 22, 7: 25 };
 
     rows = filteredScopeItems.value.map((i, idx) => [
       idx + 1,
@@ -895,6 +949,7 @@ function exportCurrentReportToExcel() {
       i.isGeneralTask ? "Nhiệm vụ Chung" : "Nhiệm vụ Riêng",
       i.title || '',
       i.leadAgencyName || '',
+      i.assignedAgencyName || '—',
       formatDateRange(i.startDate, i.dueDate),
       getStatusLabel(i.calculatedStatus)
     ]);

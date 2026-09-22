@@ -1,12 +1,9 @@
 <template>
-  <header class="h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between shrink-0 shadow-xs z-40">
+  <header class="h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between shrink-0 shadow-xs z-20">
     <!-- System Official Title Branding -->
     <div class="flex items-center gap-3">
-      <div class="hidden sm:flex w-8 h-8 rounded-lg bg-blue-50 text-blue-700 items-center justify-center font-black text-xs border border-blue-200 shrink-0">
-        1266
-      </div>
       <div>
-        <h1 class="text-sm sm:text-base md:text-lg font-black text-slate-900 tracking-tight leading-snug">
+        <h1 class="text-sm sm:text-base md:text-lg font-bold text-slate-800 leading-snug">
           Hệ thống theo dõi nhiệm vụ được giao tại Quyết định số 1266/QĐ-TTg ngày 14/07/2026
         </h1>
       </div>
@@ -46,12 +43,12 @@
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               </div>
-              <div class="overflow-hidden">
+              <div class="overflow-hidden min-w-0 flex-1">
                 <div class="text-xs font-extrabold text-slate-900 truncate leading-snug">
                   {{ user?.fullName || user?.username || 'Quản trị viên Hệ thống' }}
                 </div>
-                <div class="text-[10px] font-bold text-blue-600 uppercase tracking-wider mt-0.5 truncate">
-                  {{ user?.roleName || user?.role || 'ADMIN' }}
+                <div class="text-[11px] font-bold text-blue-600 mt-0.5 truncate" :title="userDisplayAgency">
+                  {{ userDisplayAgency }}
                 </div>
               </div>
             </div>
@@ -60,7 +57,7 @@
             <div class="space-y-1">
               <button 
                 @click="handleLogout"
-                class="w-full text-left px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition flex items-center gap-2"
+                class="w-full text-left px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl transition flex items-center gap-2 cursor-pointer"
               >
                 <svg class="w-4 h-4 text-rose-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -76,8 +73,9 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import NotificationCenter from './NotificationCenter.vue';
+import { authState } from '../services/auth';
 
 const props = defineProps({
   user: { type: Object, default: null }
@@ -87,6 +85,13 @@ const emit = defineEmits(['logout']);
 
 const isUserMenuOpen = ref(false);
 const userMenuContainer = ref(null);
+
+const userDisplayAgency = computed(() => {
+  if (props.user?.agencyName) return props.user.agencyName;
+  if (props.user?.agency?.name) return props.user.agency.name;
+  if (authState.isAdmin.value) return 'Quản trị viên Hệ thống';
+  return 'Cơ quan / Đơn vị';
+});
 
 function handleLogout() {
   isUserMenuOpen.value = false;

@@ -9,7 +9,7 @@
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
             AI Data Extraction - Human-in-the-Loop Review
           </span>
-          <h3 class="text-xl font-bold text-slate-800 tracking-tight">Đồng Bộ Dữ Liệu Tự Động Từ LLM JSON</h3>
+          <h3 class="text-xl font-bold text-slate-800">Đồng Bộ Dữ Liệu Tự Động Từ LLM JSON</h3>
           <p class="text-xs text-slate-500 mt-0.5">Kiểm tra, điều chỉnh các chỉ tiêu trích xuất từ Quyết định PDF trước khi ghi vào PostgreSQL</p>
         </div>
         <button @click="close" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1">✕</button>

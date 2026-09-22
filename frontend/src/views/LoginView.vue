@@ -12,7 +12,7 @@
           CĐS
         </div>
         <div>
-          <h1 class="text-xl font-black text-slate-900 tracking-tight">Hệ Thống Theo Dõi Nhiệm Vụ CĐS Quốc Gia</h1>
+          <h1 class="text-xl font-bold text-slate-800">Hệ Thống Theo Dõi Nhiệm Vụ CĐS Quốc Gia</h1>
           <p class="text-xs text-slate-500 mt-1 font-semibold">Vui lòng đăng nhập để truy cập hệ thống quản hành</p>
         </div>
       </div>

@@ -33,6 +33,39 @@ namespace Cdsqg.Application.Services
             _fileStorageService = fileStorageService;
         }
 
+        public static decimal CalculateDeliverablesCompletionPercentage(List<TaskDeliverable>? deliverables)
+        {
+            if (deliverables == null || deliverables.Count == 0) return 0m;
+            decimal total = 0m;
+            foreach (var d in deliverables)
+            {
+                string st = (d.CurrentStatus ?? "NotStarted").Trim();
+                decimal p = 0m;
+                if (string.Equals(st, "Completed", StringComparison.OrdinalIgnoreCase) || st == "4")
+                {
+                    p = 100m;
+                }
+                else if (string.Equals(st, "Submitted", StringComparison.OrdinalIgnoreCase))
+                {
+                    p = 85m;
+                }
+                else if (string.Equals(st, "Reviewing", StringComparison.OrdinalIgnoreCase) || st == "3")
+                {
+                    p = 60m;
+                }
+                else if (string.Equals(st, "Drafting", StringComparison.OrdinalIgnoreCase) || st == "2")
+                {
+                    p = 25m;
+                }
+                else
+                {
+                    p = 0m;
+                }
+                total += p;
+            }
+            return Math.Round(total / deliverables.Count, 2);
+        }
+
         public async Task<SubmitProgressResponseDto> SubmitProgressAsync(Guid taskId, SubmitProgressRequestDto dto)
         {
             var task = await _context.GoalTaskItems
@@ -123,19 +156,33 @@ namespace Cdsqg.Application.Services
             }
             else
             {
-                // Qualitative Text Status
-                TextStatusEnum statusVal = dto.Status ?? TextStatusEnum.NotStarted;
-                completionPercentage = statusVal switch
-                {
-                    TextStatusEnum.NotStarted => 0m,
-                    TextStatusEnum.Drafting => 35m,
-                    TextStatusEnum.Reviewing => 70m,
-                    TextStatusEnum.Completed => 100m,
-                    _ => 0m
-                };
+                var deliverablesList = (dto.Deliverables != null && dto.Deliverables.Count > 0)
+                    ? dto.Deliverables
+                    : task.Deliverables;
 
-                alertStatus = statusVal == TextStatusEnum.Completed ? AlertStatusEnum.Green :
-                              (statusVal == TextStatusEnum.Reviewing || statusVal == TextStatusEnum.Drafting) ? AlertStatusEnum.Yellow : AlertStatusEnum.Red;
+                if (deliverablesList != null && deliverablesList.Count > 0)
+                {
+                    completionPercentage = CalculateDeliverablesCompletionPercentage(deliverablesList);
+                }
+                else
+                {
+                    TextStatusEnum statusVal = dto.Status ?? TextStatusEnum.NotStarted;
+                    completionPercentage = statusVal switch
+                    {
+                        TextStatusEnum.NotStarted => 0m,
+                        TextStatusEnum.Drafting => 25m,
+                        TextStatusEnum.Reviewing => 60m,
+                        TextStatusEnum.Completed => 100m,
+                        _ => 0m
+                    };
+                }
+
+                if (completionPercentage >= 95m)
+                    alertStatus = AlertStatusEnum.Green;
+                else if (completionPercentage >= 50m)
+                    alertStatus = AlertStatusEnum.Yellow;
+                else
+                    alertStatus = AlertStatusEnum.Red;
             }
 
             // 4. Evidence File Storage
@@ -211,6 +258,17 @@ namespace Cdsqg.Application.Services
 
             var initialApprovalStatus = isLevel3Subordinate ? ApprovalStatusEnum.Pending : ApprovalStatusEnum.Approved;
 
+            if (isLevel3Subordinate && reportingAgencyId.HasValue)
+            {
+                bool hasPending = await _context.ProgressLogs
+                    .AnyAsync(p => p.GoalTaskId == taskId && p.AgencyId == reportingAgencyId.Value && p.ApprovalStatus == ApprovalStatusEnum.Pending);
+
+                if (hasPending)
+                {
+                    throw new InvalidOperationException("Nhiệm vụ này đang có báo cáo tiến độ ở trạng thái 'Chờ duyệt'. Vui lòng chờ Cấp 2 phê duyệt hoặc từ chối trước khi gửi báo cáo mới.");
+                }
+            }
+
             // ONLY mutate entity deliverables immediately if automatically Approved (e.g. submitted by Level 2 or Admin).
             // If Pending Level 2 approval, deliverables are saved only in the ProgressLog record until approved.
             if (initialApprovalStatus == ApprovalStatusEnum.Approved && dto.Deliverables != null && dto.Deliverables.Count > 0)
@@ -265,6 +323,7 @@ namespace Cdsqg.Application.Services
                     Message = $"{reportingAgencyObj.Name} đã gửi báo cáo tiến độ cho nhiệm vụ {task.Code}: {task.Title}. Vui lòng xem xét và phê duyệt.",
                     Type = "PROGRESS_APPROVAL",
                     IsRead = false,
+                    LinkUrl = $"/document-detail?taskId={task.Id}&tab=reports",
                     CreatedAt = DateTime.UtcNow
                 };
                 _context.Notifications.Add(notification);
@@ -292,29 +351,33 @@ namespace Cdsqg.Application.Services
                 }
 
                 execution.ApprovalStatus = initialApprovalStatus;
-                if (dto.Deliverables != null && dto.Deliverables.Count > 0)
-                {
-                    execution.Deliverables = dto.Deliverables;
-                    if (!isNewExecution)
-                    {
-                        _context.Entry(execution).Property(e => e.Deliverables).IsModified = true;
-                    }
-                }
-                execution.CalculatedStatus = PlanningService.CalculateExecutionStatus(task, progressLog, execution.Deliverables);
-                execution.LatestProgressValue = actualCalculatedVal;
-                execution.LatestQualitativeStatus = dto.Status;
-                execution.CompletionPercentage = completionPercentage;
-                execution.SummaryNotes = dto.SummaryNotes;
-                if (uploadedUrls.Count > 0)
-                {
-                    execution.AttachmentFileUrls = uploadedUrls;
-                    if (!isNewExecution)
-                    {
-                        _context.Entry(execution).Property(e => e.AttachmentFileUrls).IsModified = true;
-                    }
-                }
                 execution.LastReportedAt = DateTime.UtcNow;
                 execution.LastReportedBy = createdBy;
+
+                if (initialApprovalStatus == ApprovalStatusEnum.Approved)
+                {
+                    if (dto.Deliverables != null && dto.Deliverables.Count > 0)
+                    {
+                        execution.Deliverables = dto.Deliverables;
+                        if (!isNewExecution)
+                        {
+                            _context.Entry(execution).Property(e => e.Deliverables).IsModified = true;
+                        }
+                    }
+                    execution.CalculatedStatus = PlanningService.CalculateExecutionStatus(task, progressLog, execution.Deliverables);
+                    execution.LatestProgressValue = actualCalculatedVal;
+                    execution.LatestQualitativeStatus = dto.Status;
+                    execution.CompletionPercentage = completionPercentage;
+                    execution.SummaryNotes = dto.SummaryNotes;
+                    if (uploadedUrls.Count > 0)
+                    {
+                        execution.AttachmentFileUrls = uploadedUrls;
+                        if (!isNewExecution)
+                        {
+                            _context.Entry(execution).Property(e => e.AttachmentFileUrls).IsModified = true;
+                        }
+                    }
+                }
 
                 if (!isNewExecution)
                 {
@@ -365,21 +428,48 @@ namespace Cdsqg.Application.Services
         {
             var task = await _context.GoalTaskItems.FirstOrDefaultAsync(t => t.Id == taskId);
 
-            var query = _context.ProgressLogs
-                .Where(l => l.GoalTaskId == taskId && l.PeriodYear == year && l.PeriodQuarter == quarter);
+            var baseQuery = _context.ProgressLogs.Where(l => l.GoalTaskId == taskId).AsQueryable();
 
             if (task != null && task.IsGeneralTask && agencyId.HasValue && agencyId.Value != Guid.Empty)
             {
-                query = query.Where(l => l.AgencyId == agencyId.Value);
+                baseQuery = baseQuery.Where(l => l.AgencyId == agencyId.Value);
             }
             else if (agencyId.HasValue && agencyId.Value != Guid.Empty)
             {
-                query = query.Where(l => l.AgencyId == agencyId.Value || l.AgencyId == null);
+                baseQuery = baseQuery.Where(l => l.AgencyId == agencyId.Value || l.AgencyId == null);
             }
 
-            var log = await query
+            // 1. Try finding approved log for exact year & quarter
+            var log = await baseQuery
+                .Where(l => l.PeriodYear == year && l.PeriodQuarter == quarter && l.ApprovalStatus == ApprovalStatusEnum.Approved)
                 .OrderByDescending(l => l.LogDate)
                 .FirstOrDefaultAsync();
+
+            // 2. If not found, try finding any log for exact year & quarter
+            if (log == null)
+            {
+                log = await baseQuery
+                    .Where(l => l.PeriodYear == year && l.PeriodQuarter == quarter)
+                    .OrderByDescending(l => l.LogDate)
+                    .FirstOrDefaultAsync();
+            }
+
+            // 3. Fallback to latest approved log overall for this task
+            if (log == null)
+            {
+                log = await baseQuery
+                    .Where(l => l.ApprovalStatus == ApprovalStatusEnum.Approved)
+                    .OrderByDescending(l => l.LogDate)
+                    .FirstOrDefaultAsync();
+            }
+
+            // 4. Fallback to latest log overall
+            if (log == null)
+            {
+                log = await baseQuery
+                    .OrderByDescending(l => l.LogDate)
+                    .FirstOrDefaultAsync();
+            }
 
             if (log == null) return null;
 
@@ -517,6 +607,32 @@ namespace Cdsqg.Application.Services
                     }
                 }
 
+                decimal? logCompletionPercentage = log.CalculatedProgressPercentage;
+                if (task != null && task.EvaluationType != EvaluationTypeEnum.Quantitative)
+                {
+                    if (log.Deliverables != null && log.Deliverables.Count > 0)
+                    {
+                        logCompletionPercentage = CalculateDeliverablesCompletionPercentage(log.Deliverables);
+                    }
+                    else if (log.QualitativeStatus.HasValue)
+                    {
+                        logCompletionPercentage = log.QualitativeStatus.Value switch
+                        {
+                            TextStatusEnum.NotStarted => 0m,
+                            TextStatusEnum.Drafting => 25m,
+                            TextStatusEnum.Reviewing => 60m,
+                            TextStatusEnum.Completed => 100m,
+                            _ => 0m
+                        };
+                    }
+                }
+
+                decimal? prevCompletionPercentage = prevPercentage;
+                if (task != null && task.EvaluationType != EvaluationTypeEnum.Quantitative && prevDeliverables != null && prevDeliverables.Count > 0)
+                {
+                    prevCompletionPercentage = CalculateDeliverablesCompletionPercentage(prevDeliverables);
+                }
+
                 dtos.Add(new GetProgressLogResponseDto
                 {
                     Id = log.Id,
@@ -526,7 +642,7 @@ namespace Cdsqg.Application.Services
                     PeriodQuarter = log.PeriodQuarter,
                     ActualValue = log.QuantitativeValue,
                     Status = log.QualitativeStatus?.ToString(),
-                    CompletionPercentage = log.CalculatedProgressPercentage,
+                    CompletionPercentage = logCompletionPercentage,
                     SummaryNotes = log.SummaryNotes,
                     AttachmentFileUrls = log.AttachmentFileUrls ?? new List<string>(),
                     Deliverables = log.Deliverables,
@@ -540,7 +656,7 @@ namespace Cdsqg.Application.Services
 
                     PreviousValue = prevValue,
                     PreviousStatus = prevStatus,
-                    PreviousCompletionPercentage = prevPercentage,
+                    PreviousCompletionPercentage = prevCompletionPercentage,
                     PreviousNotes = prevNotes,
                     PreviousDeliverables = prevDeliverables
                 });

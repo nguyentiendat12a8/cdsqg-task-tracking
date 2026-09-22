@@ -1,7 +1,7 @@
 <template>
   <div class="w-full space-y-3.5 font-sans">
     
-    <!-- Top Header -->
+    <!-- Top Header Bar with Filter Actions -->
     <header class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200/80 w-full">
       <div>
         <div class="flex items-center gap-2.5">
@@ -9,30 +9,14 @@
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
           </span>
           <div>
-            <h2 class="text-sm sm:text-base font-extrabold tracking-tight text-slate-800">
+            <h2 class="text-sm sm:text-base font-bold text-slate-800">
               Trang chủ theo dõi tiến độ
             </h2>
           </div>
         </div>
       </div>
 
-      <!-- Overview Goal vs Task Count Badges -->
-      <div class="flex flex-wrap items-center gap-2 text-xs font-bold text-slate-500">
-        <span class="px-3 py-1 bg-slate-100 rounded-lg border border-slate-200">
-          Tổng số: <strong class="text-slate-800">{{ (metrics.totalGoals ?? 0) + (metrics.totalTasks ?? 0) }}</strong>
-        </span>
-        <span class="px-3 py-1 bg-purple-50 text-purple-700 rounded-lg border border-purple-200/60">
-          🎯 Mục tiêu: <strong class="text-purple-800">{{ metrics.totalGoals ?? 0 }}</strong>
-        </span>
-        <span class="px-3 py-1 bg-blue-50 text-blue-700 rounded-lg border border-blue-200/60">
-          📋 Nhiệm vụ: <strong class="text-blue-800">{{ metrics.totalTasks ?? 0 }}</strong>
-        </span>
-      </div>
-    </header>
-
-    <!-- UNIFIED ADVANCED FILTER BAR -->
-    <div class="bg-white p-3 sm:p-3.5 rounded-2xl border border-slate-200/80 shadow-sm flex flex-wrap items-center justify-between gap-3 w-full">
-      <!-- Left group: Filter Action Buttons -->
+      <!-- Action Buttons & Advanced Filter Popover -->
       <div class="flex flex-wrap items-center gap-2 min-w-0">
         <button 
           type="button" 
@@ -77,10 +61,20 @@
             <div>
               <SearchableSelect 
                 v-model="selectedAgencyIds" 
-                :options="agencyOptions" 
+                :options="leadAgencyOptions" 
                 :isMulti="true" 
-                label="Cơ Quan / Đơn Vị" 
-                placeholder="Tất cả cơ quan / đơn vị"
+                label="Cơ Quan Chủ Trì" 
+                placeholder="Tất cả cơ quan chủ trì"
+              />
+            </div>
+
+            <div>
+              <SearchableSelect 
+                v-model="selectedSubAgencyIds" 
+                :options="subAgencyOptions" 
+                :isMulti="true" 
+                label="Đơn Vị Trực Thuộc" 
+                placeholder="Tất cả đơn vị trực thuộc"
               />
             </div>
 
@@ -89,7 +83,7 @@
                 v-model="selectedScopes" 
                 :options="scopeOptions" 
                 :isMulti="true" 
-                label="Phạm Vi (Chung - Riêng)" 
+                label="Phạm Vi" 
                 placeholder="Tất cả phạm vi"
               />
             </div>
@@ -143,17 +137,7 @@
           </div>
         </OverlayPanel>
       </div>
-
-      <!-- Right group: Agency Count Badges -->
-      <div v-if="!isSubAgencyUser" class="text-xs text-slate-500 font-bold flex items-center gap-2.5 shrink-0 whitespace-nowrap bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/60">
-        <span>Khối Bộ/Ngành: <strong class="text-blue-700">{{ metrics.ministriesPerformance?.length ?? 0 }}</strong></span>
-        <span class="text-slate-300">•</span>
-        <span>Khối Địa phương: <strong class="text-emerald-700">{{ metrics.provincesPerformance?.length ?? 0 }}</strong></span>
-      </div>
-      <div v-else class="text-xs text-slate-700 font-bold flex items-center gap-2 shrink-0 whitespace-nowrap bg-blue-50/80 px-3 py-1.5 rounded-xl border border-blue-200/80">
-        <span class="text-blue-800">🏛️ {{ loggedUserAgency?.name || userAgencyName }}</span>
-      </div>
-    </div>
+    </header>
 
     <!-- Loading Spinner -->
     <LoadingSpinner v-if="isLoading" text="Đang tải dữ liệu tổng quan bảng điều khiển..." />
@@ -204,8 +188,8 @@
       <div v-if="singleSubAgencyPerformance" class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4 w-full">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
           <div>
-            <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
-              🏢 Bảng Tiến Độ Thực Hiện CỦA ĐƠN VỊ: <span class="text-blue-700 font-black">{{ singleSubAgencyPerformance.name }}</span>
+            <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+              🏢 <span class="text-blue-700 font-bold">{{ singleSubAgencyPerformance.name }}</span>
             </h3>
             <span v-if="loggedUserAgency?.parentName" class="text-xs text-slate-500 font-semibold mt-0.5 block">
               Cơ quan quản lý trực tiếp: <strong>{{ loggedUserAgency.parentName }}</strong>
@@ -292,24 +276,18 @@
         </div>
       </div>
 
-      <!-- 2. Subordinate Child Agencies Progress Block (Khối Các Đơn Vị Trực Thuộc) -->
-      <div class="bg-white p-4.5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4 w-full">
+      <!-- 2. Subordinate Child Agencies Progress Block (Khối Các Đơn Vị Trực Thuộc - Ẩn với Cấp 3) -->
+      <div v-if="!isLevel3User" class="bg-white p-4.5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4 w-full">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
           <div>
-            <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+            <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
               🏛️ Khối Các Đơn Vị Trực Thuộc
             </h3>
-            <p class="text-xs text-slate-500 font-semibold mt-0.5">
-              Thống kê tiến độ thực hiện nhiệm vụ các đơn vị trực thuộc (Đã sắp xếp theo tổng số nhiệm vụ giảm dần)
-            </p>
           </div>
-          <span class="text-xs font-extrabold text-blue-700 bg-blue-50 px-3 py-1 rounded-xl border border-blue-200/60">
-            {{ userSubAgenciesPerformance?.length ?? 0 }} Đơn vị trực thuộc
-          </span>
         </div>
 
         <div v-if="userSubAgenciesPerformance?.length" class="space-y-3">
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-3.5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
             <div 
               v-for="(item, index) in visibleSubAgencies" 
               :key="item.agencyId"
@@ -319,7 +297,7 @@
               <!-- Card Header: Agency Name & Blue Index Badge -->
               <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
                 <div class="min-w-0 flex-1">
-                  <h4 class="text-xs sm:text-sm font-extrabold text-slate-800 group-hover:text-blue-600 transition leading-snug truncate" :title="item.name">
+                  <h4 class="text-xs sm:text-sm font-bold text-slate-800 group-hover:text-blue-600 transition leading-snug truncate" :title="item.name">
                     {{ item.name }}
                   </h4>
                 </div>
@@ -400,12 +378,12 @@
           </div>
 
           <!-- Expand / Collapse Button -->
-          <div v-if="(userSubAgenciesPerformance?.length || 0) > 6" class="pt-2 text-center border-t border-slate-100">
+          <div v-if="(userSubAgenciesPerformance?.length || 0) > 8" class="pt-2 text-center border-t border-slate-100">
             <button 
               @click="isSubAgenciesExpanded = !isSubAgenciesExpanded" 
               class="px-5 py-2 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
             >
-              <span>{{ isSubAgenciesExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${userSubAgenciesPerformance.length - 6} Đơn vị trực thuộc khác)` }}</span>
+              <span>{{ isSubAgenciesExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${userSubAgenciesPerformance.length - 8} Đơn vị trực thuộc khác)` }}</span>
             </button>
           </div>
         </div>
@@ -422,16 +400,16 @@
       <!-- Section 1: Khối Bộ / Ngành -->
       <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-          <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+          <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
             🏢 Khối Các Bộ / Ngành Trung Ương
           </h3>
-          <span class="text-xs font-extrabold text-blue-600 bg-blue-50 px-3 py-1 rounded-xl border border-blue-200/60">
+          <span class="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-xl border border-blue-200/60">
             {{ metrics.ministriesPerformance?.length ?? 0 }} Bộ/Ngành
           </span>
         </div>
 
         <div v-if="metrics.ministriesPerformance?.length" class="space-y-3">
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-3.5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
             <div 
               v-for="(item, index) in visibleMinistries" 
               :key="item.agencyId"
@@ -441,7 +419,7 @@
               <!-- Card Header: Agency Name & Blue Index Badge -->
               <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
                 <div class="min-w-0 flex-1">
-                  <h4 class="text-xs sm:text-sm font-extrabold text-slate-800 group-hover:text-blue-600 transition leading-snug truncate">
+                  <h4 class="text-xs sm:text-sm font-bold text-slate-800 group-hover:text-blue-600 transition leading-snug truncate">
                     {{ item.name }}
                   </h4>
                 </div>
@@ -522,12 +500,12 @@
           </div>
 
           <!-- Expand / Collapse Button -->
-          <div v-if="(metrics.ministriesPerformance?.length || 0) > 6" class="pt-2 text-center border-t border-slate-100">
+          <div v-if="(metrics.ministriesPerformance?.length || 0) > 8" class="pt-2 text-center border-t border-slate-100">
             <button 
               @click="isMinistriesExpanded = !isMinistriesExpanded" 
               class="px-5 py-2 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
             >
-              <span>{{ isMinistriesExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${metrics.ministriesPerformance.length - 6} Bộ/Ngành khác)` }}</span>
+              <span>{{ isMinistriesExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${metrics.ministriesPerformance.length - 8} Bộ/Ngành khác)` }}</span>
             </button>
           </div>
         </div>
@@ -540,16 +518,16 @@
       <!-- Section 2: Khối Địa Phương -->
       <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-          <h3 class="text-base font-extrabold text-slate-900 flex items-center gap-2">
+          <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
             🏛️ Khối Các Tỉnh / Thành Phố
           </h3>
-          <span class="text-xs font-extrabold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-xl border border-emerald-200/60">
+          <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-xl border border-emerald-200/60">
             {{ metrics.provincesPerformance?.length ?? 0 }} Địa phương
           </span>
         </div>
 
         <div v-if="metrics.provincesPerformance?.length" class="space-y-3">
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-3.5">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
             <div 
               v-for="(item, index) in visibleProvinces" 
               :key="item.agencyId"
@@ -559,7 +537,7 @@
               <!-- Card Header: Agency Name & Blue Index Badge -->
               <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
                 <div class="min-w-0 flex-1">
-                  <h4 class="text-xs sm:text-sm font-extrabold text-slate-800 group-hover:text-emerald-700 transition leading-snug truncate">
+                  <h4 class="text-xs sm:text-sm font-bold text-slate-800 group-hover:text-emerald-700 transition leading-snug truncate">
                     {{ item.name }}
                   </h4>
                 </div>
@@ -640,12 +618,12 @@
           </div>
 
           <!-- Expand / Collapse Button -->
-          <div v-if="(metrics.provincesPerformance?.length || 0) > 6" class="pt-2 text-center border-t border-slate-100">
+          <div v-if="(metrics.provincesPerformance?.length || 0) > 8" class="pt-2 text-center border-t border-slate-100">
             <button 
               @click="isProvincesExpanded = !isProvincesExpanded" 
               class="px-5 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
             >
-              <span>{{ isProvincesExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${metrics.provincesPerformance.length - 6} Địa phương khác)` }}</span>
+              <span>{{ isProvincesExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${metrics.provincesPerformance.length - 8} Địa phương khác)` }}</span>
             </button>
           </div>
         </div>
@@ -665,7 +643,7 @@
         <!-- Modal Header -->
         <div class="flex items-start justify-between border-b border-slate-100 pb-3">
           <div>
-            <h3 class="text-base sm:text-lg font-extrabold text-slate-900 flex items-center gap-2">
+            <h3 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
               <span class="p-1.5 bg-blue-100 text-blue-700 rounded-xl text-sm">🏛️</span>
               {{ selectedDrilldownAgency.name }}
             </h3>
@@ -1037,6 +1015,7 @@ const dashboardFilter = ref('all'); // 'all', 'goals', 'tasks'
 const isLoading = ref(false);
 
 const selectedAgencyIds = ref([]);
+const selectedSubAgencyIds = ref([]);
 const selectedScopes = ref([]);
 const selectedSections = ref([]);
 const selectedGroups = ref([]);
@@ -1060,6 +1039,7 @@ const activeDashboardFilterCount = computed(() => {
   let count = 0;
   if (dashboardFilter.value && dashboardFilter.value !== 'all') count++;
   if (selectedAgencyIds.value?.length) count++;
+  if (selectedSubAgencyIds.value?.length) count++;
   if (selectedScopes.value?.length) count++;
   if (selectedSections.value?.length) count++;
   if (selectedGroups.value?.length) count++;
@@ -1070,6 +1050,7 @@ const activeDashboardFilterCount = computed(() => {
 
 function resetDashboardFilters() {
   selectedAgencyIds.value = [];
+  selectedSubAgencyIds.value = [];
   selectedScopes.value = [];
   selectedSections.value = [];
   selectedGroups.value = [];
@@ -1080,9 +1061,28 @@ function resetDashboardFilters() {
   loadDashboardMetrics();
 }
 
-const agencyOptions = computed(() => {
-  return agencies.value.map(ag => ({ value: ag.id, label: ag.name }));
+const leadAgencyOptions = computed(() => {
+  return agencies.value
+    .filter(ag => ag.code === 'ALL_AGENCIES' || !ag.parentId)
+    .map(ag => {
+      if (ag.code === 'ALL_AGENCIES') {
+        return { value: ag.id, label: `🌐 ${ag.name} (Tất cả đơn vị)` };
+      }
+      return { value: ag.id, label: ag.name };
+    });
 });
+
+const subAgencyOptions = computed(() => {
+  return agencies.value
+    .filter(ag => ag.parentId != null && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000')
+    .map(ag => {
+      const parentAg = agencies.value.find(p => p.id === ag.parentId);
+      const parentSuffix = parentAg ? ` (Trực thuộc ${parentAg.name})` : '';
+      return { value: ag.id, label: `${ag.name}${parentSuffix}` };
+    });
+});
+
+const agencyOptions = computed(() => leadAgencyOptions.value);
 
 const yearOptions = computed(() => [2026, 2027, 2028, 2029, 2030].map(y => ({ value: y, label: String(y) })));
 
@@ -1114,20 +1114,20 @@ const isSubAgenciesExpanded = ref(false);
 
 const visibleMinistries = computed(() => {
   const list = metrics.value.ministriesPerformance || [];
-  if (isMinistriesExpanded.value || list.length <= 6) return list;
-  return list.slice(0, 6);
+  if (isMinistriesExpanded.value || list.length <= 8) return list;
+  return list.slice(0, 8);
 });
 
 const visibleProvinces = computed(() => {
   const list = metrics.value.provincesPerformance || [];
-  if (isProvincesExpanded.value || list.length <= 6) return list;
-  return list.slice(0, 6);
+  if (isProvincesExpanded.value || list.length <= 8) return list;
+  return list.slice(0, 8);
 });
 
 const visibleSubAgencies = computed(() => {
   const list = userSubAgenciesPerformance.value || [];
-  if (isSubAgenciesExpanded.value || list.length <= 6) return list;
-  return list.slice(0, 6);
+  if (isSubAgenciesExpanded.value || list.length <= 8) return list;
+  return list.slice(0, 8);
 });
 const selectedDrilldownAgency = ref(null);
 const subAgenciesList = ref([]);
@@ -1302,6 +1302,14 @@ const userAgencyName = computed(() => {
 const loggedUserAgencyId = computed(() => authState.user.value?.agencyId ? String(authState.user.value.agencyId).toLowerCase() : '');
 const loggedUserAgency = computed(() => agencies.value.find(a => String(a.id).toLowerCase() === loggedUserAgencyId.value));
 const isSubAgencyUser = computed(() => !authState.isAdmin.value && !!loggedUserAgencyId.value);
+const isLevel3User = computed(() => {
+  if (authState.isAdmin.value) return false;
+  if (loggedUserAgency.value) {
+    return !!loggedUserAgency.value.parentId;
+  }
+  const userObjAg = authState.user.value?.agency;
+  return !!(userObjAg && userObjAg.parentId);
+});
 
 const singleSubAgencyPerformance = computed(() => {
   const allPerf = [
@@ -1340,7 +1348,10 @@ async function loadDashboardMetrics() {
     }
     if (selectedAgencyIds.value && selectedAgencyIds.value.length > 0) {
       selectedAgencyIds.value.forEach(id => params.append('agencyId', id));
-    } else if (!authState.isAdmin.value && authState.user.value?.agencyId) {
+    }
+    if (selectedSubAgencyIds.value && selectedSubAgencyIds.value.length > 0) {
+      selectedSubAgencyIds.value.forEach(id => params.append('agencyId', id));
+    } else if (!authState.isAdmin.value && authState.user.value?.agencyId && (!selectedAgencyIds.value || selectedAgencyIds.value.length === 0)) {
       params.append('agencyId', authState.user.value.agencyId);
     }
     if (selectedScopes.value && selectedScopes.value.length === 1) {
@@ -1731,25 +1742,27 @@ async function exportDashboardExcelReport() {
       ];
 
       const merges = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } },
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 7 } },
-        { s: { r: 3, c: 0 }, e: { r: 3, c: 7 } },
-        { s: { r: 8, c: 0 }, e: { r: 8, c: 7 } }
+        { s: { r: 0, c: 0 }, e: { r: 0, c: 10 } },
+        { s: { r: 1, c: 0 }, e: { r: 1, c: 10 } },
+        { s: { r: 3, c: 0 }, e: { r: 3, c: 10 } },
+        { s: { r: 8, c: 0 }, e: { r: 8, c: 10 } }
       ];
 
       // Table 2: Sub-agencies progress summary
       if (subAgencies.length > 0) {
         const rowIdx = sheetRows.length;
-        merges.push({ s: { r: rowIdx, c: 0 }, e: { r: rowIdx, c: 7 } });
+        merges.push({ s: { r: rowIdx, c: 0 }, e: { r: rowIdx, c: 10 } });
         sheetRows.push(["2. TỔNG SỐ MỤC TIÊU, NHIỆM VỤ THEO TRẠNG THÁI CỦA TỪNG ĐƠN VỊ TRỰC THUỘC"]);
         sheetRows.push([
           "STT", "Tên Đơn Vị Trực Thuộc", "Tổng Số", "Mục Tiêu", "Nhiệm Vụ",
-          "Đang T/H quá hạn", "Đang T/H trong hạn", "Sắp tới hạn"
+          "Đang T/H quá hạn", "Đang T/H trong hạn", "Sắp tới hạn",
+          "Đã H/T quá hạn", "Đã H/T trong hạn", "Chưa thực hiện"
         ]);
         subAgencies.forEach((sub, sIdx) => {
           sheetRows.push([
             sIdx + 1, sub.name, sub.totalItems || 0, sub.totalGoals || 0, sub.totalTasks || 0,
-            sub.inProgressOverdue || 0, sub.inProgressOnTime || 0, sub.expiringSoon || 0
+            sub.inProgressOverdue || 0, sub.inProgressOnTime || 0, sub.expiringSoon || 0,
+            sub.completedOverdue || 0, sub.completedOnTime || 0, sub.notStarted || 0
           ]);
         });
         sheetRows.push([]);
@@ -1758,11 +1771,11 @@ async function exportDashboardExcelReport() {
       // Table 3: Goals List
       const secGoal = subAgencies.length > 0 ? "3" : "2";
       const goalRowIdx = sheetRows.length;
-      merges.push({ s: { r: goalRowIdx, c: 0 }, e: { r: goalRowIdx, c: 7 } });
+      merges.push({ s: { r: goalRowIdx, c: 0 }, e: { r: goalRowIdx, c: 10 } });
       sheetRows.push([`${secGoal}. DANH SÁCH MỤC TIÊU CỦA ĐƠN VỊ (${goalsList.length} mục tiêu)`]);
       if (goalsList.length > 0) {
         sheetRows.push([
-          "STT", "Tên Mục Tiêu", "Cơ Quan Chủ Trì", "Phạm Vi", "Lĩnh Vực / Nhóm",
+          "STT", "Tên Mục Tiêu", "Cơ Quan Chủ Trì", "Giao Đơn Vị Trực Thuộc", "Phạm Vi", "Lĩnh Vực / Nhóm",
           "Thời Gian / Hạn Chót", "Tiến Độ Hiện Tại", "Trạng Thái Thực Hiện"
         ]);
         goalsList.forEach((g, gIdx) => {
@@ -1770,7 +1783,7 @@ async function exportDashboardExcelReport() {
           let progStr = formatItemProgressDisplay(g);
 
           sheetRows.push([
-            gIdx + 1, g.title, g.leadAgencyName,
+            gIdx + 1, g.title, g.leadAgencyName, g.assignedAgencyName || '—',
             g.isGeneralTask ? 'Phạm vi chung' : 'Phạm vi riêng',
             [g.section, g.group].filter(Boolean).join(' - ') || '—',
             dateStr, progStr, getStatusLabelClean(g.status)
@@ -1784,11 +1797,11 @@ async function exportDashboardExcelReport() {
       // Table 4: Tasks List
       const secTask = subAgencies.length > 0 ? "4" : "3";
       const taskRowIdx = sheetRows.length;
-      merges.push({ s: { r: taskRowIdx, c: 0 }, e: { r: taskRowIdx, c: 7 } });
+      merges.push({ s: { r: taskRowIdx, c: 0 }, e: { r: taskRowIdx, c: 10 } });
       sheetRows.push([`${secTask}. DANH SÁCH NHIỆM VỤ CỦA ĐƠN VỊ (${tasksList.length} nhiệm vụ)`]);
       if (tasksList.length > 0) {
         sheetRows.push([
-          "STT", "Tên Nhiệm Vụ", "Cơ Quan Chủ Trì", "Phạm Vi", "Lĩnh Vực / Nhóm",
+          "STT", "Tên Nhiệm Vụ", "Cơ Quan Chủ Trì", "Giao Đơn Vị Trực Thuộc", "Phạm Vi", "Lĩnh Vực / Nhóm",
           "Thời Gian / Hạn Chót", "Tiến Độ Hiện Tại", "Trạng Thái Thực Hiện"
         ]);
         tasksList.forEach((t, tIdx) => {
@@ -1796,7 +1809,7 @@ async function exportDashboardExcelReport() {
           let progStr = formatItemProgressDisplay(t);
 
           sheetRows.push([
-            tIdx + 1, t.title, t.leadAgencyName,
+            tIdx + 1, t.title, t.leadAgencyName, t.assignedAgencyName || '—',
             t.isGeneralTask ? 'Phạm vi chung' : 'Phạm vi riêng',
             [t.section, t.group].filter(Boolean).join(' - ') || '—',
             dateStr, progStr, getStatusLabelClean(t.status)
@@ -1810,7 +1823,7 @@ async function exportDashboardExcelReport() {
       // Table 5: Contact Persons List
       const secContact = subAgencies.length > 0 ? "5" : "4";
       const contactRowIdx = sheetRows.length;
-      merges.push({ s: { r: contactRowIdx, c: 0 }, e: { r: contactRowIdx, c: 7 } });
+      merges.push({ s: { r: contactRowIdx, c: 0 }, e: { r: contactRowIdx, c: 10 } });
       sheetRows.push([`${secContact}. DANH SÁCH CÁN BỘ ĐẦU MỐI LIÊN HỆ (${contactList.length} cán bộ)`]);
       if (contactList.length > 0) {
         sheetRows.push(["STT", "Họ và Tên", "Chức Danh", "Phòng Ban", "Điện Thoại", "Email", "Thuộc Đơn Vị"]);
@@ -1828,16 +1841,19 @@ async function exportDashboardExcelReport() {
       ws['!merges'] = merges;
       ws['!cols'] = [
         { wch: 6 },  // STT
-        { wch: 55 }, // Tên Hạng Mục / Tên Đơn Vị / Tên Cán Bộ
-        { wch: 28 }, // Cơ Quan Chủ Trì / Chức Danh
+        { wch: 45 }, // Tên Hạng Mục / Tên Đơn Vị / Tên Cán Bộ
+        { wch: 25 }, // Cơ Quan Chủ Trì / Chức Danh
+        { wch: 25 }, // Giao Đơn Vị Trực Thuộc
         { wch: 18 }, // Phạm Vi / Phòng Ban
         { wch: 25 }, // Lĩnh Vực - Nhóm / Điện Thoại
         { wch: 20 }, // Thời Gian / Email
         { wch: 18 }, // Tiến Độ / Thuộc Đơn Vị
-        { wch: 25 }  // Trạng Thái
+        { wch: 18 }, // Trạng Thái / Sắp tới hạn
+        { wch: 18 }, // Đã H/T quá hạn
+        { wch: 18 }  // Đã H/T trong hạn / Chưa thực hiện
       ];
 
-      styleWorksheet(ws, { numCols: 8, headerRowIndex: 9, titleRowIndex: 0 });
+      styleWorksheet(ws, { numCols: 11, headerRowIndex: 9, titleRowIndex: 0 });
       XLSX.utils.book_append_sheet(wb, ws, sheetName);
     }
 

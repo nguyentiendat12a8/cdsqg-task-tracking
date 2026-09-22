@@ -6,7 +6,7 @@
       <div class="flex justify-between items-start border-b border-slate-100 pb-3 shrink-0">
         <div>
           <span class="text-xs font-bold text-rose-600 uppercase tracking-wider block">Thông Báo Tiến Độ Thực Hiện</span>
-          <h3 class="text-base font-extrabold text-slate-800 mt-0.5">{{ taskCode }} - {{ taskTitle }}</h3>
+          <h3 class="text-base font-bold text-slate-800 mt-0.5">{{ taskCode }} - {{ taskTitle }}</h3>
         </div>
         <button @click="close" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1">✕</button>
       </div>

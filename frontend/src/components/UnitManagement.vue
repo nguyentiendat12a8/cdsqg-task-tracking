@@ -4,7 +4,7 @@
     <!-- Top Bar -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 pb-4">
       <div>
-        <h2 class="text-xl font-extrabold text-slate-800 flex items-center gap-2">
+        <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
           <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
           Danh Mục Đơn Vị Tính
         </h2>
@@ -45,22 +45,22 @@
         <table v-else class="w-full text-left text-sm text-slate-700">
           <thead class="bg-slate-100 text-xs text-slate-500 uppercase font-bold border-b border-slate-200 sticky top-0 z-10">
             <tr>
-              <th class="px-4 py-3 border-r border-slate-200 bg-slate-100">Mã Đơn Vị</th>
-              <th class="px-4 py-3 border-r border-slate-200 bg-slate-100">Tên Hiển Thị</th>
-              <th class="px-4 py-3 border-r border-slate-200 bg-slate-100">Kiểu Dữ Liệu</th>
-              <th class="px-4 py-3 text-center bg-slate-100 whitespace-nowrap">Thao Tác</th>
+              <th class="px-4 py-3 border-r border-slate-200 bg-slate-100 min-w-[150px] w-48">Mã Đơn Vị</th>
+              <th class="px-4 py-3 border-r border-slate-200 bg-slate-100 min-w-[280px]">Tên Hiển Thị</th>
+              <th class="px-4 py-3 border-r border-slate-200 bg-slate-100 text-center min-w-[200px] w-60">Kiểu Dữ Liệu</th>
+              <th class="px-4 py-3 text-center bg-slate-100 whitespace-nowrap min-w-[110px] w-28">Thao Tác</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
             <tr v-for="unit in units" :key="unit.id" class="hover:bg-slate-50 transition">
-              <td class="px-4 py-3 border-r border-slate-200 font-extrabold text-blue-700">{{ unit.code }}</td>
-              <td class="px-4 py-3 border-r border-slate-200 font-bold text-slate-800">{{ unit.name }}</td>
-              <td class="px-4 py-3 border-r border-slate-200">
+              <td class="px-4 py-3 border-r border-slate-200 font-extrabold text-blue-700 min-w-[150px] w-48">{{ unit.code }}</td>
+              <td class="px-4 py-3 border-r border-slate-200 font-bold text-slate-800 min-w-[280px]">{{ unit.name }}</td>
+              <td class="px-4 py-3 border-r border-slate-200 text-center min-w-[200px] w-60">
                 <span class="px-2.5 py-1 bg-emerald-50 text-emerald-800 border border-emerald-100 rounded-full text-xs font-bold">
                   {{ formatDataType(unit.dataType) }}
                 </span>
               </td>
-              <td class="px-4 py-3 text-center space-x-2 whitespace-nowrap">
+              <td class="px-4 py-3 text-center space-x-2 whitespace-nowrap min-w-[110px] w-28">
                 <button @click="openEditModal(unit)" class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition inline-flex items-center" title="Sửa">
                   <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                 </button>

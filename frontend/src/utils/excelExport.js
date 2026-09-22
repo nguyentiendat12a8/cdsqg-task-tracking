@@ -294,7 +294,8 @@ export function exportProgressReportTemplate({
   ];
   rows.push(headers);
 
-  const isAdmin = userRole?.toLowerCase() === 'admin';
+  const roleStr = userRole !== null && userRole !== undefined ? String(userRole).toLowerCase() : '';
+  const isAdmin = roleStr === 'admin' || roleStr === '1';
   const currAgId = currentAgency?.id ? String(currentAgency.id).toLowerCase() : null;
   const isLevel2 = currentAgency && !currentAgency.parentId;
   const isLevel3 = currentAgency && currentAgency.parentId;

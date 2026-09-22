@@ -33,26 +33,49 @@
           @reset="resetGridFilterSearch"
         >
           <div class="space-y-3">
-            <!-- Agency Filter -->
+            <!-- Lead Agency Filter -->
             <div>
               <SearchableSelect 
                 v-model="filterDraft.selectedAgencyIds" 
-                :options="agencyOptions" 
+                :options="leadAgencyOptions" 
                 :isMulti="true" 
                 label="Cơ Quan Chủ Trì" 
-                placeholder="Tất cả cơ quan"
+                placeholder="Tất cả cơ quan chủ trì"
               />
             </div>
 
-            <!-- Scope Filter -->
+            <!-- Subordinate Agency Filter -->
             <div>
               <SearchableSelect 
-                v-model="filterDraft.selectedScopes" 
-                :options="gridScopeOptions" 
+                v-model="filterDraft.selectedSubAgencyIds" 
+                :options="subAgencyOptions" 
                 :isMulti="true" 
-                label="Phạm Vi (Chung - Riêng)" 
-                placeholder="Tất cả phạm vi"
+                label="Đơn Vị Trực Thuộc" 
+                placeholder="Tất cả đơn vị trực thuộc"
               />
+            </div>
+
+            <!-- Combined 2-Column Row: Phạm Vi & Trạng Thái Tiến Độ -->
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <SearchableSelect 
+                  v-model="filterDraft.selectedScopes" 
+                  :options="gridScopeOptions" 
+                  :isMulti="true" 
+                  label="Phạm Vi" 
+                  placeholder="Tất cả phạm vi"
+                />
+              </div>
+
+              <div>
+                <SearchableSelect 
+                  v-model="filterDraft.selectedStatuses" 
+                  :options="gridStatusOptions" 
+                  :isMulti="true" 
+                  label="Trạng Thái Tiến Độ" 
+                  placeholder="Tất cả trạng thái"
+                />
+              </div>
             </div>
 
             <!-- Section Filter -->
@@ -104,17 +127,6 @@
                 />
               </div>
             </div>
-
-            <!-- Progress/Alert Status Filter -->
-            <div>
-              <SearchableSelect 
-                v-model="filterDraft.selectedStatuses" 
-                :options="gridStatusOptions" 
-                :isMulti="true" 
-                label="Trạng Thái Tiến Độ" 
-                placeholder="Tất cả trạng thái"
-              />
-            </div>
           </div>
         </OverlayPanel>
       </div>
@@ -155,7 +167,7 @@
             <template v-if="activeSubTab === 'goals'">
               <tr v-for="(item, itemIdx) in paginatedGridList" :key="item.taskId" class="hover:bg-purple-50/40 transition group">
                 <!-- STICKY FROZEN CELLS -->
-                <td class="px-3 py-3 border-r border-slate-200 font-extrabold text-purple-900 whitespace-nowrap min-w-[75px] w-[75px] max-w-[75px] sticky left-0 z-20 bg-white group-hover:bg-[#FAF5FF] shadow-[1px_0_0_0_#e2e8f0]">
+                <td class="px-3 py-3 border-r border-slate-200 font-normal text-purple-900 whitespace-nowrap min-w-[75px] w-[75px] max-w-[75px] sticky left-0 z-20 bg-white group-hover:bg-[#FAF5FF] shadow-[1px_0_0_0_#e2e8f0]">
                   {{ item.code }}
                 </td>
 
@@ -165,20 +177,20 @@
                     placement="top"
                     :delay="{ show: 1500, hide: 0 }"
                   >
-                    <div class="line-clamp-5 font-semibold text-slate-800 text-xs leading-relaxed cursor-help">
+                    <div class="line-clamp-2 font-normal text-slate-800 text-xs leading-relaxed cursor-help">
                       {{ item.title }}
                     </div>
 
                     <template #popper>
                       <div class="whitespace-normal break-words text-left leading-relaxed min-w-[280px] max-w-[450px] p-1">
-                        <span class="font-extrabold text-purple-300 block mb-1 text-[11px] uppercase tracking-wider">🎯 Chi Tiết Mục Tiêu</span>
+                        <span class="font-bold text-purple-300 block mb-1 text-[11px] uppercase tracking-wider">🎯 Chi Tiết Mục Tiêu</span>
                         {{ item.title }}
                       </div>
                     </template>
                   </VTooltip>
                 </td>
 
-                <td class="px-4 py-3 border-r border-slate-200 font-bold text-slate-700 min-w-[130px] w-[130px] max-w-[130px] sticky left-[355px] z-20 bg-white group-hover:bg-[#FAF5FF] shadow-[3px_0_6px_-1px_rgba(0,0,0,0.15)]">
+                <td class="px-4 py-3 border-r border-slate-200 font-normal text-slate-700 min-w-[130px] w-[130px] max-w-[130px] sticky left-[355px] z-20 bg-white group-hover:bg-[#FAF5FF] shadow-[3px_0_6px_-1px_rgba(0,0,0,0.15)]">
                   {{ item.leadAgencyName || item.leadAgencyCode || 'N/A' }}
                 </td>
 
@@ -199,9 +211,9 @@
                         :disabled="!isYearEnabledForItem(item, year)"
                         @change="saveYearlyTarget(item, year, $event.target.value)"
                         placeholder="—"
-                        class="w-full text-center font-bold text-slate-800 bg-white border border-slate-300 rounded-lg py-1 pl-2 pr-6 focus:ring-2 focus:ring-blue-500 focus:outline-none transition hover:border-blue-400 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed disabled:border-slate-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        class="w-full text-center font-normal text-slate-800 bg-white border border-slate-300 rounded-lg py-1 pl-2 pr-6 focus:ring-2 focus:ring-blue-500 focus:outline-none transition hover:border-blue-400 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed disabled:border-slate-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
-                      <span v-if="isYearEnabledForItem(item, year) && (!item.unitName || item.unitName === '%' || item.unit?.name === '%')" class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 pointer-events-none">%</span>
+                      <span v-if="isYearEnabledForItem(item, year) && (!item.unitName || item.unitName === '%' || item.unit?.name === '%')" class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-normal text-slate-400 pointer-events-none">%</span>
                     </div>
                   </template>
                   <template v-else>
@@ -251,7 +263,7 @@
             <template v-else-if="activeSubTab === 'tasks'">
               <tr v-for="(item, itemIdx) in paginatedGridList" :key="item.taskId" class="hover:bg-blue-50/40 transition group">
                 <!-- STICKY FROZEN CELLS -->
-                <td class="px-3 py-3 border-r border-slate-200 font-extrabold text-blue-900 whitespace-nowrap min-w-[75px] w-[75px] max-w-[75px] sticky left-0 z-20 bg-white group-hover:bg-[#EFF6FF] shadow-[1px_0_0_0_#e2e8f0]">
+                <td class="px-3 py-3 border-r border-slate-200 font-normal text-blue-900 whitespace-nowrap min-w-[75px] w-[75px] max-w-[75px] sticky left-0 z-20 bg-white group-hover:bg-[#EFF6FF] shadow-[1px_0_0_0_#e2e8f0]">
                   {{ item.code }}
                 </td>
 
@@ -261,20 +273,20 @@
                     placement="top"
                     :delay="{ show: 1500, hide: 0 }"
                   >
-                    <div class="line-clamp-5 font-semibold text-slate-800 text-xs leading-relaxed cursor-help">
+                    <div class="line-clamp-2 font-normal text-slate-800 text-xs leading-relaxed cursor-help">
                       {{ item.title }}
                     </div>
 
                     <template #popper>
                       <div class="whitespace-normal break-words text-left leading-relaxed min-w-[280px] max-w-[450px] p-1">
-                        <span class="font-extrabold text-blue-300 block mb-1 text-[11px] uppercase tracking-wider">📋 Chi Tiết Nhiệm Vụ</span>
+                        <span class="font-bold text-blue-300 block mb-1 text-[11px] uppercase tracking-wider">📋 Chi Tiết Nhiệm Vụ</span>
                         {{ item.title }}
                       </div>
                     </template>
                   </VTooltip>
                 </td>
 
-                <td class="px-4 py-3 border-r border-slate-200 font-bold text-slate-700 min-w-[130px] w-[130px] max-w-[130px] sticky left-[355px] z-20 bg-white group-hover:bg-[#EFF6FF] shadow-[3px_0_6px_-1px_rgba(0,0,0,0.15)]">
+                <td class="px-4 py-3 border-r border-slate-200 font-normal text-slate-700 min-w-[130px] w-[130px] max-w-[130px] sticky left-[355px] z-20 bg-white group-hover:bg-[#EFF6FF] shadow-[3px_0_6px_-1px_rgba(0,0,0,0.15)]">
                   {{ item.leadAgencyName || item.leadAgencyCode || 'N/A' }}
                 </td>
 
@@ -295,7 +307,7 @@
                         :disabled="!isYearEnabledForItem(item, year)"
                         @change="saveYearlyTarget(item, year, $event.target.value)"
                         placeholder="—"
-                        class="w-full text-center font-bold text-slate-800 bg-white border border-slate-300 rounded-lg py-1 pl-2 pr-6 focus:ring-2 focus:ring-blue-500 focus:outline-none transition hover:border-blue-400 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed disabled:border-slate-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        class="w-full text-center font-normal text-slate-800 bg-white border border-slate-300 rounded-lg py-1 pl-2 pr-6 focus:ring-2 focus:ring-blue-500 focus:outline-none transition hover:border-blue-400 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed disabled:border-slate-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                       <span v-if="isYearEnabledForItem(item, year) && (!item.unitName || item.unitName === '%' || item.unit?.name === '%')" class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 pointer-events-none">%</span>
                     </div>
@@ -423,6 +435,29 @@ const agencyOptions = computed(() => {
   return agencies.value.map(ag => ({ value: ag.id, label: ag.name }));
 });
 
+const leadAgencyOptions = computed(() => {
+  return agencies.value
+    .filter(ag => ag.code === 'ALL_AGENCIES' || (ag.type !== 3 && !ag.parentId))
+    .map(ag => {
+      if (ag.code === 'ALL_AGENCIES') {
+        return { value: ag.id, label: `🌐 ${ag.name} (Tất cả đơn vị)` };
+      }
+      return { value: ag.id, label: ag.name };
+    });
+});
+
+const subAgencyOptions = computed(() => {
+  return agencies.value
+    .filter(ag => ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000')
+    .map(ag => {
+      const parentAg = agencies.value.find(p => p.id === ag.parentId);
+      return {
+        value: ag.id,
+        label: parentAg ? `${ag.name} (Trực thuộc ${parentAg.name})` : ag.name
+      };
+    });
+});
+
 const sectionFilterOptions = computed(() => {
   return props.filterItemType === 'Goal' ? GOAL_SECTIONS : (props.filterItemType === 'Task' ? TASK_SECTIONS : [...GOAL_SECTIONS, ...TASK_SECTIONS]);
 });
@@ -442,9 +477,9 @@ const yearRangeOptions = computed(() => [2026, 2027, 2028, 2029, 2030].map(y => 
 
 const gridStatusCellOptions = ref([
   { value: 'NotStarted', label: 'Chưa thực hiện' },
-  { value: 'Drafting', label: 'Đang soạn thảo' },
-  { value: 'Reviewing', label: 'Đang xin ý kiến' },
-  { value: 'Completed', label: 'Hoàn thành' }
+  { value: 'Drafting', label: 'Đang xây dựng / Soạn thảo' },
+  { value: 'Reviewing', label: 'Đang xin ý kiến / Thẩm định' },
+  { value: 'Completed', label: 'Đã hoàn thành / Ban hành' }
 ]);
 
 const yearOptions = ref([
@@ -471,6 +506,7 @@ const STORAGE_KEY = computed(() => `cdsqg_grid_filters_${props.documentId}`);
 const filterDraft = ref({
   searchQuery: '',
   selectedAgencyIds: [],
+  selectedSubAgencyIds: [],
   selectedScopes: [],
   selectedStatuses: [],
   selectedYears: [],
@@ -484,6 +520,7 @@ const filterDraft = ref({
 const appliedFilters = ref({
   searchQuery: '',
   selectedAgencyIds: [],
+  selectedSubAgencyIds: [],
   selectedScopes: [],
   selectedStatuses: [],
   selectedYears: [],
@@ -502,6 +539,7 @@ const gridScopeOptions = computed(() => [
 const activeFilterCount = computed(() => {
   let count = 0;
   if (filterDraft.value.selectedAgencyIds?.length) count++;
+  if (filterDraft.value.selectedSubAgencyIds?.length) count++;
   if (filterDraft.value.selectedScopes?.length) count++;
   if (filterDraft.value.selectedSections?.length) count++;
   if (filterDraft.value.selectedGroups?.length) count++;
@@ -558,6 +596,7 @@ function resetGridFilterSearch() {
   filterDraft.value = {
     searchQuery: '',
     selectedAgencyIds: [],
+    selectedSubAgencyIds: [],
     selectedScopes: [],
     selectedStatuses: [],
     selectedYears: [],
@@ -668,6 +707,17 @@ function filterGridItem(item) {
       item.leadAgencyName === ag.name
     );
     if (!matchAg) return false;
+  }
+
+  // 2.1 Subordinate Agency Filter (Multi-select)
+  if (appliedFilters.value.selectedSubAgencyIds && appliedFilters.value.selectedSubAgencyIds.length > 0) {
+    const selectedSubAgencies = agencies.value.filter(a => appliedFilters.value.selectedSubAgencyIds.includes(a.id));
+    const matchSubAg = selectedSubAgencies.some(ag =>
+      item.assignedAgencyId === ag.id ||
+      item.assignedAgencyCode === ag.code ||
+      item.assignedAgencyName === ag.name
+    );
+    if (!matchSubAg) return false;
   }
 
   // 2.5 Scope Filter (Multi-select)

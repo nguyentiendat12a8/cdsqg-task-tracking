@@ -6,7 +6,7 @@
       <div class="flex justify-between items-start border-b border-slate-100 pb-3 shrink-0">
         <div>
           <span class="text-xs font-bold text-rose-600 uppercase tracking-wider block">Chi Tiết Văn Bản Thông Báo</span>
-          <h3 class="text-base font-extrabold text-slate-800 mt-0.5">
+          <h3 class="text-base font-bold text-slate-800 mt-0.5">
             {{ log.taskCode }} - {{ log.taskTitle }}
           </h3>
         </div>

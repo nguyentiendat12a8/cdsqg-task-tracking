@@ -9,7 +9,7 @@
             🔔
           </div>
           <div>
-            <h3 class="text-base font-extrabold text-slate-800">
+            <h3 class="text-base font-bold text-slate-800">
               Gửi Thông Báo / Nhắc Nhở Nhiệm Vụ (Chủ Trì, Phối Hợp & Trực Thuộc)
             </h3>
             <span class="text-xs text-slate-500 font-semibold">
