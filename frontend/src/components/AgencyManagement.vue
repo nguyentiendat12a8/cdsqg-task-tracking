@@ -137,7 +137,7 @@
       <!-- Server Pagination Controls -->
       <div class="flex flex-col md:flex-row items-center justify-between gap-3 bg-slate-50/70 p-3.5 border-t border-slate-200/80 text-xs text-slate-600 font-semibold w-full">
         <div class="flex items-center gap-3 whitespace-nowrap flex-wrap justify-center sm:justify-start">
-          <span class="whitespace-nowrap">Hiển thị <span class="font-extrabold text-slate-900">{{ totalCount > 0 ? (pageNumber - 1) * pageSize + 1 : 0 }} - {{ Math.min(pageNumber * pageSize, totalCount) }}</span> trên tổng số <span class="font-extrabold text-slate-900">{{ totalCount }}</span> cơ quan / đơn vị</span>
+          <span class="whitespace-nowrap">Hiển thị <span class="font-bold text-slate-900">{{ totalCount > 0 ? (pageNumber - 1) * pageSize + 1 : 0 }} - {{ Math.min(pageNumber * pageSize, totalCount) }}</span> trên tổng số <span class="font-bold text-slate-900">{{ totalCount }}</span> cơ quan / đơn vị</span>
           
           <div class="flex items-center gap-1.5 border-l border-slate-200 pl-3 whitespace-nowrap">
             <span class="whitespace-nowrap">Số bản ghi/trang:</span>
@@ -161,7 +161,7 @@
             ‹ Trang trước
           </button>
           
-          <span class="px-3 py-1.5 bg-blue-50 text-blue-800 border border-blue-200 rounded-lg font-black">
+          <span class="px-3 py-1.5 bg-blue-50 text-blue-800 border border-blue-200 rounded-lg font-bold">
             Trang {{ pageNumber }} / {{ Math.max(1, totalPages) }}
           </span>
 
@@ -223,7 +223,7 @@
           <!-- Contact Persons Section -->
           <div class="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 space-y-3">
             <div class="flex items-center justify-between">
-              <label class="text-xs font-extrabold text-slate-800 uppercase flex items-center gap-1.5">
+              <label class="text-xs font-bold text-slate-800 uppercase flex items-center gap-1.5">
                 <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                 Thông Tin Cán Bộ Đầu Mối (Liên Hệ)
               </label>
@@ -338,8 +338,8 @@
           >
             <div class="flex items-center justify-between border-b border-slate-200/60 pb-1.5">
               <div class="flex items-center gap-2">
-                <span class="w-5 h-5 rounded-full bg-blue-600 text-white font-extrabold text-[11px] flex items-center justify-center shrink-0">{{ idx + 1 }}</span>
-                <span class="text-xs font-extrabold text-slate-900">{{ cp.name }}</span>
+                <span class="w-5 h-5 rounded-full bg-blue-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0">{{ idx + 1 }}</span>
+                <span class="text-xs font-bold text-slate-900">{{ cp.name }}</span>
               </div>
               <span v-if="cp.position" class="px-2 py-0.5 bg-blue-100 text-blue-800 text-[10px] font-bold rounded-full">{{ cp.position }}</span>
             </div>
@@ -395,7 +395,8 @@ const pageSizeOptions = ref([10, 25, 50, 100].map(n => ({ value: n, label: Strin
 
 const agencyTypeOptions = ref([
   { value: 1, label: 'Bộ / Ngành' },
-  { value: 2, label: 'Tỉnh / Thành phố' }
+  { value: 2, label: 'Tỉnh / Thành phố' },
+  { value: 4, label: 'Khác (Danh mục riêng)' }
 ]);
 
 const parentAgencyOptions = computed(() => {
@@ -479,20 +480,17 @@ function changePage(newPage) {
   fetchAgencies();
 }
 
+function closeModal() {
+  isModalOpen.value = false;
+}
+
 function getTypeLabel(row) {
-  if (typeof row === 'object' && row !== null) {
-    if (row.parentId) return 'Đơn vị trực thuộc';
-    const type = row.type;
-    if (type === 1 || type === '1' || type === 'Ministry') return 'Bộ / Ngành';
-    if (type === 2 || type === '2' || type === 'Province') return 'Tỉnh / TP';
-    return 'Bộ / Ngành';
-  }
-  const map = { 
-    1: 'Bộ / Ngành', 'Ministry': 'Bộ / Ngành', '1': 'Bộ / Ngành',
-    2: 'Tỉnh / TP', 'Province': 'Tỉnh / TP', '2': 'Tỉnh / TP',
-    3: 'Đơn vị trực thuộc', 'Internal': 'Đơn vị trực thuộc', '3': 'Đơn vị trực thuộc'
-  };
-  return map[row] || 'Bộ / Ngành';
+  const type = (typeof row === 'object' && row !== null && row.parentId) ? 3 : (typeof row === 'object' ? row.type : row);
+  if (type === 1 || type === '1' || type === 'Ministry') return 'Bộ / Ngành';
+  if (type === 2 || type === '2' || type === 'Province') return 'Tỉnh / TP';
+  if (type === 3 || type === '3' || type === 'Internal') return 'Đơn vị trực thuộc';
+  if (type === 4 || type === '4' || type === 'Other') return 'Khác (Danh mục riêng)';
+  return 'Bộ / Ngành';
 }
 
 function getTypeBadgeClass(row) {
@@ -500,6 +498,7 @@ function getTypeBadgeClass(row) {
   if (type === 1 || type === '1' || type === 'Ministry') return 'bg-purple-50 text-purple-700 border border-purple-100';
   if (type === 2 || type === '2' || type === 'Province') return 'bg-blue-50 text-blue-700 border border-blue-100';
   if (type === 3 || type === '3' || type === 'Internal') return 'bg-emerald-50 text-emerald-700 border border-emerald-100';
+  if (type === 4 || type === '4' || type === 'Other') return 'bg-slate-100 text-slate-700 border border-slate-300 font-bold';
   return 'bg-slate-100 text-slate-700 border border-slate-200';
 }
 

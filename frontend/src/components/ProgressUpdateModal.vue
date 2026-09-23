@@ -18,7 +18,7 @@
           <div v-if="hasPendingApproval" class="p-3.5 bg-amber-50 text-amber-900 border border-amber-300/80 rounded-xl text-xs font-bold flex items-start gap-2.5 leading-relaxed shadow-2xs">
             <span class="text-base leading-none">⏳</span>
             <div>
-              <strong class="font-extrabold">Nhiệm vụ này đang ở trạng thái Chờ duyệt:</strong>
+              <strong class="font-bold">Nhiệm vụ này đang ở trạng thái Chờ duyệt:</strong>
               <span class="font-medium text-amber-950 block mt-0.5"> Báo cáo tiến độ trước đó đang chờ Cấp 2 xem xét phê duyệt hoặc từ chối. Bạn không thể gửi báo cáo tiến độ mới cho tới khi cấp trên duyệt xong.</span>
             </div>
           </div>
@@ -35,7 +35,7 @@
               <button 
                 type="button"
                 @click="setPeriodType('yearly')" 
-                :class="['flex-1 py-1.5 rounded-lg text-xs font-extrabold transition text-center', periodType === 'yearly' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600 hover:text-slate-900']"
+                :class="['flex-1 py-1.5 rounded-lg text-xs font-bold transition text-center', periodType === 'yearly' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600 hover:text-slate-900']"
               >
                 🗓 Theo Năm (Mặc định)
               </button>
@@ -44,7 +44,7 @@
                 v-if="showQuarterOption"
                 type="button"
                 @click="setPeriodType('quarterly')" 
-                :class="['flex-1 py-1.5 rounded-lg text-xs font-extrabold transition text-center', periodType === 'quarterly' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600 hover:text-slate-900']"
+                :class="['flex-1 py-1.5 rounded-lg text-xs font-bold transition text-center', periodType === 'quarterly' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600 hover:text-slate-900']"
               >
                 📅 Theo Quý (4 Quý)
               </button>
@@ -53,7 +53,7 @@
                 v-if="showMonthOption"
                 type="button"
                 @click="setPeriodType('monthly')" 
-                :class="['flex-1 py-1.5 rounded-lg text-xs font-extrabold transition text-center', periodType === 'monthly' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600 hover:text-slate-900']"
+                :class="['flex-1 py-1.5 rounded-lg text-xs font-bold transition text-center', periodType === 'monthly' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600 hover:text-slate-900']"
               >
                 📆 Theo Tháng (12 Tháng)
               </button>
@@ -127,7 +127,7 @@
           <div v-if="localDeliverables && localDeliverables.length > 0" class="border border-slate-200 rounded-xl p-3 bg-slate-50/70 space-y-3">
             <div class="flex items-center justify-between gap-2 flex-wrap border-b border-slate-200/80 pb-2">
               <div class="flex items-center gap-2">
-                <span class="text-xs font-extrabold text-blue-900 uppercase">📋 Cập Nhật Tiến Độ Danh Mục Sản Phẩm Đầu Ra</span>
+                <span class="text-xs font-bold text-blue-900 uppercase">📋 Cập Nhật Tiến Độ Danh Mục Sản Phẩm Đầu Ra</span>
                 <span class="text-[11px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">{{ localDeliverables.length }} Sản phẩm</span>
               </div>
             </div>

@@ -4,7 +4,7 @@
     <!-- Subtle Floating Toast Notification -->
     <transition name="fade">
       <div v-if="toastMessage" class="fixed bottom-6 right-6 z-50 bg-slate-900/90 text-white text-xs font-bold px-4 py-3 rounded-2xl shadow-xl backdrop-blur-sm flex items-center gap-2 border border-slate-700 animate-in fade-in slide-in-from-bottom-2">
-        <span class="text-emerald-400 font-black text-sm">✓</span>
+        <span class="text-emerald-400 font-bold text-sm">✓</span>
         <span>{{ toastMessage }}</span>
       </div>
     </transition>
@@ -103,8 +103,8 @@
             <!-- Year Range Filter -->
             <div>
               <div class="flex items-center justify-between mb-1">
-                <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block">Giai Đoạn</label>
-                <label class="inline-flex items-center gap-1 cursor-pointer text-[10px] font-extrabold text-blue-700">
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Giai Đoạn</label>
+                <label class="inline-flex items-center gap-1 cursor-pointer text-[10px] font-bold text-blue-700">
                   <input type="checkbox" v-model="filterDraft.onlyOngoing" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3 h-3">
                   Thường xuyên
                 </label>
@@ -154,7 +154,7 @@
               <th 
                 v-for="year in gridData.dynamicYears" 
                 :key="year" 
-                class="px-4 py-3 border-r border-slate-200 text-center min-w-[120px] bg-blue-50/70 text-blue-900 font-extrabold"
+                class="px-4 py-3 border-r border-slate-200 text-center min-w-[120px] bg-blue-50/70 text-blue-900 font-bold"
               >
                 Năm {{ year }}
               </th>
@@ -362,7 +362,7 @@
       <!-- Attached Pagination Controls -->
       <div v-if="totalGridItems > 0" class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50/70 p-4 border-t border-slate-200/80 text-xs text-slate-600 font-semibold w-full">
         <div>
-          Hiển thị <span class="font-extrabold text-slate-900">{{ gridPageStart }} - {{ gridPageEnd }}</span> trên tổng số <span class="font-extrabold text-slate-900">{{ totalGridItems }}</span> {{ activeSubTab === 'goals' ? 'Mục tiêu' : 'Nhiệm vụ' }}
+          Hiển thị <span class="font-bold text-slate-900">{{ gridPageStart }} - {{ gridPageEnd }}</span> trên tổng số <span class="font-bold text-slate-900">{{ totalGridItems }}</span> {{ activeSubTab === 'goals' ? 'Mục tiêu' : 'Nhiệm vụ' }}
         </div>
 
         <div class="flex items-center gap-2">
@@ -374,7 +374,7 @@
             ‹ Trang trước
           </button>
           
-          <span class="px-3 py-1.5 bg-blue-50 text-blue-800 border border-blue-200 rounded-lg font-black shadow-2xs">
+          <span class="px-3 py-1.5 bg-blue-50 text-blue-800 border border-blue-200 rounded-lg font-bold shadow-2xs">
             Trang {{ gridCurrentPage }} / {{ totalGridPages }}
           </span>
 
@@ -432,12 +432,14 @@ const toastMessage = ref('');
 let toastTimeout = null;
 
 const agencyOptions = computed(() => {
-  return agencies.value.map(ag => ({ value: ag.id, label: ag.name }));
+  return agencies.value
+    .filter(ag => ag.type !== 4 && ag.type !== 'Other')
+    .map(ag => ({ value: ag.id, label: ag.name }));
 });
 
 const leadAgencyOptions = computed(() => {
   return agencies.value
-    .filter(ag => ag.code === 'ALL_AGENCIES' || (ag.type !== 3 && !ag.parentId))
+    .filter(ag => ag.code === 'ALL_AGENCIES' || (ag.type !== 3 && ag.type !== 4 && ag.type !== 'Other' && !ag.parentId))
     .map(ag => {
       if (ag.code === 'ALL_AGENCIES') {
         return { value: ag.id, label: `🌐 ${ag.name} (Tất cả đơn vị)` };
@@ -448,7 +450,7 @@ const leadAgencyOptions = computed(() => {
 
 const subAgencyOptions = computed(() => {
   return agencies.value
-    .filter(ag => ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000')
+    .filter(ag => ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000' && ag.type !== 4 && ag.type !== 'Other')
     .map(ag => {
       const parentAg = agencies.value.find(p => p.id === ag.parentId);
       return {
@@ -662,7 +664,7 @@ function filterGridItem(item) {
     const scopedAgencyIds = [userAgencyId];
     if (userAgency && !userAgency.parentId) {
       const childIds = agencies.value
-        .filter(a => a.parentId && String(a.parentId).toLowerCase() === userAgencyId)
+        .filter(a => a.parentId && String(a.parentId).toLowerCase() === userAgencyId && a.type !== 4 && a.type !== 'Other')
         .map(a => String(a.id).toLowerCase());
       scopedAgencyIds.push(...childIds);
     }

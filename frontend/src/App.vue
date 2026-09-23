@@ -52,6 +52,9 @@
           <!-- Báo cáo - Xuất Excel (Executive Reports Center) -->
           <ExecutiveReportsView v-else-if="currentTab === 'reports'" />
 
+          <!-- Văn bản Quy Phạm Pháp Luật (VB QPPL) -->
+          <LegalDocumentsView v-else-if="currentTab === 'legal-documents'" />
+
           <!-- Thiết lập chung (Submenus) -->
           <MasterDataView v-else-if="['settings', 'master-data'].includes(currentTab)" />
           <AgencyManagement v-else-if="currentTab === 'agencies'" />
@@ -74,6 +77,7 @@ import AppHeader from './components/AppHeader.vue';
 import ExecutiveDashboard from './views/ExecutiveDashboard.vue';
 import DocumentDetailView from './views/DocumentDetailView.vue';
 import ExecutiveReportsView from './views/ExecutiveReportsView.vue';
+import LegalDocumentsView from './views/LegalDocumentsView.vue';
 import MasterDataView from './views/MasterDataView.vue';
 import AgencyManagement from './components/AgencyManagement.vue';
 import UnitManagement from './components/UnitManagement.vue';
@@ -107,7 +111,7 @@ function parseHashRoute() {
     return;
   }
 
-  if (['goals', 'goals-list', 'goals-grid', 'tasks', 'tasks-list', 'tasks-grid', 'reports', 'agencies', 'units', 'users', 'import-history', 'settings', 'master-data'].includes(route)) {
+  if (['goals', 'goals-list', 'goals-grid', 'tasks', 'tasks-list', 'tasks-grid', 'reports', 'legal-documents', 'agencies', 'units', 'users', 'import-history', 'settings', 'master-data'].includes(route)) {
     currentTab.value = route;
   } else {
     currentTab.value = 'dashboard';

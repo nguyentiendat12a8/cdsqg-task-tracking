@@ -20,7 +20,7 @@
         <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs">
           <div>
             <span class="text-slate-500 font-medium">👥 Đầu mối / Người nhận: </span>
-            <span class="font-extrabold text-slate-900 px-2 py-0.5 bg-blue-100 text-blue-900 rounded border border-blue-200">
+            <span class="font-bold text-slate-900 px-2 py-0.5 bg-blue-100 text-blue-900 rounded border border-blue-200">
               {{ log.recipientsSummary || log.leadAgencyName || log.leadAgencyCode || 'Đơn vị nhận' }}
             </span>
           </div>
@@ -32,7 +32,7 @@
 
         <!-- Full Directive Content -->
         <div class="space-y-1.5">
-          <label class="text-xs font-extrabold text-slate-700 uppercase">Nội Dung Văn Bản Thông Báo</label>
+          <label class="text-xs font-bold text-slate-700 uppercase">Nội Dung Văn Bản Thông Báo</label>
           <div 
             v-html="log.urgeContent"
             class="p-5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 font-medium leading-relaxed shadow-2xs space-y-2 whitespace-pre-line"

@@ -164,7 +164,7 @@
       <!-- 3. Bottom Footer: Server Pagination Controls -->
       <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50/70 p-4 border-t border-slate-200/80 text-xs text-slate-600 font-semibold">
         <div>
-          Hiển thị <span class="font-extrabold text-slate-900">{{ logs.length > 0 ? (currentPage - 1) * pageSize + 1 : 0 }} - {{ Math.min(currentPage * pageSize, totalCount) }}</span> trên tổng số <span class="font-extrabold text-slate-900">{{ totalCount }}</span> nhật ký nạp dữ liệu
+          Hiển thị <span class="font-bold text-slate-900">{{ logs.length > 0 ? (currentPage - 1) * pageSize + 1 : 0 }} - {{ Math.min(currentPage * pageSize, totalCount) }}</span> trên tổng số <span class="font-bold text-slate-900">{{ totalCount }}</span> nhật ký nạp dữ liệu
         </div>
 
         <div class="flex items-center gap-2">
@@ -176,7 +176,7 @@
             ‹ Trang trước
           </button>
           
-          <span class="px-3 py-1.5 bg-blue-50 text-blue-800 border border-blue-200 rounded-lg font-black">
+          <span class="px-3 py-1.5 bg-blue-50 text-blue-800 border border-blue-200 rounded-lg font-bold">
             Trang {{ currentPage }} / {{ totalPages }}
           </span>
 

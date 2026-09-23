@@ -5,7 +5,7 @@
     <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col md:flex-row md:items-center justify-between gap-4 w-full">
       <div>
         <div class="flex items-center gap-2.5">
-          <span class="p-2 bg-rose-600 text-white rounded-xl shadow-sm font-black text-base">
+          <span class="p-2 bg-rose-600 text-white rounded-xl shadow-sm font-bold text-base">
             ⚡
           </span>
           <h1 class="text-xl font-bold text-slate-800">Lịch Sử Thông Báo & Chỉ Đạo Tiến Độ</h1>
@@ -35,32 +35,32 @@
     <!-- Stats Summary Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 w-full">
       <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center font-black text-lg">
+        <div class="w-10 h-10 rounded-xl bg-rose-100 text-rose-700 flex items-center justify-center font-bold text-lg">
           📜
         </div>
         <div>
           <span class="text-[11px] font-bold text-slate-400 uppercase block">Tổng Văn Bản Thông Báo</span>
-          <span class="text-xl font-black text-slate-800">{{ logs.length }}</span>
+          <span class="text-xl font-bold text-slate-800">{{ logs.length }}</span>
         </div>
       </div>
 
       <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-black text-lg">
+        <div class="w-10 h-10 rounded-xl bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-lg">
           🏢
         </div>
         <div>
           <span class="text-[11px] font-bold text-slate-400 uppercase block">Cơ Quan Nhận Thông Báo</span>
-          <span class="text-xl font-black text-slate-800">{{ uniqueAgenciesCount }}</span>
+          <span class="text-xl font-bold text-slate-800">{{ uniqueAgenciesCount }}</span>
         </div>
       </div>
 
       <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-black text-lg">
+        <div class="w-10 h-10 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-lg">
           🕒
         </div>
         <div>
           <span class="text-[11px] font-bold text-slate-400 uppercase block">Lần Thông Báo Gần Nhất</span>
-          <span class="text-xs font-black text-slate-800">{{ latestLogDate }}</span>
+          <span class="text-xs font-bold text-slate-800">{{ latestLogDate }}</span>
         </div>
       </div>
     </div>
@@ -113,7 +113,7 @@
               </div>
 
               <div>
-                <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block mb-1">Khoảng Thời Gian Gửi</label>
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Khoảng Thời Gian Gửi</label>
                 <div class="grid grid-cols-2 gap-2">
                   <div>
                     <label class="text-[10px] font-bold text-slate-400 block mb-0.5">Từ ngày</label>
@@ -152,10 +152,10 @@
             <!-- Header info row -->
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2">
               <div class="flex items-center gap-2">
-                <span class="px-2.5 py-1 bg-rose-100 text-rose-800 font-black text-xs rounded-lg shadow-2xs">
+                <span class="px-2.5 py-1 bg-rose-100 text-rose-800 font-bold text-xs rounded-lg shadow-2xs">
                   {{ log.taskCode }}
                 </span>
-                <h3 class="text-sm font-extrabold text-slate-800">{{ log.taskTitle }}</h3>
+                <h3 class="text-sm font-bold text-slate-800">{{ log.taskTitle }}</h3>
               </div>
 
               <div class="text-[11px] text-slate-400 font-semibold shrink-0">
@@ -171,7 +171,7 @@
 
               <button 
                 @click="openDetail(log)"
-                class="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-extrabold text-xs rounded-xl shadow-xs transition shrink-0 flex items-center gap-1 cursor-pointer"
+                class="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-xs transition shrink-0 flex items-center gap-1 cursor-pointer"
               >
                 👁️ Xem chi tiết
               </button>
@@ -186,7 +186,7 @@
                 </span>
               </div>
 
-              <span class="text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-lg text-[11px] font-extrabold">
+              <span class="text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-lg text-[11px] font-bold">
                 ✓ Đã lưu lịch sử CSDL
               </span>
             </div>
@@ -197,7 +197,7 @@
       <!-- 3. Bottom Footer: Server Pagination Controls -->
       <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50/70 p-4 border-t border-slate-200/80 text-xs text-slate-600 font-semibold">
         <div>
-          Hiển thị <span class="font-extrabold text-slate-900">{{ totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0 }} - {{ Math.min(currentPage * pageSize, totalCount) }}</span> trên tổng số <span class="font-extrabold text-slate-900">{{ totalCount }}</span> văn bản thông báo
+          Hiển thị <span class="font-bold text-slate-900">{{ totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0 }} - {{ Math.min(currentPage * pageSize, totalCount) }}</span> trên tổng số <span class="font-bold text-slate-900">{{ totalCount }}</span> văn bản thông báo
         </div>
 
         <div class="flex items-center gap-2">
@@ -209,7 +209,7 @@
             ‹ Trang trước
           </button>
           
-          <span class="px-3 py-1.5 bg-rose-50 text-rose-800 border border-rose-200 rounded-xl font-black">
+          <span class="px-3 py-1.5 bg-rose-50 text-rose-800 border border-rose-200 rounded-xl font-bold">
             Trang {{ currentPage }} / {{ totalPages }}
           </span>
 
@@ -261,7 +261,7 @@ const appliedSubAgencyIds = ref([]);
 
 const leadAgencyOptions = computed(() => {
   return agencies.value
-    .filter(ag => ag.code === 'ALL_AGENCIES' || (ag.type !== 3 && !ag.parentId))
+    .filter(ag => ag.code === 'ALL_AGENCIES' || (ag.type !== 3 && ag.type !== 4 && ag.type !== 'Other' && !ag.parentId))
     .map(ag => {
       if (ag.code === 'ALL_AGENCIES') {
         return { value: ag.id, label: `🌐 ${ag.name} (Tất cả đơn vị)` };
@@ -272,7 +272,7 @@ const leadAgencyOptions = computed(() => {
 
 const subAgencyOptions = computed(() => {
   return agencies.value
-    .filter(ag => ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000')
+    .filter(ag => ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000' && ag.type !== 4 && ag.type !== 'Other')
     .map(ag => {
       const parentAg = agencies.value.find(p => p.id === ag.parentId);
       return {

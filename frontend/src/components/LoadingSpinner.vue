@@ -15,7 +15,7 @@
     </div>
     
     <!-- Optional Loading Text -->
-    <p v-if="text" class="text-xs font-extrabold text-slate-500 tracking-wide animate-pulse">
+    <p v-if="text" class="text-xs font-bold text-slate-500 tracking-wide animate-pulse">
       {{ text }}
     </p>
   </div>

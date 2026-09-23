@@ -8,7 +8,7 @@
       
       <!-- Logo & System Branding -->
       <div class="text-center space-y-3">
-        <div class="w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center text-2xl font-black mx-auto shadow-lg shadow-blue-500/30">
+        <div class="w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center text-2xl font-bold mx-auto shadow-lg shadow-blue-500/30">
           CĐS
         </div>
         <div>
@@ -26,7 +26,7 @@
       <!-- Login Form -->
       <form @submit.prevent="handleLogin" class="space-y-4">
         <div>
-          <label class="block text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-1.5">Tên Đăng Nhập <span class="text-rose-500">*</span></label>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Tên Đăng Nhập <span class="text-rose-500">*</span></label>
           <div class="relative">
             <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
             <input 
@@ -40,7 +40,7 @@
         </div>
 
         <div>
-          <label class="block text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-1.5">Mật Khẩu <span class="text-rose-500">*</span></label>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Mật Khẩu <span class="text-rose-500">*</span></label>
           <div class="relative">
             <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
             <input 
@@ -85,7 +85,7 @@
         <button 
           type="submit" 
           :disabled="isSubmitting"
-          class="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-blue-500/25 transition flex items-center justify-center gap-2"
+          class="w-full py-3 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-lg shadow-blue-500/25 transition flex items-center justify-center gap-2"
         >
           <svg v-if="isSubmitting" class="w-4 h-4 animate-spin text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
           <span>{{ isSubmitting ? 'Đang Đăng Nhập...' : 'ĐĂNG NHẬP HỆ THỐNG' }}</span>
@@ -100,7 +100,7 @@
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
           <div class="flex items-center gap-2 text-slate-900">
             <span class="p-2 bg-blue-100 text-blue-700 rounded-xl font-bold">🔑</span>
-            <h3 class="text-base font-extrabold">Khôi Phục Mật Khẩu Tài Khoản</h3>
+            <h3 class="text-base font-bold">Khôi Phục Mật Khẩu Tài Khoản</h3>
           </div>
           <button @click="isForgotPasswordOpen = false" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
         </div>
@@ -115,15 +115,15 @@
         </div>
 
         <div v-if="forgotSuccessMessage" class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs font-semibold text-emerald-800 space-y-1">
-          <div class="font-extrabold text-emerald-900">✓ {{ forgotSuccessMessage }}</div>
+          <div class="font-bold text-emerald-900">✓ {{ forgotSuccessMessage }}</div>
           <div v-if="generatedTempPassword" class="text-[11px] bg-white p-2 rounded-lg border border-emerald-200 mt-1">
-            Mật khẩu tạm thời mới: <strong class="text-blue-900 text-xs font-black">{{ generatedTempPassword }}</strong>
+            Mật khẩu tạm thời mới: <strong class="text-blue-900 text-xs font-bold">{{ generatedTempPassword }}</strong>
           </div>
         </div>
 
         <form @submit.prevent="handleForgotPassword" class="space-y-4">
           <div>
-            <label class="block text-xs font-extrabold text-slate-700 uppercase tracking-wider mb-1.5">Email hoặc Username <span class="text-rose-500">*</span></label>
+            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Email hoặc Username <span class="text-rose-500">*</span></label>
             <div class="relative">
               <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
               <input 
@@ -147,7 +147,7 @@
             <button 
               type="submit" 
               :disabled="isForgotSubmitting"
-              class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-extrabold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5"
+              class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5"
             >
               <svg v-if="isForgotSubmitting" class="w-4 h-4 animate-spin text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
               <span>Gửi Yêu Cầu Mật Khẩu</span>

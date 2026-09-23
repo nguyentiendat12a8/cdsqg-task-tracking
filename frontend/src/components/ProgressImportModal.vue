@@ -60,29 +60,29 @@
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs font-bold shrink-0">
           <div class="bg-slate-100 p-2.5 rounded-xl border border-slate-200">
             <span class="text-slate-500 block text-[10px] uppercase">Tổng mã đọc được</span>
-            <span class="text-slate-800 text-base font-black">{{ parsedItems.length }}</span>
+            <span class="text-slate-800 text-base font-bold">{{ parsedItems.length }}</span>
           </div>
 
           <div class="bg-emerald-50 p-2.5 rounded-xl border border-emerald-200">
             <span class="text-emerald-700 block text-[10px] uppercase">Hợp lệ (Duyệt ngay)</span>
-            <span class="text-emerald-800 text-base font-black">{{ validApprovedCount }}</span>
+            <span class="text-emerald-800 text-base font-bold">{{ validApprovedCount }}</span>
           </div>
 
           <div class="bg-amber-50 p-2.5 rounded-xl border border-amber-200">
             <span class="text-amber-700 block text-[10px] uppercase">Hợp lệ (Chờ Cấp 2 duyệt)</span>
-            <span class="text-amber-800 text-base font-black">{{ validPendingCount }}</span>
+            <span class="text-amber-800 text-base font-bold">{{ validPendingCount }}</span>
           </div>
 
           <div class="bg-rose-50 p-2.5 rounded-xl border border-rose-200">
             <span class="text-rose-700 block text-[10px] uppercase">Lỗi / Không có quyền</span>
-            <span class="text-rose-800 text-base font-black">{{ invalidCount }}</span>
+            <span class="text-rose-800 text-base font-bold">{{ invalidCount }}</span>
           </div>
         </div>
 
         <!-- Preview Table -->
         <div class="flex-1 overflow-y-auto border border-slate-200 rounded-xl custom-scrollbar">
           <table class="w-full text-left border-collapse text-xs">
-            <thead class="bg-slate-100 sticky top-0 font-extrabold text-slate-700 border-b border-slate-200">
+            <thead class="bg-slate-100 sticky top-0 font-bold text-slate-700 border-b border-slate-200">
               <tr>
                 <th class="p-2.5 text-center w-10">STT</th>
                 <th class="p-2.5 w-24">Mã</th>
@@ -103,13 +103,13 @@
                 ]"
               >
                 <td class="p-2.5 text-center font-bold text-slate-500">{{ idx + 1 }}</td>
-                <td class="p-2.5 font-extrabold text-blue-700">{{ row.code }}</td>
+                <td class="p-2.5 font-bold text-blue-700">{{ row.code }}</td>
                 <td class="p-2.5 font-semibold text-slate-800 leading-snug">
                   <span v-if="row.taskTitle">{{ row.taskTitle }}</span>
                   <span v-else class="text-rose-500 italic">Không tìm thấy mã này</span>
                 </td>
                 <td class="p-2.5 font-bold text-slate-600">{{ row.unitName || '—' }}</td>
-                <td class="p-2.5 font-black text-emerald-700">
+                <td class="p-2.5 font-bold text-emerald-700">
                   <span v-if="row.newValueDisplay">{{ row.newValueDisplay }}</span>
                   <span v-else class="text-slate-400 italic">Chưa nhập</span>
                 </td>
@@ -154,7 +154,7 @@
           <div class="flex items-center gap-3">
             <span class="text-2xl">🎉</span>
             <div>
-              <h4 class="text-sm font-extrabold text-emerald-900">Nhập tiến độ hàng loạt hoàn tất!</h4>
+              <h4 class="text-sm font-bold text-emerald-900">Nhập tiến độ hàng loạt hoàn tất!</h4>
               <p class="text-xs text-emerald-700 font-medium">
                 Đã xử lý thành công {{ importResults.successCount }} mục, {{ importResults.pendingCount }} mục đã gửi chờ Cấp 2 phê duyệt, {{ importResults.failureCount }} mục lỗi/bỏ qua.
               </p>
@@ -165,7 +165,7 @@
         <!-- Results Table -->
         <div class="flex-1 overflow-y-auto border border-slate-200 rounded-xl custom-scrollbar">
           <table class="w-full text-left border-collapse text-xs">
-            <thead class="bg-slate-100 sticky top-0 font-extrabold text-slate-700 border-b border-slate-200">
+            <thead class="bg-slate-100 sticky top-0 font-bold text-slate-700 border-b border-slate-200">
               <tr>
                 <th class="p-2.5 text-center w-10">STT</th>
                 <th class="p-2.5 w-24">Mã</th>
@@ -177,7 +177,7 @@
             <tbody class="divide-y divide-slate-200">
               <tr v-for="(res, idx) in importResults.results" :key="idx" class="hover:bg-slate-50 transition">
                 <td class="p-2.5 text-center font-bold text-slate-500">{{ idx + 1 }}</td>
-                <td class="p-2.5 font-extrabold text-blue-700">{{ res.code }}</td>
+                <td class="p-2.5 font-bold text-blue-700">{{ res.code }}</td>
                 <td class="p-2.5 font-semibold text-slate-800 leading-snug">{{ res.title }}</td>
                 <td class="p-2.5 text-center">
                   <span v-if="res.success && res.approvalStatus === 'Pending'" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">

@@ -66,7 +66,7 @@
         
         <!-- ADVANCED SEARCH & SCOPE FILTER BAR -->
         <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-slate-50/60 p-3 w-full">
-          <div class="flex flex-wrap items-center gap-2 flex-1 min-w-0">
+          <div class="flex items-center gap-2 flex-1 max-w-xl min-w-0">
             <!-- Quick Search Input -->
             <div class="relative flex-1 min-w-[200px]">
               <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -153,8 +153,8 @@
 
                 <div>
                   <div class="flex items-center justify-between mb-1">
-                    <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block">Giai Đoạn (Từ năm ➔ Đến năm)</label>
-                    <label class="inline-flex items-center gap-1 cursor-pointer text-[10px] font-extrabold text-blue-700 select-none">
+                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Giai Đoạn (Từ năm ➔ Đến năm)</label>
+                    <label class="inline-flex items-center gap-1 cursor-pointer text-[10px] font-bold text-blue-700 select-none">
                       <input type="checkbox" v-model="filterDraft.onlyOngoing" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5">
                       <span>Thường xuyên</span>
                     </label>
@@ -185,20 +185,20 @@
         <!-- MAIN DATA TABLE WITH STICKY HEADER & FROZEN FIRST 3 COLUMNS -->
         <LoadingSpinner v-if="isLoading" text="Đang tải dữ liệu danh sách từ máy chủ..." />
         <div v-else class="overflow-x-auto overflow-y-auto max-h-[calc(100vh-320px)] custom-scrollbar w-full">
-          <table class="w-full min-w-[1050px] text-left text-sm text-slate-700 border-collapse">
+          <table class="w-full min-w-[1280px] text-left text-sm text-slate-700 border-collapse">
             <thead class="bg-slate-100 text-xs text-slate-600 uppercase font-bold border-b border-slate-200 sticky top-0 z-30 shadow-xs">
               <tr>
                 <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 whitespace-nowrap min-w-[75px] w-[75px] max-w-[75px] sticky left-0 z-30">Mã</th>
                 <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[280px] w-[280px] max-w-[280px] sticky left-[75px] z-30 shadow-[3px_0_6px_-1px_rgba(0,0,0,0.12)]">
                   {{ filterItemType === 'Goal' ? 'Tên Mục Tiêu' : (filterItemType === 'Task' ? 'Tên Nhiệm Vụ' : 'Tên Mục Tiêu / Nhiệm Vụ') }}
                 </th>
-                <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[190px] w-[190px] max-w-[190px]">Cơ Quan Chủ Trì</th>
-                <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[200px] w-[200px] max-w-[200px]">Giao Đơn Vị Trực Thuộc</th>
-                <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[190px] w-[190px] max-w-[190px]">Cơ Quan Phối Hợp</th>
-                <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 whitespace-nowrap min-w-[145px] w-[145px] max-w-[145px]">Thời Gian thực hiện</th>
-                <th class="px-3 py-2.5 border-r border-slate-200 text-center bg-slate-100 whitespace-nowrap min-w-[85px] w-[85px] max-w-[85px]">Tiến Độ</th>
-                <th class="px-3 py-2.5 border-r border-slate-200 text-center bg-slate-100 whitespace-nowrap min-w-[185px] w-[185px] max-w-[185px]">Trạng Thái</th>
-                <th class="px-3 py-2.5 text-center bg-slate-100 whitespace-nowrap min-w-[80px] w-[80px] max-w-[80px]">Thao Tác</th>
+                <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[180px] w-[180px] max-w-[180px]">Cơ Quan Chủ Trì</th>
+                <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[190px] w-[190px] max-w-[190px]">Giao Đơn Vị Trực Thuộc</th>
+                <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[180px] w-[180px] max-w-[180px]">Cơ Quan Phối Hợp</th>
+                <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 whitespace-nowrap min-w-[160px] w-[160px] max-w-[160px]">Thời Gian thực hiện</th>
+                <th class="px-3 py-2.5 border-r border-slate-200 text-center bg-slate-100 min-w-[125px] w-[125px] max-w-[125px]">Tiến Độ</th>
+                <th class="px-3 py-2.5 border-r border-slate-200 text-center bg-slate-100 min-w-[195px] w-[195px] max-w-[195px]">Trạng Thái</th>
+                <th class="px-3 py-2.5 text-center bg-slate-100 min-w-[90px] w-[90px] max-w-[90px]">Thao Tác</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-200">
@@ -228,16 +228,16 @@
                       </template>
                     </VTooltip>
                   </td>
-                  <td class="px-3 py-2.5 border-r border-slate-200 font-normal text-slate-700 text-xs leading-relaxed min-w-[190px] w-[190px] max-w-[190px]">
+                  <td class="px-3 py-2.5 border-r border-slate-200 font-normal text-slate-700 text-xs leading-relaxed min-w-[180px] w-[180px] max-w-[180px]">
                     {{ item.leadAgencyName }}
                   </td>
-                  <td class="px-3 py-2.5 border-r border-slate-200 font-normal text-slate-700 text-xs leading-relaxed min-w-[200px] w-[200px] max-w-[200px]" @click.stop>
+                  <td class="px-3 py-2.5 border-r border-slate-200 font-normal text-slate-700 text-xs leading-relaxed min-w-[190px] w-[190px] max-w-[190px]" @click.stop>
                     <span v-if="item.assignedAgencyName" class="text-slate-700 font-normal" :title="`Đã giao cho: ${item.assignedAgencyName}`">
                       {{ item.assignedAgencyName }}
                     </span>
                     <span v-else class="text-slate-400 italic">—</span>
                   </td>
-                  <td class="px-3 py-2.5 border-r border-slate-200 font-normal text-slate-700 text-xs leading-relaxed min-w-[190px] w-[190px] max-w-[190px]">
+                  <td class="px-3 py-2.5 border-r border-slate-200 font-normal text-slate-700 text-xs leading-relaxed min-w-[180px] w-[180px] max-w-[180px]">
                     <template v-if="item.coordinatingAgencyNames && item.coordinatingAgencyNames.length > 0">
                       {{ item.coordinatingAgencyNames.join(', ') }}
                     </template>
@@ -246,7 +246,7 @@
                     </template>
                     <span v-else class="text-slate-400 italic">—</span>
                   </td>
-                  <td class="px-3 py-2.5 border-r border-slate-200 text-xs font-normal text-slate-600 whitespace-nowrap min-w-[145px] w-[145px] max-w-[145px]">
+                  <td class="px-3 py-2.5 border-r border-slate-200 text-xs font-normal text-slate-600 whitespace-nowrap min-w-[160px] w-[160px] max-w-[160px]">
                     <span v-if="item.isOngoing" class="px-2 py-0.5 rounded-full font-medium text-[11px] bg-slate-100 text-slate-700 border border-slate-200">
                       Thường xuyên
                     </span>
@@ -254,13 +254,13 @@
                       {{ formatDateRange(item.startDate, item.dueDate) }}
                     </span>
                   </td>
-                  <td class="px-3 py-2.5 border-r border-slate-200 text-center text-xs whitespace-nowrap min-w-[85px] w-[85px] max-w-[85px]">
-                    <span v-if="authState.isAdmin.value && isGeneralTaskOrAllAgencies(item)" class="text-slate-400 font-normal italic">—</span>
-                    <span v-else :class="['font-normal text-xs text-slate-700', item.latestProgressValue === null || item.latestProgressValue === undefined && !item.latestProgressStatus ? 'text-slate-400 italic' : '']">
+                  <td class="px-3 py-2.5 border-r border-slate-200 text-center text-xs min-w-[125px] w-[125px] max-w-[125px] overflow-hidden">
+                    <span v-if="authState.isAdmin.value && isGeneralTaskOrAllAgencies(item)" class="text-slate-400 font-normal">—</span>
+                    <span v-else class="font-normal text-xs text-slate-700 line-clamp-2 break-words leading-tight block" :title="formatProgressDisplay(item)">
                       {{ formatProgressDisplay(item) }}
                     </span>
                   </td>
-                  <td class="px-3 py-2.5 border-r border-slate-200 text-center whitespace-nowrap min-w-[185px] w-[185px] max-w-[185px]">
+                  <td class="px-3 py-2.5 border-r border-slate-200 text-center min-w-[195px] w-[195px] max-w-[195px]">
                     <div class="flex flex-col items-center gap-1">
                       <span v-if="authState.isAdmin.value && isGeneralTaskOrAllAgencies(item)" class="px-2.5 py-0.5 rounded-full text-xs font-normal bg-slate-100 text-slate-500 italic border border-slate-200">
                         —
@@ -384,16 +384,16 @@
                       </template>
                     </VTooltip>
                   </td>
-                  <td class="px-3 py-2 border-r border-slate-200 font-normal text-slate-700 min-w-[190px] w-[190px] max-w-[190px]">
+                  <td class="px-3 py-2 border-r border-slate-200 font-normal text-slate-700 min-w-[180px] w-[180px] max-w-[180px]">
                     {{ sub.leadAgencyName }}
                   </td>
-                  <td class="px-3 py-2 border-r border-slate-200 font-normal text-slate-700 text-xs min-w-[200px] w-[200px] max-w-[200px]" @click.stop>
+                  <td class="px-3 py-2 border-r border-slate-200 font-normal text-slate-700 text-xs min-w-[190px] w-[190px] max-w-[190px]" @click.stop>
                     <span v-if="sub.assignedAgencyName" class="text-slate-700 font-normal" :title="`Đã giao cho: ${sub.assignedAgencyName}`">
                       {{ sub.assignedAgencyName }}
                     </span>
                     <span v-else class="text-slate-400 italic">—</span>
                   </td>
-                  <td class="px-3 py-2 border-r border-slate-200 font-normal text-slate-600 text-xs leading-relaxed min-w-[190px] w-[190px] max-w-[190px]">
+                  <td class="px-3 py-2 border-r border-slate-200 font-normal text-slate-600 text-xs leading-relaxed min-w-[180px] w-[180px] max-w-[180px]">
                     <template v-if="sub.coordinatingAgencyNames && sub.coordinatingAgencyNames.length > 0">
                       {{ sub.coordinatingAgencyNames.join(', ') }}
                     </template>
@@ -402,7 +402,7 @@
                     </template>
                     <span v-else class="text-slate-400 italic">—</span>
                   </td>
-                  <td class="px-3 py-2 border-r border-slate-200 font-normal text-slate-600 whitespace-nowrap min-w-[145px] w-[145px] max-w-[145px]">
+                  <td class="px-3 py-2 border-r border-slate-200 font-normal text-slate-600 whitespace-nowrap min-w-[160px] w-[160px] max-w-[160px]">
                     <span v-if="sub.isOngoing" class="px-2 py-0.5 rounded-full font-medium text-[11px] bg-slate-100 text-slate-700 border border-slate-200">
                       Thường xuyên
                     </span>
@@ -410,13 +410,13 @@
                       {{ formatDateRange(sub.startDate, sub.dueDate) }}
                     </span>
                   </td>
-                  <td class="px-3 py-2 border-r border-slate-200 text-center font-normal whitespace-nowrap min-w-[85px] w-[85px] max-w-[85px]">
-                    <span v-if="authState.isAdmin.value && isGeneralTaskOrAllAgencies(sub)" class="text-slate-400 font-normal italic">—</span>
-                    <span v-else :class="['font-normal text-xs text-slate-700', sub.latestProgressValue === null || sub.latestProgressValue === undefined ? 'text-slate-500 italic' : '']">
+                  <td class="px-3 py-2 border-r border-slate-200 text-center font-normal text-xs min-w-[125px] w-[125px] max-w-[125px] overflow-hidden">
+                    <span v-if="authState.isAdmin.value && isGeneralTaskOrAllAgencies(sub)" class="text-slate-400 font-normal">—</span>
+                    <span v-else class="font-normal text-xs text-slate-700 line-clamp-2 break-words leading-tight block" :title="formatProgressDisplay(sub)">
                       {{ formatProgressDisplay(sub) }}
                     </span>
                   </td>
-                  <td class="px-3 py-2 border-r border-slate-200 text-center whitespace-nowrap min-w-[185px] w-[185px] max-w-[185px]">
+                  <td class="px-3 py-2 border-r border-slate-200 text-center min-w-[195px] w-[195px] max-w-[195px]">
                     <span v-if="authState.isAdmin.value && isGeneralTaskOrAllAgencies(sub)" class="px-2.5 py-0.5 rounded-full text-[11px] font-normal bg-slate-100 text-slate-500 italic border border-slate-200">
                       —
                     </span>
@@ -505,7 +505,7 @@
         <!-- Attached Pagination Controls Bar -->
         <div class="flex flex-col md:flex-row items-center justify-between gap-3 bg-slate-50/70 p-3.5 border-t border-slate-200/80 text-xs text-slate-600 font-semibold w-full">
           <div class="flex items-center gap-3 whitespace-nowrap flex-wrap justify-center sm:justify-start">
-            <span class="whitespace-nowrap">Hiển thị <span class="font-extrabold text-slate-900">{{ totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0 }} - {{ Math.min(currentPage * pageSize, totalCount) }}</span> trên tổng số <span class="font-extrabold text-slate-900">{{ totalCount }}</span> {{ filterItemType === 'Goal' ? 'mục tiêu' : 'nhiệm vụ' }}</span>
+            <span class="whitespace-nowrap">Hiển thị <span class="font-bold text-slate-900">{{ totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0 }} - {{ Math.min(currentPage * pageSize, totalCount) }}</span> trên tổng số <span class="font-bold text-slate-900">{{ totalCount }}</span> {{ filterItemType === 'Goal' ? 'mục tiêu' : 'nhiệm vụ' }}</span>
             
             <div class="flex items-center gap-1.5 border-l border-slate-200 pl-3 whitespace-nowrap">
               <span class="whitespace-nowrap">Số bản ghi/trang:</span>
@@ -529,7 +529,7 @@
               ‹ Trang trước
             </button>
             
-            <span class="px-3 py-1.5 bg-blue-50 text-blue-800 border border-blue-200 rounded-lg font-black">
+            <span class="px-3 py-1.5 bg-blue-50 text-blue-800 border border-blue-200 rounded-lg font-bold">
               Trang {{ currentPage }} / {{ Math.max(1, totalPages) }}
             </span>
 
@@ -697,7 +697,7 @@
           <!-- Multi-Deliverables Section for Tasks (Phương án 1: Phụ lục II) -->
           <div v-if="createItemType === 'Task'" class="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 space-y-3">
             <div class="flex items-center justify-between">
-              <label class="text-xs font-extrabold text-slate-800 uppercase flex items-center gap-1.5">
+              <label class="text-xs font-bold text-slate-800 uppercase flex items-center gap-1.5">
                 <span>📋 Danh Mục Sản Phẩm Đầu Ra Dự Kiến (Phụ Lục II - Phương Án 1)</span>
               </label>
               <button 
@@ -720,7 +720,7 @@
                 class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs space-y-2 relative"
               >
                 <div class="flex items-center justify-between border-b border-slate-100 pb-1">
-                  <span class="text-[11px] font-extrabold text-blue-800">Sản phẩm đầu ra #{{ idx + 1 }}</span>
+                  <span class="text-[11px] font-bold text-blue-800">Sản phẩm đầu ra #{{ idx + 1 }}</span>
                   <button 
                     type="button" 
                     @click="removeDeliverable(idx)" 
@@ -937,7 +937,7 @@
           <!-- Multi-Deliverables Section for Tasks -->
           <div v-if="editingItem?.itemType !== 'Goal'" class="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 space-y-3">
             <div class="flex items-center justify-between">
-              <label class="text-xs font-extrabold text-slate-800 uppercase flex items-center gap-1.5">
+              <label class="text-xs font-bold text-slate-800 uppercase flex items-center gap-1.5">
                 <span>📋 Danh Mục Sản Phẩm Đầu Ra Dự Kiến (Phụ Lục II - Phương Án 1)</span>
               </label>
               <button 
@@ -960,7 +960,7 @@
                 class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs space-y-2 relative"
               >
                 <div class="flex items-center justify-between border-b border-slate-100 pb-1">
-                  <span class="text-[11px] font-extrabold text-blue-800">Sản phẩm đầu ra #{{ idx + 1 }}</span>
+                  <span class="text-[11px] font-bold text-blue-800">Sản phẩm đầu ra #{{ idx + 1 }}</span>
                   <button 
                     type="button" 
                     @click="removeEditDeliverable(idx)" 
@@ -1300,12 +1300,14 @@ const groupFilterOptions = computed(() => {
 });
 
 const agencyOptions = computed(() => {
-  return agencies.value.map(ag => ({ value: ag.id, label: ag.name }));
+  return agencies.value
+    .filter(ag => ag.type !== 4 && ag.type !== 'Other')
+    .map(ag => ({ value: ag.id, label: ag.name }));
 });
 
 const leadAgencyOptions = computed(() => {
   return agencies.value
-    .filter(ag => ag.code === 'ALL_AGENCIES' || (ag.type !== 3 && !ag.parentId))
+    .filter(ag => ag.code === 'ALL_AGENCIES' || (ag.type !== 3 && ag.type !== 4 && ag.type !== 'Other' && !ag.parentId))
     .map(ag => {
       if (ag.code === 'ALL_AGENCIES') {
         return { value: ag.id, label: `🌐 ${ag.name} (Tất cả đơn vị)` };
@@ -1316,7 +1318,7 @@ const leadAgencyOptions = computed(() => {
 
 const subAgencyOptions = computed(() => {
   return agencies.value
-    .filter(ag => ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000')
+    .filter(ag => ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000' && ag.type !== 4 && ag.type !== 'Other')
     .map(ag => {
       const parentAg = agencies.value.find(p => p.id === ag.parentId);
       return {
@@ -1329,24 +1331,26 @@ const subAgencyOptions = computed(() => {
 const createAssignedAgencyOptions = computed(() => {
   if (!createForm.value.leadAgencyId) return [];
   return agencies.value
-    .filter(ag => ag.parentId === createForm.value.leadAgencyId)
+    .filter(ag => ag.parentId === createForm.value.leadAgencyId && ag.type !== 4 && ag.type !== 'Other')
     .map(ag => ({ value: ag.id, label: ag.name }));
 });
 
 const editAssignedAgencyOptions = computed(() => {
   if (!editForm.value.leadAgencyId) return [];
   return agencies.value
-    .filter(ag => ag.parentId === editForm.value.leadAgencyId)
+    .filter(ag => ag.parentId === editForm.value.leadAgencyId && ag.type !== 4 && ag.type !== 'Other')
     .map(ag => ({ value: ag.id, label: ag.name }));
 });
 
 const coordinatingAgencyOptions = computed(() => {
-  return agencies.value.map(ag => {
-    if (ag.code === 'ALL_AGENCIES') {
-      return { value: ag.id, label: `🌐 ${ag.name} (Tất cả đơn vị)` };
-    }
-    return { value: ag.id, label: ag.name };
-  });
+  return agencies.value
+    .filter(ag => ag.type !== 4 && ag.type !== 'Other')
+    .map(ag => {
+      if (ag.code === 'ALL_AGENCIES') {
+        return { value: ag.id, label: `🌐 ${ag.name} (Tất cả đơn vị)` };
+      }
+      return { value: ag.id, label: ag.name };
+    });
 });
 
 watch(() => createForm.value.leadAgencyId, (newId) => {
@@ -1955,25 +1959,25 @@ const assignSubAgencyOptions = computed(() => {
 
   if (isGeneral) {
     if (authState.isAdmin.value) {
-      return agencies.value.filter(a => a.parentId != null);
+      return agencies.value.filter(a => a.parentId != null && a.type !== 4 && a.type !== 'Other');
     }
     if (userAgencyId) {
-      return agencies.value.filter(a => String(a.parentId).toLowerCase() === String(userAgencyId).toLowerCase());
+      return agencies.value.filter(a => String(a.parentId).toLowerCase() === String(userAgencyId).toLowerCase() && a.type !== 4 && a.type !== 'Other');
     }
-    return agencies.value.filter(a => a.parentId != null);
+    return agencies.value.filter(a => a.parentId != null && a.type !== 4 && a.type !== 'Other');
   }
 
   if (targetLeadId) {
-    const list = agencies.value.filter(a => a.parentId && String(a.parentId).toLowerCase() === String(targetLeadId).toLowerCase());
+    const list = agencies.value.filter(a => a.parentId && String(a.parentId).toLowerCase() === String(targetLeadId).toLowerCase() && a.type !== 4 && a.type !== 'Other');
     if (list.length > 0) return list;
   }
 
   if (userAgencyId) {
-    const list = agencies.value.filter(a => a.parentId && String(a.parentId).toLowerCase() === String(userAgencyId).toLowerCase());
+    const list = agencies.value.filter(a => a.parentId && String(a.parentId).toLowerCase() === String(userAgencyId).toLowerCase() && a.type !== 4 && a.type !== 'Other');
     if (list.length > 0) return list;
   }
 
-  return agencies.value.filter(a => a.parentId != null);
+  return agencies.value.filter(a => a.parentId != null && a.type !== 4 && a.type !== 'Other');
 });
 
 function canAssignTask(item) {

@@ -28,21 +28,21 @@
 
           <div class="text-xs font-bold text-amber-900 bg-amber-100/90 px-3 py-1.5 rounded-xl border border-amber-200 shrink-0">
             Chỉ tiêu cả năm {{ selectedYear }}: 
-            <span class="text-purple-900 font-black">{{ yearlyTargets[selectedYear] ?? 'Chưa đặt' }}</span>
+            <span class="text-purple-900 font-bold">{{ yearlyTargets[selectedYear] ?? 'Chưa đặt' }}</span>
             <span v-if="isQuant" class="text-[10px] text-slate-500 font-bold ml-1">({{ unitName || '%' }})</span>
           </div>
         </div>
 
         <!-- Frequency Selection Checkboxes -->
         <div class="space-y-2 bg-slate-50 p-3.5 rounded-xl border border-slate-200">
-          <label class="text-xs font-extrabold text-slate-700 uppercase block">Tick chọn tần suất thiết lập mốc chỉ tiêu bổ sung:</label>
+          <label class="text-xs font-bold text-slate-700 uppercase block">Tick chọn tần suất thiết lập mốc chỉ tiêu bổ sung:</label>
           <div class="flex flex-wrap gap-4 pt-1">
-            <label class="flex items-center gap-2 cursor-pointer text-xs font-extrabold text-slate-800 hover:text-amber-700">
+            <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-800 hover:text-amber-700">
               <input type="checkbox" v-model="hasQuarter" class="rounded text-amber-600 focus:ring-amber-500 w-4 h-4 cursor-pointer" />
               <span>📅 Thiết Lập Chỉ Tiêu Theo Quý (4 Quý)</span>
             </label>
 
-            <label class="flex items-center gap-2 cursor-pointer text-xs font-extrabold text-slate-800 hover:text-amber-700">
+            <label class="flex items-center gap-2 cursor-pointer text-xs font-bold text-slate-800 hover:text-amber-700">
               <input type="checkbox" v-model="hasMonth" class="rounded text-amber-600 focus:ring-amber-500 w-4 h-4 cursor-pointer" />
               <span>📆 Thiết Lập Chỉ Tiêu Theo Tháng (12 Tháng)</span>
             </label>
@@ -53,14 +53,14 @@
         <div v-if="hasQuarter && hasMonth" class="flex items-center gap-2 bg-slate-100 p-1 rounded-xl border border-slate-200">
           <button 
             @click="activeViewTab = 'quarterly'" 
-            :class="['flex-1 py-1.5 rounded-lg text-xs font-extrabold transition text-center cursor-pointer', activeViewTab === 'quarterly' ? 'bg-white text-amber-700 shadow-sm' : 'text-slate-600 hover:text-slate-900']"
+            :class="['flex-1 py-1.5 rounded-lg text-xs font-bold transition text-center cursor-pointer', activeViewTab === 'quarterly' ? 'bg-white text-amber-700 shadow-sm' : 'text-slate-600 hover:text-slate-900']"
           >
             📅 Mốc Quý (Q1-Q4)
           </button>
 
           <button 
             @click="activeViewTab = 'monthly'" 
-            :class="['flex-1 py-1.5 rounded-lg text-xs font-extrabold transition text-center cursor-pointer', activeViewTab === 'monthly' ? 'bg-white text-amber-700 shadow-sm' : 'text-slate-600 hover:text-slate-900']"
+            :class="['flex-1 py-1.5 rounded-lg text-xs font-bold transition text-center cursor-pointer', activeViewTab === 'monthly' ? 'bg-white text-amber-700 shadow-sm' : 'text-slate-600 hover:text-slate-900']"
           >
             📆 Mốc Tháng (T1-T12)
           </button>
@@ -68,7 +68,7 @@
 
         <!-- QUARTERLY MILESTONE INPUT GRID -->
         <div v-if="hasQuarter && (!hasMonth || activeViewTab === 'quarterly')" class="space-y-2">
-          <div class="text-xs font-extrabold text-amber-900 flex items-center justify-between">
+          <div class="text-xs font-bold text-amber-900 flex items-center justify-between">
             <span>📌 Chỉ Tiêu 4 Quý Năm {{ selectedYear }}</span>
             <span class="text-[11px] font-normal text-slate-500">Loại: {{ isQuant ? `Định lượng (${unitName || '%'})` : 'Định tính văn bản' }}</span>
           </div>
@@ -106,7 +106,7 @@
 
         <!-- MONTHLY MILESTONE INPUT GRID (12 Months) -->
         <div v-if="hasMonth && (!hasQuarter || activeViewTab === 'monthly')" class="space-y-2">
-          <div class="text-xs font-extrabold text-amber-900 flex items-center justify-between">
+          <div class="text-xs font-bold text-amber-900 flex items-center justify-between">
             <span>📌 Chỉ Tiêu 12 Tháng Năm {{ selectedYear }}</span>
             <span class="text-[11px] font-normal text-slate-500">Loại: {{ isQuant ? `Định lượng (${unitName || '%'})` : 'Định tính văn bản' }}</span>
           </div>

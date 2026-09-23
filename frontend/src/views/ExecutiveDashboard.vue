@@ -1,184 +1,202 @@
 <template>
   <div class="w-full space-y-3.5 font-sans">
     
-    <!-- Top Header Bar with Filter Actions -->
-    <header class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200/80 w-full">
-      <div>
-        <div class="flex items-center gap-2.5">
-          <span class="p-2 bg-blue-600 text-white rounded-xl shadow-sm">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-          </span>
-          <div>
-            <h2 class="text-sm sm:text-base font-bold text-slate-800">
-              Trang chủ theo dõi tiến độ
-            </h2>
-          </div>
+    <!-- Top Header Bar -->
+    <header class="flex items-center justify-between bg-white p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200/80 w-full">
+      <div class="flex items-center gap-2.5">
+        <span class="p-2 bg-blue-600 text-white rounded-xl shadow-sm">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+        </span>
+        <div>
+          <h2 class="text-sm sm:text-base font-bold text-slate-800">
+            Trang chủ theo dõi tiến độ nhiệm vụ và số liệu văn bản
+          </h2>
         </div>
-      </div>
-
-      <!-- Action Buttons & Advanced Filter Popover -->
-      <div class="flex flex-wrap items-center gap-2 min-w-0">
-        <button 
-          type="button" 
-          @click="loadDashboardMetrics" 
-          class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-2xs transition h-[34px] flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-          <span>Tải Dữ Liệu</span>
-        </button>
-
-        <button 
-          type="button" 
-          @click="exportDashboardExcelReport" 
-          :disabled="isExportingExcel"
-          class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-2xs transition h-[34px] flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
-          title="Xuất file báo cáo Excel theo bộ lọc (Mỗi Bộ/Ngành/Địa phương 1 Sheet)"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-          <span>{{ isExportingExcel ? 'Đang xuất...' : 'Xuất Báo Cáo Excel' }}</span>
-        </button>
-
-        <!-- OverlayPanel Filter Popover -->
-        <OverlayPanel
-          title="Lọc Dữ Liệu Bảng Điều Khiển"
-          buttonText="Bộ Lọc Nâng Cao"
-          :activeCount="activeDashboardFilterCount"
-          widthClass="w-[340px] sm:w-[500px]"
-          @apply="loadDashboardMetrics"
-          @reset="resetDashboardFilters"
-        >
-          <div class="space-y-3">
-            <div>
-              <SearchableSelect 
-                v-model="dashboardFilter" 
-                :options="dashboardFilterOptions" 
-                :isMulti="false" 
-                label="Loại Đối Tượng (Mục tiêu / Nhiệm vụ)" 
-                placeholder="Tất cả (Mục tiêu & Nhiệm vụ)"
-              />
-            </div>
-
-            <div>
-              <SearchableSelect 
-                v-model="selectedAgencyIds" 
-                :options="leadAgencyOptions" 
-                :isMulti="true" 
-                label="Cơ Quan Chủ Trì" 
-                placeholder="Tất cả cơ quan chủ trì"
-              />
-            </div>
-
-            <div>
-              <SearchableSelect 
-                v-model="selectedSubAgencyIds" 
-                :options="subAgencyOptions" 
-                :isMulti="true" 
-                label="Đơn Vị Trực Thuộc" 
-                placeholder="Tất cả đơn vị trực thuộc"
-              />
-            </div>
-
-            <div>
-              <SearchableSelect 
-                v-model="selectedScopes" 
-                :options="scopeOptions" 
-                :isMulti="true" 
-                label="Phạm Vi" 
-                placeholder="Tất cả phạm vi"
-              />
-            </div>
-
-            <div>
-              <SearchableSelect 
-                v-model="selectedSections" 
-                :options="sectionOptions" 
-                :isMulti="true" 
-                label="Mục (Phụ lục)" 
-                placeholder="Tất cả mục"
-              />
-            </div>
-
-            <div>
-              <SearchableSelect 
-                v-model="selectedGroups" 
-                :options="groupOptions" 
-                :isMulti="true" 
-                label="Nhóm Trọng Tâm" 
-                placeholder="Tất cả nhóm"
-              />
-            </div>
-
-            <div>
-              <div class="flex items-center justify-between mb-1">
-                <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block">Giai Đoạn (Từ năm ➔ Đến năm)</label>
-                <label class="inline-flex items-center gap-1 cursor-pointer text-[10px] font-extrabold text-blue-700">
-                  <input type="checkbox" v-model="isOngoingOnly" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3 h-3">
-                  Thường xuyên
-                </label>
-              </div>
-              <div class="flex items-center gap-2">
-                <SearchableSelect 
-                  v-model="fromYear" 
-                  :options="yearOptions" 
-                  :isMulti="false" 
-                  placeholder="Từ năm" 
-                  class="w-full"
-                />
-                <span class="text-xs font-bold text-slate-400 shrink-0">➔</span>
-                <SearchableSelect 
-                  v-model="toYear" 
-                  :options="yearOptions" 
-                  :isMulti="false" 
-                  placeholder="Đến năm" 
-                  class="w-full"
-                />
-              </div>
-            </div>
-          </div>
-        </OverlayPanel>
       </div>
     </header>
 
     <!-- Loading Spinner -->
     <LoadingSpinner v-if="isLoading" text="Đang tải dữ liệu tổng quan bảng điều khiển..." />
 
-    <!-- 6 Execution Status Grid Cards (Filtered by Goal / Task / All) -->
-    <div v-else class="space-y-3.5 w-full">
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 w-full items-stretch">
+    <!-- Task Tracking Container Card (Enclosed matching Legal Documents block style) -->
+    <div v-else class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4 w-full">
+      <!-- Header Khối Theo Dõi Nhiệm Vụ -->
+      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-2.5">
+          <span class="p-2 bg-blue-600 text-white rounded-xl shadow-sm">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+          </span>
+          <div>
+            <h3 class="text-sm sm:text-base font-bold text-slate-800">
+              Tiến độ Mục tiêu & Nhiệm vụ
+            </h3>
+            <p class="text-[11px] font-semibold text-slate-500">
+              Tổng hợp kết quả thực hiện, tình trạng tiến độ các mục tiêu, nhiệm vụ chiến lược và phân khai theo cơ quan, đơn vị
+            </p>
+          </div>
+        </div>
+
+        <!-- Action Buttons & Advanced Filter Popover moved into Task Tracking Card header -->
+        <div class="flex flex-wrap items-center gap-2 min-w-0">
+          <button 
+            type="button" 
+            @click="loadDashboardMetrics" 
+            class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-2xs transition h-[34px] flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+            <span>Tải Dữ Liệu</span>
+          </button>
+
+          <button 
+            type="button" 
+            @click="exportDashboardExcelReport" 
+            :disabled="isExportingExcel"
+            class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-2xs transition h-[34px] flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
+            title="Xuất file báo cáo Excel theo bộ lọc (Mỗi Bộ/Ngành/Địa phương 1 Sheet)"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <span>{{ isExportingExcel ? 'Đang xuất...' : 'Xuất Báo Cáo Excel' }}</span>
+          </button>
+
+          <!-- OverlayPanel Filter Popover -->
+          <OverlayPanel
+            title="Lọc Dữ Liệu Bảng Điều Khiển"
+            buttonText="Bộ Lọc Nâng Cao"
+            :activeCount="activeDashboardFilterCount"
+            widthClass="w-[340px] sm:w-[500px]"
+            @apply="loadDashboardMetrics"
+            @reset="resetDashboardFilters"
+          >
+            <div class="space-y-3">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <SearchableSelect 
+                    v-model="dashboardFilter" 
+                    :options="dashboardFilterOptions" 
+                    :isMulti="false" 
+                    label="Loại Đối Tượng" 
+                    placeholder="Tất cả (Mục tiêu & Nhiệm vụ)"
+                  />
+                </div>
+
+                <div>
+                  <SearchableSelect 
+                    v-model="selectedScopes" 
+                    :options="scopeOptions" 
+                    :isMulti="true" 
+                    label="Phạm Vi" 
+                    placeholder="Tất cả phạm vi"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <SearchableSelect 
+                  v-model="selectedAgencyIds" 
+                  :options="leadAgencyOptions" 
+                  :isMulti="true" 
+                  label="Cơ Quan Chủ Trì" 
+                  placeholder="Tất cả cơ quan chủ trì"
+                />
+              </div>
+
+              <div>
+                <SearchableSelect 
+                  v-model="selectedSubAgencyIds" 
+                  :options="subAgencyOptions" 
+                  :isMulti="true" 
+                  label="Đơn Vị Trực Thuộc" 
+                  placeholder="Tất cả đơn vị trực thuộc"
+                />
+              </div>
+
+              <div>
+                <SearchableSelect 
+                  v-model="selectedSections" 
+                  :options="sectionOptions" 
+                  :isMulti="true" 
+                  label="Mục (Phụ lục)" 
+                  placeholder="Tất cả mục"
+                />
+              </div>
+
+              <div>
+                <SearchableSelect 
+                  v-model="selectedGroups" 
+                  :options="groupOptions" 
+                  :isMulti="true" 
+                  label="Nhóm Trọng Tâm" 
+                  placeholder="Tất cả nhóm"
+                />
+              </div>
+
+              <div>
+                <div class="flex items-center justify-between mb-1">
+                  <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Giai Đoạn (Từ năm ➔ Đến năm)</label>
+                  <label class="inline-flex items-center gap-1 cursor-pointer text-[10px] font-bold text-blue-700">
+                    <input type="checkbox" v-model="isOngoingOnly" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3 h-3">
+                    Thường xuyên
+                  </label>
+                </div>
+                <div class="flex items-center gap-2">
+                  <SearchableSelect 
+                    v-model="fromYear" 
+                    :options="yearOptions" 
+                    :isMulti="false" 
+                    placeholder="Từ năm" 
+                    class="w-full"
+                  />
+                  <span class="text-xs font-bold text-slate-400 shrink-0">➔</span>
+                  <SearchableSelect 
+                    v-model="toYear" 
+                    :options="yearOptions" 
+                    :isMulti="false" 
+                    placeholder="Đến năm" 
+                    class="w-full"
+                  />
+                </div>
+              </div>
+            </div>
+          </OverlayPanel>
+        </div>
+      </div>
+
+      <!-- 6 Execution Status Grid Cards (Filtered by Goal / Task / All) -->
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 w-full items-stretch">
       <!-- 1. Chưa thực hiện -->
       <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs flex flex-col justify-between h-full min-h-[76px]">
         <div class="text-[10px] font-bold text-slate-500 uppercase leading-snug">1. Chưa thực hiện</div>
-        <div class="text-xl font-black text-slate-700 mt-1">{{ activeStatusSummary.notStarted ?? 0 }}</div>
+        <div class="text-xl font-bold text-slate-700 mt-1">{{ activeStatusSummary.notStarted ?? 0 }}</div>
       </div>
 
       <!-- 2. Đang thực hiện (trong hạn) -->
       <div class="bg-white p-3 rounded-2xl border border-blue-200 bg-blue-50/40 shadow-2xs flex flex-col justify-between h-full min-h-[76px]">
         <div class="text-[10px] font-bold text-blue-700 uppercase leading-snug">2. Đang thực hiện (trong hạn)</div>
-        <div class="text-xl font-black text-blue-800 mt-1">{{ activeStatusSummary.inProgressOnTime ?? 0 }}</div>
+        <div class="text-xl font-bold text-blue-800 mt-1">{{ activeStatusSummary.inProgressOnTime ?? 0 }}</div>
       </div>
 
       <!-- 3. Đang thực hiện (quá hạn) -->
       <div class="bg-white p-3 rounded-2xl border border-rose-200 bg-rose-50/40 shadow-2xs flex flex-col justify-between h-full min-h-[76px]">
         <div class="text-[10px] font-bold text-rose-700 uppercase leading-snug">3. Đang thực hiện (quá hạn)</div>
-        <div class="text-xl font-black text-rose-800 mt-1">{{ activeStatusSummary.inProgressOverdue ?? 0 }}</div>
+        <div class="text-xl font-bold text-rose-800 mt-1">{{ activeStatusSummary.inProgressOverdue ?? 0 }}</div>
       </div>
 
       <!-- 4. Hoàn thành (đúng hạn) -->
       <div class="bg-white p-3 rounded-2xl border border-emerald-200 bg-emerald-50/40 shadow-2xs flex flex-col justify-between h-full min-h-[76px]">
         <div class="text-[10px] font-bold text-emerald-700 uppercase leading-snug">4. Hoàn thành (đúng hạn)</div>
-        <div class="text-xl font-black text-emerald-800 mt-1">{{ activeStatusSummary.completedOnTime ?? 0 }}</div>
+        <div class="text-xl font-bold text-emerald-800 mt-1">{{ activeStatusSummary.completedOnTime ?? 0 }}</div>
       </div>
 
       <!-- 5. Hoàn thành (quá hạn) -->
       <div class="bg-white p-3 rounded-2xl border border-teal-200 bg-teal-50/40 shadow-2xs flex flex-col justify-between h-full min-h-[76px]">
         <div class="text-[10px] font-bold text-teal-700 uppercase leading-snug">5. Hoàn thành (quá hạn)</div>
-        <div class="text-xl font-black text-teal-800 mt-1">{{ activeStatusSummary.completedOverdue ?? 0 }}</div>
+        <div class="text-xl font-bold text-teal-800 mt-1">{{ activeStatusSummary.completedOverdue ?? 0 }}</div>
       </div>
 
       <!-- 6. Sắp hết hạn -->
       <div class="bg-white p-3 rounded-2xl border border-amber-200 bg-amber-50/40 shadow-2xs flex flex-col justify-between h-full min-h-[76px]">
         <div class="text-[10px] font-bold text-amber-700 uppercase leading-snug">6. Sắp hết hạn</div>
-        <div class="text-xl font-black text-amber-800 mt-1">{{ activeStatusSummary.expiringSoon ?? 0 }}</div>
+        <div class="text-xl font-bold text-amber-800 mt-1">{{ activeStatusSummary.expiringSoon ?? 0 }}</div>
       </div>
     </div>
 
@@ -198,7 +216,7 @@
           
           <button 
             @click="drilldownAgency(singleSubAgencyPerformance)" 
-            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-2xs transition flex items-center gap-1.5 cursor-pointer shrink-0"
+            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-2xs transition flex items-center gap-1.5 cursor-pointer shrink-0"
           >
             <span>📋 Xem Danh Sách Chi Tiết Nhiệm Vụ</span>
             <span>→</span>
@@ -213,7 +231,7 @@
             <div class="md:col-span-5 flex flex-col items-center justify-center p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-2">
               <MiniStatusDonut :stats="singleSubAgencyPerformance" :size="160" :innerSize="105" :fontSize="32" />
               <div class="text-center pt-1">
-                <div class="text-xs font-black text-slate-800">Tổng số: {{ singleSubAgencyPerformance.totalItems || 0 }} hạng mục</div>
+                <div class="text-xs font-bold text-slate-800">Tổng số: {{ singleSubAgencyPerformance.totalItems || 0 }} hạng mục</div>
                 <div class="flex items-center gap-2 justify-center text-[11px] font-bold text-slate-500 mt-1">
                   <span class="text-purple-800 bg-purple-50 px-2 py-0.5 rounded border border-purple-200/60">🎯 {{ singleSubAgencyPerformance.totalGoals || 0 }} Mục tiêu</span>
                   <span class="text-blue-800 bg-blue-50 px-2 py-0.5 rounded border border-blue-200/60">📋 {{ singleSubAgencyPerformance.totalTasks || 0 }} Nhiệm vụ</span>
@@ -228,7 +246,7 @@
                   <span class="w-3 h-3 rounded-full bg-slate-400"></span>
                   <span class="text-slate-700">1. Chưa thực hiện</span>
                 </div>
-                <span class="font-black text-slate-900 text-sm">{{ singleSubAgencyPerformance.notStarted || 0 }}</span>
+                <span class="font-bold text-slate-900 text-sm">{{ singleSubAgencyPerformance.notStarted || 0 }}</span>
               </div>
 
               <div class="flex items-center justify-between p-2.5 rounded-xl bg-blue-50/70 border border-blue-200">
@@ -236,7 +254,7 @@
                   <span class="w-3 h-3 rounded-full bg-blue-500"></span>
                   <span class="text-blue-800">2. Đang thực hiện (trong hạn)</span>
                 </div>
-                <span class="font-black text-blue-900 text-sm">{{ singleSubAgencyPerformance.inProgressOnTime || 0 }}</span>
+                <span class="font-bold text-blue-900 text-sm">{{ singleSubAgencyPerformance.inProgressOnTime || 0 }}</span>
               </div>
 
               <div class="flex items-center justify-between p-2.5 rounded-xl bg-rose-50/70 border border-rose-200">
@@ -244,7 +262,7 @@
                   <span class="w-3 h-3 rounded-full bg-rose-500"></span>
                   <span class="text-rose-800">3. Đang thực hiện (quá hạn)</span>
                 </div>
-                <span class="font-black text-rose-900 text-sm">{{ singleSubAgencyPerformance.inProgressOverdue || 0 }}</span>
+                <span class="font-bold text-rose-900 text-sm">{{ singleSubAgencyPerformance.inProgressOverdue || 0 }}</span>
               </div>
 
               <div class="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200">
@@ -252,7 +270,7 @@
                   <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
                   <span class="text-emerald-800">4. Hoàn thành (đúng hạn)</span>
                 </div>
-                <span class="font-black text-emerald-900 text-sm">{{ singleSubAgencyPerformance.completedOnTime || 0 }}</span>
+                <span class="font-bold text-emerald-900 text-sm">{{ singleSubAgencyPerformance.completedOnTime || 0 }}</span>
               </div>
 
               <div class="flex items-center justify-between p-2.5 rounded-xl bg-teal-50/70 border border-teal-200">
@@ -260,7 +278,7 @@
                   <span class="w-3 h-3 rounded-full bg-teal-500"></span>
                   <span class="text-teal-800">5. Hoàn thành (quá hạn)</span>
                 </div>
-                <span class="font-black text-teal-900 text-sm">{{ singleSubAgencyPerformance.completedOverdue || 0 }}</span>
+                <span class="font-bold text-teal-900 text-sm">{{ singleSubAgencyPerformance.completedOverdue || 0 }}</span>
               </div>
 
               <div class="flex items-center justify-between p-2.5 rounded-xl bg-amber-50/70 border border-amber-200">
@@ -268,7 +286,7 @@
                   <span class="w-3 h-3 rounded-full bg-amber-500"></span>
                   <span class="text-amber-800">6. Sắp hết hạn</span>
                 </div>
-                <span class="font-black text-amber-900 text-sm">{{ singleSubAgencyPerformance.expiringSoon || 0 }}</span>
+                <span class="font-bold text-amber-900 text-sm">{{ singleSubAgencyPerformance.expiringSoon || 0 }}</span>
               </div>
             </div>
 
@@ -302,7 +320,7 @@
                   </h4>
                 </div>
 
-                <div class="w-7 h-7 bg-blue-600 text-white font-black text-xs rounded-xl flex items-center justify-center shrink-0 shadow-2xs">
+                <div class="w-7 h-7 bg-blue-600 text-white font-bold text-xs rounded-xl flex items-center justify-center shrink-0 shadow-2xs">
                   {{ index + 1 }}
                 </div>
               </div>
@@ -321,7 +339,7 @@
                       <span class="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0"></span>
                       <span class="text-slate-600 truncate">Đang t/h quá hạn</span>
                     </div>
-                    <span class="font-black text-slate-900">{{ item.inProgressOverdue || 0 }}</span>
+                    <span class="font-bold text-slate-900">{{ item.inProgressOverdue || 0 }}</span>
                   </div>
 
                   <div class="flex items-center justify-between gap-1.5">
@@ -329,7 +347,7 @@
                       <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
                       <span class="text-slate-600 truncate">Đang t/h trong hạn</span>
                     </div>
-                    <span class="font-black text-slate-900">{{ item.inProgressOnTime || 0 }}</span>
+                    <span class="font-bold text-slate-900">{{ item.inProgressOnTime || 0 }}</span>
                   </div>
 
                   <div class="flex items-center justify-between gap-1.5">
@@ -337,7 +355,7 @@
                       <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
                       <span class="text-slate-600 truncate">Sắp tới hạn</span>
                     </div>
-                    <span class="font-black text-slate-900">{{ item.expiringSoon || 0 }}</span>
+                    <span class="font-bold text-slate-900">{{ item.expiringSoon || 0 }}</span>
                   </div>
 
                   <div class="flex items-center justify-between gap-1.5">
@@ -345,7 +363,7 @@
                       <span class="w-2.5 h-2.5 rounded-full bg-teal-500 shrink-0"></span>
                       <span class="text-slate-600 truncate">Đã h/t quá hạn</span>
                     </div>
-                    <span class="font-black text-slate-900">{{ item.completedOverdue || 0 }}</span>
+                    <span class="font-bold text-slate-900">{{ item.completedOverdue || 0 }}</span>
                   </div>
 
                   <div class="flex items-center justify-between gap-1.5">
@@ -353,7 +371,7 @@
                       <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
                       <span class="text-slate-600 truncate">Đã h/t trong hạn</span>
                     </div>
-                    <span class="font-black text-slate-900">{{ item.completedOnTime || 0 }}</span>
+                    <span class="font-bold text-slate-900">{{ item.completedOnTime || 0 }}</span>
                   </div>
 
                   <div class="flex items-center justify-between gap-1.5" v-if="item.notStarted > 0">
@@ -361,7 +379,7 @@
                       <span class="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0"></span>
                       <span class="text-slate-600 truncate">Chưa thực hiện</span>
                     </div>
-                    <span class="font-black text-slate-900">{{ item.notStarted || 0 }}</span>
+                    <span class="font-bold text-slate-900">{{ item.notStarted || 0 }}</span>
                   </div>
                 </div>
               </div>
@@ -424,7 +442,7 @@
                   </h4>
                 </div>
 
-                <div class="w-7 h-7 bg-blue-600 text-white font-black text-xs rounded-xl flex items-center justify-center shrink-0 shadow-2xs">
+                <div class="w-7 h-7 bg-blue-600 text-white font-bold text-xs rounded-xl flex items-center justify-center shrink-0 shadow-2xs">
                   {{ index + 1 }}
                 </div>
               </div>
@@ -443,7 +461,7 @@
                       <span class="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0"></span>
                       <span class="text-slate-600 truncate">Đang t/h quá hạn</span>
                     </div>
-                    <span class="font-black text-slate-900">{{ item.inProgressOverdue || 0 }}</span>
+                    <span class="font-bold text-slate-900">{{ item.inProgressOverdue || 0 }}</span>
                   </div>
 
                   <div class="flex items-center justify-between gap-1.5">
@@ -451,7 +469,7 @@
                       <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
                       <span class="text-slate-600 truncate">Đang t/h trong hạn</span>
                     </div>
-                    <span class="font-black text-slate-900">{{ item.inProgressOnTime || 0 }}</span>
+                    <span class="font-bold text-slate-900">{{ item.inProgressOnTime || 0 }}</span>
                   </div>
 
                   <div class="flex items-center justify-between gap-1.5">
@@ -459,7 +477,7 @@
                       <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
                       <span class="text-slate-600 truncate">Sắp tới hạn</span>
                     </div>
-                    <span class="font-black text-slate-900">{{ item.expiringSoon || 0 }}</span>
+                    <span class="font-bold text-slate-900">{{ item.expiringSoon || 0 }}</span>
                   </div>
 
                   <div class="flex items-center justify-between gap-1.5">
@@ -467,7 +485,7 @@
                       <span class="w-2.5 h-2.5 rounded-full bg-teal-500 shrink-0"></span>
                       <span class="text-slate-600 truncate">Đã h/t quá hạn</span>
                     </div>
-                    <span class="font-black text-slate-900">{{ item.completedOverdue || 0 }}</span>
+                    <span class="font-bold text-slate-900">{{ item.completedOverdue || 0 }}</span>
                   </div>
 
                   <div class="flex items-center justify-between gap-1.5">
@@ -475,7 +493,7 @@
                       <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
                       <span class="text-slate-600 truncate">Đã h/t trong hạn</span>
                     </div>
-                    <span class="font-black text-slate-900">{{ item.completedOnTime || 0 }}</span>
+                    <span class="font-bold text-slate-900">{{ item.completedOnTime || 0 }}</span>
                   </div>
 
                   <div class="flex items-center justify-between gap-1.5" v-if="item.notStarted > 0">
@@ -483,7 +501,7 @@
                       <span class="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0"></span>
                       <span class="text-slate-600 truncate">Chưa thực hiện</span>
                     </div>
-                    <span class="font-black text-slate-900">{{ item.notStarted || 0 }}</span>
+                    <span class="font-bold text-slate-900">{{ item.notStarted || 0 }}</span>
                   </div>
                 </div>
               </div>
@@ -542,7 +560,7 @@
                   </h4>
                 </div>
 
-                <div class="w-7 h-7 bg-blue-600 text-white font-black text-xs rounded-xl flex items-center justify-center shrink-0 shadow-2xs">
+                <div class="w-7 h-7 bg-blue-600 text-white font-bold text-xs rounded-xl flex items-center justify-center shrink-0 shadow-2xs">
                   {{ index + 1 }}
                 </div>
               </div>
@@ -561,7 +579,7 @@
                       <span class="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0"></span>
                       <span class="text-slate-600 truncate">Đang t/h quá hạn</span>
                     </div>
-                    <span class="font-black text-slate-900">{{ item.inProgressOverdue || 0 }}</span>
+                    <span class="font-bold text-slate-900">{{ item.inProgressOverdue || 0 }}</span>
                   </div>
 
                   <div class="flex items-center justify-between gap-1.5">
@@ -569,7 +587,7 @@
                       <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
                       <span class="text-slate-600 truncate">Đang t/h trong hạn</span>
                     </div>
-                    <span class="font-black text-slate-900">{{ item.inProgressOnTime || 0 }}</span>
+                    <span class="font-bold text-slate-900">{{ item.inProgressOnTime || 0 }}</span>
                   </div>
 
                   <div class="flex items-center justify-between gap-1.5">
@@ -577,7 +595,7 @@
                       <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
                       <span class="text-slate-600 truncate">Sắp tới hạn</span>
                     </div>
-                    <span class="font-black text-slate-900">{{ item.expiringSoon || 0 }}</span>
+                    <span class="font-bold text-slate-900">{{ item.expiringSoon || 0 }}</span>
                   </div>
 
                   <div class="flex items-center justify-between gap-1.5">
@@ -585,7 +603,7 @@
                       <span class="w-2.5 h-2.5 rounded-full bg-teal-500 shrink-0"></span>
                       <span class="text-slate-600 truncate">Đã h/t quá hạn</span>
                     </div>
-                    <span class="font-black text-slate-900">{{ item.completedOverdue || 0 }}</span>
+                    <span class="font-bold text-slate-900">{{ item.completedOverdue || 0 }}</span>
                   </div>
 
                   <div class="flex items-center justify-between gap-1.5">
@@ -593,7 +611,7 @@
                       <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
                       <span class="text-slate-600 truncate">Đã h/t trong hạn</span>
                     </div>
-                    <span class="font-black text-slate-900">{{ item.completedOnTime || 0 }}</span>
+                    <span class="font-bold text-slate-900">{{ item.completedOnTime || 0 }}</span>
                   </div>
 
                   <div class="flex items-center justify-between gap-1.5" v-if="item.notStarted > 0">
@@ -601,7 +619,7 @@
                       <span class="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0"></span>
                       <span class="text-slate-600 truncate">Chưa thực hiện</span>
                     </div>
-                    <span class="font-black text-slate-900">{{ item.notStarted || 0 }}</span>
+                    <span class="font-bold text-slate-900">{{ item.notStarted || 0 }}</span>
                   </div>
                 </div>
               </div>
@@ -704,7 +722,7 @@
               <!-- Card Header: Child Agency Name & Blue Index Badge -->
               <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
                 <div class="min-w-0 flex-1">
-                  <h4 class="text-xs sm:text-sm font-extrabold text-slate-800 leading-snug truncate" :title="child.name">
+                  <h4 class="text-xs sm:text-sm font-bold text-slate-800 leading-snug truncate" :title="child.name">
                     {{ child.name }}
                   </h4>
                   <p class="text-[11px] text-slate-500 font-medium mt-0.5">
@@ -712,7 +730,7 @@
                   </p>
                 </div>
 
-                <div class="w-7 h-7 bg-blue-600 text-white font-black text-xs rounded-xl flex items-center justify-center shrink-0 shadow-2xs">
+                <div class="w-7 h-7 bg-blue-600 text-white font-bold text-xs rounded-xl flex items-center justify-center shrink-0 shadow-2xs">
                   {{ index + 1 }}
                 </div>
               </div>
@@ -731,7 +749,7 @@
                       <span class="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0"></span>
                       <span class="text-slate-600 truncate">Đang t/h quá hạn</span>
                     </div>
-                    <span class="font-black text-slate-900">{{ child.inProgressOverdue || 0 }}</span>
+                    <span class="font-bold text-slate-900">{{ child.inProgressOverdue || 0 }}</span>
                   </div>
 
                   <div class="flex items-center justify-between gap-1.5">
@@ -739,7 +757,7 @@
                       <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
                       <span class="text-slate-600 truncate">Đang t/h trong hạn</span>
                     </div>
-                    <span class="font-black text-slate-900">{{ child.inProgressOnTime || 0 }}</span>
+                    <span class="font-bold text-slate-900">{{ child.inProgressOnTime || 0 }}</span>
                   </div>
 
                   <div class="flex items-center justify-between gap-1.5">
@@ -747,7 +765,7 @@
                       <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
                       <span class="text-slate-600 truncate">Sắp tới hạn</span>
                     </div>
-                    <span class="font-black text-slate-900">{{ child.expiringSoon || 0 }}</span>
+                    <span class="font-bold text-slate-900">{{ child.expiringSoon || 0 }}</span>
                   </div>
 
                   <div class="flex items-center justify-between gap-1.5">
@@ -755,7 +773,7 @@
                       <span class="w-2.5 h-2.5 rounded-full bg-teal-500 shrink-0"></span>
                       <span class="text-slate-600 truncate">Đã h/t quá hạn</span>
                     </div>
-                    <span class="font-black text-slate-900">{{ child.completedOverdue || 0 }}</span>
+                    <span class="font-bold text-slate-900">{{ child.completedOverdue || 0 }}</span>
                   </div>
 
                   <div class="flex items-center justify-between gap-1.5">
@@ -763,7 +781,7 @@
                       <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
                       <span class="text-slate-600 truncate">Đã h/t trong hạn</span>
                     </div>
-                    <span class="font-black text-slate-900">{{ child.completedOnTime || 0 }}</span>
+                    <span class="font-bold text-slate-900">{{ child.completedOnTime || 0 }}</span>
                   </div>
 
                   <div class="flex items-center justify-between gap-1.5">
@@ -771,7 +789,7 @@
                       <span class="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0"></span>
                       <span class="text-slate-600 truncate">Chưa thực hiện</span>
                     </div>
-                    <span class="font-black text-slate-900">{{ child.notStarted || 0 }}</span>
+                    <span class="font-bold text-slate-900">{{ child.notStarted || 0 }}</span>
                   </div>
                 </div>
               </div>
@@ -856,7 +874,7 @@
                     class="group hover:bg-blue-50/80 transition cursor-pointer"
                   >
                     <!-- Mã -->
-                    <td class="px-3 py-2.5 font-extrabold text-blue-700 border-r border-slate-200 whitespace-nowrap sticky left-0 z-20 bg-white group-hover:bg-blue-50">
+                    <td class="px-3 py-2.5 font-bold text-blue-700 border-r border-slate-200 whitespace-nowrap sticky left-0 z-20 bg-white group-hover:bg-blue-50">
                       {{ item.code || 'NV' }}
                     </td>
 
@@ -885,7 +903,7 @@
 
                     <!-- Thời gian -->
                     <td class="px-3 py-2.5 border-r border-slate-200 text-xs font-semibold text-slate-600 whitespace-nowrap">
-                      <span v-if="item.isOngoing" class="px-2 py-0.5 rounded-full font-extrabold text-[11px] bg-blue-100 text-blue-800">
+                      <span v-if="item.isOngoing" class="px-2 py-0.5 rounded-full font-bold text-[11px] bg-blue-100 text-blue-800">
                         Thường xuyên
                       </span>
                       <span v-else-if="item.dueDate">
@@ -896,7 +914,7 @@
 
                     <!-- Tiến độ -->
                     <td class="px-3 py-2.5 border-r border-slate-200 text-center text-xs whitespace-nowrap">
-                      <span v-if="formatItemProgressDisplay(item) !== '—'" class="font-extrabold px-2 py-0.5 rounded-lg text-xs bg-blue-50 text-blue-900 border border-blue-200">
+                      <span v-if="formatItemProgressDisplay(item) !== '—'" class="font-bold px-2 py-0.5 rounded-lg text-xs bg-blue-50 text-blue-900 border border-blue-200">
                         {{ formatItemProgressDisplay(item) }}
                       </span>
                       <span v-else class="text-slate-400 italic">—</span>
@@ -947,7 +965,7 @@
             >
               <div class="flex items-start justify-between gap-2">
                 <div class="flex items-center gap-2.5">
-                  <div class="w-8 h-8 rounded-full bg-blue-600 text-white font-black text-xs flex items-center justify-center shrink-0 shadow-xs uppercase">
+                  <div class="w-8 h-8 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-xs uppercase">
                     {{ (contact.name || 'CB').charAt(0) }}
                   </div>
                   <div>
@@ -988,11 +1006,279 @@
       </div>
     </div>
 
+    <!-- Biểu đồ & Thống kê Văn bản Quy phạm Pháp luật (3 cấp phân quyền) -->
+    <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4 w-full">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+        <div class="flex items-center gap-2.5">
+          <span class="p-2 bg-indigo-600 text-white rounded-xl shadow-sm">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+            </svg>
+          </span>
+          <div>
+            <h3 class="text-sm sm:text-base font-bold text-slate-800">
+              Thống kê Văn bản Quy phạm Pháp luật (VB QPPL)
+            </h3>
+            <p class="text-[11px] font-semibold text-slate-500">
+              <span v-if="legalStats?.roleLevel === 1">Thống kê số lượng, phân loại VB QPPL theo từng cơ quan ban hành</span>
+              <span v-else-if="legalStats?.roleLevel === 2">Thống kê số lượng, phân loại VB QPPL theo từng cơ quan trực thuộc</span>
+              <span v-else>Danh sách 5 Văn bản QPPL ban hành gần đây nhất</span>
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 shrink-0">
+          <!-- Xuất Báo Cáo Excel Button for Legal Stats -->
+          <button 
+            type="button" 
+            @click="exportLegalStatsExcelReport" 
+            :disabled="isExportingLegalExcel"
+            class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-2xs transition h-[34px] flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
+            title="Xuất file báo cáo Excel thống kê số liệu Văn bản QPPL"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+            <span>{{ isExportingLegalExcel ? 'Đang xuất...' : 'Xuất Báo Cáo Excel' }}</span>
+          </button>
+
+          <!-- Advanced filter overlay for Legal Stats -->
+          <OverlayPanel
+            title="Lọc Thống Kê Văn Bản QPPL"
+            buttonText="Bộ Lọc Nâng Cao"
+            :activeCount="activeLegalFilterCount"
+            widthClass="w-[340px] sm:w-[500px]"
+            @apply="loadLegalDashboardStats"
+            @reset="resetLegalFilters"
+          >
+            <div class="space-y-3">
+              <!-- 1. Loại văn bản -->
+              <div>
+                <SearchableSelect
+                  v-model="legalFilterDocumentType"
+                  :options="legalDocumentTypeOptions"
+                  :isMulti="false"
+                  label="Loại Văn Bản"
+                  placeholder="Tất cả loại văn bản"
+                />
+              </div>
+
+              <!-- 2. Ngày phát hành (Từ ngày ➔ Đến ngày) -->
+              <div>
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                  Ngày Phát Hành (Từ ngày ➔ Đến ngày)
+                </label>
+                <div class="flex items-center gap-2">
+                  <input 
+                    type="date" 
+                    v-model="legalFilterIssuedFromDate" 
+                    class="w-full px-2.5 py-1.5 bg-white text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 text-slate-800"
+                  />
+                  <span class="text-xs font-bold text-slate-400 shrink-0">➔</span>
+                  <input 
+                    type="date" 
+                    v-model="legalFilterIssuedToDate" 
+                    class="w-full px-2.5 py-1.5 bg-white text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 text-slate-800"
+                  />
+                </div>
+              </div>
+
+              <!-- 3. Ngày hiệu lực (Từ ngày ➔ Đến ngày) -->
+              <div>
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
+                  Ngày Hiệu Lực (Từ ngày ➔ Đến ngày)
+                </label>
+                <div class="flex items-center gap-2">
+                  <input 
+                    type="date" 
+                    v-model="legalFilterEffectiveFromDate" 
+                    class="w-full px-2.5 py-1.5 bg-white text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 text-slate-800"
+                  />
+                  <span class="text-xs font-bold text-slate-400 shrink-0">➔</span>
+                  <input 
+                    type="date" 
+                    v-model="legalFilterEffectiveToDate" 
+                    class="w-full px-2.5 py-1.5 bg-white text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 text-slate-800"
+                  />
+                </div>
+              </div>
+
+              <!-- 4. Cơ quan phát hành -->
+              <div>
+                <SearchableSelect
+                  v-model="legalFilterIssuingAgencyId"
+                  :options="legalAgencyOptions"
+                  :isMulti="false"
+                  label="Cơ Quan Phát Hành"
+                  placeholder="Tất cả cơ quan phát hành"
+                />
+              </div>
+
+              <!-- 5. Cơ quan soạn thảo -->
+              <div>
+                <SearchableSelect
+                  v-model="legalFilterDraftingAgencyId"
+                  :options="legalAgencyOptions"
+                  :isMulti="false"
+                  label="Cơ Quan Soạn Thảo"
+                  placeholder="Tất cả cơ quan soạn thảo"
+                />
+              </div>
+            </div>
+          </OverlayPanel>
+        </div>
+      </div>
+
+      <!-- Loading Spinner for Legal Stats -->
+      <LoadingSpinner v-if="isLegalStatsLoading" text="Đang tải dữ liệu thống kê văn bản QPPL..." />
+
+      <div v-else class="space-y-4">
+        <!-- Level 1 (Admin): 2 distinct blocks for Ministries & Provinces -->
+        <div v-if="legalStats && legalStats.roleLevel === 1" class="space-y-6">
+          
+          <!-- Quick KPI Cards Row -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-4 gap-3">
+            <div class="p-3.5 bg-indigo-50/60 rounded-xl border border-indigo-100 flex flex-col justify-between">
+              <span class="text-[11px] font-bold text-indigo-700 uppercase">Tổng số văn bản</span>
+              <span class="text-2xl font-bold text-indigo-900 mt-1">{{ legalStats.totalCount || 0 }}</span>
+            </div>
+            <div class="p-3.5 bg-blue-50/60 rounded-xl border border-blue-100 flex flex-col justify-between" v-for="(cnt, cat) in (legalStats.categoryCounts || {})" :key="cat">
+              <span class="text-[11px] font-bold text-blue-700 uppercase truncate" :title="cat">{{ cat }}</span>
+              <span class="text-2xl font-bold text-blue-900 mt-1">{{ cnt }}</span>
+            </div>
+          </div>
+
+          <!-- Section 1: Khối Bộ / Ngành Trung Ương (Admin) -->
+          <div v-if="legalMinistriesStats.length > 0">
+            <!-- Stacked Bar Chart for Ministries -->
+            <LegalDocumentStackedChart 
+              :statsData="legalMinistriesStats" 
+              :allDocTypes="Object.keys(legalStats.categoryCounts || {})"
+              title="Biểu đồ phân loại Văn bản QPPL theo từng Bộ / Ngành"
+            />
+          </div>
+
+          <!-- Section 2: Khối Các Tỉnh / Thành Phố (Admin) -->
+          <div v-if="legalProvincesStats.length > 0" class="pt-1">
+            <!-- Stacked Bar Chart for Localities -->
+            <LegalDocumentStackedChart 
+              :statsData="legalProvincesStats" 
+              :allDocTypes="Object.keys(legalStats.categoryCounts || {})"
+              title="Biểu đồ phân loại Văn bản QPPL theo từng Địa phương"
+            />
+          </div>
+
+        </div>
+
+        <!-- Level 2 (Bộ/Ngành hoặc Tỉnh/TP): Only 1 chart section for their agency & subordinate units -->
+        <div v-else-if="legalStats && legalStats.roleLevel === 2" class="space-y-6">
+          
+          <!-- Quick KPI Cards Row -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-4 gap-3">
+            <div class="p-3.5 bg-indigo-50/60 rounded-xl border border-indigo-100 flex flex-col justify-between">
+              <span class="text-[11px] font-bold text-indigo-700 uppercase">Tổng số văn bản</span>
+              <span class="text-2xl font-bold text-indigo-900 mt-1">{{ legalStats.totalCount || 0 }}</span>
+            </div>
+            <div class="p-3.5 bg-blue-50/60 rounded-xl border border-blue-100 flex flex-col justify-between" v-for="(cnt, cat) in (legalStats.categoryCounts || {})" :key="cat">
+              <span class="text-[11px] font-bold text-blue-700 uppercase truncate" :title="cat">{{ cat }}</span>
+              <span class="text-2xl font-bold text-blue-900 mt-1">{{ cnt }}</span>
+            </div>
+          </div>
+
+          <!-- Level 2 Chart Section: Single block showing subordinate agencies -->
+          <div>
+            <LegalDocumentStackedChart 
+              :statsData="legalStats.agencyStats" 
+              :allDocTypes="Object.keys(legalStats.categoryCounts || {})"
+              title="Biểu đồ phân loại Văn bản QPPL theo cơ quan và các đơn vị trực thuộc"
+            />
+          </div>
+
+        </div>
+
+        <!-- Level 3: Recent 5 Documents List Widget -->
+        <div v-else-if="legalStats && legalStats.roleLevel === 3">
+          <div v-if="legalStats.recentDocuments && legalStats.recentDocuments.length > 0" class="overflow-x-auto custom-scrollbar">
+            <table class="w-full text-left border-collapse text-xs">
+              <thead>
+                <tr class="bg-slate-100 text-slate-800 border-b border-slate-200">
+                  <th class="py-2.5 px-3 font-bold text-center w-12">STT</th>
+                  <th class="py-2.5 px-3 font-bold min-w-[200px]">Số Hiệu / Trích Yếu</th>
+                  <th class="py-2.5 px-3 font-bold min-w-[130px]">Loại & Lĩnh Vực</th>
+                  <th class="py-2.5 px-3 font-bold min-w-[140px]">Cơ Quan Ban Hành / Dự Thảo</th>
+                  <th class="py-2.5 px-3 font-bold text-center min-w-[110px]">Ban Hành</th>
+                  <th class="py-2.5 px-3 font-bold text-center min-w-[110px]">Hiệu Lực</th>
+                  <th class="py-2.5 px-3 font-bold text-center min-w-[100px]">Tệp Đính Kèm</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200 font-normal">
+                <tr 
+                  v-for="(doc, idx) in legalStats.recentDocuments" 
+                  :key="doc.id"
+                  class="hover:bg-slate-50 transition"
+                >
+                  <td class="py-2.5 px-3 text-center text-slate-500 font-semibold">{{ idx + 1 }}</td>
+                  <td class="py-2.5 px-3">
+                    <div class="font-bold text-blue-700 hover:underline cursor-pointer" @click="openLegalViewerForDoc(doc)">
+                      {{ doc.documentNumber }}
+                    </div>
+                    <div class="text-[11px] text-slate-700 line-clamp-2 mt-0.5" :title="doc.title">
+                      {{ doc.title }}
+                    </div>
+                  </td>
+                  <td class="py-2.5 px-3">
+                    <span class="inline-block px-2 py-0.5 text-[10px] font-bold rounded bg-blue-50 text-blue-700 border border-blue-200 mb-1">
+                      {{ doc.documentType }}
+                    </span>
+                    <div class="text-[11px] text-slate-600 font-medium">{{ doc.field || '—' }}</div>
+                  </td>
+                  <td class="py-2.5 px-3">
+                    <div class="font-bold text-slate-800 text-[11px]">{{ doc.issuingAgencyName }}</div>
+                    <div v-if="doc.draftingAgencyName" class="text-[10px] text-indigo-700 font-semibold mt-0.5">
+                      Dự thảo: {{ doc.draftingAgencyName }}
+                    </div>
+                  </td>
+                  <td class="py-2.5 px-3 text-center text-[11px] text-slate-600">
+                    {{ formatDate(doc.issuedDate) }}
+                  </td>
+                  <td class="py-2.5 px-3 text-center">
+                    <span :class="['px-2 py-0.5 text-[10px] font-bold rounded-full border', getEffectStatusBadgeClass(doc.effectStatus)]">
+                      {{ doc.effectStatus || 'Còn hiệu lực' }}
+                    </span>
+                  </td>
+                  <td class="py-2.5 px-3 text-center">
+                    <button 
+                      v-if="doc.attachments && doc.attachments.length > 0"
+                      @click="openLegalViewerForDoc(doc)"
+                      class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[11px] rounded-lg border border-indigo-200 transition flex items-center justify-center gap-1 mx-auto cursor-pointer"
+                    >
+                      <span>👁️ Xem</span>
+                      <span class="text-[10px] text-indigo-500">({{ doc.attachments.length }})</span>
+                    </button>
+                    <span v-else class="text-slate-400 text-[11px] italic">Không có</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div v-else class="p-8 text-center text-xs text-slate-400 font-semibold italic">
+            Chưa có văn bản QPPL nào được cập nhật.
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Item Detail Modal -->
     <ItemDetailModal 
       :isOpen="selectedDetailItem != null" 
       :item="selectedDetailItem" 
       @close="selectedDetailItem = null" 
+    />
+
+    <!-- Legal File Viewer Modal -->
+    <LegalFileViewerModal 
+      :isOpen="isLegalViewerOpen" 
+      :fileItem="selectedLegalViewerFile" 
+      @close="isLegalViewerOpen = false" 
     />
   </div>
 </template>
@@ -1007,6 +1293,8 @@ import LoadingSpinner from '../components/LoadingSpinner.vue';
 import MiniStatusDonut from '../components/MiniStatusDonut.vue';
 import OverlayPanel from '../components/OverlayPanel.vue';
 import ItemDetailModal from '../components/ItemDetailModal.vue';
+import LegalFileViewerModal from '../components/LegalFileViewerModal.vue';
+import LegalDocumentStackedChart from '../components/LegalDocumentStackedChart.vue';
 import { getApiUrl } from '../config/api';
 import { authState } from '../services/auth';
 import { GOAL_SECTIONS, GOAL_GROUPS, TASK_SECTIONS, TASK_GROUPS } from '../config/planningStructureConfig';
@@ -1063,7 +1351,7 @@ function resetDashboardFilters() {
 
 const leadAgencyOptions = computed(() => {
   return agencies.value
-    .filter(ag => ag.code === 'ALL_AGENCIES' || !ag.parentId)
+    .filter(ag => ag.type !== 4 && ag.type !== 'Other' && (ag.code === 'ALL_AGENCIES' || (ag.type !== 3 && !ag.parentId)))
     .map(ag => {
       if (ag.code === 'ALL_AGENCIES') {
         return { value: ag.id, label: `🌐 ${ag.name} (Tất cả đơn vị)` };
@@ -1074,7 +1362,7 @@ const leadAgencyOptions = computed(() => {
 
 const subAgencyOptions = computed(() => {
   return agencies.value
-    .filter(ag => ag.parentId != null && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000')
+    .filter(ag => ag.type !== 4 && ag.type !== 'Other' && ag.parentId != null && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000')
     .map(ag => {
       const parentAg = agencies.value.find(p => p.id === ag.parentId);
       const parentSuffix = parentAg ? ` (Trực thuộc ${parentAg.name})` : '';
@@ -1868,8 +2156,352 @@ async function exportDashboardExcelReport() {
   }
 }
 
+// Legal Documents Stats State & Logic
+const legalStats = ref(null);
+const isLegalStatsLoading = ref(false);
+
+const legalFilterDocumentType = ref(null);
+const legalFilterIssuedFromDate = ref(null);
+const legalFilterIssuedToDate = ref(null);
+const legalFilterEffectiveFromDate = ref(null);
+const legalFilterEffectiveToDate = ref(null);
+const legalFilterIssuingAgencyId = ref(null);
+const legalFilterDraftingAgencyId = ref(null);
+
+const legalMinistriesStats = computed(() => {
+  let list = [];
+  if (legalStats.value?.ministriesStats && legalStats.value.ministriesStats.length > 0) {
+    list = legalStats.value.ministriesStats;
+  } else if (legalStats.value?.agencyStats) {
+    list = legalStats.value.agencyStats.filter(a => a.agencyType !== 'Province');
+  }
+  return list.filter(a => a.agencyName !== 'Các bộ, ngành, địa phương' && !a.agencyName?.includes('Các bộ, ngành, địa phương'));
+});
+
+const legalProvincesStats = computed(() => {
+  let list = [];
+  if (legalStats.value?.provincesStats && legalStats.value.provincesStats.length > 0) {
+    list = legalStats.value.provincesStats;
+  } else if (legalStats.value?.agencyStats) {
+    list = legalStats.value.agencyStats.filter(a => a.agencyType === 'Province');
+  }
+  return list.filter(a => a.agencyName !== 'Các bộ, ngành, địa phương' && !a.agencyName?.includes('Các bộ, ngành, địa phương'));
+});
+
+const isLegalViewerOpen = ref(false);
+const selectedLegalViewerFile = ref(null);
+
+const legalDocumentTypeOptions = ref([
+  { value: 'Thông tư', label: 'Thông tư' },
+  { value: 'Nghị định', label: 'Nghị định' },
+  { value: 'Quyết định', label: 'Quyết định' },
+  { value: 'Nghị quyết', label: 'Nghị quyết' },
+  { value: 'Chỉ thị', label: 'Chỉ thị' },
+  { value: 'Quy chế', label: 'Quy chế' },
+  { value: 'Luật', label: 'Luật' },
+  { value: 'Khác', label: 'Khác' }
+]);
+
+const legalAgencyOptions = computed(() => {
+  return (agencies.value || [])
+    .filter(ag => ag.code !== 'ALL_AGENCIES')
+    .map(ag => ({
+      value: ag.id,
+      label: ag.name
+    }));
+});
+
+const activeLegalFilterCount = computed(() => {
+  let cnt = 0;
+  if (legalFilterDocumentType.value) cnt++;
+  if (legalFilterIssuedFromDate.value || legalFilterIssuedToDate.value) cnt++;
+  if (legalFilterEffectiveFromDate.value || legalFilterEffectiveToDate.value) cnt++;
+  if (legalFilterIssuingAgencyId.value) cnt++;
+  if (legalFilterDraftingAgencyId.value) cnt++;
+  return cnt;
+});
+
+function resetLegalFilters() {
+  legalFilterDocumentType.value = null;
+  legalFilterIssuedFromDate.value = null;
+  legalFilterIssuedToDate.value = null;
+  legalFilterEffectiveFromDate.value = null;
+  legalFilterEffectiveToDate.value = null;
+  legalFilterIssuingAgencyId.value = null;
+  legalFilterDraftingAgencyId.value = null;
+  loadLegalDashboardStats();
+}
+
+async function loadLegalDashboardStats() {
+  isLegalStatsLoading.value = true;
+  try {
+    const params = new URLSearchParams();
+    if (legalFilterDocumentType.value) params.append('documentType', legalFilterDocumentType.value);
+    if (legalFilterIssuedFromDate.value) params.append('issuedFromDate', legalFilterIssuedFromDate.value);
+    if (legalFilterIssuedToDate.value) params.append('issuedToDate', legalFilterIssuedToDate.value);
+    if (legalFilterEffectiveFromDate.value) params.append('effectiveFromDate', legalFilterEffectiveFromDate.value);
+    if (legalFilterEffectiveToDate.value) params.append('effectiveToDate', legalFilterEffectiveToDate.value);
+    if (legalFilterIssuingAgencyId.value) params.append('issuingAgencyId', legalFilterIssuingAgencyId.value);
+    if (legalFilterDraftingAgencyId.value) params.append('draftingAgencyId', legalFilterDraftingAgencyId.value);
+
+    // Pass role and agencyId for 3-tier data access scoping
+    const userRole = authState.user.value?.role || (authState.isAdmin.value ? 'Admin' : 'Level2');
+    if (userRole) params.append('userRole', userRole);
+    if (authState.user.value?.agencyId) params.append('userAgencyId', authState.user.value.agencyId);
+
+    const queryString = params.toString();
+    const url = getApiUrl(`/api/legaldocuments/dashboard-stats${queryString ? '?' + queryString : ''}`);
+    const res = await fetch(url);
+    if (res.ok) {
+      legalStats.value = await res.json();
+    }
+  } catch (err) {
+    console.error("Lỗi khi tải thống kê VB QPPL:", err);
+  } finally {
+    isLegalStatsLoading.value = false;
+  }
+}
+
+const isExportingLegalExcel = ref(false);
+
+async function exportLegalStatsExcelReport() {
+  isExportingLegalExcel.value = true;
+  toast.info("Đang khởi tạo báo cáo Excel Thống kê Văn bản QPPL...", { autoClose: 2000 });
+
+  try {
+    if (!legalStats.value) {
+      toast.warning("Chưa có dữ liệu thống kê văn bản QPPL!");
+      isExportingLegalExcel.value = false;
+      return;
+    }
+
+    const wb = XLSX.utils.book_new();
+    const now = new Date();
+    const timeStr = `${now.toLocaleDateString('vi-VN')} ${now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
+    const docTypes = Object.keys(legalStats.value.categoryCounts || {});
+
+    // ==========================================
+    // SHEET 1: TỔNG HỢP THỐNG KÊ VB QPPL
+    // ==========================================
+    const summaryRows = [
+      ["BÁO CÁO THỐNG KÊ VĂN BẢN QUY PHẠM PHÁP LUẬT (VB QPPL)"],
+      [`Thời gian xuất: ${timeStr} | Tổng số văn bản: ${legalStats.value.totalCount || 0}`],
+      [],
+      ["CHỈ SỐ TỔNG QUAN THEO LOẠI VĂN BẢN"],
+      ["Tổng số văn bản quy phạm pháp luật", legalStats.value.totalCount || 0]
+    ];
+
+    docTypes.forEach(t => {
+      summaryRows.push([`Văn bản ${t}`, legalStats.value.categoryCounts[t] || 0]);
+    });
+
+    const merges = [
+      { s: { r: 0, c: 0 }, e: { r: 0, c: Math.max(docTypes.length + 2, 5) } },
+      { s: { r: 1, c: 0 }, e: { r: 1, c: Math.max(docTypes.length + 2, 5) } }
+    ];
+
+    // Table 1: Ministries Stats (Khối Bộ / Ngành)
+    const minList = legalMinistriesStats.value || [];
+    if (minList.length > 0) {
+      summaryRows.push([]);
+      const minRowIdx = summaryRows.length;
+      merges.push({ s: { r: minRowIdx, c: 0 }, e: { r: minRowIdx, c: docTypes.length + 2 } });
+      summaryRows.push([`THỐNG KÊ SỐ LƯỢNG VĂN BẢN THEO BỘ / NGÀNH TRUNG ƯƠNG (${minList.length} cơ quan)`]);
+
+      const minHeaders = ["STT", "Cơ Quan Ban Hành / Soạn Thảo", "Tổng Số Văn Bản", ...docTypes];
+      summaryRows.push(minHeaders);
+
+      minList.forEach((ag, idx) => {
+        const row = [idx + 1, ag.agencyName, ag.totalCount || 0];
+        docTypes.forEach(t => {
+          row.push(ag.typeCounts?.[t] || 0);
+        });
+        summaryRows.push(row);
+      });
+    }
+
+    // Table 2: Provinces Stats (Khối Địa Phương)
+    const provList = legalProvincesStats.value || [];
+    if (provList.length > 0) {
+      summaryRows.push([]);
+      const provRowIdx = summaryRows.length;
+      merges.push({ s: { r: provRowIdx, c: 0 }, e: { r: provRowIdx, c: docTypes.length + 2 } });
+      summaryRows.push([`THỐNG KÊ SỐ LƯỢNG VĂN BẢN THEO ĐỊA PHƯƠNG / TỈNH THÀNH (${provList.length} cơ quan)`]);
+
+      const provHeaders = ["STT", "Cơ Quan Ban Hành / Soạn Thảo", "Tổng Số Văn Bản", ...docTypes];
+      summaryRows.push(provHeaders);
+
+      provList.forEach((ag, idx) => {
+        const row = [idx + 1, ag.agencyName, ag.totalCount || 0];
+        docTypes.forEach(t => {
+          row.push(ag.typeCounts?.[t] || 0);
+        });
+        summaryRows.push(row);
+      });
+    }
+
+    // Table 3: Recent Documents (Level 3 or fallback)
+    if (legalStats.value.recentDocuments && legalStats.value.recentDocuments.length > 0) {
+      summaryRows.push([]);
+      const recentRowIdx = summaryRows.length;
+      merges.push({ s: { r: recentRowIdx, c: 0 }, e: { r: recentRowIdx, c: docTypes.length + 2 } });
+      summaryRows.push([`DANH SÁCH VĂN BẢN QPPL BAN HÀNH GẦN ĐÂY (${legalStats.value.recentDocuments.length} văn bản)`]);
+
+      summaryRows.push(["STT", "Số Ký Hiệu", "Trích Yếu Nội Dung", "Loại VB", "Cơ Quan Ban Hành", "Ngày Ban Hành", "Trạng Thái"]);
+      legalStats.value.recentDocuments.forEach((doc, idx) => {
+        summaryRows.push([
+          idx + 1,
+          doc.documentNumber || doc.code || '—',
+          doc.title || '—',
+          doc.documentType || '—',
+          doc.issuingAgencyName || '—',
+          formatDate(doc.issuedDate),
+          doc.effectStatus || '—'
+        ]);
+      });
+    }
+
+    const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
+    wsSummary['!merges'] = merges;
+    styleWorksheet(wsSummary, { numCols: Math.max(docTypes.length + 3, 6), headerRowIndex: 5, titleRowIndex: 0 });
+    XLSX.utils.book_append_sheet(wb, wsSummary, "Thống Kê Tổng Hợp");
+
+    // ==========================================
+    // SHEET 2: DANH SÁCH CHI TIẾT VĂN BẢN QPPL
+    // ==========================================
+    try {
+      const docParams = new URLSearchParams({
+        pageNumber: '1',
+        pageSize: '1000'
+      });
+
+      if (legalFilterDocumentType.value) docParams.append('documentType', legalFilterDocumentType.value);
+      if (legalFilterIssuedFromDate.value) docParams.append('fromDate', legalFilterIssuedFromDate.value);
+      if (legalFilterIssuedToDate.value) docParams.append('toDate', legalFilterIssuedToDate.value);
+      if (legalFilterIssuingAgencyId.value) docParams.append('issuingAgencyId', legalFilterIssuingAgencyId.value);
+      if (legalFilterDraftingAgencyId.value) docParams.append('draftingAgencyId', legalFilterDraftingAgencyId.value);
+
+      const userRole = authState.user.value?.role || (authState.isAdmin.value ? 'Admin' : 'Level2');
+      if (userRole) docParams.append('userRole', userRole);
+      if (authState.user.value?.agencyId) docParams.append('userAgencyId', authState.user.value.agencyId);
+
+      const docRes = await fetch(getApiUrl(`/api/legaldocuments?${docParams.toString()}`));
+      if (docRes.ok) {
+        const docData = await docRes.json();
+        const docItems = docData.items || (Array.isArray(docData) ? docData : []);
+
+        if (docItems.length > 0) {
+          const detailRows = [
+            ["DANH SÁCH VĂN BẢN QUY PHẠM PHÁP LUẬT CHI TIẾT"],
+            [`Thời gian xuất: ${timeStr} | Tổng số: ${docItems.length} văn bản`],
+            [],
+            [
+              "STT",
+              "Số Ký Hiệu",
+              "Trích Yếu Nội Dung",
+              "Loại VB",
+              "Cơ Quan Ban Hành",
+              "Cơ Quan Dự Thảo",
+              "Người Ký & Chức Danh",
+              "Ngày Ban Hành",
+              "Ngày Hiệu Lực",
+              "Trạng Thái Hiệu Lực",
+              "Lĩnh Vực",
+              "Ghi Chú"
+            ]
+          ];
+
+          docItems.forEach((d, idx) => {
+            const signer = d.signerName ? `${d.signerName}${d.signerTitle ? ' (' + d.signerTitle + ')' : ''}` : '—';
+            detailRows.push([
+              idx + 1,
+              d.code || '—',
+              d.title || '—',
+              d.documentType || '—',
+              d.issuingAgencyName || '—',
+              d.draftingAgencyName || '—',
+              signer,
+              formatDate(d.issuedDate),
+              formatDate(d.effectiveDate),
+              d.effectStatus || '—',
+              d.field || '—',
+              d.notes || '—'
+            ]);
+          });
+
+          const wsDetail = XLSX.utils.aoa_to_sheet(detailRows);
+          wsDetail['!merges'] = [
+            { s: { r: 0, c: 0 }, e: { r: 0, c: 11 } },
+            { s: { r: 1, c: 0 }, e: { r: 1, c: 11 } }
+          ];
+
+          wsDetail['!cols'] = [
+            { wch: 6 },  // STT
+            { wch: 18 }, // Số Ký Hiệu
+            { wch: 45 }, // Trích Yếu Nội Dung
+            { wch: 15 }, // Loại VB
+            { wch: 25 }, // Cơ Quan Ban Hành
+            { wch: 25 }, // Cơ Quan Dự Thảo
+            { wch: 22 }, // Người Ký
+            { wch: 15 }, // Ngày Ban Hành
+            { wch: 15 }, // Ngày Hiệu Lực
+            { wch: 18 }, // Trạng Thái Hiệu Lực
+            { wch: 18 }, // Lĩnh Vực
+            { wch: 30 }  // Ghi Chú
+          ];
+
+          styleWorksheet(wsDetail, { numCols: 12, headerRowIndex: 3, titleRowIndex: 0 });
+          XLSX.utils.book_append_sheet(wb, wsDetail, "Danh Sách Văn Bản");
+        }
+      }
+    } catch (e) {
+      console.warn("Không thể tải danh sách chi tiết văn bản để xuất Sheet 2:", e);
+    }
+
+    const dateFileStr = now.toISOString().slice(0, 10);
+    XLSX.writeFile(wb, `Bao_Cao_Thong_Ke_VB_QPPL_${dateFileStr}.xlsx`);
+    toast.success("Đã xuất báo cáo Excel Thống kê Văn bản QPPL (gồm 2 Sheet) thành công!");
+  } catch (err) {
+    console.error("Lỗi khi xuất file Excel thống kê VB QPPL:", err);
+    toast.error("Lỗi khi xuất file Excel: " + (err.message || err));
+  } finally {
+    isExportingLegalExcel.value = false;
+  }
+}
+
+function getLegalAgencyBarPercent(count) {
+  if (!legalStats.value || !legalStats.value.agencyStats || legalStats.value.agencyStats.length === 0) return 0;
+  const maxCount = Math.max(...legalStats.value.agencyStats.map(a => a.totalCount || 0), 1);
+  return Math.round((count / maxCount) * 100);
+}
+
+function openLegalViewerForDoc(doc) {
+  if (doc && doc.attachments && doc.attachments.length > 0) {
+    const file = doc.attachments[0];
+    selectedLegalViewerFile.value = {
+      fileName: file.fileName,
+      cleanName: `${doc.documentNumber} - ${doc.title}`,
+      fileType: doc.documentType,
+      fileUrl: file.fileUrl
+    };
+    isLegalViewerOpen.value = true;
+  } else {
+    toast.info("Văn bản này không có tệp đính kèm nào.");
+  }
+}
+
+function getEffectStatusBadgeClass(status) {
+  switch (status) {
+    case 'Còn hiệu lực': return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    case 'Hết hiệu lực': return 'bg-rose-50 text-rose-700 border-rose-200';
+    case 'Chưa có hiệu lực': return 'bg-amber-50 text-amber-700 border-amber-200';
+    default: return 'bg-slate-100 text-slate-700 border-slate-200';
+  }
+}
+
 onMounted(() => {
   loadAgencies();
   loadDashboardMetrics();
+  loadLegalDashboardStats();
 });
 </script>

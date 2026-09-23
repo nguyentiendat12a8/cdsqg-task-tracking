@@ -122,7 +122,7 @@
 
           <!-- Multi-Deliverables Checklist Display (Dedicated 100% Full-Width Block) -->
           <div v-if="item?.deliverables && item.deliverables.length > 0" class="bg-white p-4 rounded-2xl border border-slate-200 space-y-3 shadow-2xs">
-            <h4 class="text-xs font-extrabold text-blue-900 uppercase flex items-center gap-1.5">
+            <h4 class="text-xs font-bold text-blue-900 uppercase flex items-center gap-1.5">
               <span>📋 Danh Mục Sản Phẩm Đầu Ra Dự Kiến ({{ item.deliverables.length }} sản phẩm)</span>
             </h4>
             <div class="space-y-2">
@@ -132,8 +132,8 @@
                 class="bg-slate-50/80 p-3 rounded-xl border border-slate-200/80 space-y-1.5 text-xs hover:border-blue-300 transition"
               >
                 <div class="flex items-center justify-between font-bold text-slate-800 gap-3">
-                  <span class="text-slate-900 font-extrabold flex-1 min-w-0 text-xs leading-snug">{{ idx + 1 }}. {{ del.title }}</span>
-                  <span :class="['px-3 py-1 rounded-full text-[10px] font-black shrink-0 whitespace-nowrap shadow-2xs', getDeliverableStatusClass(del.currentStatus)]">
+                  <span class="text-slate-900 font-bold flex-1 min-w-0 text-xs leading-snug">{{ idx + 1 }}. {{ del.title }}</span>
+                  <span :class="['px-3 py-1 rounded-full text-[10px] font-bold shrink-0 whitespace-nowrap shadow-2xs', getDeliverableStatusClass(del.currentStatus)]">
                     {{ getDeliverableStatusLabel(del.currentStatus) }}
                   </span>
                 </div>
@@ -185,7 +185,7 @@
               <!-- History Log Card Header -->
               <div class="flex flex-wrap justify-between items-center border-b border-slate-100 pb-2.5 gap-2">
                 <div class="flex items-center gap-2 flex-wrap">
-                  <span class="px-2.5 py-0.5 bg-blue-600 text-white rounded-md font-extrabold text-[11px]">
+                  <span class="px-2.5 py-0.5 bg-blue-600 text-white rounded-md font-bold text-[11px]">
                     Lần {{ reportHistory.length - idx }}
                   </span>
                   <span class="px-2 py-0.5 bg-blue-50 text-blue-800 border border-blue-200 rounded-md font-bold text-[11px]">
@@ -196,13 +196,13 @@
                   </span>
 
                   <!-- Approval Status Badge -->
-                  <span v-if="rep.approvalStatus === 'Pending' || rep.approvalStatus === '2'" class="px-2.5 py-0.5 bg-amber-100 text-amber-900 border border-amber-300 rounded-md font-extrabold text-[11px] animate-pulse">
+                  <span v-if="rep.approvalStatus === 'Pending' || rep.approvalStatus === '2'" class="px-2.5 py-0.5 bg-amber-100 text-amber-900 border border-amber-300 rounded-md font-bold text-[11px] animate-pulse">
                     ⏳ Chờ duyệt
                   </span>
-                  <span v-else-if="rep.approvalStatus === 'Rejected' || rep.approvalStatus === '3'" class="px-2.5 py-0.5 bg-rose-100 text-rose-900 border border-rose-300 rounded-md font-extrabold text-[11px]" :title="rep.rejectionReason">
+                  <span v-else-if="rep.approvalStatus === 'Rejected' || rep.approvalStatus === '3'" class="px-2.5 py-0.5 bg-rose-100 text-rose-900 border border-rose-300 rounded-md font-bold text-[11px]" :title="rep.rejectionReason">
                     ❌ Từ chối: {{ rep.rejectionReason || 'Chưa đạt yêu cầu' }}
                   </span>
-                  <span v-else class="px-2.5 py-0.5 bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-md font-extrabold text-[11px]">
+                  <span v-else class="px-2.5 py-0.5 bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-md font-bold text-[11px]">
                     ✅ Đã duyệt
                   </span>
                 </div>
@@ -234,7 +234,7 @@
                 <!-- Quantitative value or qualitative status after update -->
                 <div class="space-y-1">
                   <span class="text-[10px] font-bold text-blue-700 uppercase block">Trạng Thái / Tiến Độ Ghi Nhận</span>
-                  <div class="font-black text-blue-900 text-sm">
+                  <div class="font-bold text-blue-900 text-sm">
                     {{ formatReportProgressValue(rep) }}
                   </div>
                 </div>
@@ -312,7 +312,7 @@
             >
               <div class="flex flex-wrap items-center justify-between border-b border-amber-200/70 pb-2 gap-2">
                 <div class="flex items-center gap-2">
-                  <span class="px-2.5 py-0.5 bg-amber-200 text-amber-900 rounded-full font-black">
+                  <span class="px-2.5 py-0.5 bg-amber-200 text-amber-900 rounded-full font-bold">
                     🔔 Thông Báo
                   </span>
                   <span class="text-slate-600 font-bold">
@@ -326,7 +326,7 @@
 
               <div v-if="notif.title" class="text-xs text-amber-950 bg-amber-100/60 px-3 py-2 rounded-lg font-bold border border-amber-200/80 flex items-start gap-1.5 leading-snug">
                 <span class="shrink-0 text-amber-900">📌 <strong>Tiêu đề:</strong></span>
-                <span class="font-extrabold text-slate-900">{{ notif.title }}</span>
+                <span class="font-bold text-slate-900">{{ notif.title }}</span>
               </div>
 
               <div v-if="notif.recipientsSummary" class="text-[11px] text-amber-950 bg-amber-100/70 px-3 py-1.5 rounded-lg font-bold flex items-start gap-1.5 leading-snug">
@@ -725,15 +725,15 @@ async function openAssignModal() {
 
       let filtered = [];
       if (targetLeadId) {
-        filtered = allAgencies.filter(a => a.parentId && String(a.parentId).toLowerCase() === String(targetLeadId).toLowerCase());
+        filtered = allAgencies.filter(a => a.parentId && String(a.parentId).toLowerCase() === String(targetLeadId).toLowerCase() && a.type !== 4 && a.type !== 'Other');
       }
 
       if (filtered.length === 0 && userAgencyId) {
-        filtered = allAgencies.filter(a => a.parentId && String(a.parentId).toLowerCase() === String(userAgencyId).toLowerCase());
+        filtered = allAgencies.filter(a => a.parentId && String(a.parentId).toLowerCase() === String(userAgencyId).toLowerCase() && a.type !== 4 && a.type !== 'Other');
       }
 
       if (filtered.length === 0 && (authState.isAdmin.value || props.item.isGeneralTask)) {
-        filtered = allAgencies.filter(a => a.parentId != null && a.parentId !== '' && String(a.parentId) !== '00000000-0000-0000-0000-000000000000');
+        filtered = allAgencies.filter(a => a.parentId != null && a.parentId !== '' && String(a.parentId) !== '00000000-0000-0000-0000-000000000000' && a.type !== 4 && a.type !== 'Other');
       }
 
       subAgencyOptions.value = filtered;

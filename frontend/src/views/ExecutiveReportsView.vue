@@ -18,7 +18,7 @@
 
       <button 
         @click="exportCurrentReportToExcel" 
-        class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-md transition flex items-center gap-2 shrink-0"
+        class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-2 shrink-0"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         Xuất File Excel
@@ -30,45 +30,45 @@
       <button 
         @click="activeReportType = 'summary'"
         :class="[
-          'p-3 rounded-2xl border text-left transition space-y-0.5',
+          'p-3 rounded-2xl border text-left transition space-y-0.5 cursor-pointer',
           activeReportType === 'summary' ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
         ]"
       >
-        <div class="text-[10px] font-extrabold uppercase opacity-80">Báo cáo 1</div>
-        <div class="text-xs font-black truncate">📊 Tiến độ các bộ & địa phương</div>
+        <div class="text-[10px] font-bold uppercase opacity-80">Báo cáo 1</div>
+        <div class="text-xs font-bold truncate">📊 Tiến độ các Bộ, Ngành & Địa phương</div>
       </button>
 
       <button 
         @click="activeReportType = 'urgent'"
         :class="[
-          'p-3 rounded-2xl border text-left transition space-y-0.5',
+          'p-3 rounded-2xl border text-left transition space-y-0.5 cursor-pointer',
           activeReportType === 'urgent' ? 'bg-rose-600 text-white border-rose-600 shadow-md' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
         ]"
       >
-        <div class="text-[10px] font-extrabold uppercase opacity-80">Báo cáo 2</div>
-        <div class="text-xs font-black truncate">⚠️ Nhiệm vụ Sắp hết hạn & Quá hạn</div>
+        <div class="text-[10px] font-bold uppercase opacity-80">Báo cáo 2</div>
+        <div class="text-xs font-bold truncate">⚠️ Cảnh báo Sắp hết hạn & Quá hạn</div>
       </button>
 
       <button 
-        @click="activeReportType = 'detail'"
+        @click="activeReportType = 'governance'"
         :class="[
-          'p-3 rounded-2xl border text-left transition space-y-0.5',
-          activeReportType === 'detail' ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+          'p-3 rounded-2xl border text-left transition space-y-0.5 cursor-pointer',
+          activeReportType === 'governance' ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
         ]"
       >
-        <div class="text-[10px] font-extrabold uppercase opacity-80">Báo cáo 3</div>
-        <div class="text-xs font-black truncate">📄 Chi tiết Tiến độ & File Minh chứng</div>
+        <div class="text-[10px] font-bold uppercase opacity-80">Báo cáo 3</div>
+        <div class="text-xs font-bold truncate">🏛️ Thống kê Đôn đốc & Tuân thủ Báo cáo</div>
       </button>
 
       <button 
-        @click="activeReportType = 'scope'"
+        @click="activeReportType = 'domain'"
         :class="[
-          'p-3 rounded-2xl border text-left transition space-y-0.5',
-          activeReportType === 'scope' ? 'bg-purple-600 text-white border-purple-600 shadow-md' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+          'p-3 rounded-2xl border text-left transition space-y-0.5 cursor-pointer',
+          activeReportType === 'domain' ? 'bg-purple-600 text-white border-purple-600 shadow-md' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
         ]"
       >
-        <div class="text-[10px] font-extrabold uppercase opacity-80">Báo cáo 4</div>
-        <div class="text-xs font-black truncate">🌐 Phân loại Nhiệm vụ Chung & Riêng</div>
+        <div class="text-[10px] font-bold uppercase opacity-80">Báo cáo 4</div>
+        <div class="text-xs font-bold truncate">📈 Tiến độ theo Lĩnh vực & Nhóm trọng tâm</div>
       </button>
     </div>
 
@@ -89,7 +89,7 @@
         <select 
           v-model="quickItemType" 
           @change="onQuickItemTypeChange"
-          class="py-2 px-3 text-xs bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl font-extrabold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer min-h-[36px] shadow-2xs shrink-0"
+          class="py-2 px-3 text-xs bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer min-h-[36px] shadow-2xs shrink-0"
           title="Lọc loại đối tượng (Tất cả / Mục tiêu / Nhiệm vụ)"
         >
           <option value="all">Tất cả (Mục tiêu & Nhiệm vụ)</option>
@@ -107,6 +107,28 @@
           @reset="resetReportFilters"
         >
           <div class="space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <SearchableSelect 
+                  v-model="filterDraft.selectedItemTypes" 
+                  :options="itemTypeOptions" 
+                  :isMulti="true" 
+                  label="Loại Đối Tượng" 
+                  placeholder="Tất cả loại đối tượng"
+                />
+              </div>
+
+              <div>
+                <SearchableSelect 
+                  v-model="filterDraft.selectedScopes" 
+                  :options="reportScopeOptions" 
+                  :isMulti="true" 
+                  label="Phạm Vi" 
+                  placeholder="Tất cả phạm vi"
+                />
+              </div>
+            </div>
+
             <div>
               <SearchableSelect 
                 v-model="filterDraft.selectedAgencyIds" 
@@ -124,16 +146,6 @@
                 :isMulti="true" 
                 label="Đơn Vị Trực Thuộc" 
                 placeholder="Tất cả đơn vị trực thuộc"
-              />
-            </div>
-
-            <div>
-              <SearchableSelect 
-                v-model="filterDraft.selectedScopes" 
-                :options="reportScopeOptions" 
-                :isMulti="true" 
-                label="Phạm Vi" 
-                placeholder="Tất cả phạm vi"
               />
             </div>
 
@@ -159,8 +171,8 @@
 
             <div>
               <div class="flex items-center justify-between mb-1">
-                <label class="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block">Giai Đoạn</label>
-                <label class="inline-flex items-center gap-1 cursor-pointer text-[10px] font-extrabold text-blue-700">
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Giai Đoạn</label>
+                <label class="inline-flex items-center gap-1 cursor-pointer text-[10px] font-bold text-blue-700">
                   <input type="checkbox" v-model="filterDraft.onlyOngoing" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5">
                   Thường xuyên
                 </label>
@@ -183,16 +195,6 @@
                 />
               </div>
             </div>
-
-            <div>
-              <SearchableSelect 
-                v-model="filterDraft.selectedItemTypes" 
-                :options="itemTypeOptions" 
-                :isMulti="true" 
-                label="Loại Đối Tượng (Mục tiêu / Nhiệm vụ)" 
-                placeholder="Tất cả loại đối tượng"
-              />
-            </div>
           </div>
         </OverlayPanel>
       </div>
@@ -207,7 +209,7 @@
       <!-- BÁO CÁO 1: TỔNG HỢP TIẾN ĐỘ THEO BỘ / ĐỊA PHƯƠNG -->
       <div v-if="activeReportType === 'summary'" class="overflow-x-auto">
         <table class="w-full text-left text-xs text-slate-700 border-collapse">
-          <thead class="bg-slate-100 font-extrabold text-slate-600 border-b border-slate-200">
+          <thead class="bg-slate-100 font-bold text-slate-600 border-b border-slate-200">
             <tr>
               <th class="p-3">STT</th>
               <th class="p-3">Tên Cơ Quan / Địa Phương</th>
@@ -230,7 +232,7 @@
               <td class="p-3 text-center font-bold text-blue-700">{{ ag.inProgressOnTime }}</td>
               <td class="p-3 text-center font-bold text-amber-700">{{ ag.expiringSoon }}</td>
               <td class="p-3 text-center font-bold text-rose-700">{{ ag.inProgressOverdue }}</td>
-              <td class="p-3 text-center font-extrabold text-blue-800">
+              <td class="p-3 text-center font-bold text-blue-800">
                 {{ getPct(ag.completedOnTime + ag.completedOverdue, ag.totalItems) }}%
               </td>
             </tr>
@@ -244,7 +246,7 @@
       <!-- BÁO CÁO 2: DANH SÁCH NHIỆM VỤ SẮP HẾT HẠN & QUÁ HẠN -->
       <div v-else-if="activeReportType === 'urgent'" class="overflow-x-auto">
         <table class="w-full text-left text-xs text-slate-700 border-collapse">
-          <thead class="bg-rose-50 text-rose-900 font-extrabold border-b border-rose-200">
+          <thead class="bg-rose-50 text-rose-900 font-bold border-b border-rose-200">
             <tr>
               <th class="p-3">Mã</th>
               <th class="p-3">Phân Loại</th>
@@ -256,7 +258,7 @@
           </thead>
           <tbody class="divide-y divide-slate-200">
             <tr v-for="item in paginatedUrgentItems" :key="item.taskId" class="hover:bg-rose-50/40 transition">
-              <td class="p-3 font-extrabold text-rose-800">{{ item.code }}</td>
+              <td class="p-3 font-bold text-rose-800">{{ item.code }}</td>
               <td class="p-3">
                 <span :class="['px-2 py-0.5 rounded text-[10px] font-bold', item.itemType === 'Goal' ? 'bg-purple-100 text-purple-800' : 'bg-slate-100 text-slate-700']">
                   {{ item.itemType === 'Goal' ? '🎯 Mục tiêu' : '📋 Nhiệm vụ' }}
@@ -269,7 +271,7 @@
                   </div>
                   <template #popper>
                     <div class="whitespace-normal break-words text-left leading-relaxed min-w-[260px] max-w-[420px] p-1">
-                      <span class="font-extrabold text-blue-300 block mb-1 text-[11px] uppercase tracking-wider">📋 Nội dung chi tiết</span>
+                      <span class="font-bold text-blue-300 block mb-1 text-[11px] uppercase tracking-wider">📋 Nội dung chi tiết</span>
                       {{ item.title }}
                     </div>
                   </template>
@@ -278,7 +280,7 @@
               <td class="p-3 font-bold text-slate-800">{{ item.leadAgencyName }}</td>
               <td class="p-3 font-semibold text-slate-600">{{ formatDate(item.dueDate) }}</td>
               <td class="p-3 text-center">
-                <span :class="['px-2.5 py-1 rounded-full text-[11px] font-extrabold', item.calculatedStatus === 'ExpiringSoon' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-rose-100 text-rose-900 border border-rose-300']">
+                <span :class="['px-2.5 py-1 rounded-full text-[11px] font-bold', item.calculatedStatus === 'ExpiringSoon' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-rose-100 text-rose-900 border border-rose-300']">
                   {{ item.calculatedStatus === 'ExpiringSoon' ? '⏰ Sắp Hết Hạn' : '🚨 Quá Hạn Thực Hiện' }}
                 </span>
               </td>
@@ -290,100 +292,92 @@
         </table>
       </div>
 
-      <!-- BÁO CÁO 3: CHI TIẾT TIẾN ĐỘ & FILE MINH CHỨNG -->
-      <div v-else-if="activeReportType === 'detail'" class="overflow-x-auto">
+      <!-- BÁO CÁO 3 MỚI: THỐNG KÊ ĐÔN ĐỐC & TÍNH TUÂN THỦ BÁO CÁO -->
+      <div v-else-if="activeReportType === 'governance'" class="overflow-x-auto">
         <table class="w-full text-left text-xs text-slate-700 border-collapse">
-          <thead class="bg-indigo-50 text-indigo-900 font-extrabold border-b border-indigo-200">
+          <thead class="bg-indigo-50 text-indigo-900 font-bold border-b border-indigo-200">
             <tr>
-              <th class="p-3">Mã</th>
-              <th class="p-3">Tiêu Đề</th>
-              <th class="p-3">Đơn Vị Chủ Trì</th>
-              <th class="p-3 text-center">Tiến Độ Mới Nhất</th>
-              <th class="p-3 text-center">Trạng Thái</th>
-              <th class="p-3">File Minh Chứng Đính Kèm</th>
+              <th class="p-3 text-center w-12">STT</th>
+              <th class="p-3">Tên Cơ Quan / Địa Phương</th>
+              <th class="p-3 text-center min-w-[120px]">Tổng NV Được Giao</th>
+              <th class="p-3 text-center text-amber-800 min-w-[110px]">Số Lần Đã Đôn Đốc</th>
+              <th class="p-3 text-center min-w-[120px]">Báo Cáo Đã Nạp</th>
+              <th class="p-3 text-center text-emerald-800 min-w-[120px]">Báo Cáo Đúng Hạn</th>
+              <th class="p-3 text-center text-rose-800 min-w-[120px]">Trễ Báo Cáo / Chưa Nạp</th>
+              <th class="p-3 text-center min-w-[140px]">Tỷ Lệ Tuân Thủ (%)</th>
+              <th class="p-3 text-center min-w-[130px]">Đánh Giá Tuân Thủ</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-200">
-            <tr v-for="item in paginatedDetailItems" :key="item.taskId" class="hover:bg-slate-50 transition">
-              <td class="p-3 font-extrabold text-indigo-700">{{ item.code }}</td>
-              <td class="p-3 font-semibold text-slate-900">
-                <VTooltip theme="custom-dark" placement="top" :delay="{ show: 1500, hide: 0 }">
-                  <div class="line-clamp-2 font-semibold text-slate-900 leading-relaxed cursor-help">
-                    {{ item.title }}
+            <tr v-for="(ag, idx) in paginatedGovernanceSummaries" :key="ag.agencyId" class="hover:bg-slate-50 transition">
+              <td class="p-3 text-center font-bold text-slate-500">{{ (currentPage - 1) * pageSize + idx + 1 }}</td>
+              <td class="p-3 font-bold text-slate-900">{{ ag.name }}</td>
+              <td class="p-3 text-center font-bold">{{ ag.totalItems }}</td>
+              <td class="p-3 text-center font-bold text-amber-700 bg-amber-50/40">{{ ag.urgedCount }}</td>
+              <td class="p-3 text-center font-bold text-blue-700">{{ ag.totalReportsSubmitted }}</td>
+              <td class="p-3 text-center font-bold text-emerald-700">{{ ag.onTimeReports }}</td>
+              <td class="p-3 text-center font-bold text-rose-700 bg-rose-50/40">{{ ag.lateOrPendingReports }}</td>
+              <td class="p-3 text-center font-bold text-slate-900">
+                <div class="flex items-center justify-center gap-2">
+                  <div class="w-16 bg-slate-200 rounded-full h-2 overflow-hidden">
+                    <div class="h-full bg-indigo-600 rounded-full" :style="{ width: ag.complianceRate + '%' }"></div>
                   </div>
-                  <template #popper>
-                    <div class="whitespace-normal break-words text-left leading-relaxed min-w-[260px] max-w-[420px] p-1">
-                      <span class="font-extrabold text-indigo-300 block mb-1 text-[11px] uppercase tracking-wider">📄 Chi tiết tiêu đề</span>
-                      {{ item.title }}
-                    </div>
-                  </template>
-                </VTooltip>
-              </td>
-              <td class="p-3 font-bold text-slate-800">{{ item.leadAgencyName }}</td>
-              <td class="p-3 text-center font-extrabold text-blue-700">
-                {{ item.latestProgressValue !== null ? `${item.latestProgressValue} ${item.unitName}` : 'Chưa cập nhật' }}
-              </td>
-              <td class="p-3 text-center font-bold">
-                {{ getStatusLabel(item.calculatedStatus) }}
-              </td>
-              <td class="p-3">
-                <span v-if="!item.progressLogs?.length" class="text-slate-400 italic">Chưa có minh chứng</span>
-                <div v-else class="space-y-1">
-                  <template v-for="log in item.progressLogs" :key="log.id">
-                    <a v-for="url in log.attachmentFileUrls" :key="url" :href="url" target="_blank" class="text-blue-600 underline font-semibold block text-[11px] hover:text-blue-800">
-                      📎 {{ getFileName(url) }}
-                    </a>
-                  </template>
+                  <span>{{ ag.complianceRate }}%</span>
                 </div>
               </td>
+              <td class="p-3 text-center">
+                <span :class="['px-2.5 py-1 rounded-full text-[11px] font-bold border inline-block whitespace-nowrap', ag.complianceBadgeClass]">
+                  {{ ag.complianceBadgeText }}
+                </span>
+              </td>
             </tr>
-            <tr v-if="filteredDetailItems.length === 0">
-              <td colspan="6" class="p-8 text-center text-slate-400 italic font-medium">Không tìm thấy bản ghi nào phù hợp với bộ lọc.</td>
+            <tr v-if="filteredGovernanceSummaries.length === 0">
+              <td colspan="9" class="p-8 text-center text-slate-400 italic font-medium">Không tìm thấy bản ghi nào phù hợp với bộ lọc.</td>
             </tr>
           </tbody>
         </table>
       </div>
 
-      <!-- BÁO CÁO 4: PHÂN LOẠI NHIỆM VỤ CHUNG VS RIÊNG -->
-      <div v-else-if="activeReportType === 'scope'" class="overflow-x-auto">
+      <!-- BÁO CÁO 4 MỚI: PHÂN LOẠI THEO LĨNH VỰC & TRỤ CỘT CHIẾN LƯỢC -->
+      <div v-else-if="activeReportType === 'domain'" class="overflow-x-auto">
         <table class="w-full text-left text-xs text-slate-700 border-collapse">
-          <thead class="bg-purple-50 text-purple-900 font-extrabold border-b border-purple-200">
+          <thead class="bg-purple-50 text-purple-900 font-bold border-b border-purple-200">
             <tr>
-              <th class="p-3">Mã</th>
-              <th class="p-3">Phạm Vi</th>
-              <th class="p-3">Nội Dung Thực Hiện</th>
-              <th class="p-3">Đơn Vị Đầu Mối</th>
-              <th class="p-3">Thời Gian</th>
-              <th class="p-3 text-center">Báo Cáo</th>
+              <th class="p-3 text-center w-12">STT</th>
+              <th class="p-3 min-w-[200px]">Lĩnh Vực / Trụ Cột Chiến Lược</th>
+              <th class="p-3 text-center min-w-[100px]">Tổng Số</th>
+              <th class="p-3 text-center text-emerald-800 min-w-[110px]">Đã Hoàn Thành</th>
+              <th class="p-3 text-center text-blue-800 min-w-[110px]">Đang Thực Hiện</th>
+              <th class="p-3 text-center text-amber-800 min-w-[100px]">Sắp Hết Hạn</th>
+              <th class="p-3 text-center text-rose-800 min-w-[100px]">Quá Hạn</th>
+              <th class="p-3 text-center text-slate-500 min-w-[100px]">Chưa Thực Hiện</th>
+              <th class="p-3 text-center min-w-[150px]">Tỷ Lệ Hoàn Thành (%)</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-200">
-            <tr v-for="item in paginatedScopeItems" :key="item.taskId" class="hover:bg-slate-50 transition">
-              <td class="p-3 font-black text-purple-800">{{ item.code }}</td>
-              <td class="p-3">
-                <span :class="['px-2 py-0.5 rounded text-[10px] font-extrabold', item.isGeneralTask ? 'bg-purple-100 text-purple-800' : 'bg-slate-100 text-slate-700']">
-                  {{ item.isGeneralTask ? '🌐 Nhiệm vụ Chung' : '🏢 Nhiệm vụ Riêng' }}
-                </span>
+            <tr v-for="(dom, idx) in paginatedDomainSummaries" :key="dom.domainName" class="hover:bg-slate-50 transition">
+              <td class="p-3 text-center font-bold text-slate-500">{{ (currentPage - 1) * pageSize + idx + 1 }}</td>
+              <td class="p-3 font-bold text-purple-900 flex items-center gap-2">
+                <span class="w-2 h-2 rounded-full bg-purple-600 shrink-0"></span>
+                <span>{{ dom.domainName }}</span>
               </td>
-              <td class="p-3 font-semibold text-slate-900">
-                <VTooltip theme="custom-dark" placement="top" :delay="{ show: 1500, hide: 0 }">
-                  <div class="line-clamp-2 font-semibold text-slate-900 leading-relaxed cursor-help">
-                    {{ item.title }}
+              <td class="p-3 text-center font-bold text-slate-900">{{ dom.totalItems }}</td>
+              <td class="p-3 text-center font-bold text-emerald-700">{{ dom.completedOnTime + dom.completedOverdue }}</td>
+              <td class="p-3 text-center font-bold text-blue-700">{{ dom.inProgressOnTime }}</td>
+              <td class="p-3 text-center font-bold text-amber-700">{{ dom.expiringSoon }}</td>
+              <td class="p-3 text-center font-bold text-rose-700 bg-rose-50/30">{{ dom.inProgressOverdue }}</td>
+              <td class="p-3 text-center font-bold text-slate-500">{{ dom.notStarted }}</td>
+              <td class="p-3 text-center font-bold text-slate-900">
+                <div class="flex items-center justify-center gap-2">
+                  <div class="w-16 bg-slate-200 rounded-full h-2 overflow-hidden">
+                    <div class="h-full bg-purple-600 rounded-full" :style="{ width: dom.completionRate + '%' }"></div>
                   </div>
-                  <template #popper>
-                    <div class="whitespace-normal break-words text-left leading-relaxed min-w-[260px] max-w-[420px] p-1">
-                      <span class="font-extrabold text-purple-300 block mb-1 text-[11px] uppercase tracking-wider">🌐 Nội dung nhiệm vụ</span>
-                      {{ item.title }}
-                    </div>
-                  </template>
-                </VTooltip>
+                  <span>{{ dom.completionRate }}%</span>
+                </div>
               </td>
-              <td class="p-3 font-bold text-slate-800">{{ item.leadAgencyName }}</td>
-              <td class="p-3 font-semibold text-slate-600">{{ formatDateRange(item.startDate, item.dueDate) }}</td>
-              <td class="p-3 text-center font-bold">{{ getStatusLabel(item.calculatedStatus) }}</td>
             </tr>
-            <tr v-if="filteredScopeItems.length === 0">
-              <td colspan="6" class="p-8 text-center text-slate-400 italic font-medium">Không tìm thấy bản ghi nào phù hợp với bộ lọc.</td>
+            <tr v-if="filteredDomainSummaries.length === 0">
+              <td colspan="9" class="p-8 text-center text-slate-400 italic font-medium">Không tìm thấy bản ghi nào phù hợp với bộ lọc.</td>
             </tr>
           </tbody>
         </table>
@@ -392,7 +386,7 @@
       <!-- Server Pagination Controls Footer -->
       <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50/70 p-4 border-t border-slate-200/80 text-xs text-slate-600 font-semibold">
         <div>
-          Hiển thị <span class="font-extrabold text-slate-900">{{ currentActiveTotalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0 }} - {{ Math.min(currentPage * pageSize, currentActiveTotalCount) }}</span> trên tổng số <span class="font-extrabold text-slate-900">{{ currentActiveTotalCount }}</span> bản ghi
+          Hiển thị <span class="font-bold text-slate-900">{{ currentActiveTotalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0 }} - {{ Math.min(currentPage * pageSize, currentActiveTotalCount) }}</span> trên tổng số <span class="font-bold text-slate-900">{{ currentActiveTotalCount }}</span> bản ghi
         </div>
 
         <div class="flex items-center gap-2">
@@ -404,7 +398,7 @@
             ‹ Trang trước
           </button>
           
-          <span class="px-3 py-1.5 bg-blue-50 text-blue-800 border border-blue-200 rounded-xl font-black">
+          <span class="px-3 py-1.5 bg-blue-50 text-blue-800 border border-blue-200 rounded-xl font-bold">
             Trang {{ currentPage }} / {{ currentActiveTotalPages }}
           </span>
 
@@ -487,12 +481,14 @@ const activeFilterCount = computed(() => {
 });
 
 const agencyOptions = computed(() => {
-  return agencies.value.map(ag => ({ value: ag.id, label: ag.name }));
+  return agencies.value
+    .filter(ag => ag.type !== 4 && ag.type !== 'Other')
+    .map(ag => ({ value: ag.id, label: ag.name }));
 });
 
 const leadAgencyOptions = computed(() => {
   return agencies.value
-    .filter(ag => ag.code === 'ALL_AGENCIES' || (ag.type !== 3 && !ag.parentId))
+    .filter(ag => ag.code === 'ALL_AGENCIES' || (ag.type !== 3 && ag.type !== 4 && ag.type !== 'Other' && !ag.parentId))
     .map(ag => {
       if (ag.code === 'ALL_AGENCIES') {
         return { value: ag.id, label: `🌐 ${ag.name} (Tất cả đơn vị)` };
@@ -503,7 +499,7 @@ const leadAgencyOptions = computed(() => {
 
 const subAgencyOptions = computed(() => {
   return agencies.value
-    .filter(ag => ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000')
+    .filter(ag => ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000' && ag.type !== 4 && ag.type !== 'Other')
     .map(ag => {
       const parentAg = agencies.value.find(p => p.id === ag.parentId);
       return {
@@ -641,7 +637,7 @@ function passesCommonFilters(i) {
     const scopedAgencyIds = [userAgencyId];
     if (userAgency && !userAgency.parentId) {
       const childIds = agencies.value
-        .filter(a => a.parentId && String(a.parentId).toLowerCase() === userAgencyId)
+        .filter(a => a.parentId && String(a.parentId).toLowerCase() === userAgencyId && a.type !== 4 && a.type !== 'Other')
         .map(a => String(a.id).toLowerCase());
       scopedAgencyIds.push(...childIds);
     }
@@ -713,19 +709,89 @@ const urgentItems = computed(() => {
   return allItems.value.filter(i => (i.calculatedStatus === 'ExpiringSoon' || i.calculatedStatus === 'InProgressOverdue') && passesCommonFilters(i));
 });
 
-const filteredDetailItems = computed(() => {
-  return allItems.value.filter(i => passesCommonFilters(i));
+const filteredGovernanceSummaries = computed(() => {
+  return filteredAgencySummaries.value.map(ag => {
+    const totalItems = ag.totalItems || 0;
+    const totalReportsSubmitted = (ag.completedOnTime || 0) + (ag.completedOverdue || 0) + (ag.inProgressOnTime || 0) + (ag.inProgressOverdue || 0);
+    const onTimeReports = (ag.completedOnTime || 0) + (ag.inProgressOnTime || 0);
+    const lateOrPendingReports = (ag.inProgressOverdue || 0) + (ag.expiringSoon || 0) + (ag.notStarted || 0);
+    const urgedCount = (ag.inProgressOverdue || 0) + (ag.expiringSoon || 0);
+
+    const complianceRate = totalItems > 0 ? Math.round((onTimeReports / totalItems) * 100) : 100;
+
+    let complianceBadgeText = 'Thực hiện tốt';
+    let complianceBadgeClass = 'bg-emerald-50 text-emerald-700 border-emerald-200';
+
+    if (complianceRate < 50) {
+      complianceBadgeText = 'Trễ hạn / Cần đôn đốc';
+      complianceBadgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
+    } else if (complianceRate < 80) {
+      complianceBadgeText = 'Cần đẩy nhanh';
+      complianceBadgeClass = 'bg-amber-50 text-amber-700 border-amber-200';
+    }
+
+    return {
+      agencyId: ag.agencyId,
+      name: ag.name,
+      totalItems,
+      urgedCount,
+      totalReportsSubmitted,
+      onTimeReports,
+      lateOrPendingReports,
+      complianceRate,
+      complianceBadgeText,
+      complianceBadgeClass
+    };
+  });
 });
 
-const filteredScopeItems = computed(() => {
-  return allItems.value.filter(i => passesCommonFilters(i));
+const filteredDomainSummaries = computed(() => {
+  const domainMap = {};
+
+  allItems.value.forEach(item => {
+    if (!passesCommonFilters(item)) return;
+
+    let dName = item.section || item.group || 'Các nhiệm vụ / mục tiêu chung';
+    if (!domainMap[dName]) {
+      domainMap[dName] = {
+        domainName: dName,
+        totalItems: 0,
+        completedOnTime: 0,
+        completedOverdue: 0,
+        inProgressOnTime: 0,
+        inProgressOverdue: 0,
+        expiringSoon: 0,
+        notStarted: 0
+      };
+    }
+
+    const d = domainMap[dName];
+    d.totalItems++;
+
+    const st = item.calculatedStatus;
+    if (st === 'CompletedOnTime') d.completedOnTime++;
+    else if (st === 'CompletedOverdue') d.completedOverdue++;
+    else if (st === 'InProgressOnTime') d.inProgressOnTime++;
+    else if (st === 'InProgressOverdue') d.inProgressOverdue++;
+    else if (st === 'ExpiringSoon') d.expiringSoon++;
+    else d.notStarted++;
+  });
+
+  return Object.values(domainMap).map(d => {
+    const totalComp = d.completedOnTime + d.completedOverdue;
+    const completionRate = d.totalItems > 0 ? Math.round((totalComp / d.totalItems) * 100) : 0;
+    return {
+      ...d,
+      completionRate
+    };
+  }).sort((a, b) => b.totalItems - a.totalItems);
 });
 
 const currentActiveTotalCount = computed(() => {
   if (activeReportType.value === 'summary') return filteredAgencySummaries.value.length;
   if (activeReportType.value === 'urgent') return urgentItems.value.length;
-  if (activeReportType.value === 'detail') return filteredDetailItems.value.length;
-  if (activeReportType.value === 'scope') return filteredScopeItems.value.length;
+  if (activeReportType.value === 'governance') return filteredGovernanceSummaries.value.length;
+  if (activeReportType.value === 'domain') return filteredDomainSummaries.value.length;
   return 0;
 });
 
@@ -750,14 +816,14 @@ const paginatedUrgentItems = computed(() => {
   return urgentItems.value.slice(start, start + pageSize.value);
 });
 
-const paginatedDetailItems = computed(() => {
+const paginatedGovernanceSummaries = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value;
-  return filteredDetailItems.value.slice(start, start + pageSize.value);
+  return filteredGovernanceSummaries.value.slice(start, start + pageSize.value);
 });
 
-const paginatedScopeItems = computed(() => {
+const paginatedDomainSummaries = computed(() => {
   const start = (currentPage.value - 1) * pageSize.value;
-  return filteredScopeItems.value.slice(start, start + pageSize.value);
+  return filteredDomainSummaries.value.slice(start, start + pageSize.value);
 });
 
 watch(activeReportType, () => {
@@ -892,66 +958,57 @@ function exportCurrentReportToExcel() {
       formatDate(i.dueDate),
       getStatusLabel(i.calculatedStatus)
     ]);
-  } else if (activeReportType.value === 'detail') {
-    title = "BÁO CÁO CHI TIẾT TIẾN ĐỘ VÀ FILE MINH CHỨNG - QUYẾT ĐỊNH 1266/QĐ-TTg";
-    subtitle = `Thời gian xuất báo cáo: ${timeStr} | Tổng số hạng mục: ${filteredDetailItems.value.length}`;
-    kpiTitle = "1. CHỈ SỐ CẬP NHẬT TIẾN ĐỘ VÀ MINH CHỨNG";
+  } else if (activeReportType.value === 'governance') {
+    title = "BÁO CÁO THỐNG KÊ ĐÔN ĐỐC VÀ TÍNH TUÂN THỦ BÁO CÁO - QUYẾT ĐỊNH 1266/QĐ-TTg";
+    subtitle = `Thời gian xuất báo cáo: ${timeStr} | Tổng số cơ quan / địa phương: ${filteredGovernanceSummaries.value.length}`;
+    kpiTitle = "1. CHỈ SỐ TỔNG QUAN TÍNH TUÂN THỦ BÁO CÁO";
     kpiSection = [
-      ["Tổng số mục tiêu & nhiệm vụ theo dõi", filteredDetailItems.value.length],
-      ["Số lượng hạng mục đã có cập nhật tiến độ", filteredDetailItems.value.filter(i => i.latestProgressValue !== null && i.latestProgressValue !== undefined).length],
-      ["Số lượng hạng mục đã đính kèm file minh chứng", filteredDetailItems.value.filter(i => (i.evidenceFilesCount || 0) > 0).length]
+      ["Tổng số cơ quan / địa phương theo dõi", filteredGovernanceSummaries.value.length],
+      ["Số đơn vị đạt tỷ lệ tuân thủ tốt (≥80%)", filteredGovernanceSummaries.value.filter(a => a.complianceRate >= 80).length],
+      ["Số đơn vị cần đôn đốc (<50%)", filteredGovernanceSummaries.value.filter(a => a.complianceRate < 50).length]
     ];
-    tableTitle = "2. DANH SÁCH CHI TIẾT TIẾN ĐỘ VÀ FILE MINH CHỨNG THEO HẠNG MỤC";
-    fileName = "Bao_Cao_Chi_Tiet_Tien_Do_Minh_Chung";
-    sheetName = "Chi tiết tiến độ";
-    headers = ["STT", "Mã Hạng Mục", "Tên Mục Tiêu / Nhiệm Vụ", "Đơn Vị Chủ Trì", "Giao Đơn Vị Trực Thuộc", "Tiến Độ Mới Nhất", "Trạng Thái Thực Hiện", "Số File Minh Chứng"];
-    minColWidths = { 0: 8, 1: 15, 2: 45, 3: 28, 4: 28, 5: 22, 6: 25, 7: 20 };
+    tableTitle = "2. DANH SÁCH THỐNG KÊ ĐÔN ĐỐC VÀ TÍNH TUÂN THỦ CỦA TỪNG BỘ, NGÀNH, ĐỊA PHURƠNG";
+    fileName = "Bao_Cao_Thong_Ke_Don_Doc_Tuan_Thu_Bao_Cao";
+    sheetName = "Đôn đốc & Tuân thủ";
+    headers = ["STT", "Tên Cơ Quan / Địa Phương", "Tổng NV Được Giao", "Số Lần Đã Đôn Đốc", "Báo Cáo Đã Nạp", "Báo Cáo Đúng Hạn", "Trễ Báo Cáo / Chưa Nạp", "Tỷ Lệ Tuân Thủ (%)", "Đánh Giá Tuân Thủ"];
+    minColWidths = { 0: 8, 1: 38, 2: 18, 3: 18, 4: 18, 5: 18, 6: 22, 7: 20, 8: 22 };
 
-    rows = filteredDetailItems.value.map((i, idx) => {
-      const unit = i.unitName || i.unit?.name || '%';
-      let progStr = 'Chưa cập nhật';
-      if (i.latestProgressValue !== null && i.latestProgressValue !== undefined) {
-        if (unit === 'Số lượng') progStr = `${i.latestProgressValue}`;
-        else if (unit === '%') progStr = `${i.latestProgressValue}%`;
-        else progStr = `${i.latestProgressValue} ${unit}`;
-      } else if (i.latestProgressStatus) {
-        progStr = i.latestProgressStatus;
-      }
-      return [
-        idx + 1,
-        i.code || '',
-        i.title || '',
-        i.leadAgencyName || '',
-        i.assignedAgencyName || '—',
-        progStr,
-        getStatusLabel(i.calculatedStatus),
-        i.evidenceFilesCount || 0
-      ];
-    });
-  } else if (activeReportType.value === 'scope') {
-    title = "BÁO CÁO PHÂN LOẠI NHIỆM VỤ CHUNG VÀ RIÊNG - QUYẾT ĐỊNH 1266/QĐ-TTg";
-    subtitle = `Thời gian xuất báo cáo: ${timeStr} | Tổng số nhiệm vụ: ${filteredScopeItems.value.length}`;
-    kpiTitle = "1. THỐNG KÊ PHÂN LOẠI PHẠM VI NHIỆM VỤ";
-    kpiSection = [
-      ["Tổng số nhiệm vụ theo dõi", filteredScopeItems.value.length],
-      ["Số lượng nhiệm vụ phạm vi chung (Các bộ, ngành, địa phương)", filteredScopeItems.value.filter(i => i.isGeneralTask).length],
-      ["Số lượng nhiệm vụ phạm vi riêng (Giao đơn vị cụ thể)", filteredScopeItems.value.filter(i => !i.isGeneralTask).length]
-    ];
-    tableTitle = "2. DANH SÁCH PHÂN LOẠI CHI TIẾT NHIỆM VỤ THEO PHẠM VI";
-    fileName = "Bao_Cao_Phan_Loai_Nhiem_Vu_Chung_Rieng";
-    sheetName = "Nhiệm vụ chung & riêng";
-    headers = ["STT", "Mã Hạng Mục", "Phạm Vi Nhiệm Vụ", "Nội Dung Thực Hiện", "Đơn Vị Đầu Mối", "Giao Đơn Vị Trực Thuộc", "Thời Gian Thực Hiện", "Trạng Thái Thực Hiện"];
-    minColWidths = { 0: 8, 1: 15, 2: 20, 3: 45, 4: 28, 5: 28, 6: 22, 7: 25 };
-
-    rows = filteredScopeItems.value.map((i, idx) => [
+    rows = filteredGovernanceSummaries.value.map((ag, idx) => [
       idx + 1,
-      i.code || '',
-      i.isGeneralTask ? "Nhiệm vụ Chung" : "Nhiệm vụ Riêng",
-      i.title || '',
-      i.leadAgencyName || '',
-      i.assignedAgencyName || '—',
-      formatDateRange(i.startDate, i.dueDate),
-      getStatusLabel(i.calculatedStatus)
+      ag.name || '',
+      ag.totalItems,
+      ag.urgedCount,
+      ag.totalReportsSubmitted,
+      ag.onTimeReports,
+      ag.lateOrPendingReports,
+      `${ag.complianceRate}%`,
+      ag.complianceBadgeText
+    ]);
+  } else if (activeReportType.value === 'domain') {
+    title = "BÁO CÁO THỐNG KÊ TIẾN ĐỘ THEO LĨNH VỰC VÀ TRỤ CỘT CHIẾN LƯỢC - QUYẾT ĐỊNH 1266/QĐ-TTg";
+    subtitle = `Thời gian xuất báo cáo: ${timeStr} | Tổng số lĩnh vực / trụ cột: ${filteredDomainSummaries.value.length}`;
+    kpiTitle = "1. CHỈ SỐ TỔNG QUAN TIẾN ĐỘ THEO TRỤ CỘT CHIẾN LƯỢC";
+    kpiSection = [
+      ["Tổng số lĩnh vực / nhóm trọng tâm theo dõi", filteredDomainSummaries.value.length],
+      ["Tổng số mục tiêu & nhiệm vụ hợp nhất", allItems.value.length],
+      ["Số lĩnh vực đạt tỷ lệ hoàn thành trên 50%", filteredDomainSummaries.value.filter(d => d.completionRate >= 50).length]
+    ];
+    tableTitle = "2. DANH SÁCH CHI TIẾT TIẾN ĐỘ THEO LĨNH VỰC VÀ TRỤ CỘT CHIẾN LƯỢC";
+    fileName = "Bao_Cao_Tien_Do_Theo_Linh_Vuc_Tru_Cot";
+    sheetName = "Tiến độ theo lĩnh vực";
+    headers = ["STT", "Lĩnh Vực / Trụ Cột Chiến Lược", "Tổng Hạng Mục", "Đã Hoàn Thành", "Đang Thực Hiện (Trong Hạn)", "Sắp Tới Hạn", "Đang T/H (Quá Hạn)", "Chưa Thực Hiện", "Tỷ Lệ Hoàn Thành (%)"];
+    minColWidths = { 0: 8, 1: 45, 2: 15, 3: 15, 4: 22, 5: 15, 6: 20, 7: 15, 8: 22 };
+
+    rows = filteredDomainSummaries.value.map((dom, idx) => [
+      idx + 1,
+      dom.domainName,
+      dom.totalItems,
+      dom.completedOnTime + dom.completedOverdue,
+      dom.inProgressOnTime,
+      dom.expiringSoon,
+      dom.inProgressOverdue,
+      dom.notStarted,
+      `${dom.completionRate}%`
     ]);
   }
 

@@ -26,7 +26,7 @@
               </svg>
             </div>
             <div class="flex flex-col whitespace-nowrap overflow-hidden">
-              <span class="font-extrabold text-white text-xs tracking-wider">CĐS QUỐC GIA</span>
+              <span class="font-bold text-white text-xs tracking-wider">CĐS QUỐC GIA</span>
               <span class="text-[10px] text-blue-400 font-bold">Quyết định 1266/QĐ-TTg</span>
             </div>
           </div>
@@ -135,6 +135,22 @@
         >
           <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           <span v-if="!isCollapsed" class="truncate">Báo Cáo</span>
+        </button>
+
+        <!-- Văn bản QPPL -->
+        <button 
+          @click="selectTab('legal-documents')"
+          :class="[
+            'w-full flex items-center gap-3 py-3 rounded-xl font-bold text-xs transition-all duration-200 whitespace-nowrap overflow-hidden cursor-pointer',
+            isCollapsed ? 'justify-center px-0 w-12 h-12 mx-auto' : 'px-3',
+            activeTab === 'legal-documents' ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+          ]"
+          :title="isCollapsed ? 'Văn bản QPPL' : ''"
+        >
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+          <span v-if="!isCollapsed" class="truncate">Văn bản QPPL</span>
         </button>
 
         <!-- Submenu: Thiết lập chung (Settings) -->

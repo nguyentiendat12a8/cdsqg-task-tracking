@@ -4,7 +4,7 @@
     <!-- Top Header Bar -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 w-full">
       <div class="flex items-center gap-3">
-        <span class="p-2.5 bg-blue-600 text-white rounded-xl shadow-sm font-black">
+        <span class="p-2.5 bg-blue-600 text-white rounded-xl shadow-sm font-bold">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
         </span>
         <div>
@@ -15,7 +15,7 @@
 
       <button 
         @click="openAddModal" 
-        class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-xl shadow-sm transition flex items-center gap-2 shrink-0 cursor-pointer"
+        class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-2 shrink-0 cursor-pointer"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
         Thêm Tài Khoản Mới
@@ -27,7 +27,7 @@
       
       <!-- Filter & Search Bar -->
       <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3 bg-slate-50/60 border-b border-slate-200/80 w-full">
-        <div class="flex flex-wrap items-center gap-2 flex-1 min-w-0">
+        <div class="flex items-center gap-2 flex-1 max-w-xl min-w-0">
           <!-- Search Input -->
           <div class="relative flex-1 min-w-[200px]">
             <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -92,7 +92,7 @@
         <LoadingSpinner v-if="isLoading" text="Đang tải danh sách tài khoản..." />
 
         <table v-else class="w-full text-left text-sm text-slate-700 border-collapse">
-          <thead class="bg-slate-100 text-xs text-slate-600 uppercase font-extrabold border-b border-slate-200 sticky top-0 z-10">
+          <thead class="bg-slate-100 text-xs text-slate-600 uppercase font-bold border-b border-slate-200 sticky top-0 z-10">
             <tr>
               <th class="px-4 py-3 border-r border-slate-200 bg-slate-100 min-w-[120px]">Tên Đăng Nhập</th>
               <th class="px-4 py-3 border-r border-slate-200 bg-slate-100 min-w-[180px]">Họ và Tên</th>
@@ -142,7 +142,7 @@
 
               <td class="px-4 py-3 text-center whitespace-nowrap">
                 <div class="inline-flex items-center justify-center gap-1.5 whitespace-nowrap">
-                  <button @click="openResetModal(u)" class="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 font-extrabold text-xs rounded-lg transition border border-amber-200 cursor-pointer" title="Đặt lại mật khẩu">
+                  <button @click="openResetModal(u)" class="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold text-xs rounded-lg transition border border-amber-200 cursor-pointer" title="Đặt lại mật khẩu">
                     🔑 Mật khẩu
                   </button>
                   <button @click="openEditModal(u)" class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition inline-flex items-center cursor-pointer" title="Sửa thông tin">
@@ -167,7 +167,7 @@
       <!-- Attached Pagination Bar -->
       <div class="flex flex-col md:flex-row items-center justify-between gap-3 bg-slate-50/70 p-3.5 border-t border-slate-200/80 text-xs text-slate-600 font-semibold w-full">
         <div class="flex items-center gap-3 whitespace-nowrap flex-wrap justify-center sm:justify-start">
-          <span class="whitespace-nowrap">Hiển thị <span class="font-extrabold text-slate-900">{{ totalCount > 0 ? (pageNumber - 1) * pageSize + 1 : 0 }} - {{ Math.min(pageNumber * pageSize, totalCount) }}</span> trên tổng số <span class="font-extrabold text-slate-900">{{ totalCount }}</span> tài khoản</span>
+          <span class="whitespace-nowrap">Hiển thị <span class="font-bold text-slate-900">{{ totalCount > 0 ? (pageNumber - 1) * pageSize + 1 : 0 }} - {{ Math.min(pageNumber * pageSize, totalCount) }}</span> trên tổng số <span class="font-bold text-slate-900">{{ totalCount }}</span> tài khoản</span>
           
           <div class="flex items-center gap-1.5 border-l border-slate-200 pl-3 whitespace-nowrap">
             <span class="whitespace-nowrap">Số bản ghi/trang:</span>
@@ -191,7 +191,7 @@
             ‹ Trang trước
           </button>
           
-          <span class="px-3 py-1.5 bg-blue-50 text-blue-800 border border-blue-200 rounded-lg font-black">
+          <span class="px-3 py-1.5 bg-blue-50 text-blue-800 border border-blue-200 rounded-lg font-bold">
             Trang {{ pageNumber }} / {{ Math.max(1, totalPages) }}
           </span>
 
@@ -363,7 +363,7 @@
           <button @click="isResetModalOpen = false" class="text-slate-400 hover:text-slate-600 font-bold text-lg cursor-pointer">✕</button>
         </div>
 
-        <p class="text-xs text-slate-600 font-semibold">Đặt lại mật khẩu mới cho tài khoản: <strong class="text-blue-900 font-extrabold">{{ selectedUserForReset?.username }}</strong></p>
+        <p class="text-xs text-slate-600 font-semibold">Đặt lại mật khẩu mới cho tài khoản: <strong class="text-blue-900 font-bold">{{ selectedUserForReset?.username }}</strong></p>
 
         <form @submit.prevent="saveResetPassword" class="space-y-3">
           <div>
@@ -443,19 +443,19 @@ const roleModalOptions = ref([
 
 const agencyOptions = computed(() => {
   return agencies.value
-    .filter(ag => ag.code !== 'ALL_AGENCIES')
+    .filter(ag => ag.code !== 'ALL_AGENCIES' && ag.type !== 4 && ag.type !== 'Other')
     .map(ag => ({ value: ag.id, label: ag.name }));
 });
 
 const leadAgencyOptions = computed(() => {
   return agencies.value
-    .filter(ag => ag.code !== 'ALL_AGENCIES' && (ag.type !== 3 && !ag.parentId))
+    .filter(ag => ag.code !== 'ALL_AGENCIES' && ag.type !== 4 && ag.type !== 'Other' && (ag.type !== 3 && !ag.parentId))
     .map(ag => ({ value: ag.id, label: ag.name }));
 });
 
 const subAgencyOptions = computed(() => {
   return agencies.value
-    .filter(ag => ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000')
+    .filter(ag => ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000' && ag.type !== 4 && ag.type !== 'Other')
     .map(ag => {
       const parentAg = agencies.value.find(p => p.id === ag.parentId);
       return {

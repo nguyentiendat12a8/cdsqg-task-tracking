@@ -92,7 +92,7 @@
           <span 
             v-for="(wDay, idx) in weekDays" 
             :key="idx" 
-            class="text-[10px] font-extrabold uppercase tracking-wider"
+            class="text-[10px] font-bold uppercase tracking-wider"
             :class="idx === 6 ? 'text-rose-500' : 'text-slate-400'"
           >
             {{ wDay }}
@@ -109,7 +109,7 @@
             class="h-7 w-7 rounded-lg text-xs font-bold flex items-center justify-center transition-all cursor-pointer relative"
             :class="[
               item.isSelected 
-                ? 'bg-blue-600 text-white font-extrabold shadow-xs scale-105 z-10' 
+                ? 'bg-blue-600 text-white font-bold shadow-xs scale-105 z-10' 
                 : item.isCurrentMonth 
                   ? 'text-slate-700 hover:bg-blue-50 hover:text-blue-600' 
                   : 'text-slate-300 hover:bg-slate-50',
@@ -133,7 +133,7 @@
           <button 
             type="button" 
             @click="selectToday" 
-            class="text-blue-600 hover:text-blue-800 font-extrabold px-2.5 py-1 rounded-md hover:bg-blue-50 transition cursor-pointer flex items-center gap-1"
+            class="text-blue-600 hover:text-blue-800 font-bold px-2.5 py-1 rounded-md hover:bg-blue-50 transition cursor-pointer flex items-center gap-1"
           >
             <span>Hôm nay</span>
           </button>

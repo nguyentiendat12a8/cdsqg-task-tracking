@@ -6,10 +6,10 @@
   >
     <!-- Center Cutout Hole -->
     <div 
-      class="bg-white rounded-full flex flex-col items-center justify-center font-black text-slate-800 shadow-inner"
+      class="bg-white rounded-full flex flex-col items-center justify-center font-bold text-slate-800 shadow-inner"
       :style="{ width: `${innerSize}px`, height: `${innerSize}px` }"
     >
-      <span class="font-black text-slate-900 leading-none" :style="{ fontSize: `${fontSize}px` }">{{ total }}</span>
+      <span class="font-bold text-slate-900 leading-none" :style="{ fontSize: `${fontSize}px` }">{{ total }}</span>
     </div>
   </div>
 </template>

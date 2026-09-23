@@ -11,7 +11,7 @@
       </svg>
       <span 
         v-if="unreadCount > 0" 
-        class="absolute -top-1 -right-1 px-1.5 py-0.5 bg-rose-600 text-white text-[10px] font-black rounded-full shadow-sm animate-pulse"
+        class="absolute -top-1 -right-1 px-1.5 py-0.5 bg-rose-600 text-white text-[10px] font-bold rounded-full shadow-sm animate-pulse"
       >
         {{ unreadCount }}
       </span>
@@ -24,8 +24,8 @@
     >
       <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <span class="font-extrabold text-sm">🔔 Thông báo Nhắc Nhở</span>
-          <span v-if="unreadCount > 0" class="px-2 py-0.5 bg-blue-500 text-white text-[10px] font-black rounded-full">
+          <span class="font-bold text-sm">🔔 Thông báo Nhắc Nhở</span>
+          <span v-if="unreadCount > 0" class="px-2 py-0.5 bg-blue-500 text-white text-[10px] font-bold rounded-full">
             {{ unreadCount }} mới
           </span>
         </div>

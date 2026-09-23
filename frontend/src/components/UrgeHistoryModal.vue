@@ -26,7 +26,7 @@
         >
           <div class="flex items-center justify-between border-b border-slate-200/60 pb-2">
             <div class="flex items-center gap-2">
-              <span class="px-2.5 py-1 bg-rose-100 text-rose-800 font-extrabold text-xs rounded-lg">
+              <span class="px-2.5 py-1 bg-rose-100 text-rose-800 font-bold text-xs rounded-lg">
                 {{ log.taskCode }}
               </span>
               <span class="text-xs font-bold text-slate-800">{{ log.taskTitle }}</span>

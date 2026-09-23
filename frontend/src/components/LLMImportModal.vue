@@ -5,7 +5,7 @@
       <!-- Modal Header -->
       <div class="flex justify-between items-start border-b border-slate-100 pb-4">
         <div>
-          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-extrabold text-purple-800 bg-purple-100 mb-1">
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-purple-800 bg-purple-100 mb-1">
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
             AI Data Extraction - Human-in-the-Loop Review
           </span>
@@ -48,11 +48,11 @@
           </div>
           <div>
             <span class="text-[11px] font-bold text-purple-700 uppercase block">Khung Thời Gian</span>
-            <span class="text-sm font-extrabold text-purple-900 block mt-1">{{ payload.document.startYear }} - {{ payload.document.endYear }}</span>
+            <span class="text-sm font-bold text-purple-900 block mt-1">{{ payload.document.startYear }} - {{ payload.document.endYear }}</span>
           </div>
           <div>
             <span class="text-[11px] font-bold text-purple-700 uppercase block">Số Cơ Quan Phát Hiện</span>
-            <span class="text-sm font-extrabold text-purple-900 block mt-1">{{ payload.agencies.length }} Cơ quan</span>
+            <span class="text-sm font-bold text-purple-900 block mt-1">{{ payload.agencies.length }} Cơ quan</span>
           </div>
         </div>
 
@@ -72,7 +72,7 @@
             <tbody class="divide-y divide-slate-100">
               <tr v-for="(item, idx) in payload.items" :key="idx" class="hover:bg-slate-50">
                 <td class="px-3 py-2 border-r border-slate-100">
-                  <span :class="['px-1.5 py-0.5 rounded font-extrabold text-[10px]', item.itemType === 'Goal' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800']">
+                  <span :class="['px-1.5 py-0.5 rounded font-bold text-[10px]', item.itemType === 'Goal' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800']">
                     {{ item.itemType }}
                   </span>
                   <input v-model="item.code" class="w-16 font-bold bg-white border border-slate-300 rounded px-1.5 py-0.5 mt-1 block" />
@@ -120,7 +120,7 @@
             <button 
               @click="syncToDatabase" 
               :disabled="isSyncing"
-              class="px-6 py-2.5 text-xs font-extrabold text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 rounded-xl shadow-sm transition flex items-center gap-2"
+              class="px-6 py-2.5 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 rounded-xl shadow-sm transition flex items-center gap-2"
             >
               <span v-if="isSyncing" class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
               {{ isSyncing ? 'Đang Đồng Bộ...' : 'Đồng Bộ Vào PostgreSQL' }}

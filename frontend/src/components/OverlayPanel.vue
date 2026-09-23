@@ -21,7 +21,7 @@
       <span>{{ buttonText }}</span>
       <span 
         v-if="activeCount > 0" 
-        class="ml-0.5 px-1.5 py-0.5 bg-blue-600 text-white font-extrabold text-[10px] rounded-full min-w-[18px] text-center leading-none shadow-xs"
+        class="ml-0.5 px-1.5 py-0.5 bg-blue-600 text-white font-bold text-[10px] rounded-full min-w-[18px] text-center leading-none shadow-xs"
       >
         {{ activeCount }}
       </span>
@@ -45,7 +45,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
               </svg>
             </div>
-            <h4 class="text-xs sm:text-sm font-extrabold text-slate-900 uppercase tracking-wide">
+            <h4 class="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wide">
               {{ title }}
             </h4>
           </div>

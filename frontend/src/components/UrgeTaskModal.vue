@@ -17,25 +17,25 @@
         <!-- Progress Forecast Summary Card -->
         <div class="p-4 bg-rose-50/70 border border-rose-200 rounded-xl space-y-2 shrink-0">
           <div class="flex justify-between items-center text-xs font-bold text-rose-900">
-            <span>📊 Đơn Vị Chủ Trì: <span class="font-extrabold text-slate-900">{{ leadAgencyName || 'Bộ/Ngành' }}</span></span>
-            <span class="px-2.5 py-0.5 bg-rose-200 text-rose-900 rounded-full font-black">Cảnh Báo Chậm Tiến Độ</span>
+            <span>📊 Đơn Vị Chủ Trì: <span class="font-bold text-slate-900">{{ leadAgencyName || 'Bộ/Ngành' }}</span></span>
+            <span class="px-2.5 py-0.5 bg-rose-200 text-rose-900 rounded-full font-bold">Cảnh Báo Chậm Tiến Độ</span>
           </div>
 
           <div class="grid grid-cols-3 gap-3 text-center pt-1">
             <div class="bg-white p-2.5 rounded-lg border border-rose-100 shadow-2xs">
               <span class="text-[10px] text-slate-400 font-bold block uppercase">Tiến Độ Thực Tế</span>
-              <span v-if="!hasReport" class="text-xs font-extrabold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-block mt-0.5">Chưa báo cáo</span>
-              <span v-else class="text-base font-black text-rose-700">{{ actualProgressPct }}%</span>
+              <span v-if="!hasReport" class="text-xs font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 inline-block mt-0.5">Chưa báo cáo</span>
+              <span v-else class="text-base font-bold text-rose-700">{{ actualProgressPct }}%</span>
             </div>
 
             <div class="bg-white p-2.5 rounded-lg border border-rose-100 shadow-2xs">
               <span class="text-[10px] text-slate-400 font-bold block uppercase">Chỉ Tiêu Kế Hoạch</span>
-              <span class="text-base font-black text-blue-700">{{ expectedTargetPct }}%</span>
+              <span class="text-base font-bold text-blue-700">{{ expectedTargetPct }}%</span>
             </div>
 
             <div class="bg-white p-2.5 rounded-lg border border-rose-100 shadow-2xs">
               <span class="text-[10px] text-slate-400 font-bold block uppercase">Chậm Kế Hoạch</span>
-              <span class="text-base font-black text-rose-600">-{{ Math.abs(laggingDeltaPct) }}%</span>
+              <span class="text-base font-bold text-rose-600">-{{ Math.abs(laggingDeltaPct) }}%</span>
             </div>
           </div>
         </div>
@@ -43,8 +43,8 @@
         <!-- Section: Past Urge History Logs (If any) -->
         <div v-if="historyLogs.length > 0" class="bg-slate-50 border border-slate-200/90 rounded-xl p-4 space-y-3">
           <div class="flex items-center justify-between">
-            <span class="text-xs font-extrabold text-slate-800 flex items-center gap-1.5 uppercase">
-              📜 Lịch Sử Thông Báo Trước Đây (<span class="text-rose-600 font-black">{{ historyLogs.length }}</span> lần)
+            <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5 uppercase">
+              📜 Lịch Sử Thông Báo Trước Đây (<span class="text-rose-600 font-bold">{{ historyLogs.length }}</span> lần)
             </span>
             <span class="text-[11px] text-slate-500 italic">Bấm "Xem chi tiết" để mở cửa sổ Lịch sử thông báo</span>
           </div>
@@ -57,7 +57,7 @@
             >
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2 text-[11px] text-slate-500 font-semibold">
-                  <span class="font-extrabold text-rose-800">🕒 {{ formatDate(log.createdAt) }}</span>
+                  <span class="font-bold text-rose-800">🕒 {{ formatDate(log.createdAt) }}</span>
                   <span>| Người gửi: <strong class="text-slate-700">{{ log.createdBy || 'Lãnh đạo' }}</strong></span>
                 </div>
                 <div class="text-xs text-slate-800 font-medium truncate mt-0.5">
@@ -68,7 +68,7 @@
               <button 
                 type="button"
                 @click="openUrgeDetailInNewWindow(log.id)"
-                class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-extrabold transition shrink-0 flex items-center gap-1 shadow-2xs"
+                class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-bold transition shrink-0 flex items-center gap-1 shadow-2xs"
               >
                 👁️ Xem chi tiết
               </button>
@@ -78,7 +78,7 @@
 
         <!-- Section: Draft Urge Content with Rich Text Editor -->
         <div class="space-y-2">
-          <label class="text-xs font-extrabold text-slate-700 uppercase flex items-center justify-between">
+          <label class="text-xs font-bold text-slate-700 uppercase flex items-center justify-between">
             <span>Dự Thảo Văn Bản Thông Báo</span>
           </label>
 

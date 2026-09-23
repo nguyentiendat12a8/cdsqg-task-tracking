@@ -53,7 +53,7 @@
           </thead>
           <tbody class="divide-y divide-slate-100">
             <tr v-for="unit in units" :key="unit.id" class="hover:bg-slate-50 transition">
-              <td class="px-4 py-3 border-r border-slate-200 font-extrabold text-blue-700 min-w-[150px] w-48">{{ unit.code }}</td>
+              <td class="px-4 py-3 border-r border-slate-200 font-bold text-blue-700 min-w-[150px] w-48">{{ unit.code }}</td>
               <td class="px-4 py-3 border-r border-slate-200 font-bold text-slate-800 min-w-[280px]">{{ unit.name }}</td>
               <td class="px-4 py-3 border-r border-slate-200 text-center min-w-[200px] w-60">
                 <span class="px-2.5 py-1 bg-emerald-50 text-emerald-800 border border-emerald-100 rounded-full text-xs font-bold">
@@ -82,7 +82,7 @@
       <!-- 3. Bottom Footer: Server Pagination Controls -->
       <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50/70 p-3.5 border-t border-slate-200/80 text-xs text-slate-600 font-semibold">
         <div class="flex items-center gap-3 whitespace-nowrap flex-wrap sm:flex-nowrap">
-          <span class="whitespace-nowrap">Hiển thị <span class="font-extrabold text-slate-900">{{ totalCount > 0 ? (pageNumber - 1) * pageSize + 1 : 0 }} - {{ Math.min(pageNumber * pageSize, totalCount) }}</span> trên tổng số <span class="font-extrabold text-slate-900">{{ totalCount }}</span> đơn vị tính</span>
+          <span class="whitespace-nowrap">Hiển thị <span class="font-bold text-slate-900">{{ totalCount > 0 ? (pageNumber - 1) * pageSize + 1 : 0 }} - {{ Math.min(pageNumber * pageSize, totalCount) }}</span> trên tổng số <span class="font-bold text-slate-900">{{ totalCount }}</span> đơn vị tính</span>
           
           <div class="flex items-center gap-1.5 border-l border-slate-200 pl-3 whitespace-nowrap">
             <span class="whitespace-nowrap">Số bản ghi/trang:</span>
@@ -106,7 +106,7 @@
             ‹ Trang trước
           </button>
           
-          <span class="px-3 py-1.5 bg-blue-50 text-blue-800 border border-blue-200 rounded-lg font-black">
+          <span class="px-3 py-1.5 bg-blue-50 text-blue-800 border border-blue-200 rounded-lg font-bold">
             Trang {{ pageNumber }} / {{ Math.max(1, totalPages) }}
           </span>
 

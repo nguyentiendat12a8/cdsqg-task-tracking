@@ -18,7 +18,7 @@
       <div class="flex items-center gap-3">
         <button 
           @click="$emit('openLlmImport')"
-          class="px-4 py-2.5 bg-purple-50 hover:bg-purple-100 text-purple-700 font-extrabold text-xs rounded-xl border border-purple-200/80 transition flex items-center gap-2 shadow-2xs"
+          class="px-4 py-2.5 bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs rounded-xl border border-purple-200/80 transition flex items-center gap-2 shadow-2xs"
         >
           <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
           AI LLM Import JSON
@@ -38,25 +38,25 @@
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 w-full">
       <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
         <span class="text-xs font-bold text-slate-400 uppercase">Tổng Số Văn Bản Chỉ Đạo</span>
-        <div class="text-3xl font-black text-slate-800 mt-1.5">{{ documents.length }}</div>
+        <div class="text-3xl font-bold text-slate-800 mt-1.5">{{ documents.length }}</div>
         <span class="text-xs text-slate-500 mt-1 block">Quyết định / Nghị quyết đang lưu vết</span>
       </div>
 
       <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
         <span class="text-xs font-bold text-purple-600 uppercase">Tổng Mục Tiêu Chiến Lược</span>
-        <div class="text-3xl font-black text-purple-900 mt-1.5">{{ totalGoalsSum }}</div>
+        <div class="text-3xl font-bold text-purple-900 mt-1.5">{{ totalGoalsSum }}</div>
         <span class="text-xs text-slate-500 mt-1 block">Mục tiêu tổng thể thuộc các văn bản</span>
       </div>
 
       <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
         <span class="text-xs font-bold text-blue-600 uppercase">Tổng Nhiệm Vụ Thực Thi</span>
-        <div class="text-3xl font-black text-blue-900 mt-1.5">{{ totalTasksSum }}</div>
+        <div class="text-3xl font-bold text-blue-900 mt-1.5">{{ totalTasksSum }}</div>
         <span class="text-xs text-slate-500 mt-1 block">Nhiệm vụ cụ thể giao các Bộ/Ngành</span>
       </div>
 
       <div class="bg-emerald-50/80 p-5 rounded-2xl border border-emerald-200 shadow-sm">
         <span class="text-xs font-bold text-emerald-800 uppercase">Tiến Độ Trung Bình Hợp Nhất</span>
-        <div class="text-3xl font-black text-emerald-700 mt-1.5">{{ avgCompletionRate }}%</div>
+        <div class="text-3xl font-bold text-emerald-700 mt-1.5">{{ avgCompletionRate }}%</div>
         <span class="text-xs font-semibold text-emerald-600 mt-1 block">Tỉ lệ hoàn thành các chỉ tiêu</span>
       </div>
     </div>
@@ -107,7 +107,7 @@
               <div class="space-y-3">
                 <div class="flex items-start justify-between gap-3">
                   <div class="flex items-center gap-2">
-                    <span class="px-2.5 py-1 bg-blue-100 text-blue-900 font-extrabold text-xs rounded-lg group-hover:bg-blue-600 group-hover:text-white transition">
+                    <span class="px-2.5 py-1 bg-blue-100 text-blue-900 font-bold text-xs rounded-lg group-hover:bg-blue-600 group-hover:text-white transition">
                       {{ doc.documentNumber }}
                     </span>
                     <span class="px-2 py-0.5 bg-slate-100 text-slate-600 font-semibold text-[11px] rounded">
@@ -144,10 +144,10 @@
 
                 <!-- Goals & Tasks Badges -->
                 <div class="flex items-center gap-3 pt-1">
-                  <div class="flex items-center gap-1.5 text-xs font-extrabold text-purple-800 bg-purple-50 border border-purple-100 px-3 py-1.5 rounded-xl">
+                  <div class="flex items-center gap-1.5 text-xs font-bold text-purple-800 bg-purple-50 border border-purple-100 px-3 py-1.5 rounded-xl">
                     <span>🎯 {{ doc.totalGoals }} Mục tiêu</span>
                   </div>
-                  <div class="flex items-center gap-1.5 text-xs font-extrabold text-blue-800 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-xl">
+                  <div class="flex items-center gap-1.5 text-xs font-bold text-blue-800 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-xl">
                     <span>📋 {{ doc.totalTasks }} Nhiệm vụ</span>
                   </div>
                 </div>
@@ -158,7 +158,7 @@
                 <div>
                   <div class="flex justify-between text-xs font-bold text-slate-700 mb-1">
                     <span>Tiến độ thực hiện</span>
-                    <span class="text-blue-600 font-black">{{ doc.overallCompletionRate }}%</span>
+                    <span class="text-blue-600 font-bold">{{ doc.overallCompletionRate }}%</span>
                   </div>
                   <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
                     <div 
@@ -181,7 +181,7 @@
                   </a>
                   <span v-else class="text-xs text-slate-400 italic">Không có file đính kèm</span>
 
-                  <span class="text-xs font-extrabold text-blue-600 group-hover:translate-x-1 transition flex items-center gap-1">
+                  <span class="text-xs font-bold text-blue-600 group-hover:translate-x-1 transition flex items-center gap-1">
                     Chi tiết & Kế hoạch →
                   </span>
                 </div>
@@ -206,7 +206,7 @@
             ← Trang Trước
           </button>
 
-          <span class="px-3 py-1.5 rounded-lg text-xs font-extrabold bg-blue-50 text-blue-800 border border-blue-200 shadow-2xs">
+          <span class="px-3 py-1.5 rounded-lg text-xs font-bold bg-blue-50 text-blue-800 border border-blue-200 shadow-2xs">
             Trang {{ pageNumber }} / {{ totalPages }}
           </span>
 

@@ -44,7 +44,7 @@
                 v-if="clearable"
                 type="button"
                 @click.stop="removeItem(item)"
-                class="hover:text-blue-950 text-slate-400 hover:text-rose-600 font-black text-xs leading-none shrink-0"
+                class="hover:text-blue-950 text-slate-400 hover:text-rose-600 font-bold text-xs leading-none shrink-0"
                 title="Xóa chọn"
               >
                 ×

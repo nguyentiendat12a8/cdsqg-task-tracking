@@ -26,7 +26,7 @@
         <!-- Task Info Banner -->
         <div class="p-3.5 bg-blue-50/60 border border-blue-200/80 rounded-xl space-y-1">
           <div class="flex items-center gap-2 text-xs font-bold text-blue-900">
-            <span class="px-2 py-0.5 bg-blue-600 text-white rounded-md text-[11px] font-black">{{ itemCode || 'Mã NV' }}</span>
+            <span class="px-2 py-0.5 bg-blue-600 text-white rounded-md text-[11px] font-bold">{{ itemCode || 'Mã NV' }}</span>
             <span class="truncate">{{ itemTitle || 'Tên Mục tiêu / Nhiệm vụ' }}</span>
           </div>
           <div class="text-[11px] text-slate-600 flex flex-wrap gap-x-4 gap-y-1 pt-1 border-t border-blue-100/80">
@@ -39,7 +39,7 @@
         <div class="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
           <div class="flex items-center justify-between border-b border-slate-200 pb-2">
             <div>
-              <label class="text-xs font-extrabold text-slate-800 uppercase tracking-wider block">
+              <label class="text-xs font-bold text-slate-800 uppercase tracking-wider block">
                 1. Danh Sách Đơn Vị Nhận Thông Báo <span class="text-rose-500">*</span>
               </label>
               <span class="text-[11px] text-slate-500 font-semibold block mt-0.5">
@@ -87,7 +87,7 @@
               <div class="flex items-center gap-1.5 shrink-0 ml-2">
                 <span 
                   :class="[
-                    'px-2 py-0.5 rounded-md text-[10px] font-black',
+                    'px-2 py-0.5 rounded-md text-[10px] font-bold',
                     rec.roleTag === 'Đơn vị chủ trì' ? 'bg-blue-100 text-blue-800' : 
                     rec.roleTag === 'Đơn vị phối hợp' ? 'bg-amber-100 text-amber-800' : 'bg-purple-100 text-purple-800'
                   ]"
@@ -101,7 +101,7 @@
 
         <!-- Notification Details Form -->
         <div class="space-y-3">
-          <label class="text-xs font-extrabold text-slate-700 uppercase block tracking-wider">
+          <label class="text-xs font-bold text-slate-700 uppercase block tracking-wider">
             2. Nội Dung Thông Báo
           </label>
 
@@ -143,7 +143,7 @@
           type="button" 
           @click="submitNotification" 
           :disabled="isSubmitting" 
-          class="px-5 py-2.5 text-xs font-extrabold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-xl shadow-sm transition flex items-center gap-1.5 cursor-pointer"
+          class="px-5 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-xl shadow-sm transition flex items-center gap-1.5 cursor-pointer"
         >
           <span v-if="isSubmitting" class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
           <span>{{ isSubmitting ? 'Đang gửi...' : '🚀 Gửi Thông Báo' }}</span>
@@ -250,7 +250,7 @@ function computeAgencyRecipientOptions() {
       if (parentAg) {
         addAgency(parentAg, 'Cơ quan cấp trên', 'Bộ/Cơ quan quản lý trực tiếp');
 
-        const siblings = allAgencies.filter(a => a.parentId && String(a.parentId).toLowerCase() === parentIdStr && String(a.id).toLowerCase() !== agIdStr);
+        const siblings = allAgencies.filter(a => a.parentId && String(a.parentId).toLowerCase() === parentIdStr && String(a.id).toLowerCase() !== agIdStr && a.type !== 4 && a.type !== 'Other');
         siblings.forEach(sib => {
           addAgency(sib, 'Đơn vị thuộc Bộ', `Trực thuộc ${parentAg.name}`);
         });
@@ -258,7 +258,7 @@ function computeAgencyRecipientOptions() {
     }
 
     // 3. Child Sub-Agencies directly under target agency
-    const childSubs = allAgencies.filter(a => a.parentId && String(a.parentId).toLowerCase() === agIdStr);
+    const childSubs = allAgencies.filter(a => a.parentId && String(a.parentId).toLowerCase() === agIdStr && a.type !== 4 && a.type !== 'Other');
     childSubs.forEach(sub => {
       addAgency(sub, 'Đơn vị trực thuộc', `Đơn vị trực thuộc ${ag.name}`);
     });

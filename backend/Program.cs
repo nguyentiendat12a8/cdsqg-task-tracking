@@ -149,10 +149,73 @@ using (var scope = app.Services.CreateScope())
         }
         SeedInitialData(context, hasher);
         NormalizeGoalTaskItemCodes(context);
+        EnsureSampleFilesExist(app.Environment);
     }
     catch (Exception ex)
     {
         Console.WriteLine($"[WARN] Database Initialization notice: {ex.Message}");
+    }
+}
+
+void EnsureSampleFilesExist(IWebHostEnvironment env)
+{
+    try
+    {
+        string webRoot = env.WebRootPath ?? Path.Combine(env.ContentRootPath, "wwwroot");
+        string uploadsDir = Path.Combine(webRoot, "uploads");
+        if (!Directory.Exists(uploadsDir))
+        {
+            Directory.CreateDirectory(uploadsDir);
+        }
+
+        string[] sampleFiles = new[]
+        {
+            "1266_QD_TTg.pdf",
+            "Phu_luc_Chi_tieu.pdf",
+            "ND_15_2026.pdf",
+            "TT_08_2026.pdf",
+            "TT_42_BCA.pdf"
+        };
+
+        string pdfTemplate = @"%PDF-1.4
+1 0 obj <</Type /Catalog /Pages 2 0 R>> endobj
+2 0 obj <</Type /Pages /Kids [3 0 R] /Count 1>> endobj
+3 0 obj <</Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R>> endobj
+4 0 obj <</Type /Font /Subtype /Type1 /BaseFont /Helvetica>> endobj
+5 0 obj <</Length 73>> stream
+BT
+/F1 14 Tf
+72 720 TD
+(VAN BAN QUY PHAM PHAP LUAT - TAI LIEU COMPONENT SAMPLE) Tj
+ET
+endstream endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000058 00000 n 
+0000000115 00000 n 
+0000000244 00000 n 
+0000000318 00000 n 
+trailer <</Size 6 /Root 1 0 R>>
+startxref
+441
+%%EOF";
+
+        byte[] pdfBytes = System.Text.Encoding.UTF8.GetBytes(pdfTemplate);
+
+        foreach (var file in sampleFiles)
+        {
+            string filePath = Path.Combine(uploadsDir, file);
+            if (!File.Exists(filePath))
+            {
+                File.WriteAllBytes(filePath, pdfBytes);
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"[WARN] EnsureSampleFilesExist error: {ex.Message}");
     }
 }
 
@@ -268,6 +331,36 @@ void EnsureDatabaseSchemaUpdated(AppDbContext db)
             CREATE UNIQUE INDEX IF NOT EXISTS ""IX_AgencyTaskExecutions_GoalTaskId_AgencyId"" ON ""AgencyTaskExecutions"" (""GoalTaskId"", ""AgencyId"");
         ";
         db.Database.ExecuteSqlRaw(sqlAgencyTaskExecutions);
+
+        // 8. Ensure LegalDocuments table
+        string sqlLegalDocuments = @"
+            CREATE TABLE IF NOT EXISTS ""LegalDocuments"" (
+                ""Id"" uuid NOT NULL CONSTRAINT ""PK_LegalDocuments"" PRIMARY KEY,
+                ""Code"" text NOT NULL,
+                ""Title"" text NOT NULL,
+                ""DocumentType"" text NOT NULL,
+                ""IssuingAgencyId"" uuid NULL,
+                ""IssuingAgencyName"" text NULL,
+                ""DraftingAgencyId"" uuid NULL,
+                ""DraftingAgencyName"" text NULL,
+                ""SignerName"" text NULL,
+                ""SignerTitle"" text NULL,
+                ""IssuedDate"" timestamp without time zone NULL,
+                ""EffectiveDate"" timestamp without time zone NULL,
+                ""EffectStatus"" text NOT NULL,
+                ""Field"" text NULL,
+                ""Scope"" text NULL,
+                ""AttachmentsJson"" text NULL,
+                ""Notes"" text NULL,
+                ""CreatedByAgencyId"" uuid NULL,
+                ""CreatedByUserId"" uuid NULL,
+                ""CreatedAt"" timestamp without time zone NOT NULL,
+                ""UpdatedAt"" timestamp without time zone NOT NULL
+            );
+            ALTER TABLE ""LegalDocuments"" ADD COLUMN IF NOT EXISTS ""CreatedByAgencyId"" uuid NULL;
+            ALTER TABLE ""LegalDocuments"" ADD COLUMN IF NOT EXISTS ""CreatedByUserId"" uuid NULL;
+        ";
+        db.Database.ExecuteSqlRaw(sqlLegalDocuments);
     }
     catch (Exception ex)
     {
@@ -275,7 +368,22 @@ void EnsureDatabaseSchemaUpdated(AppDbContext db)
     }
 }
 
-app.UseStaticFiles();
+var contentTypeProvider = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider();
+contentTypeProvider.Mappings[".pdf"] = "application/pdf";
+contentTypeProvider.Mappings[".docx"] = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+contentTypeProvider.Mappings[".doc"] = "application/msword";
+contentTypeProvider.Mappings[".xlsx"] = "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+contentTypeProvider.Mappings[".xls"] = "application/vnd.ms-excel";
+
+app.UseStaticFiles(new StaticFileOptions
+{
+    ContentTypeProvider = contentTypeProvider,
+    OnPrepareResponse = ctx =>
+    {
+        ctx.Context.Response.Headers["Access-Control-Allow-Origin"] = "*";
+        ctx.Context.Response.Headers["Content-Disposition"] = "inline";
+    }
+});
 app.UseSwagger();
 app.UseSwaggerUI(c =>
 {

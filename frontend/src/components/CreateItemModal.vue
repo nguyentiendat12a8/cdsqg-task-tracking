@@ -105,7 +105,7 @@
         <!-- Multi-Deliverables Section for Tasks -->
         <div v-if="form.itemType === 'Task'" class="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 space-y-3">
           <div class="flex items-center justify-between">
-            <label class="text-xs font-extrabold text-slate-800 uppercase flex items-center gap-1.5">
+            <label class="text-xs font-bold text-slate-800 uppercase flex items-center gap-1.5">
               <span>📋 Danh Mục Sản Phẩm Đầu Ra Dự Kiến (Phụ Lục II)</span>
             </label>
             <button 
@@ -128,7 +128,7 @@
               class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs space-y-2 relative"
             >
               <div class="flex items-center justify-between border-b border-slate-100 pb-1">
-                <span class="text-[11px] font-extrabold text-blue-800">Sản phẩm đầu ra #{{ idx + 1 }}</span>
+                <span class="text-[11px] font-bold text-blue-800">Sản phẩm đầu ra #{{ idx + 1 }}</span>
                 <button 
                   type="button" 
                   @click="removeDeliverable(idx)" 
@@ -220,7 +220,7 @@ const isCoordinatingDropdownOpen = ref(false);
 
 const leadAgencyOptions = computed(() => {
   return agencies.value
-    .filter(ag => ag.code === 'ALL_AGENCIES' || (ag.type !== 3 && !ag.parentId))
+    .filter(ag => ag.code === 'ALL_AGENCIES' || (ag.type !== 3 && ag.type !== 4 && ag.type !== 'Other' && !ag.parentId))
     .map(ag => {
       if (ag.code === 'ALL_AGENCIES') {
         return { value: ag.id, label: `🌐 ${ag.name}` };
@@ -232,17 +232,19 @@ const leadAgencyOptions = computed(() => {
 const assignedAgencyOptions = computed(() => {
   if (!form.value.leadAgencyId) return [];
   return agencies.value
-    .filter(ag => ag.parentId === form.value.leadAgencyId)
+    .filter(ag => ag.parentId === form.value.leadAgencyId && ag.type !== 4 && ag.type !== 'Other')
     .map(ag => ({ value: ag.id, label: ag.name }));
 });
 
 const coordinatingAgencyOptions = computed(() => {
-  return agencies.value.map(ag => {
-    if (ag.code === 'ALL_AGENCIES') {
-      return { value: ag.id, label: `🌐 ${ag.name}` };
-    }
-    return { value: ag.id, label: ag.name };
-  });
+  return agencies.value
+    .filter(ag => ag.type !== 4 && ag.type !== 'Other')
+    .map(ag => {
+      if (ag.code === 'ALL_AGENCIES') {
+        return { value: ag.id, label: `🌐 ${ag.name}` };
+      }
+      return { value: ag.id, label: ag.name };
+    });
 });
 
 watch(() => form.value.leadAgencyId, (newId) => {

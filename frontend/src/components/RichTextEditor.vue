@@ -8,7 +8,7 @@
       <button 
         type="button" 
         @click="exec('bold')" 
-        class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 transition font-black text-sm"
+        class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 transition font-bold text-sm"
         title="In đậm (Ctrl+B)"
       >
         B
@@ -133,7 +133,7 @@
         v-if="showRestoreBtn"
         type="button" 
         @click="$emit('restoreTemplate')" 
-        class="ml-auto px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 transition text-[11px] font-extrabold flex items-center gap-1 shadow-2xs"
+        class="ml-auto px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 transition text-[11px] font-bold flex items-center gap-1 shadow-2xs"
       >
         ⚡ Khôi phục văn bản mẫu
       </button>

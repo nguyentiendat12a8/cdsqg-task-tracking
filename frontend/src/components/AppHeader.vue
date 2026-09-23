@@ -44,7 +44,7 @@
                 </svg>
               </div>
               <div class="overflow-hidden min-w-0 flex-1">
-                <div class="text-xs font-extrabold text-slate-900 truncate leading-snug">
+                <div class="text-xs font-bold text-slate-900 truncate leading-snug">
                   {{ user?.fullName || user?.username || 'Quản trị viên Hệ thống' }}
                 </div>
                 <div class="text-[11px] font-bold text-blue-600 mt-0.5 truncate" :title="userDisplayAgency">
