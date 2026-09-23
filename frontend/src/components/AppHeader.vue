@@ -1,5 +1,5 @@
 <template>
-  <header class="h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between shrink-0 shadow-xs z-20">
+  <header class="h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between shrink-0 shadow-xs z-40">
     <!-- System Official Title Branding -->
     <div class="flex items-center gap-3">
       <div>

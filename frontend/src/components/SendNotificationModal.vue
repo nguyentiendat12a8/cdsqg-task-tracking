@@ -79,7 +79,7 @@
                   @click.stop
                 />
                 <span class="truncate">
-                  <strong class="text-slate-900">{{ rec.agencyName || rec.name }}</strong>
+                  <span class="font-bold text-slate-800">{{ rec.agencyName || rec.name }}</span>
                   <span v-if="rec.infoSummary" class="text-slate-600 font-medium ml-1.5">({{ rec.infoSummary }})</span>
                 </span>
               </label>
@@ -321,7 +321,7 @@ function generateTemplateContent() {
   const title = props.itemTitle || 'Tên nhiệm vụ';
   const leadName = props.leadAgencyName || 'Đơn vị Chủ trì';
 
-  form.value.title = `[Thông báo] V/v Thực hiện nhiệm vụ: ${code} - ${title}`;
+  form.value.title = `[Thông báo] V/v Thực hiện nhiệm vụ: ${code}`;
   
   form.value.message = `<p><strong>THÔNG BÁO THỰC HIỆN NHIỆM VỤ CĐS QUỐC GIA</strong></p>
 <p><strong>Kính gửi:</strong> Các Cán bộ Đầu mối Đơn vị Chủ trì (${leadName}), các Đơn vị Phối hợp và các Đơn vị trực thuộc</p>
@@ -337,7 +337,7 @@ watch(() => [props.isOpen, props.itemId], ([isOpen, itemId]) => {
   if (isOpen && itemId) {
     form.value = {
       type: 'TaskReminder',
-      title: `[Thông báo] V/v Thực hiện nhiệm vụ: ${props.itemCode} - ${props.itemTitle}`,
+      title: `[Thông báo] V/v Thực hiện nhiệm vụ: ${props.itemCode || 'Mã nhiệm vụ'}`,
       message: ''
     };
     generateTemplateContent();

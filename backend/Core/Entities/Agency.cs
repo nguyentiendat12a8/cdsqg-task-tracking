@@ -41,6 +41,11 @@ namespace Cdsqg.Core.Entities
         /// </summary>
         public List<AgencyContactPerson> ContactPersons { get; set; } = new List<AgencyContactPerson>();
 
+        /// <summary>
+        /// Danh sách tệp đính kèm Kế hoạch
+        /// </summary>
+        public List<AgencyPlanFile> PlanFiles { get; set; } = new List<AgencyPlanFile>();
+
         // Tập hợp các Cơ quan trực thuộc
         public ICollection<Agency> ChildAgencies { get; set; } = new List<Agency>();
     }

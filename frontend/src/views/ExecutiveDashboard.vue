@@ -2,203 +2,217 @@
   <div class="w-full space-y-3.5 font-sans">
     
     <!-- Top Header Bar -->
-    <header class="flex items-center justify-between bg-white p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200/80 w-full">
+    <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200/80 w-full">
       <div class="flex items-center gap-2.5">
         <span class="p-2 bg-blue-600 text-white rounded-xl shadow-sm">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
         </span>
         <div>
           <h2 class="text-sm sm:text-base font-bold text-slate-800">
-            Trang chủ theo dõi tiến độ nhiệm vụ và số liệu văn bản
+            Trang chủ theo dõi tiến độ mục tiêu & nhiệm vụ
           </h2>
         </div>
+      </div>
+
+      <!-- Action Buttons & Advanced Filter Popover -->
+      <div class="flex flex-wrap items-center gap-2 min-w-0">
+        <button 
+          type="button" 
+          @click="exportDashboardExcelReport" 
+          :disabled="isExportingExcel"
+          class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-2xs transition h-[34px] flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
+          title="Xuất file báo cáo Excel theo bộ lọc (Mỗi Bộ/Ngành/Địa phương 1 Sheet)"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span>{{ isExportingExcel ? 'Đang xuất...' : 'Xuất Báo Cáo Excel' }}</span>
+        </button>
+
+        <!-- OverlayPanel Filter Popover -->
+        <OverlayPanel
+          title="Lọc Dữ Liệu Bảng Điều Khiển"
+          buttonText="Bộ Lọc Nâng Cao"
+          :activeCount="activeDashboardFilterCount"
+          widthClass="w-[340px] sm:w-[500px]"
+          @apply="loadDashboardMetrics"
+          @reset="resetDashboardFilters"
+        >
+          <div class="space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <SearchableSelect 
+                  v-model="dashboardFilter" 
+                  :options="dashboardFilterOptions" 
+                  :isMulti="false" 
+                  label="Loại Đối Tượng" 
+                  placeholder="Tất cả (Mục tiêu & Nhiệm vụ)"
+                />
+              </div>
+
+              <div>
+                <SearchableSelect 
+                  v-model="selectedScopes" 
+                  :options="scopeOptions" 
+                  :isMulti="true" 
+                  label="Phạm Vi" 
+                  placeholder="Tất cả phạm vi"
+                />
+              </div>
+            </div>
+
+            <div>
+              <SearchableSelect 
+                v-model="selectedAgencyIds" 
+                :options="leadAgencyOptions" 
+                :isMulti="true" 
+                label="Cơ Quan Chủ Trì" 
+                placeholder="Tất cả cơ quan chủ trì"
+              />
+            </div>
+
+            <div v-if="authState.isAdmin.value || isBKHCNAgency">
+              <SearchableSelect 
+                v-model="selectedSubAgencyIds" 
+                :options="subAgencyOptions" 
+                :isMulti="true" 
+                label="Đơn Vị Trực Thuộc" 
+                placeholder="Tất cả đơn vị trực thuộc"
+              />
+            </div>
+
+            <div>
+              <SearchableSelect 
+                v-model="selectedSections" 
+                :options="sectionOptions" 
+                :isMulti="true" 
+                label="Mục (Phụ lục)" 
+                placeholder="Tất cả mục"
+              />
+            </div>
+
+            <div>
+              <SearchableSelect 
+                v-model="selectedGroups" 
+                :options="groupOptions" 
+                :isMulti="true" 
+                label="Nhóm Trọng Tâm" 
+                placeholder="Tất cả nhóm"
+              />
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Giai Đoạn (Từ năm ➔ Đến năm)</label>
+                <label class="inline-flex items-center gap-1 cursor-pointer text-[10px] font-bold text-blue-700">
+                  <input type="checkbox" v-model="isOngoingOnly" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3 h-3">
+                  Thường xuyên
+                </label>
+              </div>
+              <div class="flex items-center gap-2">
+                <SearchableSelect 
+                  v-model="fromYear" 
+                  :options="yearOptions" 
+                  :isMulti="false" 
+                  placeholder="Từ năm" 
+                  class="w-full"
+                />
+                <span class="text-xs font-bold text-slate-400 shrink-0">➔</span>
+                <SearchableSelect 
+                  v-model="toYear" 
+                  :options="yearOptions" 
+                  :isMulti="false" 
+                  placeholder="Đến năm" 
+                  class="w-full"
+                />
+              </div>
+            </div>
+          </div>
+        </OverlayPanel>
       </div>
     </header>
 
     <!-- Loading Spinner -->
     <LoadingSpinner v-if="isLoading" text="Đang tải dữ liệu tổng quan bảng điều khiển..." />
 
-    <!-- Task Tracking Container Card (Enclosed matching Legal Documents block style) -->
-    <div v-else class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4 w-full">
-      <!-- Header Khối Theo Dõi Nhiệm Vụ -->
-      <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3 border-b border-slate-100 pb-3">
-        <div class="flex items-center gap-2.5">
-          <span class="p-2 bg-blue-600 text-white rounded-xl shadow-sm">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-          </span>
-          <div>
-            <h3 class="text-sm sm:text-base font-bold text-slate-800">
-              Tiến độ Mục tiêu & Nhiệm vụ
-            </h3>
-            <p class="text-[11px] font-semibold text-slate-500">
-              Tổng hợp kết quả thực hiện, tình trạng tiến độ các mục tiêu, nhiệm vụ chiến lược và phân khai theo cơ quan, đơn vị
-            </p>
-          </div>
-        </div>
+    <!-- Main Dashboard Container -->
+    <div v-else class="space-y-3.5 w-full">
 
-        <!-- Action Buttons & Advanced Filter Popover moved into Task Tracking Card header -->
-        <div class="flex flex-wrap items-center gap-2 min-w-0">
-          <button 
-            type="button" 
-            @click="loadDashboardMetrics" 
-            class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-2xs transition h-[34px] flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
-            <span>Tải Dữ Liệu</span>
-          </button>
-
-          <button 
-            type="button" 
-            @click="exportDashboardExcelReport" 
-            :disabled="isExportingExcel"
-            class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-2xs transition h-[34px] flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
-            title="Xuất file báo cáo Excel theo bộ lọc (Mỗi Bộ/Ngành/Địa phương 1 Sheet)"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-            <span>{{ isExportingExcel ? 'Đang xuất...' : 'Xuất Báo Cáo Excel' }}</span>
-          </button>
-
-          <!-- OverlayPanel Filter Popover -->
-          <OverlayPanel
-            title="Lọc Dữ Liệu Bảng Điều Khiển"
-            buttonText="Bộ Lọc Nâng Cao"
-            :activeCount="activeDashboardFilterCount"
-            widthClass="w-[340px] sm:w-[500px]"
-            @apply="loadDashboardMetrics"
-            @reset="resetDashboardFilters"
-          >
-            <div class="space-y-3">
-              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <SearchableSelect 
-                    v-model="dashboardFilter" 
-                    :options="dashboardFilterOptions" 
-                    :isMulti="false" 
-                    label="Loại Đối Tượng" 
-                    placeholder="Tất cả (Mục tiêu & Nhiệm vụ)"
-                  />
-                </div>
-
-                <div>
-                  <SearchableSelect 
-                    v-model="selectedScopes" 
-                    :options="scopeOptions" 
-                    :isMulti="true" 
-                    label="Phạm Vi" 
-                    placeholder="Tất cả phạm vi"
-                  />
-                </div>
+      <!-- Overall System Progress Donut Chart & 6 Status Legend Breakdown -->
+      <div class="bg-gradient-to-br from-slate-50 to-blue-50/40 rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-2xs space-y-4 w-full">
+        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
+          
+          <!-- Big Donut Circle Chart on Left -->
+          <div class="md:col-span-5 lg:col-span-4 flex flex-col items-center justify-center p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
+            <MiniStatusDonut :stats="overallDonutStats" :size="160" :innerSize="105" :fontSize="32" />
+            <div class="text-center pt-1">
+              <div class="text-xs sm:text-sm font-extrabold text-slate-800">
+                Tổng số: {{ activeStatusTotal }} hạng mục
               </div>
-
-              <div>
-                <SearchableSelect 
-                  v-model="selectedAgencyIds" 
-                  :options="leadAgencyOptions" 
-                  :isMulti="true" 
-                  label="Cơ Quan Chủ Trì" 
-                  placeholder="Tất cả cơ quan chủ trì"
-                />
-              </div>
-
-              <div>
-                <SearchableSelect 
-                  v-model="selectedSubAgencyIds" 
-                  :options="subAgencyOptions" 
-                  :isMulti="true" 
-                  label="Đơn Vị Trực Thuộc" 
-                  placeholder="Tất cả đơn vị trực thuộc"
-                />
-              </div>
-
-              <div>
-                <SearchableSelect 
-                  v-model="selectedSections" 
-                  :options="sectionOptions" 
-                  :isMulti="true" 
-                  label="Mục (Phụ lục)" 
-                  placeholder="Tất cả mục"
-                />
-              </div>
-
-              <div>
-                <SearchableSelect 
-                  v-model="selectedGroups" 
-                  :options="groupOptions" 
-                  :isMulti="true" 
-                  label="Nhóm Trọng Tâm" 
-                  placeholder="Tất cả nhóm"
-                />
-              </div>
-
-              <div>
-                <div class="flex items-center justify-between mb-1">
-                  <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Giai Đoạn (Từ năm ➔ Đến năm)</label>
-                  <label class="inline-flex items-center gap-1 cursor-pointer text-[10px] font-bold text-blue-700">
-                    <input type="checkbox" v-model="isOngoingOnly" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3 h-3">
-                    Thường xuyên
-                  </label>
-                </div>
-                <div class="flex items-center gap-2">
-                  <SearchableSelect 
-                    v-model="fromYear" 
-                    :options="yearOptions" 
-                    :isMulti="false" 
-                    placeholder="Từ năm" 
-                    class="w-full"
-                  />
-                  <span class="text-xs font-bold text-slate-400 shrink-0">➔</span>
-                  <SearchableSelect 
-                    v-model="toYear" 
-                    :options="yearOptions" 
-                    :isMulti="false" 
-                    placeholder="Đến năm" 
-                    class="w-full"
-                  />
-                </div>
+              <div class="flex items-center gap-2 justify-center text-[11px] font-bold text-slate-500 mt-1.5 flex-wrap">
+                <span class="text-purple-800 bg-purple-50 px-2.5 py-0.5 rounded-lg border border-purple-200/70">🎯 {{ metrics.totalGoals || 0 }} Mục tiêu</span>
+                <span class="text-blue-800 bg-blue-50 px-2.5 py-0.5 rounded-lg border border-blue-200/70">📋 {{ metrics.totalTasks || 0 }} Nhiệm vụ</span>
               </div>
             </div>
-          </OverlayPanel>
+          </div>
+
+          <!-- 6 Status Legend Breakdown Grid on Right -->
+          <div class="md:col-span-7 lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-2.5 font-bold text-xs">
+            <!-- 1. Chưa thực hiện -->
+            <div class="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-200 shadow-2xs">
+              <div class="flex items-center gap-2.5">
+                <span class="w-3.5 h-3.5 rounded-full bg-slate-400 shrink-0"></span>
+                <span class="text-slate-700">1. Chưa thực hiện</span>
+              </div>
+              <span class="font-extrabold text-slate-900 text-base">{{ activeStatusSummary.notStarted ?? 0 }}</span>
+            </div>
+
+            <!-- 2. Đang thực hiện (trong hạn) -->
+            <div class="flex items-center justify-between p-3 rounded-xl bg-blue-50/70 border border-blue-200 shadow-2xs">
+              <div class="flex items-center gap-2.5">
+                <span class="w-3.5 h-3.5 rounded-full bg-blue-500 shrink-0"></span>
+                <span class="text-blue-800">2. Đang thực hiện (trong hạn)</span>
+              </div>
+              <span class="font-extrabold text-blue-900 text-base">{{ activeStatusSummary.inProgressOnTime ?? 0 }}</span>
+            </div>
+
+            <!-- 3. Đang thực hiện (quá hạn) -->
+            <div class="flex items-center justify-between p-3 rounded-xl bg-rose-50/70 border border-rose-200 shadow-2xs">
+              <div class="flex items-center gap-2.5">
+                <span class="w-3.5 h-3.5 rounded-full bg-rose-500 shrink-0"></span>
+                <span class="text-rose-800">3. Đang thực hiện (quá hạn)</span>
+              </div>
+              <span class="font-extrabold text-rose-900 text-base">{{ activeStatusSummary.inProgressOverdue ?? 0 }}</span>
+            </div>
+
+            <!-- 4. Hoàn thành (đúng hạn) -->
+            <div class="flex items-center justify-between p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 shadow-2xs">
+              <div class="flex items-center gap-2.5">
+                <span class="w-3.5 h-3.5 rounded-full bg-emerald-500 shrink-0"></span>
+                <span class="text-emerald-800">4. Hoàn thành (đúng hạn)</span>
+              </div>
+              <span class="font-extrabold text-emerald-900 text-base">{{ activeStatusSummary.completedOnTime ?? 0 }}</span>
+            </div>
+
+            <!-- 5. Hoàn thành (quá hạn) -->
+            <div class="flex items-center justify-between p-3 rounded-xl bg-teal-50/70 border border-teal-200 shadow-2xs">
+              <div class="flex items-center gap-2.5">
+                <span class="w-3.5 h-3.5 rounded-full bg-teal-500 shrink-0"></span>
+                <span class="text-teal-800">5. Hoàn thành (quá hạn)</span>
+              </div>
+              <span class="font-extrabold text-teal-900 text-base">{{ activeStatusSummary.completedOverdue ?? 0 }}</span>
+            </div>
+
+            <!-- 6. Sắp hết hạn -->
+            <div class="flex items-center justify-between p-3 rounded-xl bg-amber-50/70 border border-amber-200 shadow-2xs">
+              <div class="flex items-center gap-2.5">
+                <span class="w-3.5 h-3.5 rounded-full bg-amber-500 shrink-0"></span>
+                <span class="text-amber-800">6. Sắp hết hạn</span>
+              </div>
+              <span class="font-extrabold text-amber-900 text-base">{{ activeStatusSummary.expiringSoon ?? 0 }}</span>
+            </div>
+          </div>
+
         </div>
       </div>
-
-      <!-- 6 Execution Status Grid Cards (Filtered by Goal / Task / All) -->
-      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2.5 w-full items-stretch">
-      <!-- 1. Chưa thực hiện -->
-      <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs flex flex-col justify-between h-full min-h-[76px]">
-        <div class="text-[10px] font-bold text-slate-500 uppercase leading-snug">1. Chưa thực hiện</div>
-        <div class="text-xl font-bold text-slate-700 mt-1">{{ activeStatusSummary.notStarted ?? 0 }}</div>
-      </div>
-
-      <!-- 2. Đang thực hiện (trong hạn) -->
-      <div class="bg-white p-3 rounded-2xl border border-blue-200 bg-blue-50/40 shadow-2xs flex flex-col justify-between h-full min-h-[76px]">
-        <div class="text-[10px] font-bold text-blue-700 uppercase leading-snug">2. Đang thực hiện (trong hạn)</div>
-        <div class="text-xl font-bold text-blue-800 mt-1">{{ activeStatusSummary.inProgressOnTime ?? 0 }}</div>
-      </div>
-
-      <!-- 3. Đang thực hiện (quá hạn) -->
-      <div class="bg-white p-3 rounded-2xl border border-rose-200 bg-rose-50/40 shadow-2xs flex flex-col justify-between h-full min-h-[76px]">
-        <div class="text-[10px] font-bold text-rose-700 uppercase leading-snug">3. Đang thực hiện (quá hạn)</div>
-        <div class="text-xl font-bold text-rose-800 mt-1">{{ activeStatusSummary.inProgressOverdue ?? 0 }}</div>
-      </div>
-
-      <!-- 4. Hoàn thành (đúng hạn) -->
-      <div class="bg-white p-3 rounded-2xl border border-emerald-200 bg-emerald-50/40 shadow-2xs flex flex-col justify-between h-full min-h-[76px]">
-        <div class="text-[10px] font-bold text-emerald-700 uppercase leading-snug">4. Hoàn thành (đúng hạn)</div>
-        <div class="text-xl font-bold text-emerald-800 mt-1">{{ activeStatusSummary.completedOnTime ?? 0 }}</div>
-      </div>
-
-      <!-- 5. Hoàn thành (quá hạn) -->
-      <div class="bg-white p-3 rounded-2xl border border-teal-200 bg-teal-50/40 shadow-2xs flex flex-col justify-between h-full min-h-[76px]">
-        <div class="text-[10px] font-bold text-teal-700 uppercase leading-snug">5. Hoàn thành (quá hạn)</div>
-        <div class="text-xl font-bold text-teal-800 mt-1">{{ activeStatusSummary.completedOverdue ?? 0 }}</div>
-      </div>
-
-      <!-- 6. Sắp hết hạn -->
-      <div class="bg-white p-3 rounded-2xl border border-amber-200 bg-amber-50/40 shadow-2xs flex flex-col justify-between h-full min-h-[76px]">
-        <div class="text-[10px] font-bold text-amber-700 uppercase leading-snug">6. Sắp hết hạn</div>
-        <div class="text-xl font-bold text-amber-800 mt-1">{{ activeStatusSummary.expiringSoon ?? 0 }}</div>
-      </div>
-    </div>
 
     <!-- Sub-Agency Dedicated Progress Dashboard Section (When logged in as Sub-Agency / Child Unit) -->
     <div v-if="isSubAgencyUser" class="space-y-4 w-full">
@@ -294,8 +308,8 @@
         </div>
       </div>
 
-      <!-- 2. Subordinate Child Agencies Progress Block (Khối Các Đơn Vị Trực Thuộc - Ẩn với Cấp 3) -->
-      <div v-if="!isLevel3User" class="bg-white p-4.5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4 w-full">
+      <!-- 2. Subordinate Child Agencies Progress Block (Khối Các Đơn Vị Trực Thuộc - Chỉ hiển thị cho BKHCN đối với Cấp 2) -->
+      <div v-if="!isLevel3User && isBKHCNAgency" class="bg-white p-4.5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4 w-full">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
           <div>
             <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
@@ -683,8 +697,9 @@
             <span>📋 Danh Sách Nhiệm Vụ Được Gán ({{ isAgencyItemsLoading ? '...' : agencyItemsList.length }})</span>
           </button>
 
-          <!-- TAB 2: Sub-Agencies & Progress -->
+          <!-- TAB 2: Sub-Agencies & Progress (Chỉ hiển thị với Bộ Khoa học và Công nghệ) -->
           <button 
+            v-if="isBKHCNItem(selectedDrilldownAgency)"
             @click="switchDrilldownTab('sub-agencies')" 
             :class="[
               'px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shrink-0',
@@ -707,7 +722,7 @@
         </div>
 
         <!-- TAB 1 CONTENT: Sub-Agencies & Progress -->
-        <div v-if="drilldownTab === 'sub-agencies'" class="space-y-3.5 max-h-[60vh] overflow-y-auto custom-scrollbar pr-1">
+        <div v-if="drilldownTab === 'sub-agencies' && isBKHCNItem(selectedDrilldownAgency)" class="space-y-3.5 max-h-[60vh] overflow-y-auto custom-scrollbar pr-1">
           <!-- Loading State -->
           <div v-if="isSubAgenciesLoading" class="p-8 text-center">
             <LoadingSpinner size="md" message="Đang tải danh sách đơn vị trực thuộc..." />
@@ -1006,266 +1021,7 @@
       </div>
     </div>
 
-    <!-- Biểu đồ & Thống kê Văn bản Quy phạm Pháp luật (3 cấp phân quyền) -->
-    <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4 w-full">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
-        <div class="flex items-center gap-2.5">
-          <span class="p-2 bg-indigo-600 text-white rounded-xl shadow-sm">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-            </svg>
-          </span>
-          <div>
-            <h3 class="text-sm sm:text-base font-bold text-slate-800">
-              Thống kê Văn bản Quy phạm Pháp luật (VB QPPL)
-            </h3>
-            <p class="text-[11px] font-semibold text-slate-500">
-              <span v-if="legalStats?.roleLevel === 1">Thống kê số lượng, phân loại VB QPPL theo từng cơ quan ban hành</span>
-              <span v-else-if="legalStats?.roleLevel === 2">Thống kê số lượng, phân loại VB QPPL theo từng cơ quan trực thuộc</span>
-              <span v-else>Danh sách 5 Văn bản QPPL ban hành gần đây nhất</span>
-            </p>
-          </div>
-        </div>
 
-        <div class="flex items-center gap-2 shrink-0">
-          <!-- Xuất Báo Cáo Excel Button for Legal Stats -->
-          <button 
-            type="button" 
-            @click="exportLegalStatsExcelReport" 
-            :disabled="isExportingLegalExcel"
-            class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-2xs transition h-[34px] flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
-            title="Xuất file báo cáo Excel thống kê số liệu Văn bản QPPL"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-            <span>{{ isExportingLegalExcel ? 'Đang xuất...' : 'Xuất Báo Cáo Excel' }}</span>
-          </button>
-
-          <!-- Advanced filter overlay for Legal Stats -->
-          <OverlayPanel
-            title="Lọc Thống Kê Văn Bản QPPL"
-            buttonText="Bộ Lọc Nâng Cao"
-            :activeCount="activeLegalFilterCount"
-            widthClass="w-[340px] sm:w-[500px]"
-            @apply="loadLegalDashboardStats"
-            @reset="resetLegalFilters"
-          >
-            <div class="space-y-3">
-              <!-- 1. Loại văn bản -->
-              <div>
-                <SearchableSelect
-                  v-model="legalFilterDocumentType"
-                  :options="legalDocumentTypeOptions"
-                  :isMulti="false"
-                  label="Loại Văn Bản"
-                  placeholder="Tất cả loại văn bản"
-                />
-              </div>
-
-              <!-- 2. Ngày phát hành (Từ ngày ➔ Đến ngày) -->
-              <div>
-                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
-                  Ngày Phát Hành (Từ ngày ➔ Đến ngày)
-                </label>
-                <div class="flex items-center gap-2">
-                  <input 
-                    type="date" 
-                    v-model="legalFilterIssuedFromDate" 
-                    class="w-full px-2.5 py-1.5 bg-white text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 text-slate-800"
-                  />
-                  <span class="text-xs font-bold text-slate-400 shrink-0">➔</span>
-                  <input 
-                    type="date" 
-                    v-model="legalFilterIssuedToDate" 
-                    class="w-full px-2.5 py-1.5 bg-white text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 text-slate-800"
-                  />
-                </div>
-              </div>
-
-              <!-- 3. Ngày hiệu lực (Từ ngày ➔ Đến ngày) -->
-              <div>
-                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">
-                  Ngày Hiệu Lực (Từ ngày ➔ Đến ngày)
-                </label>
-                <div class="flex items-center gap-2">
-                  <input 
-                    type="date" 
-                    v-model="legalFilterEffectiveFromDate" 
-                    class="w-full px-2.5 py-1.5 bg-white text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 text-slate-800"
-                  />
-                  <span class="text-xs font-bold text-slate-400 shrink-0">➔</span>
-                  <input 
-                    type="date" 
-                    v-model="legalFilterEffectiveToDate" 
-                    class="w-full px-2.5 py-1.5 bg-white text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 text-slate-800"
-                  />
-                </div>
-              </div>
-
-              <!-- 4. Cơ quan phát hành -->
-              <div>
-                <SearchableSelect
-                  v-model="legalFilterIssuingAgencyId"
-                  :options="legalAgencyOptions"
-                  :isMulti="false"
-                  label="Cơ Quan Phát Hành"
-                  placeholder="Tất cả cơ quan phát hành"
-                />
-              </div>
-
-              <!-- 5. Cơ quan soạn thảo -->
-              <div>
-                <SearchableSelect
-                  v-model="legalFilterDraftingAgencyId"
-                  :options="legalAgencyOptions"
-                  :isMulti="false"
-                  label="Cơ Quan Soạn Thảo"
-                  placeholder="Tất cả cơ quan soạn thảo"
-                />
-              </div>
-            </div>
-          </OverlayPanel>
-        </div>
-      </div>
-
-      <!-- Loading Spinner for Legal Stats -->
-      <LoadingSpinner v-if="isLegalStatsLoading" text="Đang tải dữ liệu thống kê văn bản QPPL..." />
-
-      <div v-else class="space-y-4">
-        <!-- Level 1 (Admin): 2 distinct blocks for Ministries & Provinces -->
-        <div v-if="legalStats && legalStats.roleLevel === 1" class="space-y-6">
-          
-          <!-- Quick KPI Cards Row -->
-          <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-4 gap-3">
-            <div class="p-3.5 bg-indigo-50/60 rounded-xl border border-indigo-100 flex flex-col justify-between">
-              <span class="text-[11px] font-bold text-indigo-700 uppercase">Tổng số văn bản</span>
-              <span class="text-2xl font-bold text-indigo-900 mt-1">{{ legalStats.totalCount || 0 }}</span>
-            </div>
-            <div class="p-3.5 bg-blue-50/60 rounded-xl border border-blue-100 flex flex-col justify-between" v-for="(cnt, cat) in (legalStats.categoryCounts || {})" :key="cat">
-              <span class="text-[11px] font-bold text-blue-700 uppercase truncate" :title="cat">{{ cat }}</span>
-              <span class="text-2xl font-bold text-blue-900 mt-1">{{ cnt }}</span>
-            </div>
-          </div>
-
-          <!-- Section 1: Khối Bộ / Ngành Trung Ương (Admin) -->
-          <div v-if="legalMinistriesStats.length > 0">
-            <!-- Stacked Bar Chart for Ministries -->
-            <LegalDocumentStackedChart 
-              :statsData="legalMinistriesStats" 
-              :allDocTypes="Object.keys(legalStats.categoryCounts || {})"
-              title="Biểu đồ phân loại Văn bản QPPL theo từng Bộ / Ngành"
-            />
-          </div>
-
-          <!-- Section 2: Khối Các Tỉnh / Thành Phố (Admin) -->
-          <div v-if="legalProvincesStats.length > 0" class="pt-1">
-            <!-- Stacked Bar Chart for Localities -->
-            <LegalDocumentStackedChart 
-              :statsData="legalProvincesStats" 
-              :allDocTypes="Object.keys(legalStats.categoryCounts || {})"
-              title="Biểu đồ phân loại Văn bản QPPL theo từng Địa phương"
-            />
-          </div>
-
-        </div>
-
-        <!-- Level 2 (Bộ/Ngành hoặc Tỉnh/TP): Only 1 chart section for their agency & subordinate units -->
-        <div v-else-if="legalStats && legalStats.roleLevel === 2" class="space-y-6">
-          
-          <!-- Quick KPI Cards Row -->
-          <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-4 lg:grid-cols-4 gap-3">
-            <div class="p-3.5 bg-indigo-50/60 rounded-xl border border-indigo-100 flex flex-col justify-between">
-              <span class="text-[11px] font-bold text-indigo-700 uppercase">Tổng số văn bản</span>
-              <span class="text-2xl font-bold text-indigo-900 mt-1">{{ legalStats.totalCount || 0 }}</span>
-            </div>
-            <div class="p-3.5 bg-blue-50/60 rounded-xl border border-blue-100 flex flex-col justify-between" v-for="(cnt, cat) in (legalStats.categoryCounts || {})" :key="cat">
-              <span class="text-[11px] font-bold text-blue-700 uppercase truncate" :title="cat">{{ cat }}</span>
-              <span class="text-2xl font-bold text-blue-900 mt-1">{{ cnt }}</span>
-            </div>
-          </div>
-
-          <!-- Level 2 Chart Section: Single block showing subordinate agencies -->
-          <div>
-            <LegalDocumentStackedChart 
-              :statsData="legalStats.agencyStats" 
-              :allDocTypes="Object.keys(legalStats.categoryCounts || {})"
-              title="Biểu đồ phân loại Văn bản QPPL theo cơ quan và các đơn vị trực thuộc"
-            />
-          </div>
-
-        </div>
-
-        <!-- Level 3: Recent 5 Documents List Widget -->
-        <div v-else-if="legalStats && legalStats.roleLevel === 3">
-          <div v-if="legalStats.recentDocuments && legalStats.recentDocuments.length > 0" class="overflow-x-auto custom-scrollbar">
-            <table class="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr class="bg-slate-100 text-slate-800 border-b border-slate-200">
-                  <th class="py-2.5 px-3 font-bold text-center w-12">STT</th>
-                  <th class="py-2.5 px-3 font-bold min-w-[200px]">Số Hiệu / Trích Yếu</th>
-                  <th class="py-2.5 px-3 font-bold min-w-[130px]">Loại & Lĩnh Vực</th>
-                  <th class="py-2.5 px-3 font-bold min-w-[140px]">Cơ Quan Ban Hành / Dự Thảo</th>
-                  <th class="py-2.5 px-3 font-bold text-center min-w-[110px]">Ban Hành</th>
-                  <th class="py-2.5 px-3 font-bold text-center min-w-[110px]">Hiệu Lực</th>
-                  <th class="py-2.5 px-3 font-bold text-center min-w-[100px]">Tệp Đính Kèm</th>
-                </tr>
-              </thead>
-              <tbody class="divide-y divide-slate-200 font-normal">
-                <tr 
-                  v-for="(doc, idx) in legalStats.recentDocuments" 
-                  :key="doc.id"
-                  class="hover:bg-slate-50 transition"
-                >
-                  <td class="py-2.5 px-3 text-center text-slate-500 font-semibold">{{ idx + 1 }}</td>
-                  <td class="py-2.5 px-3">
-                    <div class="font-bold text-blue-700 hover:underline cursor-pointer" @click="openLegalViewerForDoc(doc)">
-                      {{ doc.documentNumber }}
-                    </div>
-                    <div class="text-[11px] text-slate-700 line-clamp-2 mt-0.5" :title="doc.title">
-                      {{ doc.title }}
-                    </div>
-                  </td>
-                  <td class="py-2.5 px-3">
-                    <span class="inline-block px-2 py-0.5 text-[10px] font-bold rounded bg-blue-50 text-blue-700 border border-blue-200 mb-1">
-                      {{ doc.documentType }}
-                    </span>
-                    <div class="text-[11px] text-slate-600 font-medium">{{ doc.field || '—' }}</div>
-                  </td>
-                  <td class="py-2.5 px-3">
-                    <div class="font-bold text-slate-800 text-[11px]">{{ doc.issuingAgencyName }}</div>
-                    <div v-if="doc.draftingAgencyName" class="text-[10px] text-indigo-700 font-semibold mt-0.5">
-                      Dự thảo: {{ doc.draftingAgencyName }}
-                    </div>
-                  </td>
-                  <td class="py-2.5 px-3 text-center text-[11px] text-slate-600">
-                    {{ formatDate(doc.issuedDate) }}
-                  </td>
-                  <td class="py-2.5 px-3 text-center">
-                    <span :class="['px-2 py-0.5 text-[10px] font-bold rounded-full border', getEffectStatusBadgeClass(doc.effectStatus)]">
-                      {{ doc.effectStatus || 'Còn hiệu lực' }}
-                    </span>
-                  </td>
-                  <td class="py-2.5 px-3 text-center">
-                    <button 
-                      v-if="doc.attachments && doc.attachments.length > 0"
-                      @click="openLegalViewerForDoc(doc)"
-                      class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-[11px] rounded-lg border border-indigo-200 transition flex items-center justify-center gap-1 mx-auto cursor-pointer"
-                    >
-                      <span>👁️ Xem</span>
-                      <span class="text-[10px] text-indigo-500">({{ doc.attachments.length }})</span>
-                    </button>
-                    <span v-else class="text-slate-400 text-[11px] italic">Không có</span>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-
-          <div v-else class="p-8 text-center text-xs text-slate-400 font-semibold italic">
-            Chưa có văn bản QPPL nào được cập nhật.
-          </div>
-        </div>
-      </div>
-    </div>
 
     <!-- Item Detail Modal -->
     <ItemDetailModal 
@@ -1393,6 +1149,23 @@ const activeStatusSummary = computed(() => {
   if (dashboardFilter.value === 'goals') return metrics.value.goalStatusSummary || {};
   if (dashboardFilter.value === 'tasks') return metrics.value.taskStatusSummary || {};
   return metrics.value.statusSummary || {};
+});
+
+const activeStatusTotal = computed(() => {
+  const s = activeStatusSummary.value || {};
+  return (s.notStarted || 0) + 
+         (s.inProgressOnTime || 0) + 
+         (s.inProgressOverdue || 0) + 
+         (s.completedOnTime || 0) + 
+         (s.completedOverdue || 0) + 
+         (s.expiringSoon || 0);
+});
+
+const overallDonutStats = computed(() => {
+  return {
+    ...activeStatusSummary.value,
+    totalItems: activeStatusTotal.value
+  };
 });
 
 const userSubAgenciesPerformance = ref([]);
@@ -1598,6 +1371,20 @@ const isLevel3User = computed(() => {
   const userObjAg = authState.user.value?.agency;
   return !!(userObjAg && userObjAg.parentId);
 });
+
+const isBKHCNAgency = computed(() => {
+  const ag = loggedUserAgency.value || authState.user.value?.agency;
+  const name = ((ag?.name || authState.user.value?.agencyName) || '').toLowerCase();
+  const code = ((ag?.code || authState.user.value?.agencyCode) || '').toLowerCase();
+  return code === 'bkhcn' || name.includes('khoa học và công nghệ') || name.includes('khoa học & công nghệ') || name.includes('khoa học công nghệ');
+});
+
+function isBKHCNItem(agency) {
+  if (!agency) return false;
+  const name = String(agency.name || '').toLowerCase();
+  const code = String(agency.code || '').toLowerCase();
+  return code === 'bkhcn' || name.includes('khoa học và công nghệ') || name.includes('khoa học & công nghệ') || name.includes('khoa học công nghệ');
+}
 
 const singleSubAgencyPerformance = computed(() => {
   const allPerf = [

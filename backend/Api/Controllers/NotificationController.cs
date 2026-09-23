@@ -44,20 +44,36 @@ namespace Cdsqg.Api.Controllers
         {
             var query = _db.Notifications.AsQueryable();
 
-            if (agencyId.HasValue && agencyId.Value != Guid.Empty)
+            if (isAdmin)
+            {
+                var bkhcnAg = await _db.Agencies.FirstOrDefaultAsync(a => 
+                    (!string.IsNullOrEmpty(a.Code) && a.Code.ToLower() == "bkhcn") ||
+                    a.Name.ToLower().Contains("khoa học và công nghệ") ||
+                    a.Name.ToLower().Contains("khoa học & công nghệ"));
+
+                Guid? bkhcnId = bkhcnAg?.Id;
+
+                query = query.Where(n => 
+                    (userId.HasValue && n.UserId == userId.Value) ||
+                    (agencyId.HasValue && n.AgencyId == agencyId.Value) ||
+                    (bkhcnId.HasValue && n.AgencyId == bkhcnId.Value) ||
+                    n.Type == "PROGRESS_APPROVAL"
+                );
+            }
+            else if (agencyId.HasValue && agencyId.Value != Guid.Empty)
             {
                 if (userId.HasValue && userId.Value != Guid.Empty)
                 {
-                    query = query.Where(n => (n.UserId == userId.Value || (n.UserId == null && n.AgencyId.HasValue && n.AgencyId.Value == agencyId.Value)));
+                    query = query.Where(n => (n.UserId == userId.Value || (n.UserId == null && n.AgencyId.HasValue && n.AgencyId.Value == agencyId.Value)) && n.Type != "PROGRESS_APPROVAL");
                 }
                 else
                 {
-                    query = query.Where(n => n.AgencyId.HasValue && n.AgencyId.Value == agencyId.Value);
+                    query = query.Where(n => n.AgencyId.HasValue && n.AgencyId.Value == agencyId.Value && n.Type != "PROGRESS_APPROVAL");
                 }
             }
             else if (userId.HasValue && userId.Value != Guid.Empty)
             {
-                query = query.Where(n => n.UserId == userId.Value);
+                query = query.Where(n => n.UserId == userId.Value && n.Type != "PROGRESS_APPROVAL");
             }
             else
             {
@@ -112,20 +128,36 @@ namespace Cdsqg.Api.Controllers
         {
             var query = _db.Notifications.Where(n => !n.IsRead);
 
-            if (agencyId.HasValue && agencyId.Value != Guid.Empty)
+            if (isAdmin)
+            {
+                var bkhcnAg = await _db.Agencies.FirstOrDefaultAsync(a => 
+                    (!string.IsNullOrEmpty(a.Code) && a.Code.ToLower() == "bkhcn") ||
+                    a.Name.ToLower().Contains("khoa học và công nghệ") ||
+                    a.Name.ToLower().Contains("khoa học & công nghệ"));
+
+                Guid? bkhcnId = bkhcnAg?.Id;
+
+                query = query.Where(n => 
+                    (userId.HasValue && n.UserId == userId.Value) ||
+                    (agencyId.HasValue && n.AgencyId == agencyId.Value) ||
+                    (bkhcnId.HasValue && n.AgencyId == bkhcnId.Value) ||
+                    n.Type == "PROGRESS_APPROVAL"
+                );
+            }
+            else if (agencyId.HasValue && agencyId.Value != Guid.Empty)
             {
                 if (userId.HasValue && userId.Value != Guid.Empty)
                 {
-                    query = query.Where(n => (n.UserId == userId.Value || (n.UserId == null && n.AgencyId.HasValue && n.AgencyId.Value == agencyId.Value)));
+                    query = query.Where(n => (n.UserId == userId.Value || (n.UserId == null && n.AgencyId.HasValue && n.AgencyId.Value == agencyId.Value)) && n.Type != "PROGRESS_APPROVAL");
                 }
                 else
                 {
-                    query = query.Where(n => n.AgencyId.HasValue && n.AgencyId.Value == agencyId.Value);
+                    query = query.Where(n => n.AgencyId.HasValue && n.AgencyId.Value == agencyId.Value && n.Type != "PROGRESS_APPROVAL");
                 }
             }
             else if (userId.HasValue && userId.Value != Guid.Empty)
             {
-                query = query.Where(n => n.UserId == userId.Value);
+                query = query.Where(n => n.UserId == userId.Value && n.Type != "PROGRESS_APPROVAL");
             }
             else
             {

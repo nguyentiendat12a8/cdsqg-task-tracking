@@ -19,12 +19,8 @@
         <!-- WHEN EXPANDED (or Hover-Expanded) -->
         <div v-if="!isCollapsed" class="flex items-center justify-between w-full min-w-[230px]">
           <div class="flex items-center gap-3 overflow-hidden">
-            <!-- Official National Digital Emblem Icon -->
-            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 text-white flex items-center justify-center shrink-0 shadow-lg shadow-blue-600/30 border border-blue-400/30">
-              <svg class="w-6 h-6 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-              </svg>
-            </div>
+            <!-- Official Cục Chuyển đổi số Logo Image -->
+            <img src="/logo-cds.jpg" alt="Logo Cục Chuyển đổi số" class="w-10 h-10 rounded-xl object-cover shrink-0 shadow-lg border border-slate-700/50 bg-white" />
             <div class="flex flex-col whitespace-nowrap overflow-hidden">
               <span class="font-bold text-white text-xs tracking-wider">CĐS QUỐC GIA</span>
               <span class="text-[10px] text-blue-400 font-bold">Quyết định 1266/QĐ-TTg</span>
@@ -46,12 +42,10 @@
         <div v-else class="flex items-center justify-center w-full">
           <button 
             @click.stop="toggleCollapse"
-            class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 via-indigo-600 to-blue-700 text-white flex items-center justify-center shrink-0 shadow-md shadow-blue-600/30 border border-blue-400/30 hover:scale-105 transition transform cursor-pointer"
+            class="w-10 h-10 rounded-xl overflow-hidden shrink-0 shadow-md border border-slate-700/50 hover:scale-105 transition transform cursor-pointer p-0.5 bg-white"
             title="Mở rộng Menu"
           >
-            <svg class="w-5 h-5 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-            </svg>
+            <img src="/logo-cds.jpg" alt="Logo Cục Chuyển đổi số" class="w-full h-full object-cover rounded-lg" />
           </button>
         </div>
       </div>
@@ -151,6 +145,22 @@
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
           </svg>
           <span v-if="!isCollapsed" class="truncate">Văn bản QPPL</span>
+        </button>
+
+        <!-- Đầu mối liên hệ và KH CĐS -->
+        <button 
+          @click="selectTab('agency-plans')"
+          :class="[
+            'w-full flex items-center gap-3 py-3 rounded-xl font-bold text-xs transition-all duration-200 whitespace-nowrap overflow-hidden cursor-pointer',
+            isCollapsed ? 'justify-center px-0 w-12 h-12 mx-auto' : 'px-3',
+            activeTab === 'agency-plans' ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+          ]"
+          :title="isCollapsed ? 'Đầu mối liên hệ và KH CĐS' : ''"
+        >
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0h4m-4 0a2 2 0 01-2-2V7a2 2 0 012-2h4a2 2 0 012 2v12a2 2 0 01-2 2" />
+          </svg>
+          <span v-if="!isCollapsed" class="truncate">Đầu mối liên hệ và KH CĐS</span>
         </button>
 
         <!-- Submenu: Thiết lập chung (Settings) -->
@@ -261,25 +271,11 @@ function onMouseLeave() {
 }
 
 function handleGoalsClick() {
-  if (!authState.isAdmin.value) {
-    selectTab('goals-list');
-    return;
-  }
   isGoalsOpen.value = !isGoalsOpen.value;
-  if (isGoalsOpen.value && !props.activeTab.startsWith('goals')) {
-    selectTab('goals-list');
-  }
 }
 
 function handleSettingsClick() {
-  if (!authState.isAdmin.value) {
-    selectTab('import-history');
-    return;
-  }
   isSettingsOpen.value = !isSettingsOpen.value;
-  if (isSettingsOpen.value && !['agencies', 'units', 'users', 'import-history', 'settings', 'master-data'].includes(props.activeTab)) {
-    selectTab('agencies');
-  }
 }
 
 function selectTab(tab) {

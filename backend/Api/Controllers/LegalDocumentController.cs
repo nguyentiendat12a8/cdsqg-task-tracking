@@ -27,274 +27,11 @@ namespace Cdsqg.Api.Controllers
         }
 
         /// <summary>
-        /// Seed sample legal documents if DB table is empty
+        /// Seed sample legal documents if DB table is empty (Disabled to allow permanent user deletion)
         /// </summary>
         private async Task EnsureSeedDataAsync()
         {
-            if (await _context.LegalDocuments.CountAsync() >= 8) return;
-
-            var agencies = await _context.Agencies.ToListAsync();
-            var bkhcn = agencies.FirstOrDefault(a => a.Name.Contains("Khoa học và Công nghệ")) ?? agencies.FirstOrDefault();
-            var bca = agencies.FirstOrDefault(a => a.Name.Contains("Công an"));
-            var subUnit = agencies.FirstOrDefault(a => a.ParentId != null) ?? bkhcn;
-            var tphcm = agencies.FirstOrDefault(a => a.Name.Contains("Hồ Chí Minh") || a.Name.Contains("TPHCM") || a.Code == "TPHCM");
-
-            var existingCodes = await _context.LegalDocuments.Select(d => d.Code).ToListAsync();
-            var sampleDocs = new List<LegalDocument>();
-
-            void AddIfMissing(LegalDocument doc)
-            {
-                if (!existingCodes.Contains(doc.Code))
-                {
-                    sampleDocs.Add(doc);
-                }
-            }
-
-            AddIfMissing(new LegalDocument
-            {
-                Code = "52/2023/QH15",
-                Title = "Luật Giao dịch Điện tử năm 2023",
-                DocumentType = "Luật",
-                IssuingAgencyId = bkhcn?.Id,
-                IssuingAgencyName = bkhcn?.Name ?? "Bộ Khoa học và Công nghệ",
-                DraftingAgencyId = subUnit?.Id ?? bkhcn?.Id,
-                DraftingAgencyName = subUnit?.Name ?? "Cục Chuyển đổi số Quốc gia",
-                SignerName = "Vương Đình Huệ",
-                SignerTitle = "Chủ tịch Quốc hội",
-                IssuedDate = new DateTime(2023, 6, 22),
-                EffectiveDate = new DateTime(2024, 7, 1),
-                EffectStatus = "Còn hiệu lực",
-                Field = "Thể chế số",
-                Scope = "Toàn quốc",
-                Notes = "Luật khung nền tảng cho giao dịch điện tử và dữ liệu số",
-                AttachmentsJson = JsonSerializer.Serialize(new List<LegalDocumentAttachmentDto>
-                {
-                    new LegalDocumentAttachmentDto { FileName = "Luat_52_2023_QH15.pdf", CleanName = "Luật Giao dịch Điện tử 52/2023/QH15.pdf", FileUrl = "/uploads/Luat_52_2023.pdf", FileSize = 4120000, FileType = "Văn bản chính" }
-                })
-            });
-
-            AddIfMissing(new LegalDocument
-            {
-                Code = "1266/QĐ-TTg",
-                Title = "Quyết định phê duyệt Đề án Phát triển và Theo dõi Chiến lược Chuyển đổi số Quốc gia",
-                DocumentType = "Quyết định",
-                IssuingAgencyId = bkhcn?.Id,
-                IssuingAgencyName = bkhcn?.Name ?? "Bộ Khoa học và Công nghệ",
-                DraftingAgencyId = subUnit?.Id ?? bkhcn?.Id,
-                DraftingAgencyName = subUnit?.Name ?? "Cục Chuyển đổi số Quốc gia",
-                SignerName = "Trần Lưu Quang",
-                SignerTitle = "Phó Thủ tướng Chính phủ",
-                IssuedDate = new DateTime(2026, 7, 14),
-                EffectiveDate = new DateTime(2026, 7, 14),
-                EffectStatus = "Còn hiệu lực",
-                Field = "Thể chế số",
-                Scope = "Toàn quốc",
-                Notes = "Văn bản chỉ đạo khung chiến lược chuyển đổi số quốc gia 2026-2030",
-                AttachmentsJson = JsonSerializer.Serialize(new List<LegalDocumentAttachmentDto>
-                {
-                    new LegalDocumentAttachmentDto { FileName = "1266_QD_TTg_Chinhthuc.pdf", CleanName = "Quyết định 1266/QĐ-TTg (Văn bản chính).pdf", FileUrl = "/uploads/1266_QD_TTg.pdf", FileSize = 2450112, FileType = "Văn bản chính" },
-                    new LegalDocumentAttachmentDto { FileName = "Phu_luc_Chi_tieu_1266.pdf", CleanName = "Phụ lục I - Danh mục Chỉ tiêu Kế hoạch.pdf", FileUrl = "/uploads/Phu_luc_Chi_tieu.pdf", FileSize = 1150000, FileType = "Phụ lục" }
-                })
-            });
-
-            AddIfMissing(new LegalDocument
-            {
-                Code = "15/2026/NĐ-CP",
-                Title = "Nghị định quy định chi tiết thi hành Luật Giao dịch Điện tử về Hạ tầng và Dữ liệu số",
-                DocumentType = "Nghị định",
-                IssuingAgencyId = bkhcn?.Id,
-                IssuingAgencyName = bkhcn?.Name ?? "Bộ Khoa học và Công nghệ",
-                DraftingAgencyId = bkhcn?.Id,
-                DraftingAgencyName = bkhcn?.Name ?? "Bộ Khoa học và Công nghệ",
-                SignerName = "Phạm Minh Chính",
-                SignerTitle = "Thủ tướng Chính phủ",
-                IssuedDate = new DateTime(2026, 3, 15),
-                EffectiveDate = new DateTime(2026, 5, 1),
-                EffectStatus = "Còn hiệu lực",
-                Field = "Dữ liệu số",
-                Scope = "Toàn quốc",
-                Notes = "Quy định quy chuẩn kết nối và chia sẻ dữ liệu dùng chung",
-                AttachmentsJson = JsonSerializer.Serialize(new List<LegalDocumentAttachmentDto>
-                {
-                    new LegalDocumentAttachmentDto { FileName = "Nghidinh_15_2026_ND_CP.pdf", CleanName = "Nghị định 15/2026/NĐ-CP.pdf", FileUrl = "/uploads/ND_15_2026.pdf", FileSize = 3200100, FileType = "Văn bản chính" }
-                })
-            });
-
-            AddIfMissing(new LegalDocument
-            {
-                Code = "08/2026/TT-BKHCN",
-                Title = "Thông tư hướng dẫn chuẩn hóa cấu trúc dữ liệu và báo cáo tiến độ mục tiêu CĐS",
-                DocumentType = "Thông tư",
-                IssuingAgencyId = bkhcn?.Id,
-                IssuingAgencyName = bkhcn?.Name ?? "Bộ Khoa học và Công nghệ",
-                DraftingAgencyId = subUnit?.Id ?? bkhcn?.Id,
-                DraftingAgencyName = subUnit?.Name ?? "Trung tâm CNTT & Dữ liệu số",
-                SignerName = "Huỳnh Thành Đạt",
-                SignerTitle = "Bộ trưởng",
-                IssuedDate = new DateTime(2026, 5, 20),
-                EffectiveDate = new DateTime(2026, 7, 1),
-                EffectStatus = "Còn hiệu lực",
-                Field = "Chính phủ số",
-                Scope = "Bộ/Ngành",
-                Notes = "Thông tư chuyên ngành áp dụng cho các đơn vị trực thuộc",
-                AttachmentsJson = JsonSerializer.Serialize(new List<LegalDocumentAttachmentDto>
-                {
-                    new LegalDocumentAttachmentDto { FileName = "Thongtu_08_2026_TT_BKHCN.pdf", CleanName = "Thông tư 08/2026/TT-BKHCN.pdf", FileUrl = "/uploads/TT_08_2026.pdf", FileSize = 1800500, FileType = "Văn bản chính" }
-                })
-            });
-
-            if (subUnit != null)
-            {
-                AddIfMissing(new LegalDocument
-                {
-                    Code = "05/2026/QC-CĐSQG",
-                    Title = "Quy chế Quản lý, Vận hành và An toàn Thông tin Hệ thống Dữ liệu Chuyển đổi số",
-                    DocumentType = "Quy chế",
-                    IssuingAgencyId = subUnit.Id,
-                    IssuingAgencyName = subUnit.Name,
-                    DraftingAgencyId = subUnit.Id,
-                    DraftingAgencyName = subUnit.Name,
-                    SignerName = "Cục trưởng",
-                    SignerTitle = "Cục trưởng Cục CĐSQG",
-                    IssuedDate = new DateTime(2026, 4, 12),
-                    EffectiveDate = new DateTime(2026, 4, 15),
-                    EffectStatus = "Còn hiệu lực",
-                    Field = "An toàn thông tin",
-                    Scope = "Bộ/Ngành",
-                    Notes = "Quy chế nội bộ áp dụng cho đơn vị trực thuộc",
-                    AttachmentsJson = JsonSerializer.Serialize(new List<LegalDocumentAttachmentDto>
-                    {
-                        new LegalDocumentAttachmentDto { FileName = "Quyche_05_2026_CDSQG.pdf", CleanName = "Quy chế 05/2026/QC-CĐSQG.pdf", FileUrl = "/uploads/QC_05_2026.pdf", FileSize = 1450000, FileType = "Văn bản chính" }
-                    })
-                });
-            }
-
-            if (bca != null)
-            {
-                AddIfMissing(new LegalDocument
-                {
-                    Code = "42/2026/TT-BCA",
-                    Title = "Thông tư quy định về bảo đảm an toàn thông tin và an ninh mạng trong vận hành hệ thống CĐS",
-                    DocumentType = "Thông tư",
-                    IssuingAgencyId = bca.Id,
-                    IssuingAgencyName = bca.Name,
-                    DraftingAgencyId = bca.Id,
-                    DraftingAgencyName = bca.Name,
-                    SignerName = "Lương Tam Quang",
-                    SignerTitle = "Bộ trưởng",
-                    IssuedDate = new DateTime(2026, 6, 10),
-                    EffectiveDate = new DateTime(2026, 8, 1),
-                    EffectStatus = "Còn hiệu lực",
-                    Field = "Hạ tầng số",
-                    Scope = "Toàn quốc",
-                    Notes = "Quy định bảo mật hệ thống thông tin quốc gia",
-                    AttachmentsJson = JsonSerializer.Serialize(new List<LegalDocumentAttachmentDto>
-                    {
-                        new LegalDocumentAttachmentDto { FileName = "TT_42_2026_BCA.pdf", CleanName = "Thông tư 42/2026/TT-BCA.pdf", FileUrl = "/uploads/TT_42_BCA.pdf", FileSize = 2100000, FileType = "Văn bản chính" }
-                    })
-                });
-
-                AddIfMissing(new LegalDocument
-                {
-                    Code = "03/2026/CT-BCA",
-                    Title = "Chỉ thị đẩy mạnh triển khai Đề án 06 và dịch vụ công trực tuyến năm 2026",
-                    DocumentType = "Chỉ thị",
-                    IssuingAgencyId = bca.Id,
-                    IssuingAgencyName = bca.Name,
-                    DraftingAgencyId = bca.Id,
-                    DraftingAgencyName = bca.Name,
-                    SignerName = "Lương Tam Quang",
-                    SignerTitle = "Bộ trưởng",
-                    IssuedDate = new DateTime(2026, 2, 18),
-                    EffectiveDate = new DateTime(2026, 2, 18),
-                    EffectStatus = "Còn hiệu lực",
-                    Field = "Dữ liệu số",
-                    Scope = "Toàn quốc",
-                    Notes = "Chỉ thị tăng cường bảo mật và kết nối dữ liệu dân cư",
-                    AttachmentsJson = JsonSerializer.Serialize(new List<LegalDocumentAttachmentDto>
-                    {
-                        new LegalDocumentAttachmentDto { FileName = "CT_03_2026_BCA.pdf", CleanName = "Chỉ thị 03/2026/CT-BCA.pdf", FileUrl = "/uploads/CT_03_BCA.pdf", FileSize = 1750000, FileType = "Văn bản chính" }
-                    })
-                });
-            }
-
-            if (tphcm != null)
-            {
-                AddIfMissing(new LegalDocument
-                {
-                    Code = "88/2026/QĐ-UBND",
-                    Title = "Quyết định ban hành Kế hoạch Chuyển đổi số và Đô thị thông minh TP. Hồ Chí Minh năm 2026",
-                    DocumentType = "Quyết định",
-                    IssuingAgencyId = tphcm.Id,
-                    IssuingAgencyName = tphcm.Name,
-                    DraftingAgencyId = tphcm.Id,
-                    DraftingAgencyName = tphcm.Name,
-                    SignerName = "Phan Văn Mãi",
-                    SignerTitle = "Chủ tịch UBND TP",
-                    IssuedDate = new DateTime(2026, 4, 10),
-                    EffectiveDate = new DateTime(2026, 4, 20),
-                    EffectStatus = "Còn hiệu lực",
-                    Field = "Chính phủ số",
-                    Scope = "Địa phương",
-                    Notes = "Văn bản chỉ đạo cấp địa phương",
-                    AttachmentsJson = JsonSerializer.Serialize(new List<LegalDocumentAttachmentDto>
-                    {
-                        new LegalDocumentAttachmentDto { FileName = "88_2026_QD_UBND.pdf", CleanName = "Quyết định 88/2026/QĐ-UBND.pdf", FileUrl = "/uploads/88_2026_UBND.pdf", FileSize = 1950000, FileType = "Văn bản chính" }
-                    })
-                });
-
-                AddIfMissing(new LegalDocument
-                {
-                    Code = "18/2026/NQ-HĐND",
-                    Title = "Nghị quyết thông qua Đề án Phát triển Hạ tầng số và Đô thị thông minh giai đoạn 2026-2030",
-                    DocumentType = "Nghị quyết",
-                    IssuingAgencyId = tphcm.Id,
-                    IssuingAgencyName = tphcm.Name,
-                    DraftingAgencyId = tphcm.Id,
-                    DraftingAgencyName = tphcm.Name,
-                    SignerName = "Chủ tịch HĐND",
-                    SignerTitle = "Chủ tịch Hội đồng Nhân dân TP",
-                    IssuedDate = new DateTime(2026, 7, 5),
-                    EffectiveDate = new DateTime(2026, 7, 15),
-                    EffectStatus = "Còn hiệu lực",
-                    Field = "Hạ tầng số",
-                    Scope = "Địa phương",
-                    Notes = "Nghị quyết HĐND ban hành chính sách và ngân sách cho CĐS địa phương",
-                    AttachmentsJson = JsonSerializer.Serialize(new List<LegalDocumentAttachmentDto>
-                    {
-                        new LegalDocumentAttachmentDto { FileName = "NQ_18_2026_HDND.pdf", CleanName = "Nghị quyết 18/2026/NQ-HĐND.pdf", FileUrl = "/uploads/NQ_18_2026.pdf", FileSize = 2850000, FileType = "Văn bản chính" }
-                    })
-                });
-
-                AddIfMissing(new LegalDocument
-                {
-                    Code = "12/2026/CT-UBND",
-                    Title = "Chỉ thị về việc tăng cường bảo đảm an toàn thông tin và thúc đẩy thanh toán không dùng tiền mặt",
-                    DocumentType = "Chỉ thị",
-                    IssuingAgencyId = tphcm.Id,
-                    IssuingAgencyName = tphcm.Name,
-                    DraftingAgencyId = tphcm.Id,
-                    DraftingAgencyName = tphcm.Name,
-                    SignerName = "Phan Văn Mãi",
-                    SignerTitle = "Chủ tịch UBND TP",
-                    IssuedDate = new DateTime(2026, 6, 5),
-                    EffectiveDate = new DateTime(2026, 6, 5),
-                    EffectStatus = "Còn hiệu lực",
-                    Field = "Kinh tế số",
-                    Scope = "Địa phương",
-                    Notes = "Chỉ thị chỉ đạo các sở ngành địa phương",
-                    AttachmentsJson = JsonSerializer.Serialize(new List<LegalDocumentAttachmentDto>
-                    {
-                        new LegalDocumentAttachmentDto { FileName = "12_2026_CT_UBND.pdf", CleanName = "Chỉ thị 12/2026/CT-UBND.pdf", FileUrl = "/uploads/12_2026_CT.pdf", FileSize = 1420000, FileType = "Văn bản chính" }
-                    })
-                });
-            }
-
-            if (sampleDocs.Count > 0)
-            {
-                await _context.LegalDocuments.AddRangeAsync(sampleDocs);
-                await _context.SaveChangesAsync();
-            }
+            await Task.CompletedTask;
         }
 
         private LegalDocumentDto MapToDto(LegalDocument entity)
@@ -358,42 +95,8 @@ namespace Cdsqg.Api.Controllers
 
             var query = _context.LegalDocuments.AsQueryable();
 
-            // 1. DATA ACCESS PERMISSION (3-Tier Data Access Logic)
-            bool isAdminUser = string.IsNullOrWhiteSpace(userRole) || userRole.ToLower() == "admin" || userRole == "1";
-
-            if (!isAdminUser && userAgencyId.HasValue)
-            {
-                var userAgId = userAgencyId.Value;
-                var userAgency = await _context.Agencies.FirstOrDefaultAsync(a => a.Id == userAgId);
-
-                if (userAgency != null)
-                {
-                    bool isLevel2 = userAgency.ParentId == null;
-
-                    if (isLevel2)
-                    {
-                        // Level 2 (Bộ/Ngành/Địa phương): Sees documents created by, issued by, or drafted by current agency OR any of its subordinate child agencies
-                        var childAgencyIds = await _context.Agencies
-                            .Where(a => a.ParentId == userAgId)
-                            .Select(a => a.Id)
-                            .ToListAsync();
-                        childAgencyIds.Add(userAgId);
-
-                        query = query.Where(d =>
-                            (d.IssuingAgencyId.HasValue && childAgencyIds.Contains(d.IssuingAgencyId.Value)) ||
-                            (d.DraftingAgencyId.HasValue && childAgencyIds.Contains(d.DraftingAgencyId.Value)) ||
-                            (d.CreatedByAgencyId.HasValue && childAgencyIds.Contains(d.CreatedByAgencyId.Value)));
-                    }
-                    else
-                    {
-                        // Level 3 (Đơn vị trực thuộc): Sees documents created by, issued by, or drafted by current agency
-                        query = query.Where(d =>
-                            d.IssuingAgencyId == userAgId ||
-                            d.DraftingAgencyId == userAgId ||
-                            d.CreatedByAgencyId == userAgId);
-                    }
-                }
-            }
+            // 1. DATA ACCESS PERMISSION: All authenticated accounts can view all legal documents
+            // (Creation, modification, and deletion are restricted to Admin on frontend & backend write endpoints)
 
             // 2. FILTERS
             if (!string.IsNullOrWhiteSpace(searchQuery))
@@ -546,32 +249,7 @@ namespace Cdsqg.Api.Controllers
             bool isLevel2 = currAgency != null && currAgency.ParentId == null;
             bool isLevel3 = currAgency != null && currAgency.ParentId != null;
 
-            // 1. DATA ACCESS PERMISSION FOR DASHBOARD (Apply 3-Tier Data Scoping to baseQuery)
-            if (!isAdmin && currAgId.HasValue && currAgency != null)
-            {
-                if (isLevel2)
-                {
-                    // Level 2 (Bộ/Ngành/Địa phương): Only include documents created by, issued by, or drafted by current agency OR any of its subordinate child agencies
-                    var childAgencyIds = allAgencies
-                        .Where(a => a.ParentId == currAgId.Value)
-                        .Select(a => a.Id)
-                        .ToList();
-                    childAgencyIds.Add(currAgId.Value);
-
-                    baseQuery = baseQuery.Where(d =>
-                        (d.IssuingAgencyId.HasValue && childAgencyIds.Contains(d.IssuingAgencyId.Value)) ||
-                        (d.DraftingAgencyId.HasValue && childAgencyIds.Contains(d.DraftingAgencyId.Value)) ||
-                        (d.CreatedByAgencyId.HasValue && childAgencyIds.Contains(d.CreatedByAgencyId.Value)));
-                }
-                else if (isLevel3)
-                {
-                    // Level 3 (Đơn vị trực thuộc): Only include documents created by, issued by, or drafted by current agency
-                    baseQuery = baseQuery.Where(d =>
-                        d.IssuingAgencyId == currAgId.Value ||
-                        d.DraftingAgencyId == currAgId.Value ||
-                        d.CreatedByAgencyId == currAgId.Value);
-                }
-            }
+            // 1. DATA ACCESS PERMISSION FOR DASHBOARD: All authenticated accounts view statistics across all legal documents
 
             var allDocs = await baseQuery.ToListAsync();
             var result = new LegalDocumentChartStatsDto();
@@ -689,11 +367,20 @@ namespace Cdsqg.Api.Controllers
 
         /// <summary>
         /// POST /api/legaldocuments
-        /// Tạo mới văn bản QPPL với phân quyền khóa/giới hạn Cơ quan ban hành theo Cấp tài khoản.
+        /// Tạo mới văn bản QPPL (Chỉ tài khoản Cấp 1 Admin mới có quyền tạo).
         /// </summary>
         [HttpPost]
-        public async Task<IActionResult> CreateLegalDocument([FromBody] CreateLegalDocumentDto dto)
+        public async Task<IActionResult> CreateLegalDocument([FromBody] CreateLegalDocumentDto dto, [FromQuery] string? userRole = null)
         {
+            if (!string.IsNullOrWhiteSpace(userRole))
+            {
+                bool isAdminUser = userRole.Equals("admin", StringComparison.OrdinalIgnoreCase) || userRole == "1";
+                if (!isAdminUser)
+                {
+                    return StatusCode(403, new { message = "Chỉ tài khoản Cấp 1 (Admin) mới có quyền nhập mới văn bản Quy Phạm Pháp Luật." });
+                }
+            }
+
             if (string.IsNullOrWhiteSpace(dto.Code) || string.IsNullOrWhiteSpace(dto.Title))
             {
                 return BadRequest(new { message = "Vui lòng nhập đầy đủ Số ký hiệu và Tên văn bản." });
@@ -731,8 +418,17 @@ namespace Cdsqg.Api.Controllers
         /// PUT /api/legaldocuments/{id}
         /// </summary>
         [HttpPut("{id}")]
-        public async Task<IActionResult> UpdateLegalDocument(Guid id, [FromBody] UpdateLegalDocumentDto dto)
+        public async Task<IActionResult> UpdateLegalDocument(Guid id, [FromBody] UpdateLegalDocumentDto dto, [FromQuery] string? userRole = null)
         {
+            if (!string.IsNullOrWhiteSpace(userRole))
+            {
+                bool isAdminUser = userRole.Equals("admin", StringComparison.OrdinalIgnoreCase) || userRole == "1";
+                if (!isAdminUser)
+                {
+                    return StatusCode(403, new { message = "Chỉ tài khoản Cấp 1 (Admin) mới có quyền chỉnh sửa văn bản Quy Phạm Pháp Luật." });
+                }
+            }
+
             var entity = await _context.LegalDocuments.FindAsync(id);
             if (entity == null) return NotFound(new { message = "Không tìm thấy văn bản QPPL." });
 
@@ -769,8 +465,17 @@ namespace Cdsqg.Api.Controllers
         /// DELETE /api/legaldocuments/{id}
         /// </summary>
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteLegalDocument(Guid id)
+        public async Task<IActionResult> DeleteLegalDocument(Guid id, [FromQuery] string? userRole = null)
         {
+            if (!string.IsNullOrWhiteSpace(userRole))
+            {
+                bool isAdminUser = userRole.Equals("admin", StringComparison.OrdinalIgnoreCase) || userRole == "1";
+                if (!isAdminUser)
+                {
+                    return StatusCode(403, new { message = "Chỉ tài khoản Cấp 1 (Admin) mới có quyền xóa văn bản Quy Phạm Pháp Luật." });
+                }
+            }
+
             var entity = await _context.LegalDocuments.FindAsync(id);
             if (entity == null) return NotFound(new { message = "Không tìm thấy văn bản QPPL." });
 
@@ -778,6 +483,28 @@ namespace Cdsqg.Api.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(new { message = "Đã xóa văn bản QPPL thành công." });
+        }
+
+        /// <summary>
+        /// DELETE /api/legaldocuments/clear-all
+        /// Xóa toàn bộ văn bản quy phạm pháp luật demo
+        /// </summary>
+        [HttpDelete("clear-all")]
+        public async Task<IActionResult> ClearAllLegalDocuments([FromQuery] string? userRole = null)
+        {
+            if (!string.IsNullOrWhiteSpace(userRole))
+            {
+                bool isAdminUser = userRole.Equals("admin", StringComparison.OrdinalIgnoreCase) || userRole == "1";
+                if (!isAdminUser)
+                {
+                    return StatusCode(403, new { message = "Chỉ tài khoản Cấp 1 (Admin) mới có quyền xóa tất cả văn bản." });
+                }
+            }
+
+            _context.LegalDocuments.RemoveRange(_context.LegalDocuments);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Đã xóa sạch toàn bộ văn bản QPPL demo thành công." });
         }
 
         /// <summary>

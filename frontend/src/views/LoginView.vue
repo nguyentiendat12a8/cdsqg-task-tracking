@@ -8,9 +8,7 @@
       
       <!-- Logo & System Branding -->
       <div class="text-center space-y-3">
-        <div class="w-16 h-16 bg-blue-600 text-white rounded-2xl flex items-center justify-center text-2xl font-bold mx-auto shadow-lg shadow-blue-500/30">
-          CĐS
-        </div>
+        <img src="/logo-cds.jpg" alt="Logo Cục Chuyển đổi số" class="w-16 h-16 rounded-2xl mx-auto shadow-lg object-cover border border-slate-200 bg-white" />
         <div>
           <h1 class="text-xl font-bold text-slate-800">Hệ Thống Theo Dõi Nhiệm Vụ CĐS Quốc Gia</h1>
           <p class="text-xs text-slate-500 mt-1 font-semibold">Vui lòng đăng nhập để truy cập hệ thống quản hành</p>

@@ -77,6 +77,14 @@ namespace Cdsqg.Infrastructure.Data
                               : JsonSerializer.Deserialize<List<AgencyContactPerson>>(v, (JsonSerializerOptions?)null) ?? new List<AgencyContactPerson>()
                       );
 
+                entity.Property(e => e.PlanFiles)
+                      .HasConversion(
+                          v => JsonSerializer.Serialize(v ?? new List<AgencyPlanFile>(), (JsonSerializerOptions?)null),
+                          v => string.IsNullOrWhiteSpace(v)
+                              ? new List<AgencyPlanFile>()
+                              : JsonSerializer.Deserialize<List<AgencyPlanFile>>(v, (JsonSerializerOptions?)null) ?? new List<AgencyPlanFile>()
+                      );
+
                 entity.HasOne(e => e.ParentAgency)
                       .WithMany(a => a.ChildAgencies)
                       .HasForeignKey(e => e.ParentId)

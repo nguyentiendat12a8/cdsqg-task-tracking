@@ -23,7 +23,7 @@
         <AppHeader 
           :user="authState.user.value" 
           @logout="handleLogout" 
-          class="shrink-0 sticky top-0 z-20"
+          class="shrink-0 sticky top-0 z-40"
         />
 
         <!-- Scrollable Dynamic View Content -->
@@ -55,6 +55,9 @@
           <!-- Văn bản Quy Phạm Pháp Luật (VB QPPL) -->
           <LegalDocumentsView v-else-if="currentTab === 'legal-documents'" />
 
+          <!-- Thông tin Kế hoạch & Đầu mối của các đơn vị -->
+          <AgencyPlansView v-else-if="currentTab === 'agency-plans'" />
+
           <!-- Thiết lập chung (Submenus) -->
           <MasterDataView v-else-if="['settings', 'master-data'].includes(currentTab)" />
           <AgencyManagement v-else-if="currentTab === 'agencies'" />
@@ -78,6 +81,7 @@ import ExecutiveDashboard from './views/ExecutiveDashboard.vue';
 import DocumentDetailView from './views/DocumentDetailView.vue';
 import ExecutiveReportsView from './views/ExecutiveReportsView.vue';
 import LegalDocumentsView from './views/LegalDocumentsView.vue';
+import AgencyPlansView from './views/AgencyPlansView.vue';
 import MasterDataView from './views/MasterDataView.vue';
 import AgencyManagement from './components/AgencyManagement.vue';
 import UnitManagement from './components/UnitManagement.vue';
@@ -111,7 +115,7 @@ function parseHashRoute() {
     return;
   }
 
-  if (['goals', 'goals-list', 'goals-grid', 'tasks', 'tasks-list', 'tasks-grid', 'reports', 'legal-documents', 'agencies', 'units', 'users', 'import-history', 'settings', 'master-data'].includes(route)) {
+  if (['goals', 'goals-list', 'goals-grid', 'tasks', 'tasks-list', 'tasks-grid', 'reports', 'legal-documents', 'agency-plans', 'agencies', 'units', 'users', 'import-history', 'settings', 'master-data'].includes(route)) {
     currentTab.value = route;
   } else {
     currentTab.value = 'dashboard';
@@ -147,12 +151,29 @@ async function handleOpenNotificationDetail(event) {
 
   const linkUrl = notif.linkUrl || notif.LinkUrl || '';
   const notifType = notif.type || notif.Type || '';
+  const notifTitle = notif.title || notif.Title || '';
+  const notifMsg = notif.message || notif.Message || '';
+
+  const isApprovalType = notifType === 'PROGRESS_APPROVAL' ||
+                         notifTitle.toLowerCase().includes('chờ duyệt') ||
+                         notifTitle.toLowerCase().includes('phê duyệt') ||
+                         notifMsg.toLowerCase().includes('phê duyệt');
+
+  if (isApprovalType && authState.isAdmin.value) {
+    const isGoal = notifMsg.includes('MT-') || notifTitle.includes('MT-');
+    currentTab.value = isGoal ? 'goals' : 'tasks';
+
+    setTimeout(() => {
+      window.dispatchEvent(new CustomEvent('open-pending-approvals-modal'));
+    }, 150);
+    return;
+  }
 
   const guidMatch = linkUrl.match(/(?:taskId|goalId|itemId)=([a-f0-9-]+)/i) || linkUrl.match(/([a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12})/i);
   const targetId = guidMatch ? guidMatch[1] : null;
 
-  const titleAndMsg = (notif.title || '') + ' ' + (notif.message || '');
-  const codeMatch = titleAndMsg.match(/(NV-\d+|MT-\d+|SUB-\d+)/i);
+  const titleAndMsg = notifTitle + ' ' + notifMsg;
+  const codeMatch = titleAndMsg.match(/(NV-?\d+|MT-?\d+|SUB-?\d+)/i);
   const targetCode = codeMatch ? codeMatch[1].toUpperCase() : null;
 
   const tabParamMatch = linkUrl.match(/[?&](?:tab|initialTab)=([^&]+)/i);

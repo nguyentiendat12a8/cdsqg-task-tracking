@@ -259,7 +259,7 @@ namespace Cdsqg.Api.Controllers
 
         /// <summary>
         /// GET /api/execution/pending-approvals
-        /// Danh sách báo cáo tiến độ đang chờ Cấp 2 phê duyệt.
+        /// Danh sách báo cáo tiến độ đang chờ Cấp 1 (Admin) hoặc Cấp 2 phê duyệt.
         /// </summary>
         [HttpGet("pending-approvals")]
         public async Task<IActionResult> GetPendingApprovals([FromQuery] Guid? parentAgencyId = null)
@@ -268,7 +268,9 @@ namespace Cdsqg.Api.Controllers
             {
                 var query = _context.ProgressLogs
                     .Include(p => p.GoalTaskItem)
+                        .ThenInclude(t => t!.LeadAgency)
                     .Include(p => p.Agency)
+                        .ThenInclude(a => a!.ParentAgency)
                     .Where(p => p.ApprovalStatus == Cdsqg.Core.Enums.ApprovalStatusEnum.Pending);
 
                 if (parentAgencyId.HasValue && parentAgencyId.Value != Guid.Empty)
@@ -290,6 +292,7 @@ namespace Cdsqg.Api.Controllers
                         TaskId = p.GoalTaskId,
                         TaskCode = p.GoalTaskItem != null ? p.GoalTaskItem.Code : string.Empty,
                         TaskTitle = p.GoalTaskItem != null ? p.GoalTaskItem.Title : string.Empty,
+                        IsGeneralTask = p.GoalTaskItem != null && (p.GoalTaskItem.IsGeneralTask || (p.GoalTaskItem.LeadAgency != null && p.GoalTaskItem.LeadAgency.Code == "ALL_AGENCIES")),
                         PeriodYear = p.PeriodYear,
                         PeriodQuarter = p.PeriodQuarter,
                         ActualValue = p.QuantitativeValue,
@@ -302,7 +305,10 @@ namespace Cdsqg.Api.Controllers
                         CalculatedAlert = p.CalculatedAlert,
                         CreatedBy = p.CreatedBy,
                         AgencyId = p.AgencyId,
+                        AgencyCode = p.Agency != null ? p.Agency.Code : string.Empty,
                         AgencyName = p.Agency != null ? p.Agency.Name : string.Empty,
+                        ParentAgencyId = p.Agency != null ? p.Agency.ParentId : null,
+                        ParentAgencyName = p.Agency != null && p.Agency.ParentAgency != null ? p.Agency.ParentAgency.Name : null,
                         ApprovalStatus = p.ApprovalStatus.ToString(),
                         RejectionReason = p.RejectionReason,
                         ApprovedBy = p.ApprovedBy,
@@ -315,6 +321,119 @@ namespace Cdsqg.Api.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = "Lỗi khi lấy danh sách báo cáo chờ duyệt: " + ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// GET /api/execution/tasks/{taskId}/agencies-execution
+        /// Ma trận tiến độ & phê duyệt của tất cả các cơ quan / địa phương cho 1 nhiệm vụ (đặc biệt là Nhiệm vụ chung).
+        /// </summary>
+        [HttpGet("tasks/{taskId:guid}/agencies-execution")]
+        public async Task<IActionResult> GetTaskAgenciesExecution(Guid taskId)
+        {
+            try
+            {
+                var task = await _context.GoalTaskItems
+                    .Include(t => t.LeadAgency)
+                    .FirstOrDefaultAsync(t => t.Id == taskId);
+
+                if (task == null) return NotFound(new { message = "Không tìm thấy nhiệm vụ." });
+
+                var allAgencies = await _context.Agencies
+                    .Include(a => a.ParentAgency)
+                    .Where(a => a.IsActive && a.Code != "ALL_AGENCIES")
+                    .ToListAsync();
+
+                var executions = await _context.AgencyTaskExecutions
+                    .Include(e => e.Agency)
+                        .ThenInclude(a => a!.ParentAgency)
+                    .Where(e => e.GoalTaskId == taskId)
+                    .ToListAsync();
+
+                var pendingLogs = await _context.ProgressLogs
+                    .Where(p => p.GoalTaskId == taskId && p.ApprovalStatus == Cdsqg.Core.Enums.ApprovalStatusEnum.Pending)
+                    .ToListAsync();
+
+                bool isGeneral = task.IsGeneralTask || (task.LeadAgency != null && task.LeadAgency.Code == "ALL_AGENCIES");
+
+                // If general task, include all primary Level 2 agencies (and child agencies if assigned/executing)
+                // If specific task, include lead agency and assigned agency
+                var relevantAgencies = new List<Agency>();
+                if (isGeneral)
+                {
+                    relevantAgencies = allAgencies.Where(a => a.ParentId == null).ToList();
+                    // Add any sub-agencies that have execution records or pending logs
+                    var extraAgencyIds = executions.Select(e => e.AgencyId)
+                        .Union(pendingLogs.Where(p => p.AgencyId.HasValue).Select(p => p.AgencyId!.Value))
+                        .Distinct()
+                        .ToList();
+                    foreach (var extraId in extraAgencyIds)
+                    {
+                        if (!relevantAgencies.Any(a => a.Id == extraId))
+                        {
+                            var extraAg = allAgencies.FirstOrDefault(a => a.Id == extraId);
+                            if (extraAg != null) relevantAgencies.Add(extraAg);
+                        }
+                    }
+                }
+                else
+                {
+                    if (task.LeadAgencyId != Guid.Empty)
+                    {
+                        var leadAg = allAgencies.FirstOrDefault(a => a.Id == task.LeadAgencyId);
+                        if (leadAg != null) relevantAgencies.Add(leadAg);
+                    }
+                    if (task.AssignedAgencyId.HasValue)
+                    {
+                        var assAg = allAgencies.FirstOrDefault(a => a.Id == task.AssignedAgencyId.Value);
+                        if (assAg != null && !relevantAgencies.Any(a => a.Id == assAg.Id)) relevantAgencies.Add(assAg);
+                    }
+                }
+
+                var matrixItems = new List<AgencyExecutionItemDto>();
+
+                foreach (var ag in relevantAgencies)
+                {
+                    var exec = executions.FirstOrDefault(e => e.AgencyId == ag.Id);
+                    var pendingLog = pendingLogs.FirstOrDefault(p => p.AgencyId == ag.Id);
+
+                    var itemDto = new AgencyExecutionItemDto
+                    {
+                        AgencyId = ag.Id,
+                        AgencyName = ag.Name,
+                        AgencyCode = ag.Code,
+                        AgencyType = ag.Type.ToString(),
+                        ParentAgencyId = ag.ParentId,
+                        ParentAgencyName = ag.ParentAgency?.Name,
+                        CalculatedStatus = exec != null ? exec.CalculatedStatus.ToString() : "NotStarted",
+                        ApprovalStatus = pendingLog != null ? "Pending" : (exec != null ? exec.ApprovalStatus.ToString() : "NotReported"),
+                        RejectionReason = exec?.RejectionReason ?? pendingLog?.RejectionReason,
+                        LatestProgressValue = pendingLog?.QuantitativeValue ?? exec?.LatestProgressValue,
+                        LatestQualitativeStatus = pendingLog?.QualitativeStatus?.ToString() ?? exec?.LatestQualitativeStatus?.ToString(),
+                        CompletionPercentage = pendingLog?.CalculatedProgressPercentage ?? exec?.CompletionPercentage ?? 0m,
+                        SummaryNotes = pendingLog?.SummaryNotes ?? exec?.SummaryNotes,
+                        AttachmentFileUrls = (pendingLog?.AttachmentFileUrls?.Count > 0 ? pendingLog.AttachmentFileUrls : exec?.AttachmentFileUrls) ?? new List<string>(),
+                        Deliverables = (pendingLog?.Deliverables?.Count > 0 ? pendingLog.Deliverables : exec?.Deliverables),
+                        LastReportedAt = pendingLog?.LogDate ?? exec?.LastReportedAt,
+                        LastReportedBy = pendingLog?.CreatedBy ?? exec?.LastReportedBy,
+                        PendingProgressLogId = pendingLog?.Id
+                    };
+
+                    matrixItems.Add(itemDto);
+                }
+
+                return Ok(new AgencyTaskExecutionMatrixDto
+                {
+                    TaskId = task.Id,
+                    TaskCode = task.Code,
+                    TaskTitle = task.Title,
+                    IsGeneralTask = isGeneral,
+                    AgencyExecutions = matrixItems
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Lỗi khi lấy ma trận tiến độ các cơ quan: " + ex.Message });
             }
         }
 

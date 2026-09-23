@@ -6,7 +6,7 @@
       <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0">
         <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
           <span>📜</span>
-          <span>{{ isEditing ? 'Chỉnh Sửa Văn Bản Quy Phạm Pháp Luật' : 'Thêm Mới Văn Bản Quy Phạm Pháp Luật' }}</span>
+          <span>{{ isReadOnly ? 'Chi Tiết Văn Bản Quy Phạm Pháp Luật' : (isEditing ? 'Chỉnh Sửa Văn Bản Quy Phạm Pháp Luật' : 'Thêm Mới Văn Bản Quy Phạm Pháp Luật') }}</span>
         </h3>
         <button @click="close" class="text-slate-400 hover:text-slate-700 font-bold text-lg cursor-pointer">✕</button>
       </div>
@@ -14,17 +14,20 @@
       <!-- Modal Form Body -->
       <form @submit.prevent="save" class="p-6 space-y-4 overflow-y-auto flex-1 custom-scrollbar text-xs">
         
+
+
         <!-- Row 1: Số ký hiệu & Loại văn bản -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label class="block font-bold text-slate-700 mb-1">
-              Số Ký Hiệu Văn Bản <span class="text-rose-500">*</span>
+              Số Ký Hiệu Văn Bản <span v-if="!isReadOnly" class="text-rose-500">*</span>
             </label>
             <input 
               v-model="form.code" 
+              :disabled="isReadOnly"
               required 
               placeholder="e.g. 1266/QĐ-TTg, 15/2026/NĐ-CP" 
-              class="w-full font-normal p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              class="w-full font-normal p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-600"
             />
           </div>
 
@@ -34,6 +37,7 @@
               :options="documentTypeOptions" 
               :isMulti="false" 
               :clearable="false"
+              :disabled="isReadOnly"
               label="Loại Văn Bản *" 
             />
           </div>
@@ -44,6 +48,7 @@
               :options="effectStatusOptions" 
               :isMulti="false" 
               :clearable="false"
+              :disabled="isReadOnly"
               label="Trạng Thái Hiệu Lực *" 
             />
           </div>
@@ -52,14 +57,15 @@
         <!-- Row 2: Tên / Trích yếu văn bản -->
         <div>
           <label class="block font-bold text-slate-700 mb-1">
-            Tên / Trích Yếu Nội Dung Văn Bản <span class="text-rose-500">*</span>
+            Tên / Trích Yếu Nội Dung Văn Bản <span v-if="!isReadOnly" class="text-rose-500">*</span>
           </label>
           <textarea 
             v-model="form.title" 
+            :disabled="isReadOnly"
             required 
             rows="2" 
             placeholder="Nhập trích yếu hoặc tên đầy đủ của văn bản quy phạm pháp luật..." 
-            class="w-full font-normal p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            class="w-full font-normal p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-600"
           ></textarea>
         </div>
 
@@ -70,14 +76,14 @@
               v-model="form.issuingAgencyId" 
               :options="issuingAgencyOptions" 
               :isMulti="false" 
-              :disabled="isIssuingAgencyLocked"
+              :disabled="isReadOnly || isIssuingAgencyLocked"
               label="Cơ Quan Ban Hành *" 
               placeholder="Chọn cơ quan ban hành"
             />
-            <p v-if="isIssuingAgencyLocked" class="text-[10px] text-amber-700 mt-1 italic font-medium">
+            <p v-if="!isReadOnly && isIssuingAgencyLocked" class="text-[10px] text-amber-700 mt-1 italic font-medium">
               🔒 Tài khoản Cấp 3: Cơ quan ban hành mặc định cố định là cơ quan của bạn.
             </p>
-            <p v-else-if="isLevel2" class="text-[10px] text-blue-700 mt-1 italic font-medium">
+            <p v-else-if="!isReadOnly && isLevel2" class="text-[10px] text-blue-700 mt-1 italic font-medium">
               🏢 Tài khoản Cấp 2: Chỉ được chọn Bộ/Ngành của bạn hoặc các đơn vị trực thuộc.
             </p>
           </div>
@@ -87,6 +93,7 @@
               v-model="form.draftingAgencyId" 
               :options="agencySelectOptions" 
               :isMulti="false" 
+              :disabled="isReadOnly"
               label="Cơ Quan Dự Thảo" 
               placeholder="Chọn cơ quan dự thảo văn bản"
             />
@@ -99,8 +106,9 @@
             <label class="block font-bold text-slate-700 mb-1">Người Ký</label>
             <input 
               v-model="form.signerName" 
+              :disabled="isReadOnly"
               placeholder="e.g. Trần Lưu Quang" 
-              class="w-full font-normal p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              class="w-full font-normal p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-600"
             />
           </div>
 
@@ -108,8 +116,9 @@
             <label class="block font-bold text-slate-700 mb-1">Chức Danh Người Ký</label>
             <input 
               v-model="form.signerTitle" 
+              :disabled="isReadOnly"
               placeholder="e.g. Phó Thủ tướng, Bộ trưởng" 
-              class="w-full font-normal p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              class="w-full font-normal p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-600"
             />
           </div>
 
@@ -118,7 +127,8 @@
             <input 
               type="date" 
               v-model="form.issuedDate" 
-              class="w-full font-normal p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              :disabled="isReadOnly"
+              class="w-full font-normal p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-600"
             />
           </div>
 
@@ -127,7 +137,8 @@
             <input 
               type="date" 
               v-model="form.effectiveDate" 
-              class="w-full font-normal p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              :disabled="isReadOnly"
+              class="w-full font-normal p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-600"
             />
           </div>
         </div>
@@ -139,6 +150,7 @@
               v-model="form.field" 
               :options="fieldOptions" 
               :isMulti="false" 
+              :disabled="isReadOnly"
               label="Lĩnh Vực / Nhóm Chuyển Đổi Số" 
               placeholder="Chọn lĩnh vực"
             />
@@ -149,6 +161,7 @@
               v-model="form.scope" 
               :options="scopeOptions" 
               :isMulti="false" 
+              :disabled="isReadOnly"
               label="Phạm Vi Áp Dụng" 
             />
           </div>
@@ -162,8 +175,8 @@
             </label>
           </div>
 
-          <!-- Upload Bar -->
-          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-white p-2.5 rounded-xl border border-slate-200">
+          <!-- Upload Bar (Admin only) -->
+          <div v-if="!isReadOnly" class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-white p-2.5 rounded-xl border border-slate-200">
             <input 
               type="file" 
               ref="fileInputRef" 
@@ -215,6 +228,7 @@
               </div>
 
               <button 
+                v-if="!isReadOnly"
                 type="button" 
                 @click="removeAttachment(idx)" 
                 class="text-rose-500 hover:text-rose-700 font-bold px-2 py-1 hover:bg-rose-50 rounded transition text-xs shrink-0 cursor-pointer"
@@ -225,7 +239,7 @@
           </div>
 
           <p v-else class="text-center text-slate-400 italic text-xs py-2">
-            Chưa có tệp văn bản đính kèm nào. Vui lòng chọn tệp và nhấn nút Tải tệp lên ở trên.
+            Chưa có tệp văn bản đính kèm nào.
           </p>
         </div>
 
@@ -234,28 +248,39 @@
           <label class="block font-bold text-slate-700 mb-1">Ghi Chú Chi Tiết</label>
           <textarea 
             v-model="form.notes" 
+            :disabled="isReadOnly"
             rows="2" 
             placeholder="Ghi chú thêm thông tin văn bản..." 
-            class="w-full font-normal p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            class="w-full font-normal p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-600"
           ></textarea>
         </div>
 
         <!-- Modal Footer Actions -->
         <div class="pt-3 border-t border-slate-200 flex items-center justify-end gap-3">
           <button 
+            v-if="isReadOnly"
             type="button" 
             @click="close" 
-            class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition cursor-pointer"
+            class="px-5 py-2 bg-slate-700 hover:bg-slate-800 text-white font-bold rounded-xl shadow-xs transition cursor-pointer"
           >
-            Hủy
+            Đóng
           </button>
-          <button 
-            type="submit" 
-            :disabled="isSubmitting"
-            class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-sm transition disabled:opacity-50 cursor-pointer"
-          >
-            {{ isSubmitting ? 'Đang lưu...' : (isEditing ? 'Cập Nhật Văn Bản' : 'Tạo Mới Văn Bản') }}
-          </button>
+          <template v-else>
+            <button 
+              type="button" 
+              @click="close" 
+              class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition cursor-pointer"
+            >
+              Hủy
+            </button>
+            <button 
+              type="submit" 
+              :disabled="isSubmitting"
+              class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-sm transition disabled:opacity-50 cursor-pointer"
+            >
+              {{ isSubmitting ? 'Đang lưu...' : (isEditing ? 'Cập Nhật Văn Bản' : 'Tạo Mới Văn Bản') }}
+            </button>
+          </template>
         </div>
 
       </form>
@@ -275,12 +300,14 @@ import { openFileInNewWindow } from '../utils/fileViewer';
 const props = defineProps({
   isOpen: { type: Boolean, default: false },
   editingDocument: { type: Object, default: null },
-  agencies: { type: Array, default: () => [] }
+  agencies: { type: Array, default: () => [] },
+  readOnly: { type: Boolean, default: false }
 });
 
 const emit = defineEmits(['close', 'saved']);
 
 const isEditing = computed(() => !!props.editingDocument);
+const isReadOnly = computed(() => props.readOnly || !authState.isAdmin.value);
 const isSubmitting = ref(false);
 const isUploading = ref(false);
 

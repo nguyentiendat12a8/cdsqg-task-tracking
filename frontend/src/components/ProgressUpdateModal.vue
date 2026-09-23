@@ -19,7 +19,7 @@
             <span class="text-base leading-none">⏳</span>
             <div>
               <strong class="font-bold">Nhiệm vụ này đang ở trạng thái Chờ duyệt:</strong>
-              <span class="font-medium text-amber-950 block mt-0.5"> Báo cáo tiến độ trước đó đang chờ Cấp 2 xem xét phê duyệt hoặc từ chối. Bạn không thể gửi báo cáo tiến độ mới cho tới khi cấp trên duyệt xong.</span>
+              <span class="font-medium text-amber-950 block mt-0.5"> Báo cáo tiến độ trước đó đang chờ Cấp 1 (Admin) xem xét phê duyệt hoặc từ chối. Bạn không thể gửi báo cáo tiến độ mới cho tới khi cấp trên duyệt xong.</span>
             </div>
           </div>
 
@@ -649,6 +649,8 @@ async function submitProgress() {
     if (response.ok) {
       const data = await response.json();
       toast.success("Lưu thành công!");
+      window.dispatchEvent(new CustomEvent('notification-sent'));
+      window.dispatchEvent(new CustomEvent('progress-report-submitted'));
       emit('submitted', data);
       close();
     } else {

@@ -21,26 +21,20 @@
             <span>Xuất Excel Danh Sách</span>
           </button>
 
-          <!-- Progress Report Import/Export Template (Reporting Agency Users Only, NOT Admin) -->
-          <template v-if="!authState.isAdmin.value">
-            <button 
-              @click="handleExportProgressReport"
-              class="px-3.5 py-2 text-slate-700 hover:text-slate-900 font-bold text-xs rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200/80 transition shadow-2xs flex items-center gap-1.5 cursor-pointer"
-              title="Xuất file mẫu Excel báo cáo tiến độ để điền thông tin"
-            >
-              <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-              <span>Xuất Excel Báo Cáo Tiến Độ</span>
-            </button>
 
-            <button 
-              @click="isProgressImportModalOpen = true"
-              class="px-3.5 py-2 text-emerald-800 hover:text-emerald-950 font-bold text-xs rounded-xl bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 transition shadow-2xs flex items-center gap-1.5 cursor-pointer"
-              title="Import file Excel chứa tiến độ thực hiện mới vào hệ thống"
-            >
-              <svg class="w-4 h-4 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-              <span>Import Báo Cáo Tiến Độ</span>
-            </button>
-          </template>
+
+          <button 
+            v-if="authState.isAdmin.value"
+            @click="openPendingApprovalsModal"
+            class="px-3.5 py-2 text-amber-950 font-bold text-xs rounded-xl bg-amber-100 hover:bg-amber-200 border border-amber-300 transition shadow-2xs flex items-center gap-1.5 cursor-pointer relative"
+            title="Xem danh sách báo cáo tiến độ chờ phê duyệt"
+          >
+            <span class="text-amber-700">⏳</span>
+            <span>Duyệt Báo Cáo Tiến Độ</span>
+            <span v-if="globalPendingLogs?.length > 0" class="ml-1 px-2 py-0.5 bg-amber-600 text-white rounded-full text-[10px] font-bold animate-pulse">
+              {{ globalPendingLogs.length }}
+            </span>
+          </button>
 
           <button 
             v-if="authState.isAdmin.value"
@@ -193,7 +187,7 @@
                   {{ filterItemType === 'Goal' ? 'Tên Mục Tiêu' : (filterItemType === 'Task' ? 'Tên Nhiệm Vụ' : 'Tên Mục Tiêu / Nhiệm Vụ') }}
                 </th>
                 <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[180px] w-[180px] max-w-[180px]">Cơ Quan Chủ Trì</th>
-                <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[190px] w-[190px] max-w-[190px]">Giao Đơn Vị Trực Thuộc</th>
+                <th v-if="isLeadAgencyFilteredByBKHCN" class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[180px] w-[180px] max-w-[180px]">Giao Đơn Vị Trực Thuộc</th>
                 <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[180px] w-[180px] max-w-[180px]">Cơ Quan Phối Hợp</th>
                 <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 whitespace-nowrap min-w-[160px] w-[160px] max-w-[160px]">Thời Gian thực hiện</th>
                 <th class="px-3 py-2.5 border-r border-slate-200 text-center bg-slate-100 min-w-[125px] w-[125px] max-w-[125px]">Tiến Độ</th>
@@ -231,8 +225,8 @@
                   <td class="px-3 py-2.5 border-r border-slate-200 font-normal text-slate-700 text-xs leading-relaxed min-w-[180px] w-[180px] max-w-[180px]">
                     {{ item.leadAgencyName }}
                   </td>
-                  <td class="px-3 py-2.5 border-r border-slate-200 font-normal text-slate-700 text-xs leading-relaxed min-w-[190px] w-[190px] max-w-[190px]" @click.stop>
-                    <span v-if="item.assignedAgencyName" class="text-slate-700 font-normal" :title="`Đã giao cho: ${item.assignedAgencyName}`">
+                  <td v-if="isLeadAgencyFilteredByBKHCN" class="px-3 py-2.5 border-r border-slate-200 font-normal text-slate-700 text-xs leading-relaxed min-w-[180px] w-[180px] max-w-[180px]">
+                    <span v-if="item.assignedAgencyName" class="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-semibold text-[11px] border border-blue-100 inline-block">
                       {{ item.assignedAgencyName }}
                     </span>
                     <span v-else class="text-slate-400 italic">—</span>
@@ -387,8 +381,8 @@
                   <td class="px-3 py-2 border-r border-slate-200 font-normal text-slate-700 min-w-[180px] w-[180px] max-w-[180px]">
                     {{ sub.leadAgencyName }}
                   </td>
-                  <td class="px-3 py-2 border-r border-slate-200 font-normal text-slate-700 text-xs min-w-[190px] w-[190px] max-w-[190px]" @click.stop>
-                    <span v-if="sub.assignedAgencyName" class="text-slate-700 font-normal" :title="`Đã giao cho: ${sub.assignedAgencyName}`">
+                  <td v-if="isLeadAgencyFilteredByBKHCN" class="px-3 py-2 border-r border-slate-200 font-normal text-slate-700 text-xs leading-relaxed min-w-[180px] w-[180px] max-w-[180px]">
+                    <span v-if="sub.assignedAgencyName" class="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-semibold text-[11px] border border-blue-100 inline-block">
                       {{ sub.assignedAgencyName }}
                     </span>
                     <span v-else class="text-slate-400 italic">—</span>
@@ -494,7 +488,7 @@
               </template>
 
               <tr v-if="paginatedPrimaryList.length === 0">
-                <td colspan="8" class="p-8 text-center text-slate-400 font-semibold italic">
+                <td :colspan="isLeadAgencyFilteredByBKHCN ? 9 : 8" class="p-8 text-center text-slate-400 font-semibold italic">
                   Không tìm thấy dữ liệu phù hợp.
                 </td>
               </tr>
@@ -1049,6 +1043,153 @@
       @close="isProgressImportModalOpen = false"
       @imported="handleProgressImported"
     />
+    <!-- Pending Approvals System Modal for Admin (Cấp 1) -->
+    <div v-if="isPendingApprovalsModalOpen" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 font-sans">
+      <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-5xl w-full p-5 sm:p-6 space-y-4 max-h-[90vh] flex flex-col">
+        
+        <!-- Modal Header -->
+        <div class="flex items-start justify-between border-b border-slate-100 pb-3 shrink-0">
+          <div>
+            <h3 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
+              <span class="p-1.5 bg-amber-100 text-amber-800 rounded-xl text-sm">⏳</span>
+              Danh Sách Báo Cáo Tiến Độ Chờ Phê Duyệt
+            </h3>
+          </div>
+          <button @click="isPendingApprovalsModalOpen = false" class="p-1.5 text-slate-400 hover:text-slate-700 bg-slate-100 rounded-xl transition cursor-pointer">✕</button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="flex-1 overflow-y-auto custom-scrollbar space-y-3.5 pr-1">
+          <LoadingSpinner v-if="isLoadingPendingLogs" text="Đang tải danh sách báo cáo chờ duyệt..." padding="py-8" />
+
+          <div v-else-if="!globalPendingLogs || globalPendingLogs.length === 0" class="p-10 text-center bg-slate-50 rounded-2xl border border-slate-200 text-slate-400 text-xs font-semibold italic">
+            🎉 Không có báo cáo tiến độ nào đang chờ phê duyệt!
+          </div>
+
+          <div v-else class="space-y-3">
+            <div 
+              v-for="log in globalPendingLogs" 
+              :key="log.id" 
+              class="bg-white rounded-2xl border border-amber-200/90 p-4 shadow-2xs hover:shadow-md transition-all space-y-3"
+            >
+              <!-- Card Top Row: Agency Flow & Task Code -->
+              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-2.5">
+                <div class="min-w-0">
+                  <div class="flex items-center gap-2 flex-wrap">
+                    <span class="text-xs font-bold text-slate-900 bg-slate-100 px-2.5 py-1 rounded-lg border border-slate-200">
+                      🏛️ {{ log.agencyName || 'Cơ quan gửi báo cáo' }}
+                    </span>
+                    <span v-if="log.parentAgencyName" class="text-xs text-slate-700 font-bold flex items-center gap-1">
+                      ➔ Thuộc {{ log.parentAgencyName }}
+                    </span>
+                    <span v-if="log.isGeneralTask" class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
+                      🌐 Nhiệm vụ chung
+                    </span>
+                  </div>
+                  <h4 class="text-xs sm:text-sm font-normal text-slate-800 mt-1.5 leading-relaxed">
+                    [{{ log.taskCode }}] {{ log.taskTitle }}
+                  </h4>
+                </div>
+
+                <span class="text-[11px] font-semibold text-slate-400 shrink-0">
+                  🕒 {{ formatDateTime(log.logDate) }}
+                </span>
+              </div>
+
+              <!-- Card Body: Reported Progress, Notes, Files -->
+              <div class="grid grid-cols-1 md:grid-cols-12 gap-4 text-xs font-semibold text-slate-700">
+                <div class="md:col-span-4 bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
+                  <span class="text-[10px] font-bold text-slate-400 uppercase block">Tiến độ báo cáo</span>
+                  <div class="text-sm font-bold text-blue-700">{{ log.completionPercentage || 0 }}% hoàn thành</div>
+                  <div v-if="log.actualValue !== null && log.actualValue !== undefined" class="text-slate-600 text-[11px]">Giá trị thực tế: <strong>{{ log.actualValue }}</strong></div>
+                  <div v-if="log.status" class="text-slate-600 text-[11px]">Trạng thái: <strong>{{ getStatusLabel(log.status) }}</strong></div>
+                </div>
+
+                <div class="md:col-span-8 bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5">
+                  <span class="text-[10px] font-bold text-slate-400 uppercase block">Diễn giải / File minh chứng</span>
+                  <p v-if="log.summaryNotes" class="text-slate-800 text-xs font-normal leading-relaxed">{{ log.summaryNotes }}</p>
+                  <span v-else class="text-slate-400 italic font-normal block text-[11px]">Không có ghi chú diễn giải.</span>
+
+                  <div v-if="log.attachmentFileUrls?.length" class="pt-1 flex flex-wrap items-center gap-2">
+                    <a v-for="(fileUrl, fIdx) in log.attachmentFileUrls" :key="fIdx" :href="getApiUrl(fileUrl)" target="_blank" class="px-2.5 py-1 bg-white hover:bg-blue-50 text-blue-700 font-bold text-[11px] rounded-lg border border-blue-200 shadow-2xs transition inline-flex items-center gap-1">
+                      📎 {{ formatFileName(fileUrl) }}
+                    </a>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card Actions: Approve / Reject buttons -->
+              <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+                <button 
+                  @click="handleApproveFromGlobalList(log.id)" 
+                  class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-2xs transition cursor-pointer flex items-center gap-1"
+                >
+                  ✓ Phê Duyệt
+                </button>
+                <button 
+                  @click="openRejectModalFromGlobalList(log.id)" 
+                  class="px-4 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-2xs transition cursor-pointer flex items-center gap-1"
+                >
+                  ✕ Từ Chối Phê Duyệt
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Rejection Reason Custom Modal Popup -->
+    <div 
+      v-if="isRejectModalOpen" 
+      class="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 font-sans"
+      @click.self="isRejectModalOpen = false"
+    >
+      <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-5 sm:p-6 space-y-4">
+        <!-- Modal Header -->
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <h3 class="text-base font-bold text-rose-700 flex items-center gap-2">
+            <span class="p-1.5 bg-rose-100 text-rose-700 rounded-xl text-sm">❌</span>
+            Từ Chối Phê Duyệt Báo Cáo
+          </h3>
+          <button 
+            @click="isRejectModalOpen = false" 
+            class="p-1.5 text-slate-400 hover:text-slate-700 bg-slate-100 rounded-xl transition cursor-pointer"
+          >
+            ✕
+          </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="space-y-2">
+          <label class="block text-xs font-bold text-slate-700">
+            Nhập lý do từ chối phê duyệt báo cáo tiến độ này: <span class="text-rose-500">*</span>
+          </label>
+          <textarea 
+            v-model="rejectionReason" 
+            rows="3" 
+            placeholder="Nhập lý do cụ thể..." 
+            class="w-full text-xs font-medium p-3 bg-slate-50 border border-slate-300 rounded-xl focus:ring-2 focus:ring-rose-500 focus:outline-none transition leading-relaxed"
+          ></textarea>
+        </div>
+
+        <!-- Modal Actions -->
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
+          <button 
+            @click="isRejectModalOpen = false" 
+            class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer"
+          >
+            Hủy bỏ
+          </button>
+          <button 
+            @click="confirmRejectFromGlobalList" 
+            class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-2xs transition cursor-pointer flex items-center gap-1"
+          >
+            ✕ Xác Nhận Từ Chối
+          </button>
+        </div>
+      </div>
+    </div>
 
   </div>
 </template>
@@ -1410,6 +1551,27 @@ function formatDate(dateInput) {
   }
 }
 
+function formatDateTime(dateInput) {
+  if (!dateInput) return '—';
+  try {
+    let str = String(dateInput).trim();
+    if (!str) return '—';
+    if (str.includes('T') && !str.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(str)) {
+      str += 'Z';
+    }
+    const d = new Date(str);
+    if (isNaN(d.getTime())) return String(dateInput);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${hours}:${minutes} ${day}/${month}/${year}`;
+  } catch {
+    return String(dateInput);
+  }
+}
+
 function formatDateRange(sDate, dDate) {
   if (!sDate && !dDate) return '—';
   const s = sDate ? formatDate(sDate) : '...';
@@ -1417,16 +1579,36 @@ function formatDateRange(sDate, dDate) {
   return `${s} ➔ ${d}`;
 }
 
+function formatFileName(fullPath) {
+  if (!fullPath) return 'Tệp đính kèm';
+  const cleanPath = fullPath.split('?')[0];
+  const parts = cleanPath.split(/[/\\]/);
+  const name = parts[parts.length - 1];
+  const guidMatch = name.match(/^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}_(.+)$/);
+  if (guidMatch && guidMatch[1]) {
+    return guidMatch[1];
+  }
+  return name || 'Tệp đính kèm';
+}
+
 function getStatusLabel(st) {
+  if (!st) return 'Chưa thực hiện';
   const map = {
-    'NotStarted': '1. Chưa thực hiện',
-    'InProgressOnTime': '2. Đang thực hiện (trong hạn)',
-    'InProgressOverdue': '3. Đang thực hiện (quá hạn)',
-    'CompletedOnTime': '4. Hoàn thành (đúng hạn)',
-    'CompletedOverdue': '5. Hoàn thành (quá hạn)',
-    'ExpiringSoon': '6. Sắp hết hạn'
+    'NotStarted': 'Chưa thực hiện',
+    'InProgress': 'Đang thực hiện',
+    'InProgressOnTime': 'Đang thực hiện (trong hạn)',
+    'InProgressOverdue': 'Đang thực hiện (quá hạn)',
+    'Completed': 'Hoàn thành',
+    'CompletedOnTime': 'Hoàn thành (đúng hạn)',
+    'CompletedOverdue': 'Hoàn thành (quá hạn)',
+    'ExpiringSoon': 'Sắp hết hạn',
+    'Drafting': 'Đang xây dựng / soạn thảo',
+    'Reviewing': 'Đang thẩm định / xin ý kiến',
+    'PendingApproval': 'Chờ phê duyệt',
+    'Approved': 'Đã phê duyệt',
+    'Rejected': 'Bị từ chối'
   };
-  return map[st] || st || 'Chưa thực hiện';
+  return map[st] || st;
 }
 
 function getStatusBadgeClass(st) {
@@ -1980,9 +2162,45 @@ const assignSubAgencyOptions = computed(() => {
   return agencies.value.filter(a => a.parentId != null && a.type !== 4 && a.type !== 'Other');
 });
 
+const isBKHCNAgency = computed(() => {
+  const userAgencyId = authState.user.value?.agencyId ? String(authState.user.value.agencyId).toLowerCase() : '';
+  const userAgency = agencies.value.find(a => String(a.id).toLowerCase() === userAgencyId);
+  const agName = (userAgency?.name || authState.user.value?.agencyName || '').toLowerCase();
+  const agCode = (userAgency?.code || authState.user.value?.agencyCode || '').toLowerCase();
+  return agCode === 'bkhcn' || agName.includes('khoa học và công nghệ') || agName.includes('khoa học & công nghệ') || agName.includes('khoa học công nghệ');
+});
+
+const isLeadAgencyFilteredByBKHCN = computed(() => {
+  const selectedIds = appliedFilters.value.selectedAgencyIds || [];
+  if (selectedIds.length === 0) return false;
+
+  return selectedIds.some(id => {
+    const ag = agencies.value.find(a => a.id === id);
+    if (!ag) return false;
+    const code = (ag.code || '').toLowerCase();
+    const name = (ag.name || '').toLowerCase();
+    return code === 'bkhcn' || name.includes('khoa học và công nghệ') || name.includes('khoa học & công nghệ') || name.includes('khoa học công nghệ');
+  });
+});
+
+function isItemLeadByBKHCN(item) {
+  if (!item) return false;
+  const name = (item.leadAgencyName || '').toLowerCase();
+  const code = (item.leadAgencyCode || '').toLowerCase();
+  return code === 'bkhcn' || name.includes('khoa học và công nghệ') || name.includes('khoa học & công nghệ') || name.includes('khoa học công nghệ');
+}
+
 function canAssignTask(item) {
   if (!item) return false;
+
+  // Nút giao đơn vị trực thuộc chỉ hiển thị khi cơ quan chủ trì là Bộ Khoa học và Công nghệ
+  if (!isItemLeadByBKHCN(item)) return false;
+
   if (authState.isAdmin.value) return true;
+
+  // Cấp 2: Nếu không phải Admin, user đăng nhập phải thuộc Bộ Khoa học và Công nghệ
+  if (!isBKHCNAgency.value) return false;
+
   const userAgencyId = authState.user.value?.agencyId || authState.user.value?.agency?.id;
   if (userAgencyId && (String(userAgencyId).toLowerCase() === String(item.leadAgencyId).toLowerCase() || item.isGeneralTask || item.leadAgencyCode === 'ALL_AGENCIES')) {
     return true;
@@ -2275,18 +2493,134 @@ async function submitEditItem() {
   }
 }
 
+const globalPendingLogs = ref([]);
+const isPendingApprovalsModalOpen = ref(false);
+const isLoadingPendingLogs = ref(false);
+
+const isRejectModalOpen = ref(false);
+const rejectLogId = ref(null);
+const rejectionReason = ref('');
+
+async function loadGlobalPendingLogs() {
+  if (!authState.isAdmin.value) return;
+  isLoadingPendingLogs.value = true;
+  try {
+    const res = await fetch(getApiUrl('/api/execution/pending-approvals'));
+    if (res.ok) {
+      globalPendingLogs.value = await res.json();
+    } else {
+      globalPendingLogs.value = [];
+    }
+  } catch {
+    globalPendingLogs.value = [];
+  } finally {
+    isLoadingPendingLogs.value = false;
+  }
+}
+
+function openPendingApprovalsModal() {
+  isPendingApprovalsModalOpen.value = true;
+  loadGlobalPendingLogs();
+}
+
+async function handleApproveFromGlobalList(logId) {
+  if (!logId) return;
+  try {
+    const res = await fetch(getApiUrl(`/api/execution/approve/${logId}`), { method: 'POST' });
+    if (res.ok) {
+      toast.success('Đã phê duyệt báo cáo tiến độ thành công!');
+      try {
+        await loadGlobalPendingLogs();
+        if (typeof loadData === 'function') await loadData();
+      } catch (e) {
+        console.error('Error refreshing after approve:', e);
+      }
+    } else {
+      toast.error('Phê duyệt thất bại.');
+    }
+  } catch (err) {
+    console.error('Approve error:', err);
+    toast.error('Lỗi khi phê duyệt báo cáo.');
+  }
+}
+
+function openRejectModalFromGlobalList(logId) {
+  if (!logId) return;
+  rejectLogId.value = logId;
+  rejectionReason.value = 'Chưa đạt yêu cầu';
+  isRejectModalOpen.value = true;
+}
+
+async function confirmRejectFromGlobalList() {
+  if (!rejectLogId.value) return;
+  try {
+    const res = await fetch(getApiUrl(`/api/execution/reject/${rejectLogId.value}`), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reason: rejectionReason.value || 'Chưa đạt yêu cầu' })
+    });
+    if (res.ok) {
+      toast.info('Đã từ chối báo cáo tiến độ.');
+      isRejectModalOpen.value = false;
+      rejectLogId.value = null;
+      try {
+        await loadGlobalPendingLogs();
+        if (typeof loadData === 'function') await loadData();
+      } catch (e) {
+        console.error('Error refreshing after reject:', e);
+      }
+    } else {
+      toast.error('Từ chối thất bại.');
+    }
+  } catch (err) {
+    console.error('Reject error:', err);
+    toast.error('Lỗi khi từ chối báo cáo.');
+  }
+}
+
+let globalPendingPollTimer = null;
+
+function handlePendingLogsUpdate() {
+  if (authState.isAdmin.value) {
+    loadGlobalPendingLogs();
+  }
+}
+
 function handleTargetItemDetailEvent(e) {
-  if (e.detail && e.detail.item) {
-    openItemDetailModal(e.detail.item, e.detail.initialTab || 'notifications');
+  if (e && e.detail && e.detail.item) {
+    const item = e.detail.item;
+    const initialTab = e.detail.initialTab || 'notifications';
+    openItemDetailModal(item, initialTab);
+  }
+}
+
+function handleOpenPendingApprovalsModalEvent() {
+  if (authState.isAdmin.value) {
+    loadGlobalPendingLogs();
+    isPendingApprovalsModalOpen.value = true;
   }
 }
 
 onMounted(() => {
   loadData();
+  if (authState.isAdmin.value) {
+    loadGlobalPendingLogs();
+    globalPendingPollTimer = setInterval(loadGlobalPendingLogs, 5000);
+  }
   window.addEventListener('open-target-item-detail', handleTargetItemDetailEvent);
+  window.addEventListener('open-pending-approvals-modal', handleOpenPendingApprovalsModalEvent);
+  window.addEventListener('notification-sent', handlePendingLogsUpdate);
+  window.addEventListener('progress-report-submitted', handlePendingLogsUpdate);
 });
 
 onUnmounted(() => {
+  if (globalPendingPollTimer) {
+    clearInterval(globalPendingPollTimer);
+    globalPendingPollTimer = null;
+  }
   window.removeEventListener('open-target-item-detail', handleTargetItemDetailEvent);
+  window.removeEventListener('open-pending-approvals-modal', handleOpenPendingApprovalsModalEvent);
+  window.removeEventListener('notification-sent', handlePendingLogsUpdate);
+  window.removeEventListener('progress-report-submitted', handlePendingLogsUpdate);
 });
 </script>

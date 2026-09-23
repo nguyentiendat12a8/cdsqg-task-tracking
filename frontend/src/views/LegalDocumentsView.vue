@@ -10,7 +10,7 @@
           </span>
           <div>
             <h2 class="text-sm sm:text-base font-bold text-slate-800">
-              Tra Cứu & Quản Lý Văn Bản Quy Phạm Pháp Luật
+              Hệ thống văn bản chuyển đổi số
             </h2>
             <p class="text-xs text-slate-500">Lưu trữ, đính kèm tệp và theo dõi hiệu lực văn bản pháp luật</p>
           </div>
@@ -26,7 +26,9 @@
             <span>Xuất Báo Cáo Excel</span>
           </button>
 
+
           <button 
+            v-if="authState.isAdmin.value"
             @click="openCreateModal"
             class="px-3.5 py-2 text-white font-bold text-xs rounded-xl bg-blue-600 hover:bg-blue-700 transition shadow-sm flex items-center gap-1.5 cursor-pointer"
           >
@@ -224,6 +226,14 @@
               <td class="px-3.5 py-3 text-center whitespace-nowrap">
                 <div class="inline-flex items-center justify-center gap-1">
                   <button 
+                    @click="openViewModal(item)" 
+                    class="p-1.5 text-slate-600 hover:text-blue-600 hover:bg-slate-100 rounded-lg transition inline-flex items-center cursor-pointer" 
+                    title="Xem chi tiết văn bản"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                  </button>
+                  <button 
+                    v-if="authState.isAdmin.value"
                     @click="openEditModal(item)" 
                     class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition inline-flex items-center cursor-pointer" 
                     title="Chỉnh sửa văn bản"
@@ -231,6 +241,7 @@
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                   </button>
                   <button 
+                    v-if="authState.isAdmin.value"
                     @click="handleDelete(item)" 
                     class="p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg transition inline-flex items-center cursor-pointer" 
                     title="Xóa văn bản"
@@ -298,6 +309,7 @@
       :isOpen="isModalOpen" 
       :editingDocument="selectedDocument" 
       :agencies="agencies"
+      :readOnly="isReadOnlyModal"
       @close="isModalOpen = false" 
       @saved="fetchDocuments" 
     />
@@ -336,6 +348,7 @@ const totalCount = ref(0);
 const totalPages = ref(1);
 
 const isModalOpen = ref(false);
+const isReadOnlyModal = ref(false);
 const selectedDocument = ref(null);
 
 const isFileViewerOpen = ref(false);
@@ -470,16 +483,53 @@ function changePage(p) {
 
 function openCreateModal() {
   selectedDocument.value = null;
+  isReadOnlyModal.value = false;
   isModalOpen.value = true;
 }
 
 function openEditModal(doc) {
   selectedDocument.value = doc;
+  isReadOnlyModal.value = false;
+  isModalOpen.value = true;
+}
+
+function openViewModal(doc) {
+  selectedDocument.value = doc;
+  isReadOnlyModal.value = true;
   isModalOpen.value = true;
 }
 
 function openFileViewer(fileItem) {
   openFileInNewWindow(fileItem);
+}
+
+async function handleClearAll() {
+  const confirmed = await confirmModal({
+    title: 'Xóa sạch dữ liệu văn bản demo',
+    message: 'Bạn có chắc chắn muốn xóa TOÀN BỘ văn bản QPPL hiện tại để bắt đầu nhập dữ liệu thật không? Thao tác này không thể hoàn tác.',
+    confirmText: 'Xóa toàn bộ',
+    cancelText: 'Hủy',
+    type: 'danger'
+  });
+
+  if (!confirmed) return;
+
+  try {
+    const userRoleStr = authState.user.value?.role || (authState.isAdmin.value ? 'Admin' : 'Level2');
+    const res = await fetch(getApiUrl(`/api/legaldocuments/clear-all?userRole=${encodeURIComponent(userRoleStr)}`), {
+      method: 'DELETE'
+    });
+
+    if (res.ok) {
+      toast.success('Đã xóa sạch toàn bộ văn bản demo thành công!');
+      fetchDocuments();
+    } else {
+      const err = await res.json().catch(() => ({}));
+      toast.error(err.message || 'Lỗi khi xóa dữ liệu.');
+    }
+  } catch (err) {
+    toast.error('Lỗi khi gửi yêu cầu xóa.');
+  }
 }
 
 async function handleDelete(doc) {

@@ -12,6 +12,16 @@
 
       <div class="flex items-center gap-2 shrink-0">
         <button 
+          v-if="authState.isAdmin.value"
+          @click="handleClearDemoData" 
+          class="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+          title="Xóa toàn bộ dữ liệu mẫu / demo để sẵn sàng nạp dữ liệu thật"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+          <span>Xóa Dữ Liệu Mẫu</span>
+        </button>
+
+        <button 
           @click="exportExcel" 
           class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs"
           title="Xuất bảng này ra file Excel"
@@ -197,12 +207,15 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue';
+import { toast } from 'vue3-toastify';
+import 'vue3-toastify/dist/index.css';
 import SearchableSelect from './SearchableSelect.vue';
 import { exportToExcel } from '../utils/excelExport';
 import LoadingSpinner from './LoadingSpinner.vue';
 import OverlayPanel from './OverlayPanel.vue';
 import { getApiUrl } from '../config/api';
 import { authState } from '../services/auth';
+import { confirmModal } from '../services/confirm';
 
 const importCategoryOptions = ref([
   { value: 'Minh chứng quyết định', label: 'Minh chứng quyết định' },
@@ -477,4 +490,33 @@ onMounted(() => {
   loadSavedQuery();
   loadImportHistory();
 });
+
+async function handleClearDemoData() {
+  const confirmed = await confirmModal({
+    title: 'Xóa toàn bộ dữ liệu mẫu (Demo)',
+    message: 'Bạn có chắc chắn muốn xóa toàn bộ dữ liệu mẫu (Mục tiêu, Nhiệm vụ, Báo cáo tiến độ, Đôn đốc, VB QPPL)? Tất cả Cài đặt chung (Cơ quan, Đơn vị tính, Tài khoản) sẽ được giữ nguyên.',
+    confirmText: 'Xóa dữ liệu mẫu',
+    cancelText: 'Hủy bỏ',
+    type: 'danger'
+  });
+
+  if (!confirmed) return;
+
+  try {
+    const res = await fetch(getApiUrl('/api/masterdata/clear-demo-data'), {
+      method: 'POST'
+    });
+
+    if (res.ok) {
+      await loadImportHistory();
+      window.location.reload();
+    } else {
+      const data = await res.json().catch(() => ({}));
+      toast.error(data.error || 'Lỗi khi xóa dữ liệu demo.');
+    }
+  } catch (err) {
+    console.error('Clear demo data error:', err);
+    toast.error('Lỗi kết nối khi xóa dữ liệu demo.');
+  }
+}
 </script>

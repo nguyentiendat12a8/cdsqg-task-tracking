@@ -40,6 +40,7 @@ namespace Cdsqg.Application.DTOs
         public List<IFormFile>? EvidenceFiles { get; set; }
         public List<string>? ExistingFiles { get; set; }
         public string? CreatedBy { get; set; } = "Chuyên viên theo dõi";
+        public string? UserRole { get; set; }
         public Guid? AgencyId { get; set; }
     }
 
@@ -73,6 +74,7 @@ namespace Cdsqg.Application.DTOs
         public Guid TaskId { get; set; }
         public string TaskCode { get; set; } = string.Empty;
         public string TaskTitle { get; set; } = string.Empty;
+        public bool IsGeneralTask { get; set; }
         public int PeriodYear { get; set; }
         public int PeriodQuarter { get; set; }
         public decimal? ActualValue { get; set; }
@@ -85,7 +87,10 @@ namespace Cdsqg.Application.DTOs
         public AlertStatusEnum CalculatedAlert { get; set; }
         public string CreatedBy { get; set; } = string.Empty;
         public Guid? AgencyId { get; set; }
+        public string AgencyCode { get; set; } = string.Empty;
         public string AgencyName { get; set; } = string.Empty;
+        public Guid? ParentAgencyId { get; set; }
+        public string? ParentAgencyName { get; set; }
 
         public string ApprovalStatus { get; set; } = "Approved";
         public string? RejectionReason { get; set; }
@@ -98,6 +103,39 @@ namespace Cdsqg.Application.DTOs
         public decimal? PreviousCompletionPercentage { get; set; }
         public string? PreviousNotes { get; set; }
         public List<TaskDeliverable>? PreviousDeliverables { get; set; }
+    }
+
+    public class AgencyTaskExecutionMatrixDto
+    {
+        public Guid TaskId { get; set; }
+        public string TaskCode { get; set; } = string.Empty;
+        public string TaskTitle { get; set; } = string.Empty;
+        public bool IsGeneralTask { get; set; }
+        public List<AgencyExecutionItemDto> AgencyExecutions { get; set; } = new List<AgencyExecutionItemDto>();
+    }
+
+    public class AgencyExecutionItemDto
+    {
+        public Guid AgencyId { get; set; }
+        public string AgencyName { get; set; } = string.Empty;
+        public string AgencyCode { get; set; } = string.Empty;
+        public string AgencyType { get; set; } = string.Empty;
+        public Guid? ParentAgencyId { get; set; }
+        public string? ParentAgencyName { get; set; }
+
+        public string CalculatedStatus { get; set; } = "NotStarted";
+        public string ApprovalStatus { get; set; } = "Approved";
+        public string? RejectionReason { get; set; }
+        public decimal? LatestProgressValue { get; set; }
+        public string? LatestQualitativeStatus { get; set; }
+        public decimal CompletionPercentage { get; set; } = 0m;
+        public string? SummaryNotes { get; set; }
+        public List<string> AttachmentFileUrls { get; set; } = new List<string>();
+        public List<TaskDeliverable>? Deliverables { get; set; }
+        public DateTime? LastReportedAt { get; set; }
+        public string? LastReportedBy { get; set; }
+
+        public Guid? PendingProgressLogId { get; set; }
     }
 
     public class RejectProgressRequestDto

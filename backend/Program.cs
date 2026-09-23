@@ -128,6 +128,8 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+app.UseCors("AllowFrontend");
+
 // Ensure Database Clean Recreation & Seed Initial Data (Fail-safe wrapper)
 using (var scope = app.Services.CreateScope())
 {
@@ -245,7 +247,9 @@ void EnsureDatabaseSchemaUpdated(AppDbContext db)
         string sqlAgencies = @"
             ALTER TABLE ""Agencies"" ADD COLUMN IF NOT EXISTS ""ParentId"" uuid NULL;
             ALTER TABLE ""Agencies"" ADD COLUMN IF NOT EXISTS ""ContactPersons"" text NULL;
+            ALTER TABLE ""Agencies"" ADD COLUMN IF NOT EXISTS ""PlanFiles"" text NULL;
             UPDATE ""Agencies"" SET ""ContactPersons"" = '[]' WHERE ""ContactPersons"" IS NULL OR ""ContactPersons"" = '';
+            UPDATE ""Agencies"" SET ""PlanFiles"" = '[]' WHERE ""PlanFiles"" IS NULL OR ""PlanFiles"" = '';
         ";
         db.Database.ExecuteSqlRaw(sqlAgencies);
 

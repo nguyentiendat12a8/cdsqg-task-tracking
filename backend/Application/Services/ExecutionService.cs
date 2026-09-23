@@ -256,16 +256,17 @@ namespace Cdsqg.Application.Services
                 reportingAgencyId = task.LeadAgencyId;
             }
 
-            var initialApprovalStatus = isLevel3Subordinate ? ApprovalStatusEnum.Pending : ApprovalStatusEnum.Approved;
+            bool isAdminSubmitter = !string.IsNullOrWhiteSpace(dto.UserRole) && (dto.UserRole.ToLower() == "admin" || dto.UserRole == "1");
+            var initialApprovalStatus = isAdminSubmitter ? ApprovalStatusEnum.Approved : ApprovalStatusEnum.Pending;
 
-            if (isLevel3Subordinate && reportingAgencyId.HasValue)
+            if (!isAdminSubmitter && reportingAgencyId.HasValue)
             {
                 bool hasPending = await _context.ProgressLogs
                     .AnyAsync(p => p.GoalTaskId == taskId && p.AgencyId == reportingAgencyId.Value && p.ApprovalStatus == ApprovalStatusEnum.Pending);
 
                 if (hasPending)
                 {
-                    throw new InvalidOperationException("Nhiệm vụ này đang có báo cáo tiến độ ở trạng thái 'Chờ duyệt'. Vui lòng chờ Cấp 2 phê duyệt hoặc từ chối trước khi gửi báo cáo mới.");
+                    throw new InvalidOperationException("Nhiệm vụ này đang có báo cáo tiến độ ở trạng thái 'Chờ duyệt'. Vui lòng chờ Cấp 1 (Admin) phê duyệt hoặc từ chối trước khi gửi báo cáo mới.");
                 }
             }
 
@@ -312,21 +313,30 @@ namespace Cdsqg.Application.Services
 
             _context.ProgressLogs.Add(progressLog);
 
-            // Create notification for parent agency if submitted by Level 3
-            if (isLevel3Subordinate && reportingAgencyObj?.ParentId.HasValue == true)
+            // Create notification for Level 1 Admin agency if pending approval (submitted by Level 2 or Level 3)
+            if (initialApprovalStatus == ApprovalStatusEnum.Pending)
             {
-                var notification = new Notification
+                var level1Agency = await _context.Agencies
+                    .FirstOrDefaultAsync(a => (!string.IsNullOrEmpty(a.Code) && a.Code.ToLower() == "bkhcn") ||
+                                              a.Name.ToLower().Contains("khoa học và công nghệ") ||
+                                              a.Name.ToLower().Contains("khoa học & công nghệ") ||
+                                              a.Name.ToLower().Contains("khoa học công nghệ"));
+
+                if (level1Agency != null)
                 {
-                    Id = Guid.NewGuid(),
-                    AgencyId = reportingAgencyObj.ParentId.Value,
-                    Title = "Báo cáo tiến độ mới chờ duyệt",
-                    Message = $"{reportingAgencyObj.Name} đã gửi báo cáo tiến độ cho nhiệm vụ {task.Code}: {task.Title}. Vui lòng xem xét và phê duyệt.",
-                    Type = "PROGRESS_APPROVAL",
-                    IsRead = false,
-                    LinkUrl = $"/document-detail?taskId={task.Id}&tab=reports",
-                    CreatedAt = DateTime.UtcNow
-                };
-                _context.Notifications.Add(notification);
+                    var notification = new Notification
+                    {
+                        Id = Guid.NewGuid(),
+                        AgencyId = level1Agency.Id,
+                        Title = "Báo cáo tiến độ mới chờ duyệt",
+                        Message = $"{reportingAgencyObj?.Name ?? "Đơn vị"} đã gửi báo cáo tiến độ cho nhiệm vụ {task.Code}: {task.Title}. Vui lòng xem xét và phê duyệt.",
+                        Type = "PROGRESS_APPROVAL",
+                        IsRead = false,
+                        LinkUrl = $"/document-detail?taskId={task.Id}&tab=reports",
+                        CreatedAt = DateTime.UtcNow
+                    };
+                    _context.Notifications.Add(notification);
+                }
             }
 
             // 6. Update or create AgencyTaskExecution for clean 1-to-1 or 1-to-N tracking per agency

@@ -116,12 +116,19 @@
 
               <!-- Actions -->
               <td class="px-4 py-3 text-center space-x-1 whitespace-nowrap min-w-[110px] w-28">
-                <button @click="openEditModal(row)" class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition inline-flex items-center cursor-pointer" title="Sửa">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
-                </button>
-                <button @click="deleteAgency(row)" class="p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg transition inline-flex items-center cursor-pointer" title="Xóa">
-                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
-                </button>
+                <template v-if="isBKHCN(row)">
+                  <span class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200 shadow-2xs" title="Bộ Khoa học và Công nghệ là cơ quan hệ thống cố định (Không thể sửa/xóa)">
+                    🔒 Cố định
+                  </span>
+                </template>
+                <template v-else>
+                  <button @click="openEditModal(row)" class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition inline-flex items-center cursor-pointer" title="Sửa">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                  </button>
+                  <button @click="deleteAgency(row)" class="p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg transition inline-flex items-center cursor-pointer" title="Xóa">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                  </button>
+                </template>
               </td>
             </tr>
 
@@ -400,11 +407,23 @@ const agencyTypeOptions = ref([
 ]);
 
 const parentAgencyOptions = computed(() => {
-  // Enforce 2 levels max: Only root agencies (parentId == null) can be selected as a parent agency
+  // Only "Bộ Khoa học và Công nghệ" can be selected as parent agency
   return allParentOptions.value
-    .filter(p => !p.parentId && p.id !== editingId.value && p.code !== 'ALL_AGENCIES')
+    .filter(p => {
+      if (p.parentId || p.id === editingId.value || p.code === 'ALL_AGENCIES') return false;
+      const lowerName = (p.name || '').toLowerCase();
+      const lowerCode = (p.code || '').toLowerCase();
+      return lowerName.includes('khoa học') || lowerCode === 'bkhcn';
+    })
     .map(p => ({ value: p.id, label: p.name }));
 });
+
+function isBKHCN(agency) {
+  if (!agency) return false;
+  const name = (agency.name || '').toLowerCase();
+  const code = (agency.code || '').toLowerCase();
+  return name.includes('khoa học và công nghệ') || name.includes('khoa học & công nghệ') || code === 'bkhcn';
+}
 
 const searchDraft = ref('');
 const searchQuery = ref('');
@@ -607,6 +626,11 @@ function openCreateModal(parentAgencyId = null) {
 }
 
 function openEditModal(agency) {
+  if (isBKHCN(agency)) {
+    toast.warning('Bộ Khoa học và Công nghệ là cơ quan hệ thống cố định, không thể chỉnh sửa.');
+    return;
+  }
+
   isEditing.value = true;
   editingId.value = agency.id;
   editingUsedCount.value = agency.usedCount || 0;
@@ -727,6 +751,11 @@ async function saveAgency() {
 }
 
 async function deleteAgency(agency) {
+  if (isBKHCN(agency)) {
+    toast.warning('Bộ Khoa học và Công nghệ là cơ quan hệ thống cố định, không thể xóa.');
+    return;
+  }
+
   if (agency.usedCount > 0) {
     toast.warning('Không thể xóa dữ liệu này.');
     return;
