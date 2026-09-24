@@ -587,7 +587,6 @@
                 v-model="createForm.group" 
                 :options="currentFormGroups" 
                 :isMulti="false" 
-                :required="true"
                 label="Nhóm Trọng Tâm" 
                 placeholder="-- Chọn Nhóm --"
               />
@@ -830,7 +829,6 @@
                 v-model="editForm.group" 
                 :options="groupFilterOptions" 
                 :isMulti="false" 
-                :required="true"
                 label="Nhóm Trọng Tâm" 
                 placeholder="-- Chọn Nhóm --"
               />
@@ -2030,12 +2028,6 @@ async function submitCreateItem() {
     return;
   }
 
-  if (!createForm.value.group) {
-    createErrorMessage.value = 'Vui lòng chọn Nhóm trọng tâm.';
-    toast.error(createErrorMessage.value);
-    return;
-  }
-
   if (createItemType.value === 'Goal' && !createForm.value.unitName) {
     createErrorMessage.value = 'Vui lòng chọn Đơn vị tính.';
     toast.error(createErrorMessage.value);
@@ -2407,12 +2399,6 @@ async function submitEditItem() {
 
   if (isGoal && !editForm.value.section) {
     editErrorMessage.value = 'Vui lòng chọn Mục (Phụ lục I).';
-    toast.error(editErrorMessage.value);
-    return;
-  }
-
-  if (!editForm.value.group) {
-    editErrorMessage.value = 'Vui lòng chọn Nhóm trọng tâm.';
     toast.error(editErrorMessage.value);
     return;
   }
