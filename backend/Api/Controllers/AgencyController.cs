@@ -274,8 +274,9 @@ namespace Cdsqg.Api.Controllers
             if (existing == null) return NotFound(new { error = "Không tìm thấy Cơ quan." });
 
             bool isBkhcn = string.Equals(existing.Code, "bkhcn", StringComparison.OrdinalIgnoreCase) ||
-                           existing.Name.Contains("Khoa học và Công nghệ", StringComparison.OrdinalIgnoreCase) ||
-                           existing.Name.Contains("Khoa học & Công nghệ", StringComparison.OrdinalIgnoreCase);
+                           (!existing.ParentId.HasValue && existing.Name.StartsWith("Bộ", StringComparison.OrdinalIgnoreCase) &&
+                            (existing.Name.Contains("Khoa học và Công nghệ", StringComparison.OrdinalIgnoreCase) ||
+                             existing.Name.Contains("Khoa học & Công nghệ", StringComparison.OrdinalIgnoreCase)));
 
             if (isBkhcn)
             {
@@ -295,8 +296,9 @@ namespace Cdsqg.Api.Controllers
                 }
 
                 bool isParentBkhcn = string.Equals(parentAg.Code, "bkhcn", StringComparison.OrdinalIgnoreCase) ||
-                                     parentAg.Name.Contains("Khoa học và Công nghệ", StringComparison.OrdinalIgnoreCase) ||
-                                     parentAg.Name.Contains("Khoa học & Công nghệ", StringComparison.OrdinalIgnoreCase);
+                                     (!parentAg.ParentId.HasValue && parentAg.Name.StartsWith("Bộ", StringComparison.OrdinalIgnoreCase) &&
+                                      (parentAg.Name.Contains("Khoa học và Công nghệ", StringComparison.OrdinalIgnoreCase) ||
+                                       parentAg.Name.Contains("Khoa học & Công nghệ", StringComparison.OrdinalIgnoreCase)));
 
                 if (!isParentBkhcn)
                 {
@@ -306,13 +308,10 @@ namespace Cdsqg.Api.Controllers
 
             if (!string.IsNullOrWhiteSpace(dto.Code) && !string.Equals(existing.Code, dto.Code, StringComparison.OrdinalIgnoreCase))
             {
-                int leadCount = await _context.GoalTaskItems.CountAsync(g => g.LeadAgencyId == id);
-                int urgeCount = await _context.TaskUrgeLogs.CountAsync(u => u.LeadAgencyId == id);
-                int totalUsage = leadCount + urgeCount;
-
-                if (totalUsage > 0)
+                var codeDuplicate = await _context.Agencies.AnyAsync(a => a.Id != id && a.Code.ToLower() == dto.Code.ToLower());
+                if (codeDuplicate)
                 {
-                    return BadRequest(new { error = $"Không thể thay đổi mã cơ quan vì đã có {totalUsage} mục tiêu / nhiệm vụ / đôn đốc đang sử dụng." });
+                    return BadRequest(new { error = $"Mã cơ quan '{dto.Code}' đã tồn tại trong hệ thống." });
                 }
                 existing.Code = dto.Code;
             }
@@ -395,8 +394,9 @@ namespace Cdsqg.Api.Controllers
             if (existing == null) return NotFound(new { error = "Không tìm thấy Cơ quan." });
 
             bool isBkhcn = string.Equals(existing.Code, "bkhcn", StringComparison.OrdinalIgnoreCase) ||
-                           existing.Name.Contains("Khoa học và Công nghệ", StringComparison.OrdinalIgnoreCase) ||
-                           existing.Name.Contains("Khoa học & Công nghệ", StringComparison.OrdinalIgnoreCase);
+                           (!existing.ParentId.HasValue && existing.Name.StartsWith("Bộ", StringComparison.OrdinalIgnoreCase) &&
+                            (existing.Name.Contains("Khoa học và Công nghệ", StringComparison.OrdinalIgnoreCase) ||
+                             existing.Name.Contains("Khoa học & Công nghệ", StringComparison.OrdinalIgnoreCase)));
 
             if (isBkhcn)
             {

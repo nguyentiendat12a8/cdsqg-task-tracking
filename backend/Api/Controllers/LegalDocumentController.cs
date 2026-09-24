@@ -20,6 +20,26 @@ namespace Cdsqg.Api.Controllers
         private readonly AppDbContext _context;
         private readonly IFileStorageService _fileStorageService;
 
+        private static readonly HashSet<string> AllowedDocumentTypes = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Luật", "Nghị định", "Thông tư", "Quyết định", "Nghị quyết", "Chỉ thị", "Khác"
+        };
+
+        private static readonly HashSet<string> AllowedEffectStatuses = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Còn hiệu lực", "Hết hiệu lực toàn bộ", "Hết hiệu lực một phần", "Chưa có hiệu lực"
+        };
+
+        private static readonly HashSet<string> AllowedFields = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Thể chế số", "Chính phủ số", "Kinh tế số", "Xã hội số", "Hạ tầng số", "Dữ liệu số", "Khác"
+        };
+
+        private static readonly HashSet<string> AllowedScopes = new(StringComparer.OrdinalIgnoreCase)
+        {
+            "Toàn quốc", "Bộ/Ngành", "Địa phương"
+        };
+
         public LegalDocumentController(AppDbContext context, IFileStorageService fileStorageService)
         {
             _context = context;
@@ -386,9 +406,16 @@ namespace Cdsqg.Api.Controllers
                 return BadRequest(new { message = "Vui lòng nhập đầy đủ Số ký hiệu và Tên văn bản." });
             }
 
+            var cleanCode = dto.Code.Trim();
+            bool codeExists = await _context.LegalDocuments.AnyAsync(d => d.Code.ToLower() == cleanCode.ToLower());
+            if (codeExists)
+            {
+                return BadRequest(new { message = $"Số ký hiệu '{cleanCode}' đã tồn tại trong hệ thống. Vui lòng nhập số ký hiệu khác." });
+            }
+
             var entity = new LegalDocument
             {
-                Code = dto.Code.Trim(),
+                Code = cleanCode,
                 Title = dto.Title.Trim(),
                 DocumentType = dto.DocumentType ?? "Quyết định",
                 IssuingAgencyId = dto.IssuingAgencyId,
@@ -437,7 +464,14 @@ namespace Cdsqg.Api.Controllers
                 return BadRequest(new { message = "Vui lòng nhập đầy đủ Số ký hiệu và Tên văn bản." });
             }
 
-            entity.Code = dto.Code.Trim();
+            var cleanCode = dto.Code.Trim();
+            bool codeExists = await _context.LegalDocuments.AnyAsync(d => d.Id != id && d.Code.ToLower() == cleanCode.ToLower());
+            if (codeExists)
+            {
+                return BadRequest(new { message = $"Số ký hiệu '{cleanCode}' đã tồn tại ở một văn bản khác trong hệ thống." });
+            }
+
+            entity.Code = cleanCode;
             entity.Title = dto.Title.Trim();
             entity.DocumentType = dto.DocumentType ?? "Quyết định";
             entity.IssuingAgencyId = dto.IssuingAgencyId;
@@ -459,6 +493,243 @@ namespace Cdsqg.Api.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(MapToDto(entity));
+        }
+
+        private Agency? ResolveAgency(string? inputStr, List<Agency> allAgencies)
+        {
+            if (string.IsNullOrWhiteSpace(inputStr) || inputStr.Trim() == "—") return null;
+
+            var cleanInput = inputStr.Trim();
+
+            // 1. Direct match on Name or Code (case-insensitive)
+            var match = allAgencies.FirstOrDefault(a =>
+                a.Name.Trim().Equals(cleanInput, StringComparison.OrdinalIgnoreCase) ||
+                a.Code.Trim().Equals(cleanInput, StringComparison.OrdinalIgnoreCase));
+            if (match != null) return match;
+
+            // 2. Standardize "&" vs "và"
+            var stdInput = cleanInput.ToLower().Replace("&", "và").Replace("  ", " ");
+            match = allAgencies.FirstOrDefault(a => {
+                var stdName = a.Name.Trim().ToLower().Replace("&", "và").Replace("  ", " ");
+                return stdName == stdInput;
+            });
+            if (match != null) return match;
+
+            return null;
+        }
+
+        /// <summary>
+        /// POST /api/legaldocuments/bulk-import
+        /// Nhập hàng loạt văn bản QPPL từ Excel (Yêu cầu duy nhất số ký hiệu & cơ quan hợp lệ)
+        /// </summary>
+        [HttpPost("bulk-import")]
+        public async Task<IActionResult> BulkImportLegalDocuments([FromBody] BulkImportLegalDocumentRequestDto req, [FromQuery] string? userRole = null)
+        {
+            if (!string.IsNullOrWhiteSpace(userRole))
+            {
+                bool isAdminUser = userRole.Equals("admin", StringComparison.OrdinalIgnoreCase) || userRole == "1";
+                if (!isAdminUser)
+                {
+                    return StatusCode(403, new { message = "Chỉ tài khoản Cấp 1 (Admin) mới có quyền import văn bản Quy Phạm Pháp Luật." });
+                }
+            }
+
+            if (req == null || req.Items == null || req.Items.Count == 0)
+            {
+                return BadRequest(new { message = "Dữ liệu import rỗng. Vui lòng kiểm tra lại file Excel." });
+            }
+
+            var existingCodes = await _context.LegalDocuments.Select(d => d.Code.ToLower()).ToListAsync();
+            var existingCodesSet = new HashSet<string>(existingCodes, StringComparer.OrdinalIgnoreCase);
+            var allAgencies = await _context.Agencies.ToListAsync();
+
+            var seenBatchCodes = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var errors = new List<LegalDocumentImportErrorDto>();
+            var entitiesToInsert = new List<LegalDocument>();
+
+            foreach (var item in req.Items)
+            {
+                var itemErrors = new List<string>();
+
+                if (string.IsNullOrWhiteSpace(item.Code))
+                {
+                    itemErrors.Add("Số ký hiệu không được để trống");
+                }
+
+                if (string.IsNullOrWhiteSpace(item.Title))
+                {
+                    itemErrors.Add("Trích yếu nội dung không được để trống");
+                }
+
+                if (!string.IsNullOrWhiteSpace(item.Code))
+                {
+                    var cleanCode = item.Code.Trim();
+                    if (existingCodesSet.Contains(cleanCode))
+                    {
+                        itemErrors.Add($"Số ký hiệu '{cleanCode}' đã tồn tại trong hệ thống");
+                    }
+                    else if (seenBatchCodes.Contains(cleanCode))
+                    {
+                        itemErrors.Add($"Số ký hiệu '{cleanCode}' bị trùng lặp trong file import");
+                    }
+                    else
+                    {
+                        seenBatchCodes.Add(cleanCode);
+                    }
+                }
+
+                // Validate DocumentType against options
+                string docType = "Quyết định";
+                if (!string.IsNullOrWhiteSpace(item.DocumentType) && item.DocumentType.Trim() != "—")
+                {
+                    var cleanType = item.DocumentType.Trim();
+                    var matchedType = AllowedDocumentTypes.FirstOrDefault(t => t.Equals(cleanType, StringComparison.OrdinalIgnoreCase));
+                    if (matchedType != null)
+                    {
+                        docType = matchedType;
+                    }
+                    else
+                    {
+                        itemErrors.Add($"Loại văn bản '{cleanType}' không thuộc danh sách lựa chọn (Luật, Nghị định, Thông tư, Quyết định, Nghị quyết, Chỉ thị, Khác)");
+                    }
+                }
+
+                // Validate EffectStatus against options
+                string effectStatus = "Còn hiệu lực";
+                if (!string.IsNullOrWhiteSpace(item.EffectStatus) && item.EffectStatus.Trim() != "—")
+                {
+                    var cleanStatus = item.EffectStatus.Trim();
+                    var matchedStatus = AllowedEffectStatuses.FirstOrDefault(s => s.Equals(cleanStatus, StringComparison.OrdinalIgnoreCase));
+                    if (matchedStatus != null)
+                    {
+                        effectStatus = matchedStatus;
+                    }
+                    else
+                    {
+                        itemErrors.Add($"Trạng thái hiệu lực '{cleanStatus}' không thuộc danh sách lựa chọn (Còn hiệu lực, Hết hiệu lực toàn bộ, Hết hiệu lực một phần, Chưa có hiệu lực)");
+                    }
+                }
+
+                // Validate Field against options
+                string field = "Thể chế số";
+                if (!string.IsNullOrWhiteSpace(item.Field) && item.Field.Trim() != "—")
+                {
+                    var cleanField = item.Field.Trim();
+                    var matchedField = AllowedFields.FirstOrDefault(f => f.Equals(cleanField, StringComparison.OrdinalIgnoreCase));
+                    if (matchedField != null)
+                    {
+                        field = matchedField;
+                    }
+                    else
+                    {
+                        itemErrors.Add($"Lĩnh vực '{cleanField}' không thuộc danh sách lựa chọn (Thể chế số, Chính phủ số, Kinh tế số, Xã hội số, Hạ tầng số, Dữ liệu số, Khác)");
+                    }
+                }
+
+                // Validate Scope against options
+                string scope = "Toàn quốc";
+                if (!string.IsNullOrWhiteSpace(item.Scope) && item.Scope.Trim() != "—")
+                {
+                    var cleanScope = item.Scope.Trim();
+                    var matchedScope = AllowedScopes.FirstOrDefault(s => s.Equals(cleanScope, StringComparison.OrdinalIgnoreCase));
+                    if (matchedScope != null)
+                    {
+                        scope = matchedScope;
+                    }
+                    else
+                    {
+                        itemErrors.Add($"Phạm vi áp dụng '{cleanScope}' không thuộc danh sách lựa chọn (Toàn quốc, Bộ/Ngành, Địa phương)");
+                    }
+                }
+
+                // Validate Issuing Agency existence
+                Guid? issuingId = null;
+                string? issuingName = null;
+                if (!string.IsNullOrWhiteSpace(item.IssuingAgencyName) && item.IssuingAgencyName.Trim() != "—")
+                {
+                    var ag = ResolveAgency(item.IssuingAgencyName, allAgencies);
+                    if (ag != null)
+                    {
+                        issuingId = ag.Id;
+                        issuingName = ag.Name;
+                    }
+                    else
+                    {
+                        itemErrors.Add($"Cơ quan ban hành '{item.IssuingAgencyName.Trim()}' không tồn tại trong danh mục cơ quan");
+                    }
+                }
+
+                // Validate Drafting Agency existence
+                Guid? draftingId = null;
+                string? draftingName = null;
+                if (!string.IsNullOrWhiteSpace(item.DraftingAgencyName) && item.DraftingAgencyName.Trim() != "—")
+                {
+                    var ag = ResolveAgency(item.DraftingAgencyName, allAgencies);
+                    if (ag != null)
+                    {
+                        draftingId = ag.Id;
+                        draftingName = ag.Name;
+                    }
+                    else
+                    {
+                        itemErrors.Add($"Cơ quan dự thảo '{item.DraftingAgencyName.Trim()}' không tồn tại trong danh mục cơ quan");
+                    }
+                }
+
+                if (itemErrors.Count > 0)
+                {
+                    errors.Add(new LegalDocumentImportErrorDto
+                    {
+                        RowIndex = item.RowIndex,
+                        Code = item.Code ?? string.Empty,
+                        ErrorDetail = string.Join("; ", itemErrors)
+                    });
+                }
+                else
+                {
+                    entitiesToInsert.Add(new LegalDocument
+                    {
+                        Code = item.Code.Trim(),
+                        Title = item.Title.Trim(),
+                        DocumentType = docType,
+                        IssuingAgencyId = issuingId,
+                        IssuingAgencyName = issuingName,
+                        DraftingAgencyId = draftingId,
+                        DraftingAgencyName = draftingName,
+                        SignerName = item.SignerName?.Trim(),
+                        SignerTitle = item.SignerTitle?.Trim(),
+                        IssuedDate = item.IssuedDate,
+                        EffectiveDate = item.EffectiveDate,
+                        EffectStatus = effectStatus,
+                        Field = field,
+                        Scope = scope,
+                        Notes = item.Notes?.Trim(),
+                        AttachmentsJson = "[]",
+                        CreatedAt = DateTime.UtcNow,
+                        UpdatedAt = DateTime.UtcNow
+                    });
+                }
+            }
+
+            if (errors.Count > 0)
+            {
+                return Ok(new
+                {
+                    success = false,
+                    message = $"Phát hiện {errors.Count} dòng bị lỗi trong file Excel.",
+                    errors = errors
+                });
+            }
+
+            await _context.LegalDocuments.AddRangeAsync(entitiesToInsert);
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                success = true,
+                message = $"Đã nhập thành công {entitiesToInsert.Count} văn bản QPPL.",
+                importedCount = entitiesToInsert.Count
+            });
         }
 
         /// <summary>

@@ -36,10 +36,7 @@
           @click="switchTab('agencies-matrix')" 
           :class="['px-4 py-2 text-xs font-semibold transition border-b-2 cursor-pointer flex items-center gap-1.5', activeTab === 'agencies-matrix' ? 'border-purple-600 text-purple-700 bg-purple-50/50 rounded-t-lg font-bold' : 'border-transparent text-slate-500 hover:text-slate-800']"
         >
-          <span>🌐 Tiến Độ Các Cơ Quan & Phê Duyệt</span>
-          <span v-if="matrixPendingCount > 0" class="px-2 py-0.5 bg-amber-500 text-white rounded-full text-[10px] font-bold animate-pulse">
-            {{ matrixPendingCount }} chờ duyệt
-          </span>
+          <span>🌐 Tiến Độ Các Đơn Vị</span>
         </button>
         <button 
           @click="activeTab = 'notifications'" 
@@ -343,24 +340,9 @@
           </div>
         </div>
 
-        <!-- TAB 4: Multi-Agency Progress Matrix & Level 1 Approval (For General Tasks) -->
+        <!-- TAB 4: Multi-Agency Progress Matrix (For General Tasks) -->
         <div v-if="activeTab === 'agencies-matrix'" class="space-y-4 font-sans">
-          <div class="bg-gradient-to-r from-purple-900 to-indigo-900 text-white p-4 rounded-2xl shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-purple-800">
-            <div>
-              <h3 class="text-sm sm:text-base font-bold flex items-center gap-2">
-                <span>🌐 Bảng Theo Dõi Tiến Độ Thực Hiện & Báo Cáo Của Các Cơ Quan, Địa Phương</span>
-              </h3>
-              <p class="text-xs text-purple-200 mt-0.5">
-                Theo dõi tiến độ báo cáo của tất cả các Bộ, Ngành, Tỉnh/Thành phố và thực hiện Phê duyệt
-              </p>
-            </div>
-
-            <button @click="loadAgenciesMatrix" class="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-xs font-bold rounded-xl transition cursor-pointer shrink-0 border border-white/20 flex items-center gap-1.5">
-              <span>↺ Tải Lại Dữ Liệu</span>
-            </button>
-          </div>
-
-          <LoadingSpinner v-if="isLoadingMatrix" text="Đang tải ma trận tiến độ các cơ quan..." padding="py-8" />
+          <LoadingSpinner v-if="isLoadingMatrix" text="Đang tải ma trận tiến độ các đơn vị..." padding="py-8" />
 
           <div v-else-if="!matrixData || !matrixData.agencyExecutions?.length" class="p-8 text-center bg-slate-50 rounded-2xl border border-slate-200 text-slate-400 text-xs font-semibold italic">
             📭 Chưa có thông tin thực hiện của các cơ quan cho nhiệm vụ này.
@@ -368,22 +350,18 @@
 
           <div v-else class="space-y-4">
             <!-- Matrix Status Counter Badges -->
-            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-              <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
-                <span class="text-[10px] font-bold text-slate-500 uppercase block">Tổng cơ quan/địa phương</span>
-                <span class="text-lg font-bold text-slate-800 mt-0.5 block">{{ matrixData.agencyExecutions.length }}</span>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-600 uppercase">Tổng cơ quan/địa phương</span>
+                <span class="text-lg font-bold text-slate-800">{{ matrixData.agencyExecutions.length }}</span>
               </div>
-              <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-200 shadow-2xs">
-                <span class="text-[10px] font-bold text-emerald-800 uppercase block">Đã hoàn thành</span>
-                <span class="text-lg font-bold text-emerald-900 mt-0.5 block">{{ matrixData.agencyExecutions.filter(a => (a.calculatedStatus || '').includes('Completed')).length }}</span>
+              <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-200 shadow-2xs flex items-center justify-between">
+                <span class="text-xs font-bold text-emerald-800 uppercase">Đã hoàn thành</span>
+                <span class="text-lg font-bold text-emerald-900">{{ matrixData.agencyExecutions.filter(a => (a.calculatedStatus || '').includes('Completed')).length }}</span>
               </div>
-              <div class="bg-blue-50 p-3 rounded-xl border border-blue-200 shadow-2xs">
-                <span class="text-[10px] font-bold text-blue-800 uppercase block">Đang thực hiện</span>
-                <span class="text-lg font-bold text-blue-900 mt-0.5 block">{{ matrixData.agencyExecutions.filter(a => (a.calculatedStatus || '').includes('InProgress')).length }}</span>
-              </div>
-              <div class="bg-amber-50 p-3 rounded-xl border border-amber-300 shadow-2xs">
-                <span class="text-[10px] font-bold text-amber-900 uppercase block">⏳ Chờ Phê duyệt</span>
-                <span class="text-lg font-bold text-amber-950 mt-0.5 block">{{ matrixPendingCount }}</span>
+              <div class="bg-blue-50 p-3 rounded-xl border border-blue-200 shadow-2xs flex items-center justify-between">
+                <span class="text-xs font-bold text-blue-800 uppercase">Đang thực hiện</span>
+                <span class="text-lg font-bold text-blue-900">{{ matrixData.agencyExecutions.filter(a => (a.calculatedStatus || '').includes('InProgress')).length }}</span>
               </div>
             </div>
 
@@ -395,12 +373,9 @@
                     <tr>
                       <th class="px-3 py-2.5 border-r border-slate-200 w-10 text-center">STT</th>
                       <th class="px-3.5 py-2.5 border-r border-slate-200 min-w-[220px]">Cơ Quan / Địa Phương Thực Hiện</th>
-                      <th class="px-3.5 py-2.5 border-r border-slate-200 min-w-[170px]">Cơ Quan Quản Lý (Cấp Trực Thuộc)</th>
                       <th class="px-3 py-2.5 border-r border-slate-200 text-center min-w-[120px]">Tiến Độ (%)</th>
-                      <th class="px-3 py-2.5 border-r border-slate-200 text-center min-w-[150px]">Trạng Thái Thực Hiện</th>
-                      <th class="px-3 py-2.5 border-r border-slate-200 text-center min-w-[150px]">Trạng Thái Duyệt</th>
-                      <th class="px-3.5 py-2.5 border-r border-slate-200 min-w-[200px]">Nội Dung Báo Cáo & File Minh Chứng</th>
-                      <th v-if="authState.isAdmin.value" class="px-3 py-2.5 text-center min-w-[140px] sticky right-0 bg-slate-100 border-l border-slate-200">Thao Tác Duyệt</th>
+                      <th class="px-3 py-2.5 border-r border-slate-200 text-center min-w-[150px]">Trạng Thái</th>
+                      <th class="px-3.5 py-2.5 border-r border-slate-200 min-w-[250px]">Nội Dung Báo Cáo & File Minh Chứng</th>
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-slate-200 font-semibold text-slate-800">
@@ -408,13 +383,6 @@
                       <td class="px-3 py-2.5 border-r border-slate-200 text-center text-slate-500 font-bold">{{ idx + 1 }}</td>
                       <td class="px-3.5 py-2.5 border-r border-slate-200 font-bold text-slate-900">
                         <div>{{ row.agencyName }}</div>
-                        <span v-if="row.agencyCode" class="text-[10px] text-slate-400 font-mono">({{ row.agencyCode }})</span>
-                      </td>
-                      <td class="px-3.5 py-2.5 border-r border-slate-200 text-slate-600">
-                        <span v-if="row.parentAgencyName" class="inline-flex items-center gap-1 text-[11px] font-bold text-blue-800 bg-blue-50 px-2 py-0.5 rounded border border-blue-200">
-                          🏢 {{ row.parentAgencyName }}
-                        </span>
-                        <span v-else class="text-slate-400 italic font-normal">Cơ quan Cấp 2 gốc</span>
                       </td>
                       <td class="px-3 py-2.5 border-r border-slate-200 text-center">
                         <div class="font-bold text-blue-700 text-sm">{{ row.completionPercentage || 0 }}%</div>
@@ -423,22 +391,8 @@
                         </div>
                       </td>
                       <td class="px-3 py-2.5 border-r border-slate-200 text-center">
-                        <span :class="['px-2.5 py-0.5 rounded-full text-[11px] font-bold inline-block whitespace-nowrap', getStatusBadgeClass(row.calculatedStatus)]">
+                        <span :class="['px-2.5 py-0.5 rounded-full text-[11px] font-bold inline-block whitespace-nowrap border', getStatusBadgeClass(row.calculatedStatus)]">
                           {{ getStatusLabel(row.calculatedStatus) }}
-                        </span>
-                      </td>
-                      <td class="px-3 py-2.5 border-r border-slate-200 text-center">
-                        <span v-if="row.approvalStatus === 'Pending'" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-100 text-amber-900 border border-amber-300 animate-pulse block">
-                          ⏳ Chờ Phê duyệt
-                        </span>
-                        <span v-else-if="row.approvalStatus === 'Approved'" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 block">
-                          ✓ Đã phê duyệt
-                        </span>
-                        <span v-else-if="row.approvalStatus === 'Rejected'" class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-rose-100 text-rose-800 border border-rose-300 block" :title="row.rejectionReason">
-                          ✕ Bị từ chối
-                        </span>
-                        <span v-else class="px-2.5 py-1 rounded-lg text-[11px] font-normal text-slate-400 bg-slate-100 border border-slate-200 block">
-                          Chưa gửi báo cáo
                         </span>
                       </td>
                       <td class="px-3.5 py-2.5 border-r border-slate-200 font-normal">
@@ -450,17 +404,6 @@
                             📎 {{ formatFileName(fileUrl) }}
                           </a>
                         </div>
-                      </td>
-                      <td v-if="authState.isAdmin.value" class="px-3 py-2.5 text-center sticky right-0 bg-white border-l border-slate-200">
-                        <div v-if="row.pendingProgressLogId" class="flex flex-col gap-1.5 items-center">
-                          <button @click="approveProgressLog(row.pendingProgressLogId)" class="w-full px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] rounded-lg shadow-2xs transition cursor-pointer">
-                            ✓ Phê Duyệt
-                          </button>
-                          <button @click="openRejectModal(row.pendingProgressLogId)" class="w-full px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] rounded-lg shadow-2xs transition cursor-pointer">
-                            ✕ Từ chối
-                          </button>
-                        </div>
-                        <span v-else class="text-slate-400 text-[11px] italic font-normal">—</span>
                       </td>
                     </tr>
                   </tbody>

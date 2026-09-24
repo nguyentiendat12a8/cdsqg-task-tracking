@@ -89,7 +89,6 @@
           </div>
         </div>
 
-        <!-- Is Ongoing / Continuous Task Toggle -->
         <div class="flex items-center gap-2.5 p-3 bg-blue-50/70 border border-blue-200 rounded-xl">
           <input 
             type="checkbox" 
@@ -98,7 +97,7 @@
             class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
           />
           <label for="isOngoingToggle" class="text-xs font-bold text-blue-950 cursor-pointer select-none">
-            Thời hạn thực hiện: Thường xuyên (Nhiệm vụ duy trì liên tục, báo cáo theo kỳ)
+            Thời hạn thực hiện: Thường xuyên (Tự động áp dụng từ 01/01/2026 đến 31/12/2030)
           </label>
         </div>
 
@@ -198,7 +197,16 @@ const form = ref({
   calculationMethod: 'LatestValue',
   isOngoing: false,
   isGeneralTask: false,
+  startDate: '',
+  dueDate: '',
   deliverables: []
+});
+
+watch(() => form.value.isOngoing, (val) => {
+  if (val) {
+    form.value.startDate = '2026-01-01';
+    form.value.dueDate = '2030-12-31';
+  }
 });
 
 function addDeliverable() {
@@ -369,6 +377,11 @@ async function submitItem() {
         return;
       }
     }
+  }
+
+  if (form.value.isOngoing) {
+    form.value.startDate = new Date('2026-01-01T00:00:00.000Z').toISOString();
+    form.value.dueDate = new Date('2030-12-31T23:59:59.000Z').toISOString();
   }
 
   isSubmitting.value = true;

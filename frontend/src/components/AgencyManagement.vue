@@ -192,9 +192,15 @@
         </h3>
 
         <form @submit.prevent="saveAgency" class="space-y-4 flex-1 overflow-y-auto pr-1">
-          <div>
-            <label class="text-xs font-bold text-slate-700 uppercase">Tên Đầy Đủ Cơ Quan / Đơn Vị <span class="text-rose-500">*</span></label>
-            <input v-model="form.name" required placeholder="Nhập tên cơ quan / đơn vị..." class="w-full text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 mt-1 focus:bg-white focus:ring-2 focus:ring-blue-500" />
+          <div class="grid grid-cols-3 gap-3">
+            <div class="col-span-2">
+              <label class="text-xs font-bold text-slate-700 uppercase">Tên Đầy Đủ Cơ Quan / Đơn Vị <span class="text-rose-500">*</span></label>
+              <input v-model="form.name" @input="onNameInput" required placeholder="Nhập tên cơ quan / đơn vị..." class="w-full text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 mt-1 focus:bg-white focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label class="text-xs font-bold text-slate-700 uppercase">Mã Cơ Quan / Viết Tắt <span class="text-rose-500">*</span></label>
+              <input v-model="form.code" required placeholder="VD: TTCDS (Tự động)..." class="w-full text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 mt-1 focus:bg-white focus:ring-2 focus:ring-blue-500" />
+            </div>
           </div>
 
           <div class="grid grid-cols-2 gap-3">
@@ -420,9 +426,10 @@ const parentAgencyOptions = computed(() => {
 
 function isBKHCN(agency) {
   if (!agency) return false;
-  const name = (agency.name || '').toLowerCase();
-  const code = (agency.code || '').toLowerCase();
-  return name.includes('khoa học và công nghệ') || name.includes('khoa học & công nghệ') || code === 'bkhcn';
+  if (agency.parentId) return false;
+  const name = (agency.name || '').toLowerCase().trim();
+  const code = (agency.code || '').toLowerCase().trim();
+  return code === 'bkhcn' || (name.startsWith('bộ') && (name.includes('khoa học và công nghệ') || name.includes('khoa học & công nghệ')));
 }
 
 const searchDraft = ref('');
@@ -448,6 +455,32 @@ function openContactPersonsModal(agency) {
 }
 
 const form = ref({ code: '', name: '', parentId: null, type: 1, contactPersons: [] });
+
+function generateAgencyCode(name) {
+  if (!name || typeof name !== 'string') return '';
+  const cleanStr = name
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/Đ/g, 'D')
+    .replace(/đ/g, 'd');
+    
+  const words = cleanStr
+    .replace(/[^a-zA-Z0-9\s]/g, ' ')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+    
+  if (words.length === 0) return '';
+  return words.map(w => w[0].toUpperCase()).join('');
+}
+
+function onNameInput() {
+  if (form.value.name) {
+    form.value.code = generateAgencyCode(form.value.name);
+  } else {
+    form.value.code = '';
+  }
+}
 
 function formatContactPerson(cp) {
   if (!cp) return '';
@@ -713,8 +746,12 @@ async function saveAgency() {
     const isSubAgency = !!form.value.parentId;
     const finalType = isSubAgency ? 3 : Number(form.value.type || 1);
 
+    const finalCode = (form.value.code && form.value.code.trim()) 
+      ? form.value.code.trim() 
+      : generateAgencyCode(form.value.name);
+
     const payload = {
-      code: form.value.code || form.value.name || '',
+      code: finalCode,
       name: form.value.name,
       parentId: form.value.parentId || null,
       type: finalType,

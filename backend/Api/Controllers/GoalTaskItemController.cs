@@ -124,8 +124,8 @@ namespace Cdsqg.Api.Controllers
                     Group = dto.Group,
                     IsOngoing = dto.IsOngoing,
                     IsGeneralTask = isGeneral,
-                    StartDate = dto.StartDate,
-                    DueDate = dto.DueDate,
+                    StartDate = dto.IsOngoing ? (dto.StartDate ?? new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)) : dto.StartDate,
+                    DueDate = dto.IsOngoing ? (dto.DueDate ?? new DateTime(2030, 12, 31, 23, 59, 59, DateTimeKind.Utc)) : dto.DueDate,
                     LeadAgencyId = dto.LeadAgencyId,
                     AssignedAgencyId = dto.AssignedAgencyId,
                     CoordinatingAgencyIds = dto.CoordinatingAgencyIds ?? new List<Guid>(),
@@ -354,8 +354,8 @@ namespace Cdsqg.Api.Controllers
                 item.Group = dto.Group;
                 item.IsOngoing = dto.IsOngoing;
                 item.IsGeneralTask = isGeneral;
-                item.StartDate = dto.StartDate;
-                item.DueDate = dto.DueDate;
+                item.StartDate = dto.IsOngoing ? (dto.StartDate ?? new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)) : dto.StartDate;
+                item.DueDate = dto.IsOngoing ? (dto.DueDate ?? new DateTime(2030, 12, 31, 23, 59, 59, DateTimeKind.Utc)) : dto.DueDate;
                 item.LeadAgencyId = dto.LeadAgencyId;
                 item.AssignedAgencyId = dto.AssignedAgencyId;
                 item.CoordinatingAgencyIds = dto.CoordinatingAgencyIds ?? new List<Guid>();

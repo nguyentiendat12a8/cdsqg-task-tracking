@@ -615,7 +615,7 @@
             />
             <label for="docIsOngoingToggle" class="text-xs font-bold text-blue-950 cursor-pointer select-none flex items-center gap-1.5">
               <span>Thời hạn thực hiện: Thường xuyên</span>
-              <span class="text-[11px] font-normal text-slate-500">(Không giới hạn năm cố định, báo cáo theo kỳ)</span>
+              <span class="text-[11px] font-normal text-slate-500">(Tự động áp dụng từ 01/01/2026 đến 31/12/2030)</span>
             </label>
           </div>
 
@@ -857,7 +857,7 @@
             />
             <label for="editIsOngoingToggle" class="text-xs font-bold text-blue-950 cursor-pointer select-none flex items-center gap-1.5">
               <span>Thời hạn thực hiện: Thường xuyên</span>
-              <span class="text-[11px] font-normal text-slate-500">(Không giới hạn năm cố định, báo cáo theo kỳ)</span>
+              <span class="text-[11px] font-normal text-slate-500">(Tự động áp dụng từ 01/01/2026 đến 31/12/2030)</span>
             </label>
           </div>
 
@@ -1393,6 +1393,24 @@ const editForm = ref({
   assignedAgencyId: '',
   coordinatingAgencyIds: [],
   deliverables: []
+});
+
+watch(() => createForm.value.isOngoing, (val) => {
+  if (val) {
+    createForm.value.startYear = 2026;
+    createForm.value.dueYear = 2030;
+    createForm.value.startDate = '2026-01-01';
+    createForm.value.dueDate = '2030-12-31';
+  }
+});
+
+watch(() => editForm.value.isOngoing, (val) => {
+  if (val) {
+    editForm.value.startYear = 2026;
+    editForm.value.dueYear = 2030;
+    editForm.value.startDate = '2026-01-01';
+    editForm.value.dueDate = '2030-12-31';
+  }
 });
 
 function addDeliverable() {
@@ -2056,7 +2074,10 @@ async function submitCreateItem() {
     let startDateIso = null;
     let dueDateIso = null;
 
-    if (parentTaskForSubTask.value) {
+    if (createForm.value.isOngoing) {
+      startDateIso = new Date('2026-01-01T00:00:00.000Z').toISOString();
+      dueDateIso = new Date('2030-12-31T23:59:59.000Z').toISOString();
+    } else if (parentTaskForSubTask.value) {
       startDateIso = createForm.value.startDate ? new Date(createForm.value.startDate).toISOString() : null;
       dueDateIso = createForm.value.dueDate ? new Date(createForm.value.dueDate).toISOString() : null;
     } else {
@@ -2430,7 +2451,10 @@ async function submitEditItem() {
     let startDateIso = null;
     let dueDateIso = null;
 
-    if (editingItem.value.parentId || editingItem.value.parentItemId || editForm.value.startDate || editForm.value.dueDate) {
+    if (editForm.value.isOngoing) {
+      startDateIso = new Date('2026-01-01T00:00:00.000Z').toISOString();
+      dueDateIso = new Date('2030-12-31T23:59:59.000Z').toISOString();
+    } else if (editingItem.value.parentId || editingItem.value.parentItemId || editForm.value.startDate || editForm.value.dueDate) {
       startDateIso = editForm.value.startDate ? new Date(editForm.value.startDate).toISOString() : null;
       dueDateIso = editForm.value.dueDate ? new Date(editForm.value.dueDate).toISOString() : null;
     } else {

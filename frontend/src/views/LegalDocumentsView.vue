@@ -26,6 +26,23 @@
             <span>Xuất Báo Cáo Excel</span>
           </button>
 
+          <button 
+            v-if="authState.isAdmin.value"
+            @click="triggerImportExcel"
+            :disabled="isImporting"
+            class="px-3.5 py-2 text-slate-700 hover:text-slate-900 font-bold text-xs rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200/80 transition shadow-2xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            title="Nhập danh sách văn bản QPPL từ file Excel"
+          >
+            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+            <span>{{ isImporting ? 'Đang Import...' : 'Import Excel' }}</span>
+          </button>
+          <input 
+            type="file" 
+            ref="importFileInputRef" 
+            @change="handleImportExcelFile" 
+            accept=".xlsx, .xls" 
+            class="hidden" 
+          />
 
           <button 
             v-if="authState.isAdmin.value"
@@ -327,12 +344,13 @@
 import { ref, computed, reactive, onMounted } from 'vue';
 import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
+import XLSX from 'xlsx-js-style';
 import SearchableSelect from '../components/SearchableSelect.vue';
 import OverlayPanel from '../components/OverlayPanel.vue';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
 import LegalDocumentModal from '../components/LegalDocumentModal.vue';
 import LegalFileViewerModal from '../components/LegalFileViewerModal.vue';
-import { exportFormattedReportExcel } from '../utils/excelExport';
+import { exportFormattedReportExcel, styleWorksheet } from '../utils/excelExport';
 import { getApiUrl } from '../config/api';
 import { authState } from '../services/auth';
 import { openFileInNewWindow } from '../utils/fileViewer';
@@ -341,6 +359,302 @@ import { confirmModal } from '../services/confirm';
 const documents = ref([]);
 const agencies = ref([]);
 const isLoading = ref(true);
+
+const importFileInputRef = ref(null);
+const isImporting = ref(false);
+
+function triggerImportExcel() {
+  if (importFileInputRef.value) {
+    importFileInputRef.value.value = '';
+    importFileInputRef.value.click();
+  }
+}
+
+function parseExcelDateStr(val) {
+  if (!val) return null;
+  const valStr = String(val).trim();
+  if (!valStr || valStr === '—') return null;
+
+  const ddmmyyyy = valStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if (ddmmyyyy) {
+    const day = parseInt(ddmmyyyy[1], 10);
+    const month = parseInt(ddmmyyyy[2], 10) - 1;
+    const year = parseInt(ddmmyyyy[3], 10);
+    const d = new Date(Date.UTC(year, month, day));
+    if (!isNaN(d.getTime())) return d.toISOString();
+  }
+
+  const yyyymmdd = valStr.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+  if (yyyymmdd) {
+    const year = parseInt(yyyymmdd[1], 10);
+    const month = parseInt(yyyymmdd[2], 10) - 1;
+    const day = parseInt(yyyymmdd[3], 10);
+    const d = new Date(Date.UTC(year, month, day));
+    if (!isNaN(d.getTime())) return d.toISOString();
+  }
+
+  const d = new Date(valStr);
+  if (!isNaN(d.getTime())) return d.toISOString();
+  return null;
+}
+
+async function handleImportExcelFile(event) {
+  const file = event.target.files?.[0];
+  if (!file) return;
+
+  isImporting.value = true;
+  try {
+    const arrayBuffer = await file.arrayBuffer();
+    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+    const sheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[sheetName];
+    if (!worksheet) {
+      toast.error('File Excel không chứa dữ liệu.');
+      return;
+    }
+
+    const rawRows = XLSX.utils.sheet_to_json(worksheet, { header: 1, raw: false, defval: '' });
+    if (!rawRows || rawRows.length === 0) {
+      toast.error('File Excel rỗng.');
+      return;
+    }
+
+    let headerRowIdx = -1;
+    let colMap = {
+      code: -1,
+      title: -1,
+      type: -1,
+      issuing: -1,
+      drafting: -1,
+      signer: -1,
+      issuedDate: -1,
+      effectiveDate: -1,
+      status: -1,
+      field: -1
+    };
+
+    for (let r = 0; r < Math.min(rawRows.length, 20); r++) {
+      const row = rawRows[r] || [];
+      const rowStr = row.map(c => String(c || '')).join(' ').toLowerCase();
+      if (rowStr.includes('số ký hiệu') || rowStr.includes('trích yếu')) {
+        headerRowIdx = r;
+        row.forEach((cellVal, cIdx) => {
+          const cStr = String(cellVal || '').trim().toLowerCase();
+          if (cStr.includes('số ký hiệu') || cStr === 'mã') colMap.code = cIdx;
+          else if (cStr.includes('trích yếu') || cStr.includes('tên văn bản')) colMap.title = cIdx;
+          else if (cStr.includes('loại vb') || cStr.includes('loại văn bản')) colMap.type = cIdx;
+          else if (cStr.includes('cơ quan ban hành')) colMap.issuing = cIdx;
+          else if (cStr.includes('cơ quan dự thảo')) colMap.drafting = cIdx;
+          else if (cStr.includes('người ký')) colMap.signer = cIdx;
+          else if (cStr.includes('ngày ban hành')) colMap.issuedDate = cIdx;
+          else if (cStr.includes('ngày hiệu lực')) colMap.effectiveDate = cIdx;
+          else if (cStr.includes('trạng thái')) colMap.status = cIdx;
+          else if (cStr.includes('lĩnh vực')) colMap.field = cIdx;
+        });
+        break;
+      }
+    }
+
+    if (headerRowIdx === -1) {
+      headerRowIdx = 0;
+      colMap = {
+        code: 1,
+        title: 2,
+        type: 3,
+        issuing: 4,
+        drafting: 5,
+        signer: 6,
+        issuedDate: 7,
+        effectiveDate: 8,
+        status: 9,
+        field: 10
+      };
+    }
+
+    const items = [];
+    for (let r = headerRowIdx + 1; r < rawRows.length; r++) {
+      const row = rawRows[r] || [];
+      const codeVal = colMap.code >= 0 ? String(row[colMap.code] || '').trim() : '';
+      const titleVal = colMap.title >= 0 ? String(row[colMap.title] || '').trim() : '';
+      const typeVal = colMap.type >= 0 ? String(row[colMap.type] || '').trim() : 'Quyết định';
+      const issuingVal = colMap.issuing >= 0 ? String(row[colMap.issuing] || '').trim() : '';
+      const draftingVal = colMap.drafting >= 0 ? String(row[colMap.drafting] || '').trim() : '';
+      const signerVal = colMap.signer >= 0 ? String(row[colMap.signer] || '').trim() : '';
+      const issuedDateVal = colMap.issuedDate >= 0 ? row[colMap.issuedDate] : null;
+      const effectiveDateVal = colMap.effectiveDate >= 0 ? row[colMap.effectiveDate] : null;
+      const statusVal = colMap.status >= 0 ? String(row[colMap.status] || '').trim() : 'Còn hiệu lực';
+      const fieldVal = colMap.field >= 0 ? String(row[colMap.field] || '').trim() : 'Thể chế số';
+
+      if (!codeVal && !titleVal) continue;
+
+      let signerName = signerVal;
+      let signerTitle = '';
+      if (signerVal && signerVal.includes('(') && signerVal.endsWith(')')) {
+        const match = signerVal.match(/^(.*?)\s*\((.*?)\)$/);
+        if (match) {
+          signerName = match[1].trim();
+          signerTitle = match[2].trim();
+        }
+      }
+
+      items.push({
+        rowIndex: r,
+        code: codeVal,
+        title: titleVal,
+        documentType: typeVal && typeVal !== '—' ? typeVal : 'Quyết định',
+        issuingAgencyName: issuingVal !== '—' ? issuingVal : '',
+        draftingAgencyName: draftingVal !== '—' ? draftingVal : '',
+        signerName: signerName !== '—' ? signerName : '',
+        signerTitle: signerTitle !== '—' ? signerTitle : '',
+        issuedDate: parseExcelDateStr(issuedDateVal),
+        effectiveDate: parseExcelDateStr(effectiveDateVal),
+        effectStatus: statusVal && statusVal !== '—' ? statusVal : 'Còn hiệu lực',
+        field: fieldVal && fieldVal !== '—' ? fieldVal : 'Thể chế số',
+        scope: 'Toàn quốc',
+        notes: ''
+      });
+    }
+
+    if (items.length === 0) {
+      toast.warning('Không tìm thấy dòng dữ liệu văn bản nào trong file Excel.');
+      return;
+    }
+
+    const userRoleStr = authState.user.value?.role || (authState.isAdmin.value ? 'Admin' : 'Level2');
+    const res = await fetch(getApiUrl(`/api/legaldocuments/bulk-import?userRole=${encodeURIComponent(userRoleStr)}`), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items })
+    });
+
+    const resData = await res.json().catch(() => ({}));
+
+    if (res.ok && resData.success) {
+      toast.success(resData.message || `Đã nhập thành công ${resData.importedCount || items.length} văn bản QPPL!`);
+      await fetchDocuments();
+    } else if (resData.errors && resData.errors.length > 0) {
+      const errorMap = {};
+      resData.errors.forEach(e => {
+        errorMap[e.rowIndex] = e.errorDetail;
+      });
+
+      const range = XLSX.utils.decode_range(worksheet['!ref'] || 'A1');
+      let errColIdx = -1;
+
+      for (let c = range.s.c; c <= range.e.c; c++) {
+        const cell = worksheet[XLSX.utils.encode_cell({ r: headerRowIdx, c })];
+        const valStr = cell?.v ? String(cell.v).toLowerCase() : '';
+        if (valStr.includes('chi tiết lỗi') || valStr.includes('lỗi import')) {
+          errColIdx = c;
+          break;
+        }
+      }
+
+      if (errColIdx === -1) {
+        errColIdx = range.e.c + 1;
+        range.e.c = errColIdx;
+        worksheet['!ref'] = XLSX.utils.encode_range(range);
+      }
+
+      // 1. Format the entire worksheet with standard table theme (navy headers, zebra striping, thin borders)
+      styleWorksheet(worksheet, {
+        numCols: range.e.c + 1,
+        headerRowIndex: headerRowIdx,
+        titleRowIndex: 0
+      });
+
+      // 2. Dark Red Header style for "CHI TIẾT LỖI IMPORT" column
+      const headerCellRef = XLSX.utils.encode_cell({ r: headerRowIdx, c: errColIdx });
+      worksheet[headerCellRef] = {
+        t: 's',
+        v: 'CHI TIẾT LỖI IMPORT',
+        s: {
+          font: { name: 'Segoe UI', sz: 10, bold: true, color: { rgb: 'FFFFFF' } },
+          fill: { fgColor: { rgb: '991B1B' } }, // Dark Red
+          alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+          border: {
+            top: { style: 'medium', color: { rgb: '7F1D1D' } },
+            bottom: { style: 'medium', color: { rgb: '7F1D1D' } },
+            left: { style: 'thin', color: { rgb: '991B1B' } },
+            right: { style: 'thin', color: { rgb: '991B1B' } }
+          }
+        }
+      };
+
+      // 3. Format error detail cells and valid row cells
+      for (let r = headerRowIdx + 1; r <= range.e.r; r++) {
+        const errCellRef = XLSX.utils.encode_cell({ r, c: errColIdx });
+        if (errorMap[r]) {
+          worksheet[errCellRef] = {
+            t: 's',
+            v: errorMap[r],
+            s: {
+              font: { name: 'Segoe UI', sz: 10, bold: true, color: { rgb: 'B91C1C' } },
+              fill: { fgColor: { rgb: 'FEE2E2' } }, // Soft Red
+              alignment: { horizontal: 'left', vertical: 'center', wrapText: true },
+              border: {
+                top: { style: 'thin', color: { rgb: 'FCA5A5' } },
+                bottom: { style: 'thin', color: { rgb: 'FCA5A5' } },
+                left: { style: 'thin', color: { rgb: 'FCA5A5' } },
+                right: { style: 'thin', color: { rgb: 'FCA5A5' } }
+              }
+            }
+          };
+        } else {
+          const hasData = rawRows[r] && (rawRows[r][colMap.code] || rawRows[r][colMap.title]);
+          if (hasData) {
+            worksheet[errCellRef] = {
+              t: 's',
+              v: 'Hợp lệ',
+              s: {
+                font: { name: 'Segoe UI', sz: 10, color: { rgb: '15803D' } },
+                fill: { fgColor: { rgb: 'F0FDF4' } }, // Soft Green
+                alignment: { horizontal: 'center', vertical: 'center' },
+                border: {
+                  top: { style: 'thin', color: { rgb: 'CBD5E1' } },
+                  bottom: { style: 'thin', color: { rgb: 'CBD5E1' } },
+                  left: { style: 'thin', color: { rgb: 'CBD5E1' } },
+                  right: { style: 'thin', color: { rgb: 'CBD5E1' } }
+                }
+              }
+            };
+          }
+        }
+      }
+
+      // 4. Calculate dynamic column widths for all columns
+      const colWidths = [];
+      for (let c = range.s.c; c <= range.e.c; c++) {
+        let maxLen = 10;
+        for (let r = headerRowIdx; r <= range.e.r; r++) {
+          const cellVal = worksheet[XLSX.utils.encode_cell({ r, c })]?.v;
+          if (cellVal !== undefined && cellVal !== null) {
+            const len = String(cellVal).length;
+            if (len > maxLen) maxLen = len;
+          }
+        }
+        let width = Math.min(Math.max(maxLen + 4, 12), 70);
+        if (c === errColIdx) width = Math.max(width, 45);
+        colWidths.push({ wch: width });
+      }
+      worksheet['!cols'] = colWidths;
+
+      const dateStr = new Date().toISOString().slice(0, 10);
+      XLSX.writeFile(workbook, `File_Import_VBQPPL_Loi_${dateStr}.xlsx`);
+
+      toast.error(`Import thất bại! Phát hiện ${resData.errors.length} dòng bị lỗi. File chi tiết lỗi đã được tự động tải xuống.`);
+    } else {
+      toast.error(resData.message || 'Lỗi khi import file Excel.');
+    }
+
+  } catch (err) {
+    console.error('Error importing Excel:', err);
+    toast.error(err.message || 'Đã xảy ra lỗi khi xử lý file Excel.');
+  } finally {
+    isImporting.value = false;
+    if (importFileInputRef.value) importFileInputRef.value.value = '';
+  }
+}
 
 const pageNumber = ref(1);
 const pageSize = ref(10);

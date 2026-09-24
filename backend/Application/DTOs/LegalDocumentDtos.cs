@@ -97,4 +97,34 @@ namespace Cdsqg.Application.DTOs
         public List<LegalDocumentDto> RecentDocuments { get; set; } = new();
         public int TotalCount { get; set; }
     }
+
+    public class BulkImportLegalDocumentItemDto
+    {
+        public int RowIndex { get; set; }
+        public string Code { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public string DocumentType { get; set; } = "Quyết định";
+        public string? IssuingAgencyName { get; set; }
+        public string? DraftingAgencyName { get; set; }
+        public string? SignerName { get; set; }
+        public string? SignerTitle { get; set; }
+        public DateTime? IssuedDate { get; set; }
+        public DateTime? EffectiveDate { get; set; }
+        public string EffectStatus { get; set; } = "Còn hiệu lực";
+        public string? Field { get; set; }
+        public string? Scope { get; set; } = "Toàn quốc";
+        public string? Notes { get; set; }
+    }
+
+    public class LegalDocumentImportErrorDto
+    {
+        public int RowIndex { get; set; }
+        public string Code { get; set; } = string.Empty;
+        public string ErrorDetail { get; set; } = string.Empty;
+    }
+
+    public class BulkImportLegalDocumentRequestDto
+    {
+        public List<BulkImportLegalDocumentItemDto> Items { get; set; } = new();
+    }
 }

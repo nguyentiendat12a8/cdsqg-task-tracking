@@ -9,13 +9,37 @@
         </span>
         <div>
           <h2 class="text-sm sm:text-base font-bold text-slate-800">
-            Trang chủ theo dõi tiến độ mục tiêu & nhiệm vụ
+            {{ dashboardTitleText }}
           </h2>
         </div>
       </div>
 
       <!-- Action Buttons & Advanced Filter Popover -->
       <div class="flex flex-wrap items-center gap-2 min-w-0">
+        <!-- Segmented Tab Filter: Mục tiêu | Nhiệm vụ -->
+        <div class="inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200/90 shrink-0 h-[34px] items-center">
+          <button 
+            type="button" 
+            @click="setDashboardFilter('goals')" 
+            :class="[
+              'px-3.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer whitespace-nowrap h-full flex items-center gap-1.5',
+              dashboardFilter === 'goals' ? 'bg-purple-600 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+            ]"
+          >
+            <span>🎯</span> Mục tiêu
+          </button>
+          <button 
+            type="button" 
+            @click="setDashboardFilter('tasks')" 
+            :class="[
+              'px-3.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer whitespace-nowrap h-full flex items-center gap-1.5',
+              dashboardFilter === 'tasks' ? 'bg-blue-600 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+            ]"
+          >
+            <span>📋</span> Nhiệm vụ
+          </button>
+        </div>
+
         <button 
           type="button" 
           @click="exportDashboardExcelReport" 
@@ -136,8 +160,8 @@
     <!-- Main Dashboard Container -->
     <div v-else class="space-y-3.5 w-full">
 
-      <!-- Overall System Progress Donut Chart & 6 Status Legend Breakdown -->
-      <div class="bg-gradient-to-br from-slate-50 to-blue-50/40 rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-2xs space-y-4 w-full">
+      <!-- Overall System Progress Donut Chart & 6 Status Legend Breakdown (Chỉ hiển thị cho tài khoản Cấp 1 Admin) -->
+      <div v-if="!isSubAgencyUser" class="bg-gradient-to-br from-slate-50 to-blue-50/40 rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-2xs space-y-4 w-full">
         <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
           
           <!-- Big Donut Circle Chart on Left -->
@@ -145,11 +169,7 @@
             <MiniStatusDonut :stats="overallDonutStats" :size="160" :innerSize="105" :fontSize="32" />
             <div class="text-center pt-1">
               <div class="text-xs sm:text-sm font-extrabold text-slate-800">
-                Tổng số: {{ activeStatusTotal }} hạng mục
-              </div>
-              <div class="flex items-center gap-2 justify-center text-[11px] font-bold text-slate-500 mt-1.5 flex-wrap">
-                <span class="text-purple-800 bg-purple-50 px-2.5 py-0.5 rounded-lg border border-purple-200/70">🎯 {{ metrics.totalGoals || 0 }} Mục tiêu</span>
-                <span class="text-blue-800 bg-blue-50 px-2.5 py-0.5 rounded-lg border border-blue-200/70">📋 {{ metrics.totalTasks || 0 }} Nhiệm vụ</span>
+                Tổng số: {{ activeStatusTotal }} {{ dashboardItemNoun }}
               </div>
             </div>
           </div>
@@ -232,7 +252,7 @@
             @click="drilldownAgency(singleSubAgencyPerformance)" 
             class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-2xs transition flex items-center gap-1.5 cursor-pointer shrink-0"
           >
-            <span>📋 Xem Danh Sách Chi Tiết Nhiệm Vụ</span>
+            <span>📋 Xem Danh Sách Chi Tiết {{ dashboardItemNounCap }}</span>
             <span>→</span>
           </button>
         </div>
@@ -245,11 +265,7 @@
             <div class="md:col-span-5 flex flex-col items-center justify-center p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-2">
               <MiniStatusDonut :stats="singleSubAgencyPerformance" :size="160" :innerSize="105" :fontSize="32" />
               <div class="text-center pt-1">
-                <div class="text-xs font-bold text-slate-800">Tổng số: {{ singleSubAgencyPerformance.totalItems || 0 }} hạng mục</div>
-                <div class="flex items-center gap-2 justify-center text-[11px] font-bold text-slate-500 mt-1">
-                  <span class="text-purple-800 bg-purple-50 px-2 py-0.5 rounded border border-purple-200/60">🎯 {{ singleSubAgencyPerformance.totalGoals || 0 }} Mục tiêu</span>
-                  <span class="text-blue-800 bg-blue-50 px-2 py-0.5 rounded border border-blue-200/60">📋 {{ singleSubAgencyPerformance.totalTasks || 0 }} Nhiệm vụ</span>
-                </div>
+                <div class="text-xs font-bold text-slate-800">Tổng số: {{ (dashboardFilter === 'goals' ? singleSubAgencyPerformance.totalGoals : singleSubAgencyPerformance.totalTasks) || 0 }} {{ dashboardItemNoun }}</div>
               </div>
             </div>
 
@@ -401,8 +417,8 @@
               <!-- Card Footer: Sub-badges -->
               <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-bold">
                 <div class="flex items-center gap-1.5">
-                  <span class="text-purple-800 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200/60">🎯 {{ item.totalGoals || 0 }}</span>
-                  <span class="text-blue-800 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200/60">📋 {{ item.totalTasks || 0 }}</span>
+                  <span v-if="dashboardFilter === 'goals'" class="text-purple-800 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200/60">🎯 {{ item.totalGoals || 0 }} Mục tiêu</span>
+                  <span v-else class="text-blue-800 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200/60">📋 {{ item.totalTasks || 0 }} Nhiệm vụ</span>
                 </div>
                 <span class="text-blue-600 group-hover:underline">Chi tiết →</span>
               </div>
@@ -523,8 +539,8 @@
               <!-- Card Footer: Sub-badges -->
               <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-bold">
                 <div class="flex items-center gap-1.5">
-                  <span class="text-purple-800 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200/60">🎯 {{ item.totalGoals || 0 }}</span>
-                  <span class="text-blue-800 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200/60">📋 {{ item.totalTasks || 0 }}</span>
+                  <span v-if="dashboardFilter === 'goals'" class="text-purple-800 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200/60">🎯 {{ item.totalGoals || 0 }} Mục tiêu</span>
+                  <span v-else class="text-blue-800 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200/60">📋 {{ item.totalTasks || 0 }} Nhiệm vụ</span>
                 </div>
                 <span class="text-blue-600 group-hover:underline">Chi tiết →</span>
               </div>
@@ -641,8 +657,8 @@
               <!-- Card Footer: Sub-badges -->
               <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-bold">
                 <div class="flex items-center gap-1.5">
-                  <span class="text-purple-800 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200/60">🎯 {{ item.totalGoals || 0 }}</span>
-                  <span class="text-blue-800 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200/60">📋 {{ item.totalTasks || 0 }}</span>
+                  <span v-if="dashboardFilter === 'goals'" class="text-purple-800 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200/60">🎯 {{ item.totalGoals || 0 }} Mục tiêu</span>
+                  <span v-else class="text-blue-800 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200/60">📋 {{ item.totalTasks || 0 }} Nhiệm vụ</span>
                 </div>
                 <span class="text-emerald-700 group-hover:underline">Chi tiết →</span>
               </div>
@@ -679,14 +695,25 @@
               <span class="p-1.5 bg-blue-100 text-blue-700 rounded-xl text-sm">🏛️</span>
               {{ selectedDrilldownAgency.name }}
             </h3>
-            <p class="text-xs text-slate-500 mt-0.5">Chi tiết tiến độ đơn vị trực thuộc, danh sách nhiệm vụ được gán và thông tin cán bộ đầu mối liên hệ</p>
+            <p class="text-xs text-slate-500 mt-0.5">Chi tiết tiến độ đơn vị trực thuộc, danh sách mục tiêu & nhiệm vụ được gán và thông tin cán bộ đầu mối liên hệ</p>
           </div>
           <button @click="selectedDrilldownAgency = null" class="p-1.5 text-slate-400 hover:text-slate-700 bg-slate-100 rounded-xl transition cursor-pointer">✕</button>
         </div>
 
         <!-- Navigation Tabs inside Modal -->
         <div class="flex items-center gap-2 border-b border-slate-200/80 pb-2 overflow-x-auto custom-scrollbar">
-          <!-- TAB 1: Goal/Task Items Assigned to Agency -->
+          <!-- TAB 1: Goal Items Assigned to Agency -->
+          <button 
+            @click="switchDrilldownTab('goals')" 
+            :class="[
+              'px-3.5 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 cursor-pointer shrink-0',
+              drilldownTab === 'goals' ? 'bg-purple-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+            ]"
+          >
+            <span>🎯 Danh Sách Mục Tiêu ({{ isAgencyItemsLoading ? '...' : modalGoalsList.length }})</span>
+          </button>
+
+          <!-- TAB 2: Task Items Assigned to Agency -->
           <button 
             @click="switchDrilldownTab('tasks')" 
             :class="[
@@ -694,10 +721,10 @@
               drilldownTab === 'tasks' ? 'bg-blue-600 text-white shadow-xs' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
             ]"
           >
-            <span>📋 Danh Sách Nhiệm Vụ Được Gán ({{ isAgencyItemsLoading ? '...' : agencyItemsList.length }})</span>
+            <span>📋 Danh Sách Nhiệm Vụ ({{ isAgencyItemsLoading ? '...' : modalTasksList.length }})</span>
           </button>
 
-          <!-- TAB 2: Sub-Agencies & Progress (Chỉ hiển thị với Bộ Khoa học và Công nghệ) -->
+          <!-- TAB 3: Sub-Agencies & Progress (Chỉ hiển thị với Bộ Khoa học và Công nghệ) -->
           <button 
             v-if="isBKHCNItem(selectedDrilldownAgency)"
             @click="switchDrilldownTab('sub-agencies')" 
@@ -709,7 +736,7 @@
             <span>🏛️ Đơn Vị Trực Thuộc ({{ isSubAgenciesLoading ? '...' : subAgenciesList.length }})</span>
           </button>
           
-          <!-- TAB 3: Contact Persons -->
+          <!-- TAB 4: Contact Persons -->
           <button 
             @click="switchDrilldownTab('contacts')" 
             :class="[
@@ -741,7 +768,8 @@
                     {{ child.name }}
                   </h4>
                   <p class="text-[11px] text-slate-500 font-medium mt-0.5">
-                    Tổng {{ child.totalItems || 0 }} hạng mục (🎯 {{ child.totalGoals || 0 }} Mục tiêu, 📋 {{ child.totalTasks || 0 }} Nhiệm vụ)
+                    <span v-if="dashboardFilter === 'goals'">🎯 {{ child.totalGoals || 0 }} Mục tiêu</span>
+                    <span v-else>📋 {{ child.totalTasks || 0 }} Nhiệm vụ</span>
                   </p>
                 </div>
 
@@ -816,8 +844,8 @@
           </div>
         </div>
 
-        <!-- TAB 2: Goal/Task Items Assigned to Agency -->
-        <div v-if="drilldownTab === 'tasks'" class="space-y-3 max-h-[60vh] overflow-y-auto custom-scrollbar pr-1">
+        <!-- TAB CONTENT: Goal/Task Items Assigned to Agency -->
+        <div v-if="drilldownTab === 'goals' || drilldownTab === 'tasks'" class="space-y-3 max-h-[60vh] overflow-y-auto custom-scrollbar pr-1">
           <!-- Local Filters Toolbar -->
           <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200/80">
             <div class="flex items-center gap-2 flex-1 min-w-[200px]">
@@ -826,23 +854,13 @@
                 <input 
                   v-model="modalSearchKeyword" 
                   type="text" 
-                  placeholder="Tìm mã, tên nhiệm vụ, lĩnh vực..." 
+                  :placeholder="drilldownTab === 'goals' ? 'Tìm mã, tên mục tiêu, lĩnh vực...' : 'Tìm mã, tên nhiệm vụ, lĩnh vực...'" 
                   class="w-full pl-8 pr-3 py-1.5 bg-white text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 text-slate-800"
                 />
               </div>
             </div>
 
             <div class="flex items-center gap-2 shrink-0">
-              <!-- Item Type Filter -->
-              <select 
-                v-model="modalItemTypeFilter" 
-                class="py-1.5 px-2.5 text-xs bg-white border border-slate-200 rounded-lg font-medium text-slate-700 focus:outline-none focus:border-blue-500 cursor-pointer"
-              >
-                <option value="all">Tất cả loại</option>
-                <option value="Goal">🎯 Chỉ Mục tiêu</option>
-                <option value="Task">📋 Chỉ Nhiệm vụ</option>
-              </select>
-
               <!-- Status Filter -->
               <select 
                 v-model="modalStatusFilter" 
@@ -861,18 +879,20 @@
 
           <!-- Loading State -->
           <div v-if="isAgencyItemsLoading" class="p-8 text-center">
-            <LoadingSpinner size="md" message="Đang tải danh sách nhiệm vụ..." />
+            <LoadingSpinner size="md" :text="drilldownTab === 'goals' ? 'Đang tải danh sách mục tiêu...' : 'Đang tải danh sách nhiệm vụ...'" />
           </div>
 
-          <!-- Task Items List (BẢNG) -->
+          <!-- Task/Goal Items List (BẢNG) -->
           <div v-else-if="filteredAgencyItems.length > 0" class="border border-slate-200/80 rounded-2xl bg-white overflow-hidden shadow-xs">
             <div class="overflow-x-auto overflow-y-auto max-h-[50vh] custom-scrollbar w-full">
               <table class="w-full min-w-[850px] text-left text-xs text-slate-700 border-collapse">
                 <thead class="bg-slate-100 text-xs text-slate-600 uppercase font-bold border-b border-slate-200 sticky top-0 z-30 shadow-2xs">
                   <tr>
-                    <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 whitespace-nowrap min-w-[70px] w-[70px] max-w-[70px] sticky left-0 z-30">Mã</th>
+                    <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 whitespace-nowrap min-w-[70px] w-[70px] max-w-[70px] sticky left-0 z-30">
+                      {{ drilldownTab === 'goals' ? 'Mã MT' : 'Mã NV' }}
+                    </th>
                     <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[260px]">
-                      Tên Mục Tiêu / Nhiệm Vụ
+                      {{ drilldownTab === 'goals' ? 'Tên Mục Tiêu' : 'Tên Nhiệm Vụ' }}
                     </th>
                     <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[140px] w-[140px]">Cơ Quan Chủ Trì</th>
                     <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 whitespace-nowrap min-w-[130px] w-[130px]">Thời Gian</th>
@@ -890,7 +910,7 @@
                   >
                     <!-- Mã -->
                     <td class="px-3 py-2.5 font-bold text-blue-700 border-r border-slate-200 whitespace-nowrap sticky left-0 z-20 bg-white group-hover:bg-blue-50">
-                      {{ item.code || 'NV' }}
+                      {{ item.code || (drilldownTab === 'goals' ? 'MT' : 'NV') }}
                     </td>
 
                     <!-- Tên & Phân loại -->
@@ -961,7 +981,7 @@
 
           <!-- Empty State -->
           <div v-else class="p-8 text-center text-xs text-slate-400 font-semibold italic">
-            Không tìm thấy mục tiêu, nhiệm vụ nào phù hợp với bộ lọc.
+            Không tìm thấy {{ drilldownTab === 'goals' ? 'mục tiêu' : 'nhiệm vụ' }} nào phù hợp với bộ lọc.
           </div>
         </div>
 
@@ -1055,8 +1075,28 @@ import { getApiUrl } from '../config/api';
 import { authState } from '../services/auth';
 import { GOAL_SECTIONS, GOAL_GROUPS, TASK_SECTIONS, TASK_GROUPS } from '../config/planningStructureConfig';
 
-const dashboardFilter = ref('all'); // 'all', 'goals', 'tasks'
+const dashboardFilter = ref('goals'); // 'goals', 'tasks'
 const isLoading = ref(false);
+
+function setDashboardFilter(val) {
+  dashboardFilter.value = val;
+  loadDashboardMetrics();
+}
+
+const dashboardTitleText = computed(() => {
+  if (dashboardFilter.value === 'goals') return 'Trang chủ theo dõi tiến độ mục tiêu';
+  return 'Trang chủ theo dõi tiến độ nhiệm vụ';
+});
+
+const dashboardItemNoun = computed(() => {
+  if (dashboardFilter.value === 'goals') return 'mục tiêu';
+  return 'nhiệm vụ';
+});
+
+const dashboardItemNounCap = computed(() => {
+  if (dashboardFilter.value === 'goals') return 'Mục Tiêu';
+  return 'Nhiệm Vụ';
+});
 
 const selectedAgencyIds = ref([]);
 const selectedSubAgencyIds = ref([]);
@@ -1069,9 +1109,8 @@ const isOngoingOnly = ref(false);
 const agencies = ref([]);
 
 const dashboardFilterOptions = ref([
-  { value: 'all', label: 'Tất cả (Mục tiêu & Nhiệm vụ)' },
-  { value: 'goals', label: '🎯 Chỉ Mục tiêu' },
-  { value: 'tasks', label: '📋 Chỉ Nhiệm vụ' }
+  { value: 'goals', label: '🎯 Mục tiêu' },
+  { value: 'tasks', label: '📋 Nhiệm vụ' }
 ]);
 
 const scopeOptions = ref([
@@ -1081,7 +1120,7 @@ const scopeOptions = ref([
 
 const activeDashboardFilterCount = computed(() => {
   let count = 0;
-  if (dashboardFilter.value && dashboardFilter.value !== 'all') count++;
+  if (dashboardFilter.value && dashboardFilter.value !== 'goals') count++;
   if (selectedAgencyIds.value?.length) count++;
   if (selectedSubAgencyIds.value?.length) count++;
   if (selectedScopes.value?.length) count++;
@@ -1101,7 +1140,7 @@ function resetDashboardFilters() {
   fromYear.value = null;
   toYear.value = null;
   isOngoingOnly.value = false;
-  dashboardFilter.value = 'all';
+  dashboardFilter.value = 'goals';
   loadDashboardMetrics();
 }
 
@@ -1193,7 +1232,7 @@ const visibleSubAgencies = computed(() => {
 const selectedDrilldownAgency = ref(null);
 const subAgenciesList = ref([]);
 const isSubAgenciesLoading = ref(false);
-const drilldownTab = ref('tasks'); // Default Tab 1: 'tasks' | 'sub-agencies' | 'contacts'
+const drilldownTab = ref('goals'); // 'goals' | 'tasks' | 'sub-agencies' | 'contacts'
 
 const selectedDetailItem = ref(null);
 const agencyItemsList = ref([]);
@@ -1202,10 +1241,17 @@ const modalSearchKeyword = ref('');
 const modalItemTypeFilter = ref('all');
 const modalStatusFilter = ref('all');
 
+const modalGoalsList = computed(() => (agencyItemsList.value || []).filter(i => i.itemType === 'Goal'));
+const modalTasksList = computed(() => (agencyItemsList.value || []).filter(i => i.itemType === 'Task'));
+
 const filteredAgencyItems = computed(() => {
   let list = agencyItemsList.value || [];
 
-  if (modalItemTypeFilter.value && modalItemTypeFilter.value !== 'all') {
+  if (drilldownTab.value === 'goals') {
+    list = list.filter(i => i.itemType === 'Goal');
+  } else if (drilldownTab.value === 'tasks') {
+    list = list.filter(i => i.itemType === 'Task');
+  } else if (modalItemTypeFilter.value && modalItemTypeFilter.value !== 'all') {
     list = list.filter(i => i.itemType === modalItemTypeFilter.value);
   }
 
@@ -1503,10 +1549,6 @@ async function loadAgencyItems(agencyId) {
   try {
     const params = new URLSearchParams();
     params.append('agencyId', agencyId);
-    if (dashboardFilter.value && dashboardFilter.value !== 'all') {
-      const itemType = dashboardFilter.value === 'goals' ? 'Goal' : 'Task';
-      params.append('itemType', itemType);
-    }
     if (selectedScopes.value && selectedScopes.value.length === 1) {
       params.append('scope', selectedScopes.value[0]);
     }
@@ -1525,7 +1567,7 @@ async function loadAgencyItems(agencyId) {
       agencyItemsList.value = await res.json();
     }
   } catch (e) {
-    console.error('Lỗi khi tải danh sách nhiệm vụ của đơn vị:', e);
+    console.error('Lỗi khi tải danh sách mục tiêu/nhiệm vụ của đơn vị:', e);
   } finally {
     isAgencyItemsLoading.value = false;
   }
@@ -1569,7 +1611,7 @@ async function switchDrilldownTab(tab) {
   drilldownTab.value = tab;
   if (!selectedDrilldownAgency.value) return;
 
-  if (tab === 'tasks') {
+  if (tab === 'goals' || tab === 'tasks') {
     if (agencyItemsList.value.length === 0 && !isAgencyItemsLoading.value) {
       await loadAgencyItems(selectedDrilldownAgency.value.agencyId);
     }
@@ -1587,18 +1629,27 @@ async function drilldownAgency(agency) {
   modalSearchKeyword.value = '';
   modalItemTypeFilter.value = 'all';
   modalStatusFilter.value = 'all';
-  drilldownTab.value = 'tasks'; // Default Tab 1: Assigned Tasks
+
+  if (dashboardFilter.value === 'tasks') {
+    drilldownTab.value = 'tasks';
+  } else {
+    drilldownTab.value = 'goals';
+  }
 
   // Set loading states immediately so header tab badges display (...) loading indicator instead of (0)
   isAgencyItemsLoading.value = true;
   isSubAgenciesLoading.value = true;
 
-  // Immediately load both assigned tasks list and sub-agencies metrics concurrently 
-  // so all tab totals (Tasks, Sub-agencies, Contacts) are accurate right on popup open
+  // Immediately load both assigned items list and sub-agencies metrics concurrently 
+  // so all tab totals (Goals, Tasks, Sub-agencies, Contacts) are accurate right on popup open
   await Promise.all([
     loadAgencyItems(agency.agencyId),
     loadSubAgencies(agency.agencyId)
   ]);
+
+  if (drilldownTab.value === 'goals' && modalGoalsList.value.length === 0 && modalTasksList.value.length > 0) {
+    drilldownTab.value = 'tasks';
+  }
 }
 
 const isExportingExcel = ref(false);
