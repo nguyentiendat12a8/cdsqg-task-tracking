@@ -452,11 +452,11 @@
             🏢 Khối Các Bộ / Ngành Trung Ương
           </h3>
           <span class="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-xl border border-blue-200/60">
-            {{ metrics.ministriesPerformance?.length ?? 0 }} Bộ/Ngành
+            {{ filteredMinistriesPerformance?.length ?? 0 }} Bộ/Ngành
           </span>
         </div>
 
-        <div v-if="metrics.ministriesPerformance?.length" class="space-y-3">
+        <div v-if="filteredMinistriesPerformance?.length" class="space-y-3">
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
             <div 
               v-for="(item, index) in visibleMinistries" 
@@ -548,17 +548,17 @@
           </div>
 
           <!-- Expand / Collapse Button -->
-          <div v-if="(metrics.ministriesPerformance?.length || 0) > 8" class="pt-2 text-center border-t border-slate-100">
+          <div v-if="(filteredMinistriesPerformance?.length || 0) > 8" class="pt-2 text-center border-t border-slate-100">
             <button 
               @click="isMinistriesExpanded = !isMinistriesExpanded" 
               class="px-5 py-2 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
             >
-              <span>{{ isMinistriesExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${metrics.ministriesPerformance.length - 8} Bộ/Ngành khác)` }}</span>
+              <span>{{ isMinistriesExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${filteredMinistriesPerformance.length - 8} Bộ/Ngành khác)` }}</span>
             </button>
           </div>
         </div>
 
-        <div v-if="!metrics.ministriesPerformance?.length" class="p-8 text-center text-xs text-slate-400 italic font-semibold">
+        <div v-if="!filteredMinistriesPerformance?.length" class="p-8 text-center text-xs text-slate-400 italic font-semibold">
           Không có dữ liệu Bộ/Ngành.
         </div>
       </div>
@@ -570,11 +570,11 @@
             🏛️ Khối Các Tỉnh / Thành Phố
           </h3>
           <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-xl border border-emerald-200/60">
-            {{ metrics.provincesPerformance?.length ?? 0 }} Địa phương
+            {{ filteredProvincesPerformance?.length ?? 0 }} Địa phương
           </span>
         </div>
 
-        <div v-if="metrics.provincesPerformance?.length" class="space-y-3">
+        <div v-if="filteredProvincesPerformance?.length" class="space-y-3">
           <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
             <div 
               v-for="(item, index) in visibleProvinces" 
@@ -666,30 +666,30 @@
           </div>
 
           <!-- Expand / Collapse Button -->
-          <div v-if="(metrics.provincesPerformance?.length || 0) > 8" class="pt-2 text-center border-t border-slate-100">
+          <div v-if="(filteredProvincesPerformance?.length || 0) > 8" class="pt-2 text-center border-t border-slate-100">
             <button 
               @click="isProvincesExpanded = !isProvincesExpanded" 
               class="px-5 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
             >
-              <span>{{ isProvincesExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${metrics.provincesPerformance.length - 8} Địa phương khác)` }}</span>
+              <span>{{ isProvincesExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${filteredProvincesPerformance.length - 8} Địa phương khác)` }}</span>
             </button>
           </div>
         </div>
 
-          <div v-if="!metrics.provincesPerformance?.length" class="col-span-full p-8 text-center text-xs text-slate-400 italic font-semibold">
+          <div v-if="!filteredProvincesPerformance?.length" class="col-span-full p-8 text-center text-xs text-slate-400 italic font-semibold">
             Không có dữ liệu Địa phương.
           </div>
         </div>
       </div>
 
       <!-- Section 3: Khối Các Cơ Quan / Đơn Vị Khác (Hiển thị khi có dữ liệu được gán chủ trì) -->
-      <div v-if="metrics.othersPerformance?.length" class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
+      <div v-if="filteredOthersPerformance?.length" class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
           <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
             🏢 Khối Các Cơ Quan / Đơn Vị Khác
           </h3>
           <span class="text-xs font-bold text-purple-600 bg-purple-50 px-3 py-1 rounded-xl border border-purple-200/60">
-            {{ metrics.othersPerformance?.length ?? 0 }} Cơ quan / Đơn vị
+            {{ filteredOthersPerformance?.length ?? 0 }} Cơ quan / Đơn vị
           </span>
         </div>
 
@@ -785,12 +785,12 @@
           </div>
 
           <!-- Expand / Collapse Button -->
-          <div v-if="(metrics.othersPerformance?.length || 0) > 8" class="pt-2 text-center border-t border-slate-100">
+          <div v-if="(filteredOthersPerformance?.length || 0) > 8" class="pt-2 text-center border-t border-slate-100">
             <button 
               @click="isOthersExpanded = !isOthersExpanded" 
               class="px-5 py-2 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-xl transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
             >
-              <span>{{ isOthersExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${metrics.othersPerformance.length - 8} Đơn vị khác)` }}</span>
+              <span>{{ isOthersExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${filteredOthersPerformance.length - 8} Đơn vị khác)` }}</span>
             </button>
           </div>
         </div>
@@ -1332,20 +1332,37 @@ const isProvincesExpanded = ref(false);
 const isOthersExpanded = ref(false);
 const isSubAgenciesExpanded = ref(false);
 
+function filterOutSpecialAgencies(list) {
+  return (list || []).filter(item => {
+    if (!item) return false;
+    if (isSpecialAgencyCode(item.code)) return false;
+    if (item.type === 5 || item.type === '5' || item.type === 'Special') return false;
+    const code = (item.code || '').toUpperCase();
+    if (['ALL_AGENCIES', 'ALL_MINISTRIES', 'ALL_PROVINCES', 'ALL_PROVINCES_UBND', 'ALL_MINISTRIES_DIRECT'].includes(code)) return false;
+    const name = (item.name || '').toLowerCase();
+    if (name.includes('ubnd tỉnh, thành phố trực thuộc trung ương') || name.startsWith('các bộ, ngành') || name.startsWith('các địa phương')) return false;
+    return true;
+  });
+}
+
+const filteredMinistriesPerformance = computed(() => filterOutSpecialAgencies(metrics.value.ministriesPerformance));
+const filteredProvincesPerformance = computed(() => filterOutSpecialAgencies(metrics.value.provincesPerformance));
+const filteredOthersPerformance = computed(() => filterOutSpecialAgencies(metrics.value.othersPerformance));
+
 const visibleMinistries = computed(() => {
-  const list = metrics.value.ministriesPerformance || [];
+  const list = filteredMinistriesPerformance.value;
   if (isMinistriesExpanded.value || list.length <= 8) return list;
   return list.slice(0, 8);
 });
 
 const visibleProvinces = computed(() => {
-  const list = metrics.value.provincesPerformance || [];
+  const list = filteredProvincesPerformance.value;
   if (isProvincesExpanded.value || list.length <= 8) return list;
   return list.slice(0, 8);
 });
 
 const visibleOthers = computed(() => {
-  const list = metrics.value.othersPerformance || [];
+  const list = filteredOthersPerformance.value;
   if (isOthersExpanded.value || list.length <= 8) return list;
   return list.slice(0, 8);
 });
@@ -1802,13 +1819,18 @@ function getStatusLabelClean(status) {
 
 async function exportDashboardExcelReport() {
   isExportingExcel.value = true;
-  toast.info("Đang khởi tạo báo cáo Excel theo bộ lọc...", { autoClose: 2000 });
+  const filterType = dashboardFilter.value; // 'goals', 'tasks', or 'all'
+  const isGoalsOnly = filterType === 'goals';
+  const isTasksOnly = filterType === 'tasks';
+
+  const filterNameLabel = isGoalsOnly ? 'Mục tiêu' : (isTasksOnly ? 'Nhiệm vụ' : 'Mục tiêu & Nhiệm vụ');
+  toast.info(`Đang khởi tạo báo cáo Excel (${filterNameLabel}) theo bộ lọc...`, { autoClose: 2000 });
 
   try {
     const allFilteredAgencies = [
-      ...(metrics.value.ministriesPerformance || []),
-      ...(metrics.value.provincesPerformance || []),
-      ...(metrics.value.othersPerformance || [])
+      ...(filteredMinistriesPerformance.value || []),
+      ...(filteredProvincesPerformance.value || []),
+      ...(filteredOthersPerformance.value || [])
     ];
 
     if (allFilteredAgencies.length === 0) {
@@ -1824,77 +1846,141 @@ async function exportDashboardExcelReport() {
     // ==========================================
     // SHEET 1: TỔNG HỢP CHUNG
     // ==========================================
+    const reportTitle = isGoalsOnly 
+      ? "BÁO CÁO TỔNG HỢP TIẾN ĐỘ THỰC HIỆN MỤC TIÊU CHIẾN LƯỢC - QUYẾT ĐỊNH 1266/QĐ-TTg"
+      : (isTasksOnly 
+          ? "BÁO CÁO TỔNG HỢP TIẾN ĐỘ THỰC HIỆN NHIỆM VỤ CHIẾN LƯỢC - QUYẾT ĐỊNH 1266/QĐ-TTg"
+          : "BÁO CÁO TỔNG HỢP TIẾN ĐỘ THỰC HIỆN MỤC TIÊU & NHIỆM VỤ CHIẾN LƯỢC - QUYẾT ĐỊNH 1266/QĐ-TTg");
+
     const summaryData = [
-      ["BÁO CÁO TỔNG HỢP TIẾN ĐỘ THEO DÕI CHIẾN LƯỢC - QUYẾT ĐỊNH 1266/QĐ-TTg"],
-      [`Thời gian xuất: ${timeStr} | Tổng số đơn vị: ${allFilteredAgencies.length}`],
+      [reportTitle],
+      [`Thời gian xuất: ${timeStr} | Lọc theo: ${filterNameLabel} | Tổng số đơn vị: ${allFilteredAgencies.length}`],
       [],
-      ["CHỈ SỐ TỔNG QUAN TOÀN HỆ THỐNG"],
-      ["Tổng số mục tiêu", metrics.value.totalGoals || 0],
-      ["Tổng số nhiệm vụ", metrics.value.totalTasks || 0],
-      ["Tổng số hạng mục", (metrics.value.totalGoals || 0) + (metrics.value.totalTasks || 0)],
-      [],
-      ["DANH SÁCH BỘ, NGÀNH, ĐỊA PHƯƠNG VÀ TIẾN ĐỘ THỰC HIỆN"],
-      [
-        "STT",
-        "Loại hình",
-        "Tên Bộ / Ngành / Địa phương",
-        "Tổng số",
-        "Mục tiêu",
-        "Nhiệm vụ",
-        "Đang T/H quá hạn",
-        "Đang T/H trong hạn",
-        "Sắp tới hạn",
-        "Đã H/T quá hạn",
-        "Đã H/T trong hạn",
-        "Chưa thực hiện",
-        "Cán bộ đầu mối chính"
-      ]
+      ["CHỈ SỐ TỔNG QUAN TOÀN HỆ THỐNG"]
     ];
+
+    if (isGoalsOnly) {
+      summaryData.push(["Tổng số mục tiêu", metrics.value.goalStatusSummary?.totalGoals ?? metrics.value.totalGoals ?? 0]);
+    } else if (isTasksOnly) {
+      summaryData.push(["Tổng số nhiệm vụ", metrics.value.taskStatusSummary?.totalTasks ?? metrics.value.totalTasks ?? 0]);
+    } else {
+      summaryData.push(["Tổng số mục tiêu", metrics.value.totalGoals || 0]);
+      summaryData.push(["Tổng số nhiệm vụ", metrics.value.totalTasks || 0]);
+      summaryData.push(["Tổng số hạng mục", (metrics.value.totalGoals || 0) + (metrics.value.totalTasks || 0)]);
+    }
+
+    summaryData.push([]);
+    summaryData.push(["DANH SÁCH BỘ, NGÀNH, ĐỊA PHƯƠNG VÀ TIẾN ĐỘ THỰC HIỆN"]);
+
+    let headerRowSheet1 = [];
+    if (isGoalsOnly) {
+      headerRowSheet1 = [
+        "STT", "Loại hình", "Tên Bộ / Ngành / Địa phương", "Số lượng Mục tiêu",
+        "Đang T/H quá hạn", "Đang T/H trong hạn", "Sắp tới hạn",
+        "Đã H/T quá hạn", "Đã H/T trong hạn", "Chưa thực hiện",
+        "Cán bộ đầu mối chính"
+      ];
+    } else if (isTasksOnly) {
+      headerRowSheet1 = [
+        "STT", "Loại hình", "Tên Bộ / Ngành / Địa phương", "Số lượng Nhiệm vụ",
+        "Đang T/H quá hạn", "Đang T/H trong hạn", "Sắp tới hạn",
+        "Đã H/T quá hạn", "Đã H/T trong hạn", "Chưa thực hiện",
+        "Cán bộ đầu mối chính"
+      ];
+    } else {
+      headerRowSheet1 = [
+        "STT", "Loại hình", "Tên Bộ / Ngành / Địa phương", "Tổng số", "Mục tiêu", "Nhiệm vụ",
+        "Đang T/H quá hạn", "Đang T/H trong hạn", "Sắp tới hạn",
+        "Đã H/T quá hạn", "Đã H/T trong hạn", "Chưa thực hiện",
+        "Cán bộ đầu mối chính"
+      ];
+    }
+    summaryData.push(headerRowSheet1);
 
     allFilteredAgencies.forEach((ag, idx) => {
       const mainContact = ag.contactPersons?.[0];
       const contactStr = mainContact ? `${mainContact.name || ''} (${mainContact.phone || mainContact.email || ''})` : '—';
-      summaryData.push([
-        idx + 1,
-        ag.type === 'Ministry' ? 'Bộ / Ngành' : 'Địa phương',
-        ag.name,
-        ag.totalItems || 0,
-        ag.totalGoals || 0,
-        ag.totalTasks || 0,
-        ag.inProgressOverdue || 0,
-        ag.inProgressOnTime || 0,
-        ag.expiringSoon || 0,
-        ag.completedOverdue || 0,
-        ag.completedOnTime || 0,
-        ag.notStarted || 0,
-        contactStr
-      ]);
+      const agencyTypeLabel = ag.type === 'Ministry' ? 'Bộ / Ngành' : (ag.type === 'Province' ? 'Địa phương' : 'Đơn vị khác');
+
+      if (isGoalsOnly) {
+        summaryData.push([
+          idx + 1, agencyTypeLabel, ag.name,
+          ag.totalGoals ?? ag.totalItems ?? 0,
+          ag.goalInProgressOverdue ?? ag.inProgressOverdue ?? 0,
+          ag.goalInProgressOnTime ?? ag.inProgressOnTime ?? 0,
+          ag.goalExpiringSoon ?? ag.expiringSoon ?? 0,
+          ag.goalCompletedOverdue ?? ag.completedOverdue ?? 0,
+          ag.goalCompletedOnTime ?? ag.completedOnTime ?? 0,
+          ag.goalNotStarted ?? ag.notStarted ?? 0,
+          contactStr
+        ]);
+      } else if (isTasksOnly) {
+        summaryData.push([
+          idx + 1, agencyTypeLabel, ag.name,
+          ag.totalTasks ?? ag.totalItems ?? 0,
+          ag.taskInProgressOverdue ?? ag.inProgressOverdue ?? 0,
+          ag.taskInProgressOnTime ?? ag.inProgressOnTime ?? 0,
+          ag.taskExpiringSoon ?? ag.expiringSoon ?? 0,
+          ag.taskCompletedOverdue ?? ag.completedOverdue ?? 0,
+          ag.taskCompletedOnTime ?? ag.completedOnTime ?? 0,
+          ag.taskNotStarted ?? ag.notStarted ?? 0,
+          contactStr
+        ]);
+      } else {
+        summaryData.push([
+          idx + 1, agencyTypeLabel, ag.name,
+          ag.totalItems || 0, ag.totalGoals || 0, ag.totalTasks || 0,
+          ag.inProgressOverdue || 0, ag.inProgressOnTime || 0, ag.expiringSoon || 0,
+          ag.completedOverdue || 0, ag.completedOnTime || 0, ag.notStarted || 0,
+          contactStr
+        ]);
+      }
     });
 
+    const headerRowIdxSheet1 = isGoalsOnly || isTasksOnly ? 7 : 9;
     const wsSummary = XLSX.utils.aoa_to_sheet(summaryData);
+    const numColsSheet1 = headerRowSheet1.length;
+
     wsSummary['!merges'] = [
-      { s: { r: 0, c: 0 }, e: { r: 0, c: 12 } },
-      { s: { r: 1, c: 0 }, e: { r: 1, c: 12 } },
-      { s: { r: 3, c: 0 }, e: { r: 3, c: 12 } },
-      { s: { r: 8, c: 0 }, e: { r: 8, c: 12 } }
-    ];
-    wsSummary['!cols'] = [
-      { wch: 6 },  // STT
-      { wch: 15 }, // Loại hình
-      { wch: 40 }, // Tên Bộ / Ngành / Địa phương
-      { wch: 12 }, // Tổng số
-      { wch: 12 }, // Mục tiêu
-      { wch: 12 }, // Nhiệm vụ
-      { wch: 18 }, // Đang T/H quá hạn
-      { wch: 18 }, // Đang T/H trong hạn
-      { wch: 16 }, // Sắp tới hạn
-      { wch: 16 }, // Đã H/T quá hạn
-      { wch: 16 }, // Đã H/T trong hạn
-      { wch: 16 }, // Chưa thực hiện
-      { wch: 35 }  // Cán bộ đầu mối chính
+      { s: { r: 0, c: 0 }, e: { r: 0, c: numColsSheet1 - 1 } },
+      { s: { r: 1, c: 0 }, e: { r: 1, c: numColsSheet1 - 1 } },
+      { s: { r: 3, c: 0 }, e: { r: 3, c: numColsSheet1 - 1 } },
+      { s: { r: headerRowIdxSheet1 - 1, c: 0 }, e: { r: headerRowIdxSheet1 - 1, c: numColsSheet1 - 1 } }
     ];
 
-    styleWorksheet(wsSummary, { numCols: 13, headerRowIndex: 9, titleRowIndex: 0 });
+    if (isGoalsOnly || isTasksOnly) {
+      wsSummary['!cols'] = [
+        { wch: 6 },  // STT
+        { wch: 15 }, // Loại hình
+        { wch: 40 }, // Tên Bộ / Ngành / Địa phương
+        { wch: 18 }, // Số lượng Mục tiêu/Nhiệm vụ
+        { wch: 18 }, // Đang T/H quá hạn
+        { wch: 18 }, // Đang T/H trong hạn
+        { wch: 16 }, // Sắp tới hạn
+        { wch: 16 }, // Đã H/T quá hạn
+        { wch: 16 }, // Đã H/T trong hạn
+        { wch: 16 }, // Chưa thực hiện
+        { wch: 35 }  // Cán bộ đầu mối chính
+      ];
+    } else {
+      wsSummary['!cols'] = [
+        { wch: 6 },  // STT
+        { wch: 15 }, // Loại hình
+        { wch: 40 }, // Tên Bộ / Ngành / Địa phương
+        { wch: 12 }, // Tổng số
+        { wch: 12 }, // Mục tiêu
+        { wch: 12 }, // Nhiệm vụ
+        { wch: 18 }, // Đang T/H quá hạn
+        { wch: 18 }, // Đang T/H trong hạn
+        { wch: 16 }, // Sắp tới hạn
+        { wch: 16 }, // Đã H/T quá hạn
+        { wch: 16 }, // Đã H/T trong hạn
+        { wch: 16 }, // Chưa thực hiện
+        { wch: 35 }  // Cán bộ đầu mối chính
+      ];
+    }
+
+    styleWorksheet(wsSummary, { numCols: numColsSheet1, headerRowIndex: headerRowIdxSheet1, titleRowIndex: 0 });
     XLSX.utils.book_append_sheet(wb, wsSummary, "TỔNG HỢP CHUNG");
 
     const usedSheetNames = new Set(["TỔNG HỢP CHUNG"]);
@@ -1917,8 +2003,8 @@ async function exportDashboardExcelReport() {
       try {
         const subParams = new URLSearchParams();
         subParams.append('parentAgencyId', ag.agencyId);
-        if (dashboardFilter.value && dashboardFilter.value !== 'all') {
-          subParams.append('itemType', dashboardFilter.value === 'goals' ? 'Goal' : 'Task');
+        if (filterType !== 'all') {
+          subParams.append('itemType', isGoalsOnly ? 'Goal' : 'Task');
         }
         if (selectedScopes.value && selectedScopes.value.length === 1) subParams.append('scope', selectedScopes.value[0]);
         if (selectedSections.value && selectedSections.value.length > 0) selectedSections.value.forEach(s => subParams.append('section', s));
@@ -1930,7 +2016,11 @@ async function exportDashboardExcelReport() {
         const subRes = await fetch(getApiUrl(`/api/dashboard/metrics?${subParams.toString()}`));
         if (subRes.ok) {
           const subData = await subRes.json();
-          subAgencies = [...(subData.ministriesPerformance || []), ...(subData.provincesPerformance || []), ...(subData.othersPerformance || [])];
+          subAgencies = filterOutSpecialAgencies([
+            ...(subData.ministriesPerformance || []),
+            ...(subData.provincesPerformance || []),
+            ...(subData.othersPerformance || [])
+          ]);
         }
       } catch (e) {}
 
@@ -1939,7 +2029,7 @@ async function exportDashboardExcelReport() {
       try {
         const agParams = new URLSearchParams();
         agParams.append('agencyId', ag.agencyId);
-        if (dashboardFilter.value && dashboardFilter.value !== 'all') agParams.append('itemType', dashboardFilter.value === 'goals' ? 'Goal' : 'Task');
+        if (filterType !== 'all') agParams.append('itemType', isGoalsOnly ? 'Goal' : 'Task');
         if (selectedScopes.value && selectedScopes.value.length === 1) agParams.append('scope', selectedScopes.value[0]);
         if (selectedSections.value && selectedSections.value.length > 0) selectedSections.value.forEach(s => agParams.append('section', s));
         if (selectedGroups.value && selectedGroups.value.length > 0) selectedGroups.value.forEach(g => agParams.append('group', g));
@@ -1973,113 +2063,199 @@ async function exportDashboardExcelReport() {
       const mainContact = ag.contactPersons?.[0];
       const mainContactStr = mainContact ? `${mainContact.name || ''} - ${mainContact.position || ''} (SĐT: ${mainContact.phone || '—'}, Email: ${mainContact.email || '—'})` : 'Chưa có thông tin';
 
+      const sheetAgencyHeaderTitle = isGoalsOnly
+        ? `BÁO CÁO CHI TIẾT THỰC HIỆN MỤC TIÊU CHIẾN LƯỢC - ${ag.name.toUpperCase()}`
+        : (isTasksOnly
+            ? `BÁO CÁO CHI TIẾT THỰC HIỆN NHIỆM VỤ CHIẾN LƯỢC - ${ag.name.toUpperCase()}`
+            : `BÁO CÁO CHI TIẾT THỰC HIỆN MỤC TIÊU & NHIỆM VỤ CHIẾN LƯỢC - ${ag.name.toUpperCase()}`);
+
       const sheetRows = [
-        [`BÁO CÁO CHI TIẾT THỰC HIỆN NHIỆM VỤ CHIẾN LƯỢC - ${ag.name.toUpperCase()}`],
+        [sheetAgencyHeaderTitle],
         [`Thời gian xuất: ${timeStr} | Loại hình: ${ag.type === 'Ministry' ? 'Bộ / Ngành' : 'Địa phương'}`],
         [],
         ["1. THÔNG TIN CHUNG VÀ TỔNG HỢP TIẾN ĐỘ THỰC HIỆN CỦA ĐƠN VỊ"],
         ["Tên đơn vị:", ag.name],
         ["Cán bộ đầu mối chính:", mainContactStr],
         ["Đơn vị trực thuộc:", subAgencies.length > 0 ? `${subAgencies.length} đơn vị trực thuộc` : "Không có đơn vị trực thuộc"],
-        [],
-        ["BẢNG TỔNG HỢP TRẠNG THÁI TIẾN ĐỘ CỦA ĐƠN VỊ"],
-        [
-          "Tổng số hạng mục", "Mục tiêu", "Nhiệm vụ",
-          "Đang T/H quá hạn", "Đang T/H trong hạn", "Sắp tới hạn",
-          "Đã H/T quá hạn", "Đã H/T trong hạn", "Chưa thực hiện"
-        ],
-        [
-          ag.totalItems || 0, ag.totalGoals || 0, ag.totalTasks || 0,
-          ag.inProgressOverdue || 0, ag.inProgressOnTime || 0, ag.expiringSoon || 0,
-          ag.completedOverdue || 0, ag.completedOnTime || 0, ag.notStarted || 0
-        ],
         []
       ];
 
+      // Table 1: Agency Progress Summary
+      if (isGoalsOnly) {
+        sheetRows.push(["BẢNG TỔNG HỢP TRẠNG THÁI TIẾN ĐỘ MỤC TIÊU CỦA ĐƠN VỊ"]);
+        sheetRows.push([
+          "Số lượng Mục tiêu", "Đang T/H quá hạn", "Đang T/H trong hạn", "Sắp tới hạn",
+          "Đã H/T quá hạn", "Đã H/T trong hạn", "Chưa thực hiện"
+        ]);
+        sheetRows.push([
+          ag.totalGoals ?? ag.totalItems ?? 0,
+          ag.goalInProgressOverdue ?? ag.inProgressOverdue ?? 0,
+          ag.goalInProgressOnTime ?? ag.inProgressOnTime ?? 0,
+          ag.goalExpiringSoon ?? ag.expiringSoon ?? 0,
+          ag.goalCompletedOverdue ?? ag.completedOverdue ?? 0,
+          ag.goalCompletedOnTime ?? ag.completedOnTime ?? 0,
+          ag.goalNotStarted ?? ag.notStarted ?? 0
+        ]);
+      } else if (isTasksOnly) {
+        sheetRows.push(["BẢNG TỔNG HỢP TRẠNG THÁI TIẾN ĐỘ NHIỆM VỤ CỦA ĐƠN VỊ"]);
+        sheetRows.push([
+          "Số lượng Nhiệm vụ", "Đang T/H quá hạn", "Đang T/H trong hạn", "Sắp tới hạn",
+          "Đã H/T quá hạn", "Đã H/T trong hạn", "Chưa thực hiện"
+        ]);
+        sheetRows.push([
+          ag.totalTasks ?? ag.totalItems ?? 0,
+          ag.taskInProgressOverdue ?? ag.inProgressOverdue ?? 0,
+          ag.taskInProgressOnTime ?? ag.inProgressOnTime ?? 0,
+          ag.taskExpiringSoon ?? ag.expiringSoon ?? 0,
+          ag.taskCompletedOverdue ?? ag.completedOverdue ?? 0,
+          ag.taskCompletedOnTime ?? ag.completedOnTime ?? 0,
+          ag.taskNotStarted ?? ag.notStarted ?? 0
+        ]);
+      } else {
+        sheetRows.push(["BẢNG TỔNG HỢP TRẠNG THÁI TIẾN ĐỘ CỦA ĐƠN VỊ"]);
+        sheetRows.push([
+          "Tổng số hạng mục", "Mục tiêu", "Nhiệm vụ",
+          "Đang T/H quá hạn", "Đang T/H trong hạn", "Sắp tới hạn",
+          "Đã H/T quá hạn", "Đã H/T trong hạn", "Chưa thực hiện"
+        ]);
+        sheetRows.push([
+          ag.totalItems || 0, ag.totalGoals || 0, ag.totalTasks || 0,
+          ag.inProgressOverdue || 0, ag.inProgressOnTime || 0, ag.expiringSoon || 0,
+          ag.completedOverdue || 0, ag.completedOnTime || 0, ag.notStarted || 0
+        ]);
+      }
+      sheetRows.push([]);
+
+      const maxColsAgency = 11;
       const merges = [
-        { s: { r: 0, c: 0 }, e: { r: 0, c: 10 } },
-        { s: { r: 1, c: 0 }, e: { r: 1, c: 10 } },
-        { s: { r: 3, c: 0 }, e: { r: 3, c: 10 } },
-        { s: { r: 8, c: 0 }, e: { r: 8, c: 10 } }
+        { s: { r: 0, c: 0 }, e: { r: 0, c: maxColsAgency - 1 } },
+        { s: { r: 1, c: 0 }, e: { r: 1, c: maxColsAgency - 1 } },
+        { s: { r: 3, c: 0 }, e: { r: 3, c: maxColsAgency - 1 } },
+        { s: { r: 8, c: 0 }, e: { r: 8, c: maxColsAgency - 1 } }
       ];
+
+      let secCounter = 2;
 
       // Table 2: Sub-agencies progress summary
       if (subAgencies.length > 0) {
         const rowIdx = sheetRows.length;
-        merges.push({ s: { r: rowIdx, c: 0 }, e: { r: rowIdx, c: 10 } });
-        sheetRows.push(["2. TỔNG SỐ MỤC TIÊU, NHIỆM VỤ THEO TRẠNG THÁI CỦA TỪNG ĐƠN VỊ TRỰC THUỘC"]);
-        sheetRows.push([
-          "STT", "Tên Đơn Vị Trực Thuộc", "Tổng Số", "Mục Tiêu", "Nhiệm Vụ",
-          "Đang T/H quá hạn", "Đang T/H trong hạn", "Sắp tới hạn",
-          "Đã H/T quá hạn", "Đã H/T trong hạn", "Chưa thực hiện"
-        ]);
-        subAgencies.forEach((sub, sIdx) => {
+        merges.push({ s: { r: rowIdx, c: 0 }, e: { r: rowIdx, c: maxColsAgency - 1 } });
+
+        if (isGoalsOnly) {
+          sheetRows.push([`${secCounter}. TỔNG SỐ MỤC TIÊU THEO TRẠNG THÁI CỦA TỪNG ĐƠN VỊ TRỰC THUỘC`]);
           sheetRows.push([
-            sIdx + 1, sub.name, sub.totalItems || 0, sub.totalGoals || 0, sub.totalTasks || 0,
-            sub.inProgressOverdue || 0, sub.inProgressOnTime || 0, sub.expiringSoon || 0,
-            sub.completedOverdue || 0, sub.completedOnTime || 0, sub.notStarted || 0
+            "STT", "Tên Đơn Vị Trực Thuộc", "Số Lượng Mục Tiêu",
+            "Đang T/H quá hạn", "Đang T/H trong hạn", "Sắp tới hạn",
+            "Đã H/T quá hạn", "Đã H/T trong hạn", "Chưa thực hiện"
           ]);
-        });
+          subAgencies.forEach((sub, sIdx) => {
+            sheetRows.push([
+              sIdx + 1, sub.name, sub.totalGoals ?? sub.totalItems ?? 0,
+              sub.goalInProgressOverdue ?? sub.inProgressOverdue ?? 0,
+              sub.goalInProgressOnTime ?? sub.inProgressOnTime ?? 0,
+              sub.goalExpiringSoon ?? sub.expiringSoon ?? 0,
+              sub.goalCompletedOverdue ?? sub.completedOverdue ?? 0,
+              sub.goalCompletedOnTime ?? sub.completedOnTime ?? 0,
+              sub.goalNotStarted ?? sub.notStarted ?? 0
+            ]);
+          });
+        } else if (isTasksOnly) {
+          sheetRows.push([`${secCounter}. TỔNG SỐ NHIỆM VỤ THEO TRẠNG THÁI CỦA TỪNG ĐƠN VỊ TRỰC THUỘC`]);
+          sheetRows.push([
+            "STT", "Tên Đơn Vị Trực Thuộc", "Số Lượng Nhiệm Vụ",
+            "Đang T/H quá hạn", "Đang T/H trong hạn", "Sắp tới hạn",
+            "Đã H/T quá hạn", "Đã H/T trong hạn", "Chưa thực hiện"
+          ]);
+          subAgencies.forEach((sub, sIdx) => {
+            sheetRows.push([
+              sIdx + 1, sub.name, sub.totalTasks ?? sub.totalItems ?? 0,
+              sub.taskInProgressOverdue ?? sub.inProgressOverdue ?? 0,
+              sub.taskInProgressOnTime ?? sub.inProgressOnTime ?? 0,
+              sub.taskExpiringSoon ?? sub.expiringSoon ?? 0,
+              sub.taskCompletedOverdue ?? sub.completedOverdue ?? 0,
+              sub.taskCompletedOnTime ?? sub.completedOnTime ?? 0,
+              sub.taskNotStarted ?? sub.notStarted ?? 0
+            ]);
+          });
+        } else {
+          sheetRows.push([`${secCounter}. TỔNG SỐ MỤC TIÊU, NHIỆM VỤ THEO TRẠNG THÁI CỦA TỪNG ĐƠN VỊ TRỰC THUỘC`]);
+          sheetRows.push([
+            "STT", "Tên Đơn Vị Trực Thuộc", "Tổng Số", "Mục Tiêu", "Nhiệm Vụ",
+            "Đang T/H quá hạn", "Đang T/H trong hạn", "Sắp tới hạn",
+            "Đã H/T quá hạn", "Đã H/T trong hạn", "Chưa thực hiện"
+          ]);
+          subAgencies.forEach((sub, sIdx) => {
+            sheetRows.push([
+              sIdx + 1, sub.name, sub.totalItems || 0, sub.totalGoals || 0, sub.totalTasks || 0,
+              sub.inProgressOverdue || 0, sub.inProgressOnTime || 0, sub.expiringSoon || 0,
+              sub.completedOverdue || 0, sub.completedOnTime || 0, sub.notStarted || 0
+            ]);
+          });
+        }
+        secCounter++;
         sheetRows.push([]);
       }
 
-      // Table 3: Goals List
-      const secGoal = subAgencies.length > 0 ? "3" : "2";
-      const goalRowIdx = sheetRows.length;
-      merges.push({ s: { r: goalRowIdx, c: 0 }, e: { r: goalRowIdx, c: 10 } });
-      sheetRows.push([`${secGoal}. DANH SÁCH MỤC TIÊU CỦA ĐƠN VỊ (${goalsList.length} mục tiêu)`]);
-      if (goalsList.length > 0) {
-        sheetRows.push([
-          "STT", "Tên Mục Tiêu", "Cơ Quan Chủ Trì", "Giao Đơn Vị Trực Thuộc", "Phạm Vi", "Lĩnh Vực / Nhóm",
-          "Thời Gian / Hạn Chót", "Tiến Độ Hiện Tại", "Trạng Thái Thực Hiện"
-        ]);
-        goalsList.forEach((g, gIdx) => {
-          let dateStr = g.isOngoing ? 'Hằng năm' : (g.dueDate ? formatDate(g.dueDate) : '—');
-          let progStr = formatItemProgressDisplay(g);
-
+      // Goals List Table (Include if isGoalsOnly or isAll)
+      if (isGoalsOnly || !isTasksOnly) {
+        const goalRowIdx = sheetRows.length;
+        merges.push({ s: { r: goalRowIdx, c: 0 }, e: { r: goalRowIdx, c: maxColsAgency - 1 } });
+        sheetRows.push([`${secCounter}. DANH SÁCH MỤC TIÊU CỦA ĐƠN VỊ (${goalsList.length} mục tiêu)`]);
+        if (goalsList.length > 0) {
           sheetRows.push([
-            gIdx + 1, g.title, g.leadAgencyName, g.assignedAgencyName || '—',
-            g.isGeneralTask ? 'Phạm vi chung' : 'Phạm vi riêng',
-            [g.section, g.group].filter(Boolean).join(' - ') || '—',
-            dateStr, progStr, getStatusLabelClean(g.status)
+            "STT", "Mã Mục Tiêu", "Tên Mục Tiêu", "Cơ Quan Chủ Trì", "Giao Đơn Vị Trực Thuộc", "Phạm Vi", "Lĩnh Vực / Nhóm",
+            "Thời Gian / Hạn Chót", "Tiến Độ Hiện Tại", "Trạng Thái Thực Hiện"
           ]);
-        });
-      } else {
-        sheetRows.push(["Không có mục tiêu nào trong bộ lọc hiện tại."]);
+          goalsList.forEach((g, gIdx) => {
+            let dateStr = g.isOngoing ? 'Hằng năm' : (g.dueDate ? formatDate(g.dueDate) : '—');
+            let progStr = formatItemProgressDisplay(g);
+
+            sheetRows.push([
+              gIdx + 1, g.code || '—', g.title, g.leadAgencyName, g.assignedAgencyName || '—',
+              g.isGeneralTask ? 'Phạm vi chung' : 'Phạm vi riêng',
+              [g.section, g.group].filter(Boolean).join(' - ') || '—',
+              dateStr, progStr, getStatusLabelClean(g.status)
+            ]);
+          });
+        } else {
+          sheetRows.push(["Không có mục tiêu nào trong bộ lọc hiện tại."]);
+        }
+        secCounter++;
+        sheetRows.push([]);
       }
-      sheetRows.push([]);
 
-      // Table 4: Tasks List
-      const secTask = subAgencies.length > 0 ? "4" : "3";
-      const taskRowIdx = sheetRows.length;
-      merges.push({ s: { r: taskRowIdx, c: 0 }, e: { r: taskRowIdx, c: 10 } });
-      sheetRows.push([`${secTask}. DANH SÁCH NHIỆM VỤ CỦA ĐƠN VỊ (${tasksList.length} nhiệm vụ)`]);
-      if (tasksList.length > 0) {
-        sheetRows.push([
-          "STT", "Tên Nhiệm Vụ", "Cơ Quan Chủ Trì", "Giao Đơn Vị Trực Thuộc", "Phạm Vi", "Lĩnh Vực / Nhóm",
-          "Thời Gian / Hạn Chót", "Tiến Độ Hiện Tại", "Trạng Thái Thực Hiện"
-        ]);
-        tasksList.forEach((t, tIdx) => {
-          let dateStr = t.isOngoing ? 'Hằng năm' : (t.dueDate ? formatDate(t.dueDate) : '—');
-          let progStr = formatItemProgressDisplay(t);
-
+      // Tasks List Table (Include if isTasksOnly or isAll)
+      if (isTasksOnly || !isGoalsOnly) {
+        const taskRowIdx = sheetRows.length;
+        merges.push({ s: { r: taskRowIdx, c: 0 }, e: { r: taskRowIdx, c: maxColsAgency - 1 } });
+        sheetRows.push([`${secCounter}. DANH SÁCH NHIỆM VỤ CỦA ĐƠN VỊ (${tasksList.length} nhiệm vụ)`]);
+        if (tasksList.length > 0) {
           sheetRows.push([
-            tIdx + 1, t.title, t.leadAgencyName, t.assignedAgencyName || '—',
-            t.isGeneralTask ? 'Phạm vi chung' : 'Phạm vi riêng',
-            [t.section, t.group].filter(Boolean).join(' - ') || '—',
-            dateStr, progStr, getStatusLabelClean(t.status)
+            "STT", "Mã Nhiệm Vụ", "Tên Nhiệm Vụ", "Cơ Quan Chủ Trì", "Giao Đơn Vị Trực Thuộc", "Phạm Vi", "Lĩnh Vực / Nhóm",
+            "Thời Gian / Hạn Chót", "Tiến Độ Hiện Tại", "Trạng Thái Thực Hiện"
           ]);
-        });
-      } else {
-        sheetRows.push(["Không có nhiệm vụ nào trong bộ lọc hiện tại."]);
-      }
-      sheetRows.push([]);
+          tasksList.forEach((t, tIdx) => {
+            let dateStr = t.isOngoing ? 'Hằng năm' : (t.dueDate ? formatDate(t.dueDate) : '—');
+            let progStr = formatItemProgressDisplay(t);
 
-      // Table 5: Contact Persons List
-      const secContact = subAgencies.length > 0 ? "5" : "4";
+            sheetRows.push([
+              tIdx + 1, t.code || '—', t.title, t.leadAgencyName, t.assignedAgencyName || '—',
+              t.isGeneralTask ? 'Phạm vi chung' : 'Phạm vi riêng',
+              [t.section, t.group].filter(Boolean).join(' - ') || '—',
+              dateStr, progStr, getStatusLabelClean(t.status)
+            ]);
+          });
+        } else {
+          sheetRows.push(["Không có nhiệm vụ nào trong bộ lọc hiện tại."]);
+        }
+        secCounter++;
+        sheetRows.push([]);
+      }
+
+      // Contact Persons Table
       const contactRowIdx = sheetRows.length;
-      merges.push({ s: { r: contactRowIdx, c: 0 }, e: { r: contactRowIdx, c: 10 } });
-      sheetRows.push([`${secContact}. DANH SÁCH CÁN BỘ ĐẦU MỐI LIÊN HỆ (${contactList.length} cán bộ)`]);
+      merges.push({ s: { r: contactRowIdx, c: 0 }, e: { r: contactRowIdx, c: maxColsAgency - 1 } });
+      sheetRows.push([`${secCounter}. DANH SÁCH CÁN BỘ ĐẦU MỐI LIÊN HỆ (${contactList.length} cán bộ)`]);
       if (contactList.length > 0) {
         sheetRows.push(["STT", "Họ và Tên", "Chức Danh", "Phòng Ban", "Điện Thoại", "Email", "Thuộc Đơn Vị"]);
         contactList.forEach((c, cIdx) => {
@@ -2096,25 +2272,25 @@ async function exportDashboardExcelReport() {
       ws['!merges'] = merges;
       ws['!cols'] = [
         { wch: 6 },  // STT
-        { wch: 45 }, // Tên Hạng Mục / Tên Đơn Vị / Tên Cán Bộ
+        { wch: 15 }, // Mã / Họ tên
+        { wch: 45 }, // Tên Hạng Mục / Tên Đơn Vị
         { wch: 25 }, // Cơ Quan Chủ Trì / Chức Danh
-        { wch: 25 }, // Giao Đơn Vị Trực Thuộc
-        { wch: 18 }, // Phạm Vi / Phòng Ban
-        { wch: 25 }, // Lĩnh Vực - Nhóm / Điện Thoại
-        { wch: 20 }, // Thời Gian / Email
-        { wch: 18 }, // Tiến Độ / Thuộc Đơn Vị
-        { wch: 18 }, // Trạng Thái / Sắp tới hạn
-        { wch: 18 }, // Đã H/T quá hạn
-        { wch: 18 }  // Đã H/T trong hạn / Chưa thực hiện
+        { wch: 25 }, // Giao Đơn Vị Trực Thuộc / Phòng ban
+        { wch: 18 }, // Phạm Vi / Điện thoại
+        { wch: 25 }, // Lĩnh Vực - Nhóm / Email
+        { wch: 20 }, // Thời Gian / Thuộc đơn vị
+        { wch: 18 }, // Tiến Độ
+        { wch: 18 }  // Trạng Thái
       ];
 
-      styleWorksheet(ws, { numCols: 11, headerRowIndex: 9, titleRowIndex: 0 });
+      styleWorksheet(ws, { numCols: maxColsAgency, headerRowIndex: 9, titleRowIndex: 0 });
       XLSX.utils.book_append_sheet(wb, ws, sheetName);
     }
 
+    const fileSuffix = isGoalsOnly ? "Muc_Tieu" : (isTasksOnly ? "Nhiem_Vu" : "Chien_Luoc");
     const dateFileStr = now.toISOString().slice(0, 10);
-    XLSX.writeFile(wb, `Bao_Cao_Theo_Doi_Chien_Luoc_${dateFileStr}.xlsx`);
-    toast.success(`Đã xuất thành công file Báo cáo Excel gồm ${allFilteredAgencies.length + 1} Sheet!`);
+    XLSX.writeFile(wb, `Bao_Cao_Theo_Doi_${fileSuffix}_${dateFileStr}.xlsx`);
+    toast.success(`Đã xuất thành công file Báo cáo Excel (${filterNameLabel}) gồm ${allFilteredAgencies.length + 1} Sheet!`);
   } catch (err) {
     console.error("Lỗi khi xuất báo cáo Excel:", err);
     toast.error("Lỗi khi xuất file Excel: " + (err.message || err));

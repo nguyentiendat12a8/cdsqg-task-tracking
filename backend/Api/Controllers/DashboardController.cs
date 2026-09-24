@@ -169,8 +169,18 @@ namespace Cdsqg.Api.Controllers
                     targetAgencies = allAgencies.Where(a => !a.ParentId.HasValue && a.Type != AgencyTypeEnum.Internal);
                 }
 
-                // Exclude pseudo-agencies from standalone card lists
-                targetAgencies = targetAgencies.Where(a => a.Id != allAgenciesId && a.Code != "ALL_AGENCIES" && a.Code != "ALL_MINISTRIES" && a.Code != "ALL_PROVINCES" && a.Code != "ALL_PROVINCES_UBND" && a.Code != "ALL_MINISTRIES_DIRECT");
+                // Exclude special agencies and pseudo-agencies from standalone performance card lists
+                targetAgencies = targetAgencies.Where(a => 
+                    a.Type != AgencyTypeEnum.Special && 
+                    (parentAgencyId.HasValue || a.Type != AgencyTypeEnum.Internal) &&
+                    a.Id != allAgenciesId && 
+                    a.Code != "ALL_AGENCIES" && 
+                    a.Code != "ALL_MINISTRIES" && 
+                    a.Code != "ALL_PROVINCES" && 
+                    a.Code != "ALL_PROVINCES_UBND" && 
+                    a.Code != "ALL_MINISTRIES_DIRECT" &&
+                    !(a.Name != null && (a.Name.StartsWith("Các bộ, ngành") || a.Name.StartsWith("Các địa phương") || a.Name.Contains("UBND tỉnh, thành phố trực thuộc trung ương")))
+                );
 
                 var agencySummaries = new Dictionary<Guid, AgencyStatusSummaryDto>();
                 foreach (var agency in targetAgencies)
@@ -273,7 +283,15 @@ namespace Cdsqg.Api.Controllers
 
                     agencySummaries[agency.Id] = summaryDto;
 
-                    if (parentAgencyId.HasValue && parentAgencyId.Value != Guid.Empty)
+                    bool isSpecial = agency.Type == AgencyTypeEnum.Special ||
+                                     agency.Code == "ALL_AGENCIES" || agency.Code == "ALL_MINISTRIES" || agency.Code == "ALL_PROVINCES" || agency.Code == "ALL_PROVINCES_UBND" || agency.Code == "ALL_MINISTRIES_DIRECT" ||
+                                     (agency.Name != null && (agency.Name.StartsWith("Các bộ, ngành") || agency.Name.StartsWith("Các địa phương") || agency.Name.Contains("UBND tỉnh, thành phố trực thuộc trung ương")));
+
+                    if (isSpecial)
+                    {
+                        // Do not add special agencies to standalone performance lists
+                    }
+                    else if (parentAgencyId.HasValue && parentAgencyId.Value != Guid.Empty)
                     {
                         var parentAgency = allAgencies.FirstOrDefault(p => p.Id == parentAgencyId.Value);
                         if (parentAgency != null && parentAgency.Type == AgencyTypeEnum.Province)
@@ -287,7 +305,7 @@ namespace Cdsqg.Api.Controllers
                                 othersPerformance.Add(summaryDto);
                             }
                         }
-                        else
+                        else if (parentAgency != null && parentAgency.Type == AgencyTypeEnum.Ministry)
                         {
                             ministriesPerformance.Add(summaryDto);
                         }
@@ -303,7 +321,7 @@ namespace Cdsqg.Api.Controllers
                     {
                         provincesPerformance.Add(summaryDto);
                     }
-                    else
+                    else if (agency.Type == AgencyTypeEnum.Ministry)
                     {
                         ministriesPerformance.Add(summaryDto);
                     }

@@ -415,7 +415,7 @@ void SeedInitialData(AppDbContext db, IPasswordHasher hasher)
 
     foreach (var spec in specialItems)
     {
-        var existing = db.Agencies.FirstOrDefault(a => a.Code == spec.Code);
+        var existing = db.Agencies.FirstOrDefault(a => a.Code == spec.Code || a.Name == spec.Name);
         if (existing == null)
         {
             db.Agencies.Add(new Agency
@@ -427,9 +427,35 @@ void SeedInitialData(AppDbContext db, IPasswordHasher hasher)
                 CreatedAt = DateTime.UtcNow
             });
         }
-        else if (existing.Type != AgencyTypeEnum.Special)
+        else
         {
+            existing.Code = spec.Code;
+            existing.Name = spec.Name;
             existing.Type = AgencyTypeEnum.Special;
+        }
+    }
+    db.SaveChanges();
+
+    // Restore proper types for regular agencies if they were marked as Special
+    var specCodes = new HashSet<string> { "ALL_AGENCIES", "ALL_MINISTRIES", "ALL_PROVINCES", "ALL_PROVINCES_UBND", "ALL_MINISTRIES_DIRECT" };
+    var regularAgencies = db.Agencies.Where(a => !specCodes.Contains(a.Code)).ToList();
+    foreach (var ag in regularAgencies)
+    {
+        if (ag.Type == AgencyTypeEnum.Special)
+        {
+            string nameLower = (ag.Name ?? "").ToLower();
+            if (nameLower.StartsWith("ubnd") || nameLower.StartsWith("tỉnh") || nameLower.StartsWith("thành phố") || nameLower.StartsWith("tp."))
+            {
+                ag.Type = AgencyTypeEnum.Province;
+            }
+            else if (nameLower.StartsWith("bộ") || nameLower.StartsWith("bảo hiểm") || nameLower.StartsWith("ngân hàng") || nameLower.StartsWith("viện") || nameLower.StartsWith("đài") || nameLower.StartsWith("thông tấn"))
+            {
+                ag.Type = AgencyTypeEnum.Ministry;
+            }
+            else
+            {
+                ag.Type = AgencyTypeEnum.Other;
+            }
         }
     }
     db.SaveChanges();
