@@ -32,7 +32,7 @@
         </button>
 
         <button 
-          v-if="item?.isGeneralTask || item?.leadAgencyCode === 'ALL_AGENCIES'"
+          v-if="isGeneralTaskItem"
           @click="switchTab('agencies-matrix')" 
           :class="['px-4 py-2 text-xs font-semibold transition border-b-2 cursor-pointer flex items-center gap-1.5', activeTab === 'agencies-matrix' ? 'border-purple-600 text-purple-700 bg-purple-50/50 rounded-t-lg font-bold' : 'border-transparent text-slate-500 hover:text-slate-800']"
         >
@@ -62,8 +62,8 @@
 
             <div>
               <span class="text-slate-500 font-semibold uppercase block text-[10px]">Phạm Vi Triển Khai</span>
-              <span :class="['px-2.5 py-0.5 rounded-full font-medium text-[11px] inline-block mt-0.5', item?.isGeneralTask ? 'bg-purple-100 text-purple-800' : 'bg-slate-200 text-slate-700']">
-                {{ item?.isGeneralTask ? 'Nhiệm vụ chung' : 'Nhiệm vụ riêng' }}
+              <span :class="['px-2.5 py-0.5 rounded-full font-medium text-[11px] inline-block mt-0.5', isGeneralTaskItem ? 'bg-purple-100 text-purple-800' : 'bg-slate-200 text-slate-700']">
+                {{ isGeneralTaskItem ? 'Phạm vi chung' : 'Phạm vi riêng' }}
               </span>
             </div>
 
@@ -623,17 +623,7 @@ function formatDateOnly(dateStr) {
 
 function formatDate(dateStr) {
   if (!dateStr) return '—';
-  try {
-    let str = String(dateStr).trim();
-    if (str.includes('T') && !str.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(str)) {
-      str += 'Z';
-    }
-    const d = new Date(str);
-    if (isNaN(d.getTime())) return dateStr;
-    return d.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
-  } catch {
-    return dateStr;
-  }
+  return formatDateOnly(dateStr);
 }
 
 function getStatusLabel(st) {
@@ -693,6 +683,18 @@ function getDeliverableStatusClass(st) {
   };
   return map[st] || 'bg-slate-100 text-slate-600';
 }
+
+const isSpecialAgencyCode = (code) => code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES' || code === 'ALL_PROVINCES_UBND';
+
+const isGeneralTaskItem = computed(() => {
+  if (!props.item) return false;
+  if (props.item.isGeneralTask) return true;
+  const code = (props.item.leadAgencyCode || props.item.leadAgency?.code || '').toUpperCase();
+  if (isSpecialAgencyCode(code)) return true;
+  const leadId = String(props.item.leadAgencyId || '').toLowerCase();
+  if (['00000000-0000-0000-0000-000000009999', '00000000-0000-0000-0000-000000009998', '00000000-0000-0000-0000-000000009997', '00000000-0000-0000-0000-000000009996'].includes(leadId)) return true;
+  return false;
+});
 
 async function loadHistories() {
   if (!props.item) return;

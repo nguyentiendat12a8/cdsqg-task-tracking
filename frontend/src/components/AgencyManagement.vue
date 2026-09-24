@@ -409,6 +409,7 @@ const pageSizeOptions = ref([10, 25, 50, 100].map(n => ({ value: n, label: Strin
 const agencyTypeOptions = ref([
   { value: 1, label: 'Bộ / Ngành' },
   { value: 2, label: 'Tỉnh / Thành phố' },
+  { value: 5, label: 'Đặc biệt' },
   { value: 4, label: 'Khác (Danh mục riêng)' }
 ]);
 
@@ -416,7 +417,7 @@ const parentAgencyOptions = computed(() => {
   // Only "Bộ Khoa học và Công nghệ" can be selected as parent agency
   return allParentOptions.value
     .filter(p => {
-      if (p.parentId || p.id === editingId.value || p.code === 'ALL_AGENCIES') return false;
+      if (p.parentId || p.id === editingId.value || p.code === 'ALL_AGENCIES' || p.code === 'ALL_MINISTRIES' || p.code === 'ALL_PROVINCES' || p.code === 'ALL_PROVINCES_UBND') return false;
       const lowerName = (p.name || '').toLowerCase();
       const lowerCode = (p.code || '').toLowerCase();
       return lowerName.includes('khoa học') || lowerCode === 'bkhcn';
@@ -424,13 +425,18 @@ const parentAgencyOptions = computed(() => {
     .map(p => ({ value: p.id, label: p.name }));
 });
 
-function isBKHCN(agency) {
+function isFixedAgency(agency) {
   if (!agency) return false;
-  if (agency.parentId) return false;
   const name = (agency.name || '').toLowerCase().trim();
   const code = (agency.code || '').toLowerCase().trim();
-  return code === 'bkhcn' || (name.startsWith('bộ') && (name.includes('khoa học và công nghệ') || name.includes('khoa học & công nghệ')));
+  if (code === 'all_agencies' || code === 'all_ministries' || code === 'all_provinces' || code === 'all_provinces_ubnd') return true;
+  if (name.includes('các bộ, ngành') || name.includes('các địa phương') || name.includes('ubnd tỉnh, thành phố')) return true;
+  if (!agency.parentId && (code === 'bkhcn' || (name.startsWith('bộ') && (name.includes('khoa học và công nghệ') || name.includes('khoa học & công nghệ'))))) {
+    return true;
+  }
+  return false;
 }
+const isBKHCN = isFixedAgency;
 
 const searchDraft = ref('');
 const searchQuery = ref('');
@@ -541,6 +547,7 @@ function getTypeLabel(row) {
   if (type === 1 || type === '1' || type === 'Ministry') return 'Bộ / Ngành';
   if (type === 2 || type === '2' || type === 'Province') return 'Tỉnh / TP';
   if (type === 3 || type === '3' || type === 'Internal') return 'Đơn vị trực thuộc';
+  if (type === 5 || type === '5' || type === 'Special') return 'Đặc biệt';
   if (type === 4 || type === '4' || type === 'Other') return 'Khác (Danh mục riêng)';
   return 'Bộ / Ngành';
 }
@@ -550,6 +557,7 @@ function getTypeBadgeClass(row) {
   if (type === 1 || type === '1' || type === 'Ministry') return 'bg-purple-50 text-purple-700 border border-purple-100';
   if (type === 2 || type === '2' || type === 'Province') return 'bg-blue-50 text-blue-700 border border-blue-100';
   if (type === 3 || type === '3' || type === 'Internal') return 'bg-emerald-50 text-emerald-700 border border-emerald-100';
+  if (type === 5 || type === '5' || type === 'Special') return 'bg-amber-50 text-amber-800 border border-amber-200 font-bold';
   if (type === 4 || type === '4' || type === 'Other') return 'bg-slate-100 text-slate-700 border border-slate-300 font-bold';
   return 'bg-slate-100 text-slate-700 border border-slate-200';
 }

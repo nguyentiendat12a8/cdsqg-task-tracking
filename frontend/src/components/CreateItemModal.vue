@@ -209,9 +209,17 @@ watch(() => form.value.isOngoing, (val) => {
   }
 });
 
+watch(() => form.value.leadAgencyId, (newId) => {
+  const selected = agencies.value.find(a => a.id === newId);
+  if (selected && isSpecialAgencyCode(selected.code)) {
+    form.value.isGeneralTask = true;
+  }
+});
+
 function addDeliverable() {
   if (!form.value.deliverables) form.value.deliverables = [];
-  form.value.deliverables.push({ title: '', dueDate: null, currentStatus: 'NotStarted' });
+  const defaultDueDate = form.value.dueDate || '2030-12-31';
+  form.value.deliverables.push({ title: '', dueDate: defaultDueDate, currentStatus: 'NotStarted' });
 }
 
 function removeDeliverable(index) {
@@ -226,38 +234,44 @@ const isSubmitting = ref(false);
 const errorMessage = ref(null);
 const isCoordinatingDropdownOpen = ref(false);
 
+const isSpecialAgencyCode = (code) => code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES' || code === 'ALL_PROVINCES_UBND';
+
 const leadAgencyOptions = computed(() => {
-  return agencies.value
-    .filter(ag => ag.code === 'ALL_AGENCIES' || (ag.type !== 3 && ag.type !== 4 && ag.type !== 'Other' && !ag.parentId))
-    .map(ag => {
-      if (ag.code === 'ALL_AGENCIES') {
-        return { value: ag.id, label: `🌐 ${ag.name}` };
-      }
-      return { value: ag.id, label: ag.name };
-    });
+  return agencies.value.map(ag => {
+    if (isSpecialAgencyCode(ag.code)) {
+      return { value: ag.id, label: `🌐 ${ag.name}` };
+    }
+    if (ag.parentId) {
+      const parentAg = agencies.value.find(p => p.id === ag.parentId);
+      return { value: ag.id, label: parentAg ? `${ag.name} (Trực thuộc ${parentAg.name})` : ag.name };
+    }
+    return { value: ag.id, label: ag.name };
+  });
 });
 
 const assignedAgencyOptions = computed(() => {
   if (!form.value.leadAgencyId) return [];
   return agencies.value
-    .filter(ag => ag.parentId === form.value.leadAgencyId && ag.type !== 4 && ag.type !== 'Other')
+    .filter(ag => ag.parentId === form.value.leadAgencyId)
     .map(ag => ({ value: ag.id, label: ag.name }));
 });
 
 const coordinatingAgencyOptions = computed(() => {
-  return agencies.value
-    .filter(ag => ag.type !== 4 && ag.type !== 'Other')
-    .map(ag => {
-      if (ag.code === 'ALL_AGENCIES') {
-        return { value: ag.id, label: `🌐 ${ag.name}` };
-      }
-      return { value: ag.id, label: ag.name };
-    });
+  return agencies.value.map(ag => {
+    if (isSpecialAgencyCode(ag.code)) {
+      return { value: ag.id, label: `🌐 ${ag.name}` };
+    }
+    if (ag.parentId) {
+      const parentAg = agencies.value.find(p => p.id === ag.parentId);
+      return { value: ag.id, label: parentAg ? `${ag.name} (Trực thuộc ${parentAg.name})` : ag.name };
+    }
+    return { value: ag.id, label: ag.name };
+  });
 });
 
 watch(() => form.value.leadAgencyId, (newId) => {
   const selected = agencies.value.find(a => a.id === newId);
-  if (selected && selected.code === 'ALL_AGENCIES') {
+  if (selected && isSpecialAgencyCode(selected.code)) {
     form.value.isGeneralTask = true;
   } else {
     form.value.isGeneralTask = false;

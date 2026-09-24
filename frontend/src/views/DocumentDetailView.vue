@@ -1417,9 +1417,10 @@ function addDeliverable() {
   if (!createForm.value.deliverables) {
     createForm.value.deliverables = [];
   }
+  const defaultDueDate = createForm.value.dueDate || '2030-12-31';
   createForm.value.deliverables.push({
     title: '',
-    dueDate: '',
+    dueDate: defaultDueDate,
     notes: ''
   });
 }
@@ -1457,25 +1458,36 @@ const groupFilterOptions = computed(() => {
 });
 
 const agencyOptions = computed(() => {
-  return agencies.value
-    .filter(ag => ag.type !== 4 && ag.type !== 'Other')
-    .map(ag => ({ value: ag.id, label: ag.name }));
+  return agencies.value.map(ag => {
+    if (isSpecialAgencyCode(ag.code)) {
+      return { value: ag.id, label: `🌐 ${ag.name}` };
+    }
+    if (ag.parentId) {
+      const parentAg = agencies.value.find(p => p.id === ag.parentId);
+      return { value: ag.id, label: parentAg ? `${ag.name} (Trực thuộc ${parentAg.name})` : ag.name };
+    }
+    return { value: ag.id, label: ag.name };
+  });
 });
 
+const isSpecialAgencyCode = (code) => code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES' || code === 'ALL_PROVINCES_UBND';
+
 const leadAgencyOptions = computed(() => {
-  return agencies.value
-    .filter(ag => ag.code === 'ALL_AGENCIES' || (ag.type !== 3 && ag.type !== 4 && ag.type !== 'Other' && !ag.parentId))
-    .map(ag => {
-      if (ag.code === 'ALL_AGENCIES') {
-        return { value: ag.id, label: `🌐 ${ag.name} (Tất cả đơn vị)` };
-      }
-      return { value: ag.id, label: ag.name };
-    });
+  return agencies.value.map(ag => {
+    if (isSpecialAgencyCode(ag.code)) {
+      return { value: ag.id, label: `🌐 ${ag.name}` };
+    }
+    if (ag.parentId) {
+      const parentAg = agencies.value.find(p => p.id === ag.parentId);
+      return { value: ag.id, label: parentAg ? `${ag.name} (Trực thuộc ${parentAg.name})` : ag.name };
+    }
+    return { value: ag.id, label: ag.name };
+  });
 });
 
 const subAgencyOptions = computed(() => {
   return agencies.value
-    .filter(ag => ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000' && ag.type !== 4 && ag.type !== 'Other')
+    .filter(ag => ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000')
     .map(ag => {
       const parentAg = agencies.value.find(p => p.id === ag.parentId);
       return {
@@ -1488,31 +1500,33 @@ const subAgencyOptions = computed(() => {
 const createAssignedAgencyOptions = computed(() => {
   if (!createForm.value.leadAgencyId) return [];
   return agencies.value
-    .filter(ag => ag.parentId === createForm.value.leadAgencyId && ag.type !== 4 && ag.type !== 'Other')
+    .filter(ag => ag.parentId === createForm.value.leadAgencyId)
     .map(ag => ({ value: ag.id, label: ag.name }));
 });
 
 const editAssignedAgencyOptions = computed(() => {
   if (!editForm.value.leadAgencyId) return [];
   return agencies.value
-    .filter(ag => ag.parentId === editForm.value.leadAgencyId && ag.type !== 4 && ag.type !== 'Other')
+    .filter(ag => ag.parentId === editForm.value.leadAgencyId)
     .map(ag => ({ value: ag.id, label: ag.name }));
 });
 
 const coordinatingAgencyOptions = computed(() => {
-  return agencies.value
-    .filter(ag => ag.type !== 4 && ag.type !== 'Other')
-    .map(ag => {
-      if (ag.code === 'ALL_AGENCIES') {
-        return { value: ag.id, label: `🌐 ${ag.name} (Tất cả đơn vị)` };
-      }
-      return { value: ag.id, label: ag.name };
-    });
+  return agencies.value.map(ag => {
+    if (isSpecialAgencyCode(ag.code)) {
+      return { value: ag.id, label: `🌐 ${ag.name}` };
+    }
+    if (ag.parentId) {
+      const parentAg = agencies.value.find(p => p.id === ag.parentId);
+      return { value: ag.id, label: parentAg ? `${ag.name} (Trực thuộc ${parentAg.name})` : ag.name };
+    }
+    return { value: ag.id, label: ag.name };
+  });
 });
 
 watch(() => createForm.value.leadAgencyId, (newId) => {
   const selected = agencies.value.find(a => a.id === newId);
-  if (selected && selected.code === 'ALL_AGENCIES') {
+  if (selected && isSpecialAgencyCode(selected.code)) {
     createForm.value.isGeneralTask = true;
   } else {
     createForm.value.isGeneralTask = false;
@@ -1696,9 +1710,10 @@ function formatProgressDisplay(item) {
 function isGeneralTaskOrAllAgencies(item) {
   if (!item) return false;
   if (item.isGeneralTask) return true;
-  if (item.leadAgencyCode === 'ALL_AGENCIES') return true;
-  if (item.leadAgencyId && String(item.leadAgencyId).toLowerCase() === '00000000-0000-0000-0000-000000009999') return true;
-  if (item.leadAgencyName && item.leadAgencyName.toLowerCase().trim() === 'các bộ, ngành, địa phương') return true;
+  const code = (item.leadAgencyCode || '').toUpperCase();
+  if (code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES' || code === 'ALL_PROVINCES_UBND') return true;
+  if (item.leadAgencyId && ['00000000-0000-0000-0000-000000009999', '00000000-0000-0000-0000-000000009998', '00000000-0000-0000-0000-000000009997', '00000000-0000-0000-0000-000000009996'].includes(String(item.leadAgencyId).toLowerCase())) return true;
+  if (item.leadAgencyName && (item.leadAgencyName.toLowerCase().includes('các bộ, ngành') || item.leadAgencyName.toLowerCase().includes('các địa phương') || item.leadAgencyName.toLowerCase().includes('ubnd tỉnh, thành phố'))) return true;
   return false;
 }
 
@@ -2392,9 +2407,10 @@ function addEditDeliverable() {
   if (!editForm.value.deliverables) {
     editForm.value.deliverables = [];
   }
+  const defaultDueDate = editForm.value.dueDate || '2030-12-31';
   editForm.value.deliverables.push({
     title: '',
-    dueDate: '',
+    dueDate: defaultDueDate,
     currentStatus: 'NotStarted'
   });
 }

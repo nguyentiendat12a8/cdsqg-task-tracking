@@ -5,7 +5,8 @@ namespace Cdsqg.Core.Enums
         Ministry = 1,  // Bộ / Ngành
         Province = 2,  // Tỉnh / Thành phố
         Internal = 3,  // Đơn vị nội bộ
-        Other = 4      // Khác
+        Other = 4,     // Khác
+        Special = 5    // Đặc biệt
     }
 
     public enum UnitDataTypeEnum

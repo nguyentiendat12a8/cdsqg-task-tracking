@@ -441,28 +441,34 @@ const roleModalOptions = ref([
   { value: 'AgencyUser', label: 'Cán bộ Cơ quan/Bộ ngành' }
 ]);
 
+const isSpecialAgencyCode = (code) => code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES' || code === 'ALL_PROVINCES_UBND';
+
+const formatAgencyLabel = (ag, list) => {
+  if (isSpecialAgencyCode(ag.code)) {
+    return `🌐 ${ag.name}`;
+  }
+  if (ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000') {
+    const parentAg = list.find(p => p.id === ag.parentId);
+    return parentAg ? `${ag.name} (Trực thuộc ${parentAg.name})` : ag.name;
+  }
+  return ag.name;
+};
+
 const agencyOptions = computed(() => {
-  return agencies.value
-    .filter(ag => ag.code !== 'ALL_AGENCIES' && ag.type !== 4 && ag.type !== 'Other')
-    .map(ag => ({ value: ag.id, label: ag.name }));
+  return agencies.value.map(ag => ({ value: ag.id, label: formatAgencyLabel(ag, agencies.value) }));
 });
 
 const leadAgencyOptions = computed(() => {
-  return agencies.value
-    .filter(ag => ag.code !== 'ALL_AGENCIES' && ag.type !== 4 && ag.type !== 'Other' && (ag.type !== 3 && !ag.parentId))
-    .map(ag => ({ value: ag.id, label: ag.name }));
+  return agencies.value.map(ag => ({ value: ag.id, label: formatAgencyLabel(ag, agencies.value) }));
 });
 
 const subAgencyOptions = computed(() => {
   return agencies.value
-    .filter(ag => ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000' && ag.type !== 4 && ag.type !== 'Other')
-    .map(ag => {
-      const parentAg = agencies.value.find(p => p.id === ag.parentId);
-      return {
-        value: ag.id,
-        label: parentAg ? `${ag.name} (Trực thuộc ${parentAg.name})` : ag.name
-      };
-    });
+    .filter(ag => ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000')
+    .map(ag => ({
+      value: ag.id,
+      label: formatAgencyLabel(ag, agencies.value)
+    }));
 });
 
 const pageNumber = ref(1);

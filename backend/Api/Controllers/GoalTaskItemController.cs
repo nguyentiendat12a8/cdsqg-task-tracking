@@ -102,7 +102,7 @@ namespace Cdsqg.Api.Controllers
                 }
 
                 var leadAgency = await _context.Agencies.FirstOrDefaultAsync(a => a.Id == dto.LeadAgencyId);
-                bool isGeneral = dto.IsGeneralTask || (leadAgency != null && leadAgency.Code == "ALL_AGENCIES");
+                bool isGeneral = dto.IsGeneralTask || (leadAgency != null && (leadAgency.Code == "ALL_AGENCIES" || leadAgency.Code == "ALL_MINISTRIES" || leadAgency.Code == "ALL_PROVINCES" || leadAgency.Code == "ALL_PROVINCES_UBND"));
 
                 Guid? unitIdToAssign = dto.UnitId;
                 if (!unitIdToAssign.HasValue && !string.IsNullOrWhiteSpace(dto.UnitName))
@@ -347,7 +347,7 @@ namespace Cdsqg.Api.Controllers
                 }
 
                 var leadAgency = await _context.Agencies.FirstOrDefaultAsync(a => a.Id == dto.LeadAgencyId);
-                bool isGeneral = dto.IsGeneralTask || (leadAgency != null && leadAgency.Code == "ALL_AGENCIES");
+                bool isGeneral = dto.IsGeneralTask || (leadAgency != null && (leadAgency.Code == "ALL_AGENCIES" || leadAgency.Code == "ALL_MINISTRIES" || leadAgency.Code == "ALL_PROVINCES" || leadAgency.Code == "ALL_PROVINCES_UBND"));
 
                 item.Title = dto.Title.Trim();
                 item.Section = dto.Section;

@@ -437,15 +437,19 @@ const agencyOptions = computed(() => {
     .map(ag => ({ value: ag.id, label: ag.name }));
 });
 
+const isSpecialAgencyCode = (code) => code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES' || code === 'ALL_PROVINCES_UBND';
+
 const leadAgencyOptions = computed(() => {
-  return agencies.value
-    .filter(ag => ag.code === 'ALL_AGENCIES' || (ag.type !== 3 && ag.type !== 4 && ag.type !== 'Other' && !ag.parentId))
-    .map(ag => {
-      if (ag.code === 'ALL_AGENCIES') {
-        return { value: ag.id, label: `🌐 ${ag.name} (Tất cả đơn vị)` };
-      }
-      return { value: ag.id, label: ag.name };
-    });
+  return agencies.value.map(ag => {
+    if (isSpecialAgencyCode(ag.code)) {
+      return { value: ag.id, label: `🌐 ${ag.name}` };
+    }
+    if (ag.parentId) {
+      const parentAg = agencies.value.find(p => p.id === ag.parentId);
+      return { value: ag.id, label: parentAg ? `${ag.name} (Trực thuộc ${parentAg.name})` : ag.name };
+    }
+    return { value: ag.id, label: ag.name };
+  });
 });
 
 const subAgencyOptions = computed(() => {
@@ -674,7 +678,7 @@ function filterGridItem(item) {
     const itemCoordIds = (item.coordinatingAgencyIds || []).map(id => String(id).toLowerCase());
 
     const isParentAgency = !userAgency || !userAgency.parentId;
-    const isGeneral = isParentAgency && (item.isGeneralTask || item.leadAgencyCode === 'ALL_AGENCIES' || itemLeadId === '00000000-0000-0000-0000-000000009999' || (item.leadAgencyName && item.leadAgencyName.toLowerCase().trim() === 'các bộ, ngành, địa phương'));
+    const isGeneral = isParentAgency && (item.isGeneralTask || isSpecialAgencyCode(item.leadAgencyCode) || ['00000000-0000-0000-0000-000000009999', '00000000-0000-0000-0000-000000009998', '00000000-0000-0000-0000-000000009997'].includes(itemLeadId) || (item.leadAgencyName && (item.leadAgencyName.toLowerCase().includes('các bộ, ngành') || item.leadAgencyName.toLowerCase().includes('các địa phương'))));
     const isLead = scopedAgencyIds.includes(itemLeadId);
     const isAssigned = itemAssignedId && scopedAgencyIds.includes(itemAssignedId);
     const isCoord = itemCoordIds.some(id => scopedAgencyIds.includes(id));
@@ -682,7 +686,7 @@ function filterGridItem(item) {
       const sLeadId = s.leadAgencyId ? String(s.leadAgencyId).toLowerCase() : '';
       const sAssignedId = s.assignedAgencyId ? String(s.assignedAgencyId).toLowerCase() : '';
       const sCoordIds = (s.coordinatingAgencyIds || []).map(id => String(id).toLowerCase());
-      const sIsGeneral = isParentAgency && (s.isGeneralTask || s.leadAgencyCode === 'ALL_AGENCIES' || sLeadId === '00000000-0000-0000-0000-000000009999');
+      const sIsGeneral = isParentAgency && (s.isGeneralTask || isSpecialAgencyCode(s.leadAgencyCode) || ['00000000-0000-0000-0000-000000009999', '00000000-0000-0000-0000-000000009998', '00000000-0000-0000-0000-000000009997'].includes(sLeadId));
       return sIsGeneral || scopedAgencyIds.includes(sLeadId) || (sAssignedId && scopedAgencyIds.includes(sAssignedId)) || sCoordIds.some(id => scopedAgencyIds.includes(id));
     });
 
@@ -724,7 +728,7 @@ function filterGridItem(item) {
 
   // 2.5 Scope Filter (Multi-select)
   if (appliedFilters.value.selectedScopes && appliedFilters.value.selectedScopes.length > 0) {
-    const isGeneral = item.isGeneralTask || item.leadAgencyCode === 'ALL_AGENCIES' || item.leadAgencyId === '00000000-0000-0000-0000-000000009999';
+    const isGeneral = item.isGeneralTask || isSpecialAgencyCode(item.leadAgencyCode) || ['00000000-0000-0000-0000-000000009999', '00000000-0000-0000-0000-000000009998', '00000000-0000-0000-0000-000000009997'].includes(item.leadAgencyId);
     const matchGen = appliedFilters.value.selectedScopes.includes('general') && isGeneral;
     const matchSpec = appliedFilters.value.selectedScopes.includes('specific') && !isGeneral;
     if (!matchGen && !matchSpec) return false;

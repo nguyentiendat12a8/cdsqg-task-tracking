@@ -355,13 +355,19 @@ const attachmentTypeOptions = [
   { value: 'Tờ trình', label: 'Tờ trình' }
 ];
 
+const isSpecialAgencyCode = (code) => code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES' || code === 'ALL_PROVINCES_UBND';
+
 const agencySelectOptions = computed(() => {
-  return (props.agencies || [])
-    .filter(a => a.code !== 'ALL_AGENCIES')
-    .map(a => ({
-      value: a.id,
-      label: a.name
-    }));
+  return (props.agencies || []).map(a => {
+    if (isSpecialAgencyCode(a.code)) {
+      return { value: a.id, label: `🌐 ${a.name}` };
+    }
+    if (a.parentId && a.parentId !== '' && String(a.parentId) !== '00000000-0000-0000-0000-000000000000') {
+      const parentAg = (props.agencies || []).find(p => p.id === a.parentId);
+      return { value: a.id, label: parentAg ? `${a.name} (Trực thuộc ${parentAg.name})` : a.name };
+    }
+    return { value: a.id, label: a.name };
+  });
 });
 
 // Role permission checks for Issuing Agency dropdown

@@ -682,6 +682,120 @@
         </div>
       </div>
 
+      <!-- Section 3: Khối Các Cơ Quan / Đơn Vị Khác (Hiển thị khi có dữ liệu được gán chủ trì) -->
+      <div v-if="metrics.othersPerformance?.length" class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+          <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+            🏢 Khối Các Cơ Quan / Đơn Vị Khác
+          </h3>
+          <span class="text-xs font-bold text-purple-600 bg-purple-50 px-3 py-1 rounded-xl border border-purple-200/60">
+            {{ metrics.othersPerformance?.length ?? 0 }} Cơ quan / Đơn vị
+          </span>
+        </div>
+
+        <div class="space-y-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+            <div 
+              v-for="(item, index) in visibleOthers" 
+              :key="item.agencyId"
+              @click="drilldownAgency(item)"
+              class="bg-white rounded-2xl border border-slate-200/90 p-3.5 shadow-2xs hover:shadow-md transition-all duration-200 cursor-pointer space-y-3 group flex flex-col justify-between"
+            >
+              <!-- Card Header: Agency Name & Purple Index Badge -->
+              <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
+                <div class="min-w-0 flex-1">
+                  <h4 class="text-xs sm:text-sm font-bold text-slate-800 group-hover:text-purple-700 transition leading-snug truncate">
+                    {{ item.name }}
+                  </h4>
+                </div>
+
+                <div class="w-7 h-7 bg-purple-600 text-white font-bold text-xs rounded-xl flex items-center justify-center shrink-0 shadow-2xs">
+                  {{ index + 1 }}
+                </div>
+              </div>
+
+              <!-- Card Body: Donut Chart on Left, Legend Breakdown List on Right -->
+              <div class="flex items-center gap-3 py-0.5">
+                <!-- Donut Chart -->
+                <div class="shrink-0 flex items-center justify-center">
+                  <MiniStatusDonut :stats="item" :size="84" :innerSize="54" :fontSize="18" />
+                </div>
+
+                <!-- Status Legend List -->
+                <div class="flex-1 min-w-0 space-y-1 text-[10px] font-bold">
+                  <div class="flex items-center justify-between gap-1.5">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <span class="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0"></span>
+                      <span class="text-slate-600 truncate">Đang t/h quá hạn</span>
+                    </div>
+                    <span class="font-bold text-slate-900">{{ item.inProgressOverdue || 0 }}</span>
+                  </div>
+
+                  <div class="flex items-center justify-between gap-1.5">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
+                      <span class="text-slate-600 truncate">Đang t/h trong hạn</span>
+                    </div>
+                    <span class="font-bold text-slate-900">{{ item.inProgressOnTime || 0 }}</span>
+                  </div>
+
+                  <div class="flex items-center justify-between gap-1.5">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
+                      <span class="text-slate-600 truncate">Sắp tới hạn</span>
+                    </div>
+                    <span class="font-bold text-slate-900">{{ item.expiringSoon || 0 }}</span>
+                  </div>
+
+                  <div class="flex items-center justify-between gap-1.5">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <span class="w-2.5 h-2.5 rounded-full bg-teal-500 shrink-0"></span>
+                      <span class="text-slate-600 truncate">Đã h/t quá hạn</span>
+                    </div>
+                    <span class="font-bold text-slate-900">{{ item.completedOverdue || 0 }}</span>
+                  </div>
+
+                  <div class="flex items-center justify-between gap-1.5">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+                      <span class="text-slate-600 truncate">Đã h/t trong hạn</span>
+                    </div>
+                    <span class="font-bold text-slate-900">{{ item.completedOnTime || 0 }}</span>
+                  </div>
+
+                  <div class="flex items-center justify-between gap-1.5" v-if="item.notStarted > 0">
+                    <div class="flex items-center gap-1.5 min-w-0">
+                      <span class="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0"></span>
+                      <span class="text-slate-600 truncate">Chưa thực hiện</span>
+                    </div>
+                    <span class="font-bold text-slate-900">{{ item.notStarted || 0 }}</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Card Footer: Sub-badges -->
+              <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-bold">
+                <div class="flex items-center gap-1.5">
+                  <span v-if="dashboardFilter === 'goals'" class="text-purple-800 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200/60">🎯 {{ item.totalGoals || 0 }} Mục tiêu</span>
+                  <span v-else class="text-blue-800 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200/60">📋 {{ item.totalTasks || 0 }} Nhiệm vụ</span>
+                </div>
+                <span class="text-purple-700 group-hover:underline">Chi tiết →</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Expand / Collapse Button -->
+          <div v-if="(metrics.othersPerformance?.length || 0) > 8" class="pt-2 text-center border-t border-slate-100">
+            <button 
+              @click="isOthersExpanded = !isOthersExpanded" 
+              class="px-5 py-2 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-xl transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
+            >
+              <span>{{ isOthersExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${metrics.othersPerformance.length - 8} Đơn vị khác)` }}</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <!-- Drilldown Sub-agencies, Tasks List & Contact Persons Modal -->
@@ -1144,20 +1258,24 @@ function resetDashboardFilters() {
   loadDashboardMetrics();
 }
 
+const isSpecialAgencyCode = (code) => code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES' || code === 'ALL_PROVINCES_UBND';
+
 const leadAgencyOptions = computed(() => {
-  return agencies.value
-    .filter(ag => ag.type !== 4 && ag.type !== 'Other' && (ag.code === 'ALL_AGENCIES' || (ag.type !== 3 && !ag.parentId)))
-    .map(ag => {
-      if (ag.code === 'ALL_AGENCIES') {
-        return { value: ag.id, label: `🌐 ${ag.name} (Tất cả đơn vị)` };
-      }
-      return { value: ag.id, label: ag.name };
-    });
+  return agencies.value.map(ag => {
+    if (isSpecialAgencyCode(ag.code)) {
+      return { value: ag.id, label: `🌐 ${ag.name}` };
+    }
+    if (ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000') {
+      const parentAg = agencies.value.find(p => p.id === ag.parentId);
+      return { value: ag.id, label: parentAg ? `${ag.name} (Trực thuộc ${parentAg.name})` : ag.name };
+    }
+    return { value: ag.id, label: ag.name };
+  });
 });
 
 const subAgencyOptions = computed(() => {
   return agencies.value
-    .filter(ag => ag.type !== 4 && ag.type !== 'Other' && ag.parentId != null && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000')
+    .filter(ag => ag.parentId != null && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000')
     .map(ag => {
       const parentAg = agencies.value.find(p => p.id === ag.parentId);
       const parentSuffix = parentAg ? ` (Trực thuộc ${parentAg.name})` : '';
@@ -1181,7 +1299,8 @@ const metrics = ref({
   goalStatusSummary: {},
   taskStatusSummary: {},
   ministriesPerformance: [],
-  provincesPerformance: []
+  provincesPerformance: [],
+  othersPerformance: []
 });
 
 const activeStatusSummary = computed(() => {
@@ -1210,6 +1329,7 @@ const overallDonutStats = computed(() => {
 const userSubAgenciesPerformance = ref([]);
 const isMinistriesExpanded = ref(false);
 const isProvincesExpanded = ref(false);
+const isOthersExpanded = ref(false);
 const isSubAgenciesExpanded = ref(false);
 
 const visibleMinistries = computed(() => {
@@ -1221,6 +1341,12 @@ const visibleMinistries = computed(() => {
 const visibleProvinces = computed(() => {
   const list = metrics.value.provincesPerformance || [];
   if (isProvincesExpanded.value || list.length <= 8) return list;
+  return list.slice(0, 8);
+});
+
+const visibleOthers = computed(() => {
+  const list = metrics.value.othersPerformance || [];
+  if (isOthersExpanded.value || list.length <= 8) return list;
   return list.slice(0, 8);
 });
 
@@ -1313,9 +1439,10 @@ function getStatusLabel(status) {
 function isGeneralTaskItem(item) {
   if (!item) return false;
   if (item.isGeneralTask) return true;
-  if (item.leadAgencyCode === 'ALL_AGENCIES') return true;
-  if (item.leadAgencyId && String(item.leadAgencyId).toLowerCase() === '00000000-0000-0000-0000-000000009999') return true;
-  if (item.leadAgencyName && item.leadAgencyName.toLowerCase().trim() === 'các bộ, ngành, địa phương') return true;
+  const code = (item.leadAgencyCode || '').toUpperCase();
+  if (code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES') return true;
+  if (item.leadAgencyId && ['00000000-0000-0000-0000-000000009999', '00000000-0000-0000-0000-000000009998', '00000000-0000-0000-0000-000000009997'].includes(String(item.leadAgencyId).toLowerCase())) return true;
+  if (item.leadAgencyName && (item.leadAgencyName.toLowerCase().includes('các bộ, ngành') || item.leadAgencyName.toLowerCase().includes('các địa phương'))) return true;
   return false;
 }
 
@@ -1435,7 +1562,8 @@ function isBKHCNItem(agency) {
 const singleSubAgencyPerformance = computed(() => {
   const allPerf = [
     ...(metrics.value.ministriesPerformance || []),
-    ...(metrics.value.provincesPerformance || [])
+    ...(metrics.value.provincesPerformance || []),
+    ...(metrics.value.othersPerformance || [])
   ];
   if (loggedUserAgencyId.value) {
     const found = allPerf.find(p => String(p.agencyId).toLowerCase() === loggedUserAgencyId.value);
@@ -1526,7 +1654,7 @@ async function loadDashboardMetrics() {
 
     if (subRes && subRes.ok) {
       const subData = await subRes.json();
-      const rawSubList = [...(subData.ministriesPerformance || []), ...(subData.provincesPerformance || [])];
+      const rawSubList = [...(subData.ministriesPerformance || []), ...(subData.provincesPerformance || []), ...(subData.othersPerformance || [])];
       // Sort by totalItems (goals + tasks) descending so units with most items are at the top
       userSubAgenciesPerformance.value = rawSubList.sort((a, b) => {
         const totalA = a.totalItems ?? ((a.totalGoals || 0) + (a.totalTasks || 0));
@@ -1679,7 +1807,8 @@ async function exportDashboardExcelReport() {
   try {
     const allFilteredAgencies = [
       ...(metrics.value.ministriesPerformance || []),
-      ...(metrics.value.provincesPerformance || [])
+      ...(metrics.value.provincesPerformance || []),
+      ...(metrics.value.othersPerformance || [])
     ];
 
     if (allFilteredAgencies.length === 0) {
@@ -1801,7 +1930,7 @@ async function exportDashboardExcelReport() {
         const subRes = await fetch(getApiUrl(`/api/dashboard/metrics?${subParams.toString()}`));
         if (subRes.ok) {
           const subData = await subRes.json();
-          subAgencies = [...(subData.ministriesPerformance || []), ...(subData.provincesPerformance || [])];
+          subAgencies = [...(subData.ministriesPerformance || []), ...(subData.provincesPerformance || []), ...(subData.othersPerformance || [])];
         }
       } catch (e) {}
 
@@ -2042,7 +2171,7 @@ const legalDocumentTypeOptions = ref([
 
 const legalAgencyOptions = computed(() => {
   return (agencies.value || [])
-    .filter(ag => ag.code !== 'ALL_AGENCIES')
+    .filter(ag => !isSpecialAgencyCode(ag.code))
     .map(ag => ({
       value: ag.id,
       label: ag.name

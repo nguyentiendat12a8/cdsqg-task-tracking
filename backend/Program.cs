@@ -403,23 +403,53 @@ app.Run();
 
 void SeedInitialData(AppDbContext db, IPasswordHasher hasher)
 {
-    // 1. Seed Reference Agencies Dictionary if missing
-    var allAgencies = db.Agencies.FirstOrDefault(a => a.Code == "ALL_AGENCIES");
-    if (allAgencies == null)
+    // 1. Seed Reference Special Agencies Dictionary if missing
+    var specialItems = new[]
     {
-        allAgencies = new Agency 
-        { 
-            Id = Guid.Parse("00000000-0000-0000-0000-000000009999"), 
-            Code = "ALL_AGENCIES", 
-            Name = "Các bộ, ngành, địa phương", 
-            Type = AgencyTypeEnum.Ministry, 
-            CreatedAt = DateTime.UtcNow 
-        };
-        db.Agencies.Add(allAgencies);
-        db.SaveChanges();
+        new { Id = Guid.Parse("00000000-0000-0000-0000-000000009999"), Code = "ALL_AGENCIES", Name = "Các bộ, ngành, địa phương" },
+        new { Id = Guid.Parse("00000000-0000-0000-0000-000000009998"), Code = "ALL_MINISTRIES", Name = "Các bộ, ngành chủ quản cơ sở dữ liệu" },
+        new { Id = Guid.Parse("00000000-0000-0000-0000-000000009997"), Code = "ALL_PROVINCES", Name = "Các địa phương" },
+        new { Id = Guid.Parse("00000000-0000-0000-0000-000000009996"), Code = "ALL_PROVINCES_UBND", Name = "UBND tỉnh, thành phố trực thuộc trung ương" }
+    };
+
+    foreach (var spec in specialItems)
+    {
+        var existing = db.Agencies.FirstOrDefault(a => a.Code == spec.Code);
+        if (existing == null)
+        {
+            db.Agencies.Add(new Agency
+            {
+                Id = spec.Id,
+                Code = spec.Code,
+                Name = spec.Name,
+                Type = AgencyTypeEnum.Special,
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+        else if (existing.Type != AgencyTypeEnum.Special)
+        {
+            existing.Type = AgencyTypeEnum.Special;
+        }
+    }
+    db.SaveChanges();
+
+    // Set IsGeneralTask = true for items assigned to any of the 4 special agencies
+    var specialAgencies = db.Agencies.Where(a => a.Code == "ALL_AGENCIES" || a.Code == "ALL_MINISTRIES" || a.Code == "ALL_PROVINCES" || a.Code == "ALL_PROVINCES_UBND").Select(a => a.Id).ToList();
+    if (specialAgencies.Count > 0)
+    {
+        var itemsToSetGeneral = db.GoalTaskItems.Where(i => !i.IsGeneralTask && specialAgencies.Contains(i.LeadAgencyId)).ToList();
+        if (itemsToSetGeneral.Count > 0)
+        {
+            foreach (var item in itemsToSetGeneral)
+            {
+                item.IsGeneralTask = true;
+            }
+            db.SaveChanges();
+        }
     }
 
-    if (!db.Agencies.Any(a => a.Code != "ALL_AGENCIES"))
+    var specialCodes = specialItems.Select(s => s.Code).ToList();
+    if (!db.Agencies.Any(a => !specialCodes.Contains(a.Code)))
     {
         var btttt = new Agency { Id = Guid.NewGuid(), Code = "BTTTT", Name = "Bộ Thông tin và Truyền thông", Type = AgencyTypeEnum.Ministry, CreatedAt = DateTime.UtcNow };
         var bca = new Agency { Id = Guid.NewGuid(), Code = "BCA", Name = "Bộ Công an", Type = AgencyTypeEnum.Ministry, CreatedAt = DateTime.UtcNow };

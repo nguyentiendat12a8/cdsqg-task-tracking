@@ -292,7 +292,7 @@ namespace Cdsqg.Api.Controllers
                         TaskId = p.GoalTaskId,
                         TaskCode = p.GoalTaskItem != null ? p.GoalTaskItem.Code : string.Empty,
                         TaskTitle = p.GoalTaskItem != null ? p.GoalTaskItem.Title : string.Empty,
-                        IsGeneralTask = p.GoalTaskItem != null && (p.GoalTaskItem.IsGeneralTask || (p.GoalTaskItem.LeadAgency != null && p.GoalTaskItem.LeadAgency.Code == "ALL_AGENCIES")),
+                        IsGeneralTask = p.GoalTaskItem != null && (p.GoalTaskItem.IsGeneralTask || (p.GoalTaskItem.LeadAgency != null && (p.GoalTaskItem.LeadAgency.Code == "ALL_AGENCIES" || p.GoalTaskItem.LeadAgency.Code == "ALL_MINISTRIES" || p.GoalTaskItem.LeadAgency.Code == "ALL_PROVINCES" || p.GoalTaskItem.LeadAgency.Code == "ALL_PROVINCES_UBND"))),
                         PeriodYear = p.PeriodYear,
                         PeriodQuarter = p.PeriodQuarter,
                         ActualValue = p.QuantitativeValue,
@@ -341,7 +341,7 @@ namespace Cdsqg.Api.Controllers
 
                 var allAgencies = await _context.Agencies
                     .Include(a => a.ParentAgency)
-                    .Where(a => a.IsActive && a.Code != "ALL_AGENCIES")
+                    .Where(a => a.IsActive && a.Code != "ALL_AGENCIES" && a.Code != "ALL_MINISTRIES" && a.Code != "ALL_PROVINCES" && a.Code != "ALL_PROVINCES_UBND")
                     .ToListAsync();
 
                 var executions = await _context.AgencyTaskExecutions
@@ -354,14 +354,26 @@ namespace Cdsqg.Api.Controllers
                     .Where(p => p.GoalTaskId == taskId && p.ApprovalStatus == Cdsqg.Core.Enums.ApprovalStatusEnum.Pending)
                     .ToListAsync();
 
-                bool isGeneral = task.IsGeneralTask || (task.LeadAgency != null && task.LeadAgency.Code == "ALL_AGENCIES");
+                string leadCode = task.LeadAgency?.Code ?? string.Empty;
+                bool isGeneral = task.IsGeneralTask || leadCode == "ALL_AGENCIES" || leadCode == "ALL_MINISTRIES" || leadCode == "ALL_PROVINCES" || leadCode == "ALL_PROVINCES_UBND";
 
                 // If general task, include all primary Level 2 agencies (and child agencies if assigned/executing)
                 // If specific task, include lead agency and assigned agency
                 var relevantAgencies = new List<Agency>();
                 if (isGeneral)
                 {
-                    relevantAgencies = allAgencies.Where(a => a.ParentId == null).ToList();
+                    if (leadCode == "ALL_MINISTRIES")
+                    {
+                        relevantAgencies = allAgencies.Where(a => a.ParentId == null && a.Type == Cdsqg.Core.Enums.AgencyTypeEnum.Ministry).ToList();
+                    }
+                    else if (leadCode == "ALL_PROVINCES" || leadCode == "ALL_PROVINCES_UBND")
+                    {
+                        relevantAgencies = allAgencies.Where(a => a.ParentId == null && a.Type == Cdsqg.Core.Enums.AgencyTypeEnum.Province).ToList();
+                    }
+                    else
+                    {
+                        relevantAgencies = allAgencies.Where(a => a.ParentId == null && (a.Type == Cdsqg.Core.Enums.AgencyTypeEnum.Ministry || a.Type == Cdsqg.Core.Enums.AgencyTypeEnum.Province)).ToList();
+                    }
                     // Add any sub-agencies that have execution records or pending logs
                     var extraAgencyIds = executions.Select(e => e.AgencyId)
                         .Union(pendingLogs.Where(p => p.AgencyId.HasValue).Select(p => p.AgencyId!.Value))

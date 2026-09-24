@@ -480,33 +480,34 @@ const activeFilterCount = computed(() => {
   return count;
 });
 
+const isSpecialAgencyCode = (code) => code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES' || code === 'ALL_PROVINCES_UBND';
+
+const formatAgencyLabel = (ag, list) => {
+  if (isSpecialAgencyCode(ag.code)) {
+    return `🌐 ${ag.name}`;
+  }
+  if (ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000') {
+    const parentAg = list.find(p => p.id === ag.parentId);
+    return parentAg ? `${ag.name} (Trực thuộc ${parentAg.name})` : ag.name;
+  }
+  return ag.name;
+};
+
 const agencyOptions = computed(() => {
-  return agencies.value
-    .filter(ag => ag.type !== 4 && ag.type !== 'Other')
-    .map(ag => ({ value: ag.id, label: ag.name }));
+  return agencies.value.map(ag => ({ value: ag.id, label: formatAgencyLabel(ag, agencies.value) }));
 });
 
 const leadAgencyOptions = computed(() => {
-  return agencies.value
-    .filter(ag => ag.code === 'ALL_AGENCIES' || (ag.type !== 3 && ag.type !== 4 && ag.type !== 'Other' && !ag.parentId))
-    .map(ag => {
-      if (ag.code === 'ALL_AGENCIES') {
-        return { value: ag.id, label: `🌐 ${ag.name} (Tất cả đơn vị)` };
-      }
-      return { value: ag.id, label: ag.name };
-    });
+  return agencies.value.map(ag => ({ value: ag.id, label: formatAgencyLabel(ag, agencies.value) }));
 });
 
 const subAgencyOptions = computed(() => {
   return agencies.value
-    .filter(ag => ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000' && ag.type !== 4 && ag.type !== 'Other')
-    .map(ag => {
-      const parentAg = agencies.value.find(p => p.id === ag.parentId);
-      return {
-        value: ag.id,
-        label: parentAg ? `${ag.name} (Trực thuộc ${parentAg.name})` : ag.name
-      };
-    });
+    .filter(ag => ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000')
+    .map(ag => ({
+      value: ag.id,
+      label: formatAgencyLabel(ag, agencies.value)
+    }));
 });
 
 const yearOptions = computed(() => [2026, 2027, 2028, 2029, 2030].map(y => ({ value: y, label: String(y) })));
@@ -647,7 +648,7 @@ function passesCommonFilters(i) {
     const itemCoordIds = (i.coordinatingAgencyIds || []).map(id => String(id).toLowerCase());
 
     const isParentAgency = !userAgency || !userAgency.parentId;
-    const isGeneral = isParentAgency && (i.isGeneralTask || i.leadAgencyCode === 'ALL_AGENCIES' || itemLeadId === '00000000-0000-0000-0000-000000009999' || (i.leadAgencyName && i.leadAgencyName.toLowerCase().trim() === 'các bộ, ngành, địa phương'));
+    const isGeneral = isParentAgency && (i.isGeneralTask || isSpecialAgencyCode(i.leadAgencyCode) || ['00000000-0000-0000-0000-000000009999', '00000000-0000-0000-0000-000000009998', '00000000-0000-0000-0000-000000009997'].includes(itemLeadId) || (i.leadAgencyName && (i.leadAgencyName.toLowerCase().includes('các bộ, ngành') || i.leadAgencyName.toLowerCase().includes('các địa phương'))));
     const isLead = scopedAgencyIds.includes(itemLeadId);
     const isAssigned = itemAssignedId && scopedAgencyIds.includes(itemAssignedId);
     const isCoord = itemCoordIds.some(id => scopedAgencyIds.includes(id));
@@ -655,7 +656,7 @@ function passesCommonFilters(i) {
       const sLeadId = s.leadAgencyId ? String(s.leadAgencyId).toLowerCase() : '';
       const sAssignedId = s.assignedAgencyId ? String(s.assignedAgencyId).toLowerCase() : '';
       const sCoordIds = (s.coordinatingAgencyIds || []).map(id => String(id).toLowerCase());
-      const sIsGeneral = isParentAgency && (s.isGeneralTask || s.leadAgencyCode === 'ALL_AGENCIES' || sLeadId === '00000000-0000-0000-0000-000000009999');
+      const sIsGeneral = isParentAgency && (s.isGeneralTask || isSpecialAgencyCode(s.leadAgencyCode) || ['00000000-0000-0000-0000-000000009999', '00000000-0000-0000-0000-000000009998', '00000000-0000-0000-0000-000000009997'].includes(sLeadId));
       return sIsGeneral || scopedAgencyIds.includes(sLeadId) || (sAssignedId && scopedAgencyIds.includes(sAssignedId)) || sCoordIds.some(id => scopedAgencyIds.includes(id));
     });
 
@@ -665,7 +666,7 @@ function passesCommonFilters(i) {
   if (appliedFilters.value.selectedAgencyIds?.length > 0 && !appliedFilters.value.selectedAgencyIds.includes(i.leadAgencyId)) return false;
   if (appliedFilters.value.selectedSubAgencyIds?.length > 0 && !appliedFilters.value.selectedSubAgencyIds.includes(i.assignedAgencyId)) return false;
   if (appliedFilters.value.selectedScopes?.length > 0) {
-    const isGeneral = i.isGeneralTask || i.leadAgencyCode === 'ALL_AGENCIES' || i.leadAgencyId === '00000000-0000-0000-0000-000000009999';
+    const isGeneral = i.isGeneralTask || isSpecialAgencyCode(i.leadAgencyCode) || ['00000000-0000-0000-0000-000000009999', '00000000-0000-0000-0000-000000009998', '00000000-0000-0000-0000-000000009997'].includes(i.leadAgencyId);
     const matchGen = appliedFilters.value.selectedScopes.includes('general') && isGeneral;
     const matchSpec = appliedFilters.value.selectedScopes.includes('specific') && !isGeneral;
     if (!matchGen && !matchSpec) return false;

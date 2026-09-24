@@ -92,13 +92,13 @@ namespace Cdsqg.Api.Controllers
             }
 
             var list = await query
-                .OrderByDescending(a => a.Code == "ALL_AGENCIES")
+                .OrderByDescending(a => a.Code == "ALL_AGENCIES" || a.Code == "ALL_MINISTRIES" || a.Code == "ALL_PROVINCES" || a.Code == "ALL_PROVINCES_UBND")
                 .ThenBy(a => a.Name)
                 .ToListAsync();
 
-            if (excludeSpecial == true || pageNumber.HasValue)
+            if (excludeSpecial == true)
             {
-                list = list.Where(a => a.Code != "ALL_AGENCIES" && a.Name != "Các bộ, ngành, địa phương").ToList();
+                list = list.Where(a => a.Code != "ALL_AGENCIES" && a.Code != "ALL_MINISTRIES" && a.Code != "ALL_PROVINCES" && a.Code != "ALL_PROVINCES_UBND").ToList();
             }
 
             if (restrictForUser == true && userAgencyId.HasValue && userAgencyId.Value != Guid.Empty)
@@ -273,14 +273,18 @@ namespace Cdsqg.Api.Controllers
             var existing = await _context.Agencies.FindAsync(id);
             if (existing == null) return NotFound(new { error = "Không tìm thấy Cơ quan." });
 
-            bool isBkhcn = string.Equals(existing.Code, "bkhcn", StringComparison.OrdinalIgnoreCase) ||
-                           (!existing.ParentId.HasValue && existing.Name.StartsWith("Bộ", StringComparison.OrdinalIgnoreCase) &&
-                            (existing.Name.Contains("Khoa học và Công nghệ", StringComparison.OrdinalIgnoreCase) ||
-                             existing.Name.Contains("Khoa học & Công nghệ", StringComparison.OrdinalIgnoreCase)));
+            bool isFixedSystemAgency = string.Equals(existing.Code, "bkhcn", StringComparison.OrdinalIgnoreCase) ||
+                                       string.Equals(existing.Code, "ALL_AGENCIES", StringComparison.OrdinalIgnoreCase) ||
+                                       string.Equals(existing.Code, "ALL_MINISTRIES", StringComparison.OrdinalIgnoreCase) ||
+                                       string.Equals(existing.Code, "ALL_PROVINCES", StringComparison.OrdinalIgnoreCase) ||
+                                       string.Equals(existing.Code, "ALL_PROVINCES_UBND", StringComparison.OrdinalIgnoreCase) ||
+                                       (!existing.ParentId.HasValue && existing.Name.StartsWith("Bộ", StringComparison.OrdinalIgnoreCase) &&
+                                        (existing.Name.Contains("Khoa học và Công nghệ", StringComparison.OrdinalIgnoreCase) ||
+                                         existing.Name.Contains("Khoa học & Công nghệ", StringComparison.OrdinalIgnoreCase)));
 
-            if (isBkhcn)
+            if (isFixedSystemAgency)
             {
-                // Cho phép cập nhật danh sách đầu mối và file kế hoạch của Bộ KH&CN, giữ nguyên thông tin cơ quan gốc
+                // Cho phép cập nhật danh sách đầu mối và file kế hoạch của cơ quan cố định, giữ nguyên thông tin cơ quan gốc
                 existing.ContactPersons = dto.ContactPersons ?? new List<AgencyContactPerson>();
                 if (dto.PlanFiles != null) existing.PlanFiles = dto.PlanFiles;
                 await _context.SaveChangesAsync();
@@ -393,14 +397,18 @@ namespace Cdsqg.Api.Controllers
             var existing = await _context.Agencies.FindAsync(id);
             if (existing == null) return NotFound(new { error = "Không tìm thấy Cơ quan." });
 
-            bool isBkhcn = string.Equals(existing.Code, "bkhcn", StringComparison.OrdinalIgnoreCase) ||
-                           (!existing.ParentId.HasValue && existing.Name.StartsWith("Bộ", StringComparison.OrdinalIgnoreCase) &&
-                            (existing.Name.Contains("Khoa học và Công nghệ", StringComparison.OrdinalIgnoreCase) ||
-                             existing.Name.Contains("Khoa học & Công nghệ", StringComparison.OrdinalIgnoreCase)));
+            bool isFixedSystemAgency = string.Equals(existing.Code, "bkhcn", StringComparison.OrdinalIgnoreCase) ||
+                                       string.Equals(existing.Code, "ALL_AGENCIES", StringComparison.OrdinalIgnoreCase) ||
+                                       string.Equals(existing.Code, "ALL_MINISTRIES", StringComparison.OrdinalIgnoreCase) ||
+                                       string.Equals(existing.Code, "ALL_PROVINCES", StringComparison.OrdinalIgnoreCase) ||
+                                       string.Equals(existing.Code, "ALL_PROVINCES_UBND", StringComparison.OrdinalIgnoreCase) ||
+                                       (!existing.ParentId.HasValue && existing.Name.StartsWith("Bộ", StringComparison.OrdinalIgnoreCase) &&
+                                        (existing.Name.Contains("Khoa học và Công nghệ", StringComparison.OrdinalIgnoreCase) ||
+                                         existing.Name.Contains("Khoa học & Công nghệ", StringComparison.OrdinalIgnoreCase)));
 
-            if (isBkhcn)
+            if (isFixedSystemAgency)
             {
-                return BadRequest(new { error = "Bộ Khoa học và Công nghệ là cơ quan gốc của hệ thống, không thể xóa." });
+                return BadRequest(new { error = "Cơ quan / Đơn vị hệ thống cố định không thể xóa." });
             }
 
             int leadCount = await _context.GoalTaskItems.CountAsync(g => g.LeadAgencyId == id);
