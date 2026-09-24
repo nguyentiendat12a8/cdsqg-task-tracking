@@ -92,13 +92,13 @@ namespace Cdsqg.Api.Controllers
             }
 
             var list = await query
-                .OrderByDescending(a => a.Code == "ALL_AGENCIES" || a.Code == "ALL_MINISTRIES" || a.Code == "ALL_PROVINCES" || a.Code == "ALL_PROVINCES_UBND")
+                .OrderByDescending(a => a.Code == "ALL_AGENCIES" || a.Code == "ALL_MINISTRIES" || a.Code == "ALL_PROVINCES" || a.Code == "ALL_PROVINCES_UBND" || a.Code == "ALL_MINISTRIES_DIRECT")
                 .ThenBy(a => a.Name)
                 .ToListAsync();
 
             if (excludeSpecial == true)
             {
-                list = list.Where(a => a.Code != "ALL_AGENCIES" && a.Code != "ALL_MINISTRIES" && a.Code != "ALL_PROVINCES" && a.Code != "ALL_PROVINCES_UBND").ToList();
+                list = list.Where(a => a.Code != "ALL_AGENCIES" && a.Code != "ALL_MINISTRIES" && a.Code != "ALL_PROVINCES" && a.Code != "ALL_PROVINCES_UBND" && a.Code != "ALL_MINISTRIES_DIRECT").ToList();
             }
 
             if (restrictForUser == true && userAgencyId.HasValue && userAgencyId.Value != Guid.Empty)
@@ -278,6 +278,7 @@ namespace Cdsqg.Api.Controllers
                                        string.Equals(existing.Code, "ALL_MINISTRIES", StringComparison.OrdinalIgnoreCase) ||
                                        string.Equals(existing.Code, "ALL_PROVINCES", StringComparison.OrdinalIgnoreCase) ||
                                        string.Equals(existing.Code, "ALL_PROVINCES_UBND", StringComparison.OrdinalIgnoreCase) ||
+                                       string.Equals(existing.Code, "ALL_MINISTRIES_DIRECT", StringComparison.OrdinalIgnoreCase) ||
                                        (!existing.ParentId.HasValue && existing.Name.StartsWith("Bộ", StringComparison.OrdinalIgnoreCase) &&
                                         (existing.Name.Contains("Khoa học và Công nghệ", StringComparison.OrdinalIgnoreCase) ||
                                          existing.Name.Contains("Khoa học & Công nghệ", StringComparison.OrdinalIgnoreCase)));
@@ -402,6 +403,7 @@ namespace Cdsqg.Api.Controllers
                                        string.Equals(existing.Code, "ALL_MINISTRIES", StringComparison.OrdinalIgnoreCase) ||
                                        string.Equals(existing.Code, "ALL_PROVINCES", StringComparison.OrdinalIgnoreCase) ||
                                        string.Equals(existing.Code, "ALL_PROVINCES_UBND", StringComparison.OrdinalIgnoreCase) ||
+                                       string.Equals(existing.Code, "ALL_MINISTRIES_DIRECT", StringComparison.OrdinalIgnoreCase) ||
                                        (!existing.ParentId.HasValue && existing.Name.StartsWith("Bộ", StringComparison.OrdinalIgnoreCase) &&
                                         (existing.Name.Contains("Khoa học và Công nghệ", StringComparison.OrdinalIgnoreCase) ||
                                          existing.Name.Contains("Khoa học & Công nghệ", StringComparison.OrdinalIgnoreCase)));

@@ -441,7 +441,7 @@ const roleModalOptions = ref([
   { value: 'AgencyUser', label: 'Cán bộ Cơ quan/Bộ ngành' }
 ]);
 
-const isSpecialAgencyCode = (code) => code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES' || code === 'ALL_PROVINCES_UBND';
+const isSpecialAgencyCode = (code) => code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES' || code === 'ALL_PROVINCES_UBND' || code === 'ALL_MINISTRIES_DIRECT';
 
 const formatAgencyLabel = (ag, list) => {
   if (isSpecialAgencyCode(ag.code)) {

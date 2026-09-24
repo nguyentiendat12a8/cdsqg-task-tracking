@@ -50,11 +50,11 @@ namespace Cdsqg.Api.Controllers
                 {
                     if (scope.Equals("general", StringComparison.OrdinalIgnoreCase))
                     {
-                        query = query.Where(i => i.IsGeneralTask || (i.LeadAgency != null && (i.LeadAgency.Code == "ALL_AGENCIES" || i.LeadAgency.Code == "ALL_MINISTRIES" || i.LeadAgency.Code == "ALL_PROVINCES" || i.LeadAgency.Code == "ALL_PROVINCES_UBND")));
+                        query = query.Where(i => i.IsGeneralTask || (i.LeadAgency != null && (i.LeadAgency.Code == "ALL_AGENCIES" || i.LeadAgency.Code == "ALL_MINISTRIES" || i.LeadAgency.Code == "ALL_PROVINCES" || i.LeadAgency.Code == "ALL_PROVINCES_UBND" || i.LeadAgency.Code == "ALL_MINISTRIES_DIRECT")));
                     }
                     else if (scope.Equals("specific", StringComparison.OrdinalIgnoreCase))
                     {
-                        query = query.Where(i => !i.IsGeneralTask && (i.LeadAgency == null || (i.LeadAgency.Code != "ALL_AGENCIES" && i.LeadAgency.Code != "ALL_MINISTRIES" && i.LeadAgency.Code != "ALL_PROVINCES" && i.LeadAgency.Code != "ALL_PROVINCES_UBND")));
+                        query = query.Where(i => !i.IsGeneralTask && (i.LeadAgency == null || (i.LeadAgency.Code != "ALL_AGENCIES" && i.LeadAgency.Code != "ALL_MINISTRIES" && i.LeadAgency.Code != "ALL_PROVINCES" && i.LeadAgency.Code != "ALL_PROVINCES_UBND" && i.LeadAgency.Code != "ALL_MINISTRIES_DIRECT")));
                     }
                 }
 
@@ -170,7 +170,7 @@ namespace Cdsqg.Api.Controllers
                 }
 
                 // Exclude pseudo-agencies from standalone card lists
-                targetAgencies = targetAgencies.Where(a => a.Id != allAgenciesId && a.Code != "ALL_AGENCIES" && a.Code != "ALL_MINISTRIES" && a.Code != "ALL_PROVINCES" && a.Code != "ALL_PROVINCES_UBND");
+                targetAgencies = targetAgencies.Where(a => a.Id != allAgenciesId && a.Code != "ALL_AGENCIES" && a.Code != "ALL_MINISTRIES" && a.Code != "ALL_PROVINCES" && a.Code != "ALL_PROVINCES_UBND" && a.Code != "ALL_MINISTRIES_DIRECT");
 
                 var agencySummaries = new Dictionary<Guid, AgencyStatusSummaryDto>();
                 foreach (var agency in targetAgencies)
@@ -188,7 +188,7 @@ namespace Cdsqg.Api.Controllers
                             (isMinistryOrProvince && (
                                 i.LeadAgencyId == allAgenciesId || 
                                 (i.LeadAgency != null && i.LeadAgency.Code == "ALL_AGENCIES") ||
-                                (i.LeadAgency != null && i.LeadAgency.Code == "ALL_MINISTRIES" && IsMinistryAgency(agency)) ||
+                                (i.LeadAgency != null && (i.LeadAgency.Code == "ALL_MINISTRIES" || i.LeadAgency.Code == "ALL_MINISTRIES_DIRECT") && IsMinistryAgency(agency)) ||
                                 (i.LeadAgency != null && (i.LeadAgency.Code == "ALL_PROVINCES" || i.LeadAgency.Code == "ALL_PROVINCES_UBND") && IsProvinceAgency(agency)) ||
                                 (i.IsGeneralTask && (i.LeadAgency == null || i.LeadAgency.Code == "ALL_AGENCIES"))
                             ))
@@ -446,11 +446,11 @@ namespace Cdsqg.Api.Controllers
                 {
                     if (scope.Equals("general", StringComparison.OrdinalIgnoreCase))
                     {
-                        query = query.Where(i => i.IsGeneralTask || (i.LeadAgency != null && (i.LeadAgency.Code == "ALL_AGENCIES" || i.LeadAgency.Code == "ALL_MINISTRIES" || i.LeadAgency.Code == "ALL_PROVINCES" || i.LeadAgency.Code == "ALL_PROVINCES_UBND")));
+                        query = query.Where(i => i.IsGeneralTask || (i.LeadAgency != null && (i.LeadAgency.Code == "ALL_AGENCIES" || i.LeadAgency.Code == "ALL_MINISTRIES" || i.LeadAgency.Code == "ALL_PROVINCES" || i.LeadAgency.Code == "ALL_PROVINCES_UBND" || i.LeadAgency.Code == "ALL_MINISTRIES_DIRECT")));
                     }
                     else if (scope.Equals("specific", StringComparison.OrdinalIgnoreCase))
                     {
-                        query = query.Where(i => !i.IsGeneralTask && (i.LeadAgency == null || (i.LeadAgency.Code != "ALL_AGENCIES" && i.LeadAgency.Code != "ALL_MINISTRIES" && i.LeadAgency.Code != "ALL_PROVINCES" && i.LeadAgency.Code != "ALL_PROVINCES_UBND")));
+                        query = query.Where(i => !i.IsGeneralTask && (i.LeadAgency == null || (i.LeadAgency.Code != "ALL_AGENCIES" && i.LeadAgency.Code != "ALL_MINISTRIES" && i.LeadAgency.Code != "ALL_PROVINCES" && i.LeadAgency.Code != "ALL_PROVINCES_UBND" && i.LeadAgency.Code != "ALL_MINISTRIES_DIRECT")));
                     }
                 }
 
@@ -513,7 +513,7 @@ namespace Cdsqg.Api.Controllers
                             (isMinistryOrProvince && (
                                 i.LeadAgencyId == allAgenciesId ||
                                 (i.LeadAgency != null && i.LeadAgency.Code == "ALL_AGENCIES") ||
-                                (currentAg != null && i.LeadAgency != null && i.LeadAgency.Code == "ALL_MINISTRIES" && IsMinistryAgency(currentAg)) ||
+                                (currentAg != null && i.LeadAgency != null && (i.LeadAgency.Code == "ALL_MINISTRIES" || i.LeadAgency.Code == "ALL_MINISTRIES_DIRECT") && IsMinistryAgency(currentAg)) ||
                                 (currentAg != null && i.LeadAgency != null && (i.LeadAgency.Code == "ALL_PROVINCES" || i.LeadAgency.Code == "ALL_PROVINCES_UBND") && IsProvinceAgency(currentAg)) ||
                                 (i.IsGeneralTask && (i.LeadAgency == null || i.LeadAgency.Code == "ALL_AGENCIES"))
                             ))

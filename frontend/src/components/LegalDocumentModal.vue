@@ -355,7 +355,7 @@ const attachmentTypeOptions = [
   { value: 'Tờ trình', label: 'Tờ trình' }
 ];
 
-const isSpecialAgencyCode = (code) => code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES' || code === 'ALL_PROVINCES_UBND';
+const isSpecialAgencyCode = (code) => code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES' || code === 'ALL_PROVINCES_UBND' || code === 'ALL_MINISTRIES_DIRECT';
 
 const agencySelectOptions = computed(() => {
   return (props.agencies || []).map(a => {

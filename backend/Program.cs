@@ -409,7 +409,8 @@ void SeedInitialData(AppDbContext db, IPasswordHasher hasher)
         new { Id = Guid.Parse("00000000-0000-0000-0000-000000009999"), Code = "ALL_AGENCIES", Name = "Các bộ, ngành, địa phương" },
         new { Id = Guid.Parse("00000000-0000-0000-0000-000000009998"), Code = "ALL_MINISTRIES", Name = "Các bộ, ngành chủ quản cơ sở dữ liệu" },
         new { Id = Guid.Parse("00000000-0000-0000-0000-000000009997"), Code = "ALL_PROVINCES", Name = "Các địa phương" },
-        new { Id = Guid.Parse("00000000-0000-0000-0000-000000009996"), Code = "ALL_PROVINCES_UBND", Name = "UBND tỉnh, thành phố trực thuộc trung ương" }
+        new { Id = Guid.Parse("00000000-0000-0000-0000-000000009996"), Code = "ALL_PROVINCES_UBND", Name = "UBND tỉnh, thành phố trực thuộc trung ương" },
+        new { Id = Guid.Parse("00000000-0000-0000-0000-000000009995"), Code = "ALL_MINISTRIES_DIRECT", Name = "Các bộ, ngành" }
     };
 
     foreach (var spec in specialItems)
@@ -433,8 +434,8 @@ void SeedInitialData(AppDbContext db, IPasswordHasher hasher)
     }
     db.SaveChanges();
 
-    // Set IsGeneralTask = true for items assigned to any of the 4 special agencies
-    var specialAgencies = db.Agencies.Where(a => a.Code == "ALL_AGENCIES" || a.Code == "ALL_MINISTRIES" || a.Code == "ALL_PROVINCES" || a.Code == "ALL_PROVINCES_UBND").Select(a => a.Id).ToList();
+    // Set IsGeneralTask = true for items assigned to any of the 5 special agencies
+    var specialAgencies = db.Agencies.Where(a => a.Code == "ALL_AGENCIES" || a.Code == "ALL_MINISTRIES" || a.Code == "ALL_PROVINCES" || a.Code == "ALL_PROVINCES_UBND" || a.Code == "ALL_MINISTRIES_DIRECT").Select(a => a.Id).ToList();
     if (specialAgencies.Count > 0)
     {
         var itemsToSetGeneral = db.GoalTaskItems.Where(i => !i.IsGeneralTask && specialAgencies.Contains(i.LeadAgencyId)).ToList();

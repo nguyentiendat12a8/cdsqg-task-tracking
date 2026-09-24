@@ -1470,7 +1470,7 @@ const agencyOptions = computed(() => {
   });
 });
 
-const isSpecialAgencyCode = (code) => code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES' || code === 'ALL_PROVINCES_UBND';
+const isSpecialAgencyCode = (code) => code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES' || code === 'ALL_PROVINCES_UBND' || code === 'ALL_MINISTRIES_DIRECT';
 
 const leadAgencyOptions = computed(() => {
   return agencies.value.map(ag => {
@@ -1711,8 +1711,8 @@ function isGeneralTaskOrAllAgencies(item) {
   if (!item) return false;
   if (item.isGeneralTask) return true;
   const code = (item.leadAgencyCode || '').toUpperCase();
-  if (code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES' || code === 'ALL_PROVINCES_UBND') return true;
-  if (item.leadAgencyId && ['00000000-0000-0000-0000-000000009999', '00000000-0000-0000-0000-000000009998', '00000000-0000-0000-0000-000000009997', '00000000-0000-0000-0000-000000009996'].includes(String(item.leadAgencyId).toLowerCase())) return true;
+  if (code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES' || code === 'ALL_PROVINCES_UBND' || code === 'ALL_MINISTRIES_DIRECT') return true;
+  if (item.leadAgencyId && ['00000000-0000-0000-0000-000000009999', '00000000-0000-0000-0000-000000009998', '00000000-0000-0000-0000-000000009997', '00000000-0000-0000-0000-000000009996', '00000000-0000-0000-0000-000000009995'].includes(String(item.leadAgencyId).toLowerCase())) return true;
   if (item.leadAgencyName && (item.leadAgencyName.toLowerCase().includes('các bộ, ngành') || item.leadAgencyName.toLowerCase().includes('các địa phương') || item.leadAgencyName.toLowerCase().includes('ubnd tỉnh, thành phố'))) return true;
   return false;
 }

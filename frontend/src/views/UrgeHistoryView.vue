@@ -259,7 +259,7 @@ const appliedAgencyIds = ref([]);
 const selectedSubAgencyIds = ref([]);
 const appliedSubAgencyIds = ref([]);
 
-const isSpecialAgencyCode = (code) => code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES' || code === 'ALL_PROVINCES_UBND';
+const isSpecialAgencyCode = (code) => code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES' || code === 'ALL_PROVINCES_UBND' || code === 'ALL_MINISTRIES_DIRECT';
 
 const formatAgencyLabel = (ag, list) => {
   if (isSpecialAgencyCode(ag.code)) {

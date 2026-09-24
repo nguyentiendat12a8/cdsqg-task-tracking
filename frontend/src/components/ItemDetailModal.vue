@@ -684,7 +684,7 @@ function getDeliverableStatusClass(st) {
   return map[st] || 'bg-slate-100 text-slate-600';
 }
 
-const isSpecialAgencyCode = (code) => code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES' || code === 'ALL_PROVINCES_UBND';
+const isSpecialAgencyCode = (code) => code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES' || code === 'ALL_PROVINCES_UBND' || code === 'ALL_MINISTRIES_DIRECT';
 
 const isGeneralTaskItem = computed(() => {
   if (!props.item) return false;
@@ -692,7 +692,7 @@ const isGeneralTaskItem = computed(() => {
   const code = (props.item.leadAgencyCode || props.item.leadAgency?.code || '').toUpperCase();
   if (isSpecialAgencyCode(code)) return true;
   const leadId = String(props.item.leadAgencyId || '').toLowerCase();
-  if (['00000000-0000-0000-0000-000000009999', '00000000-0000-0000-0000-000000009998', '00000000-0000-0000-0000-000000009997', '00000000-0000-0000-0000-000000009996'].includes(leadId)) return true;
+  if (['00000000-0000-0000-0000-000000009999', '00000000-0000-0000-0000-000000009998', '00000000-0000-0000-0000-000000009997', '00000000-0000-0000-0000-000000009996', '00000000-0000-0000-0000-000000009995'].includes(leadId)) return true;
   return false;
 });
 

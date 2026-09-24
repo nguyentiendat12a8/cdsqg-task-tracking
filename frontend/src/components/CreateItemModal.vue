@@ -234,7 +234,7 @@ const isSubmitting = ref(false);
 const errorMessage = ref(null);
 const isCoordinatingDropdownOpen = ref(false);
 
-const isSpecialAgencyCode = (code) => code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES' || code === 'ALL_PROVINCES_UBND';
+const isSpecialAgencyCode = (code) => code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES' || code === 'ALL_PROVINCES_UBND' || code === 'ALL_MINISTRIES_DIRECT';
 
 const leadAgencyOptions = computed(() => {
   return agencies.value.map(ag => {

@@ -417,7 +417,7 @@ const parentAgencyOptions = computed(() => {
   // Only "Bộ Khoa học và Công nghệ" can be selected as parent agency
   return allParentOptions.value
     .filter(p => {
-      if (p.parentId || p.id === editingId.value || p.code === 'ALL_AGENCIES' || p.code === 'ALL_MINISTRIES' || p.code === 'ALL_PROVINCES' || p.code === 'ALL_PROVINCES_UBND') return false;
+      if (p.parentId || p.id === editingId.value || p.code === 'ALL_AGENCIES' || p.code === 'ALL_MINISTRIES' || p.code === 'ALL_PROVINCES' || p.code === 'ALL_PROVINCES_UBND' || p.code === 'ALL_MINISTRIES_DIRECT') return false;
       const lowerName = (p.name || '').toLowerCase();
       const lowerCode = (p.code || '').toLowerCase();
       return lowerName.includes('khoa học') || lowerCode === 'bkhcn';
@@ -429,7 +429,7 @@ function isFixedAgency(agency) {
   if (!agency) return false;
   const name = (agency.name || '').toLowerCase().trim();
   const code = (agency.code || '').toLowerCase().trim();
-  if (code === 'all_agencies' || code === 'all_ministries' || code === 'all_provinces' || code === 'all_provinces_ubnd') return true;
+  if (code === 'all_agencies' || code === 'all_ministries' || code === 'all_provinces' || code === 'all_provinces_ubnd' || code === 'all_ministries_direct') return true;
   if (name.includes('các bộ, ngành') || name.includes('các địa phương') || name.includes('ubnd tỉnh, thành phố')) return true;
   if (!agency.parentId && (code === 'bkhcn' || (name.startsWith('bộ') && (name.includes('khoa học và công nghệ') || name.includes('khoa học & công nghệ'))))) {
     return true;

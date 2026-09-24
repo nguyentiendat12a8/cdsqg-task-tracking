@@ -437,7 +437,7 @@ const agencyOptions = computed(() => {
     .map(ag => ({ value: ag.id, label: ag.name }));
 });
 
-const isSpecialAgencyCode = (code) => code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES' || code === 'ALL_PROVINCES_UBND';
+const isSpecialAgencyCode = (code) => code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES' || code === 'ALL_PROVINCES_UBND' || code === 'ALL_MINISTRIES_DIRECT';
 
 const leadAgencyOptions = computed(() => {
   return agencies.value.map(ag => {
@@ -678,7 +678,7 @@ function filterGridItem(item) {
     const itemCoordIds = (item.coordinatingAgencyIds || []).map(id => String(id).toLowerCase());
 
     const isParentAgency = !userAgency || !userAgency.parentId;
-    const isGeneral = isParentAgency && (item.isGeneralTask || isSpecialAgencyCode(item.leadAgencyCode) || ['00000000-0000-0000-0000-000000009999', '00000000-0000-0000-0000-000000009998', '00000000-0000-0000-0000-000000009997'].includes(itemLeadId) || (item.leadAgencyName && (item.leadAgencyName.toLowerCase().includes('các bộ, ngành') || item.leadAgencyName.toLowerCase().includes('các địa phương'))));
+    const isGeneral = isParentAgency && (item.isGeneralTask || isSpecialAgencyCode(item.leadAgencyCode) || ['00000000-0000-0000-0000-000000009999', '00000000-0000-0000-0000-000000009998', '00000000-0000-0000-0000-000000009997', '00000000-0000-0000-0000-000000009996', '00000000-0000-0000-0000-000000009995'].includes(itemLeadId) || (item.leadAgencyName && (item.leadAgencyName.toLowerCase().includes('các bộ, ngành') || item.leadAgencyName.toLowerCase().includes('các địa phương'))));
     const isLead = scopedAgencyIds.includes(itemLeadId);
     const isAssigned = itemAssignedId && scopedAgencyIds.includes(itemAssignedId);
     const isCoord = itemCoordIds.some(id => scopedAgencyIds.includes(id));
@@ -686,7 +686,7 @@ function filterGridItem(item) {
       const sLeadId = s.leadAgencyId ? String(s.leadAgencyId).toLowerCase() : '';
       const sAssignedId = s.assignedAgencyId ? String(s.assignedAgencyId).toLowerCase() : '';
       const sCoordIds = (s.coordinatingAgencyIds || []).map(id => String(id).toLowerCase());
-      const sIsGeneral = isParentAgency && (s.isGeneralTask || isSpecialAgencyCode(s.leadAgencyCode) || ['00000000-0000-0000-0000-000000009999', '00000000-0000-0000-0000-000000009998', '00000000-0000-0000-0000-000000009997'].includes(sLeadId));
+      const sIsGeneral = isParentAgency && (s.isGeneralTask || isSpecialAgencyCode(s.leadAgencyCode) || ['00000000-0000-0000-0000-000000009999', '00000000-0000-0000-0000-000000009998', '00000000-0000-0000-0000-000000009997', '00000000-0000-0000-0000-000000009996', '00000000-0000-0000-0000-000000009995'].includes(sLeadId));
       return sIsGeneral || scopedAgencyIds.includes(sLeadId) || (sAssignedId && scopedAgencyIds.includes(sAssignedId)) || sCoordIds.some(id => scopedAgencyIds.includes(id));
     });
 
@@ -728,7 +728,7 @@ function filterGridItem(item) {
 
   // 2.5 Scope Filter (Multi-select)
   if (appliedFilters.value.selectedScopes && appliedFilters.value.selectedScopes.length > 0) {
-    const isGeneral = item.isGeneralTask || isSpecialAgencyCode(item.leadAgencyCode) || ['00000000-0000-0000-0000-000000009999', '00000000-0000-0000-0000-000000009998', '00000000-0000-0000-0000-000000009997'].includes(item.leadAgencyId);
+    const isGeneral = item.isGeneralTask || isSpecialAgencyCode(item.leadAgencyCode) || ['00000000-0000-0000-0000-000000009999', '00000000-0000-0000-0000-000000009998', '00000000-0000-0000-0000-000000009997', '00000000-0000-0000-0000-000000009996', '00000000-0000-0000-0000-000000009995'].includes(item.leadAgencyId);
     const matchGen = appliedFilters.value.selectedScopes.includes('general') && isGeneral;
     const matchSpec = appliedFilters.value.selectedScopes.includes('specific') && !isGeneral;
     if (!matchGen && !matchSpec) return false;
