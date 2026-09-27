@@ -265,5 +265,30 @@ namespace Cdsqg.Tests
             var allPerf = data.MinistriesPerformance.Concat(data.ProvincesPerformance).Concat(data.OthersPerformance).ToList();
             Assert.Contains(allPerf, p => p.AgencyId == subAgencyId);
         }
+
+        [Fact]
+        public async Task GetDashboardMetrics_FilterBySpecialAgency_ReturnsMatchingPerformance()
+        {
+            using var context = GetInMemoryDbContext();
+            
+            var specialAgId = Guid.Parse("00000000-0000-0000-0000-000000009995");
+            var specialAg = new Agency
+            {
+                Id = specialAgId,
+                Code = "ALL_MINISTRIES_DIRECT",
+                Name = "Các bộ, ngành",
+                Type = AgencyTypeEnum.Special
+            };
+            context.Agencies.Add(specialAg);
+            context.SaveChanges();
+
+            var controller = new DashboardController(context);
+            var result = await controller.GetDashboardMetrics(agencyId: new[] { specialAgId });
+            var data = GetResponseDto(result);
+
+            // Should expand to Ministry agencies (BCA & BTTTT)
+            Assert.NotEmpty(data.MinistriesPerformance);
+            Assert.Contains(data.MinistriesPerformance, m => m.Code == "BCA");
+        }
     }
 }
