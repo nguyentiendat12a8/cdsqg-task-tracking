@@ -292,6 +292,7 @@ namespace Cdsqg.Api.Controllers
                         TaskId = p.GoalTaskId,
                         TaskCode = p.GoalTaskItem != null ? p.GoalTaskItem.Code : string.Empty,
                         TaskTitle = p.GoalTaskItem != null ? p.GoalTaskItem.Title : string.Empty,
+                        ItemType = p.GoalTaskItem != null ? p.GoalTaskItem.ItemType.ToString() : "Task",
                         IsGeneralTask = p.GoalTaskItem != null && (p.GoalTaskItem.IsGeneralTask || (p.GoalTaskItem.LeadAgency != null && (p.GoalTaskItem.LeadAgency.Code == "ALL_AGENCIES" || p.GoalTaskItem.LeadAgency.Code == "ALL_MINISTRIES" || p.GoalTaskItem.LeadAgency.Code == "ALL_PROVINCES" || p.GoalTaskItem.LeadAgency.Code == "ALL_PROVINCES_UBND" || p.GoalTaskItem.LeadAgency.Code == "ALL_MINISTRIES_DIRECT"))),
                         PeriodYear = p.PeriodYear,
                         PeriodQuarter = p.PeriodQuarter,

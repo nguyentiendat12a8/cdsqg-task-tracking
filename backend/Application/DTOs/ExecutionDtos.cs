@@ -74,6 +74,7 @@ namespace Cdsqg.Application.DTOs
         public Guid TaskId { get; set; }
         public string TaskCode { get; set; } = string.Empty;
         public string TaskTitle { get; set; } = string.Empty;
+        public string ItemType { get; set; } = "Task";
         public bool IsGeneralTask { get; set; }
         public int PeriodYear { get; set; }
         public int PeriodQuarter { get; set; }

@@ -487,6 +487,7 @@ namespace Cdsqg.Application.Services
             {
                 Id = log.Id,
                 TaskId = log.GoalTaskId,
+                ItemType = task != null ? task.ItemType.ToString() : "Task",
                 PeriodYear = log.PeriodYear,
                 PeriodQuarter = log.PeriodQuarter,
                 ActualValue = log.QuantitativeValue,
@@ -647,6 +648,7 @@ namespace Cdsqg.Application.Services
                 {
                     Id = log.Id,
                     TaskId = log.GoalTaskId,
+                    ItemType = task != null ? task.ItemType.ToString() : "Task",
                     AgencyId = log.AgencyId,
                     PeriodYear = log.PeriodYear,
                     PeriodQuarter = log.PeriodQuarter,

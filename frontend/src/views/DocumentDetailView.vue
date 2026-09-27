@@ -1080,7 +1080,10 @@
                     <span v-if="log.parentAgencyName" class="text-xs text-slate-700 font-bold flex items-center gap-1">
                       ➔ Thuộc {{ log.parentAgencyName }}
                     </span>
-                    <span v-if="log.isGeneralTask" class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
+                    <span v-if="isGoalItem(log)" class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
+                      🎯 Mục tiêu
+                    </span>
+                    <span v-else-if="log.isGeneralTask" class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
                       🌐 Nhiệm vụ chung
                     </span>
                   </div>
@@ -1099,7 +1102,7 @@
                 <div class="md:col-span-4 bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
                   <span class="text-[10px] font-bold text-slate-400 uppercase block">Tiến độ báo cáo</span>
                   <div class="text-sm font-bold text-blue-700">{{ log.completionPercentage || 0 }}% hoàn thành</div>
-                  <div v-if="log.actualValue !== null && log.actualValue !== undefined" class="text-slate-600 text-[11px]">Giá trị thực tế: <strong>{{ log.actualValue }}</strong></div>
+                  <div v-if="!isGoalItem(log) && log.actualValue !== null && log.actualValue !== undefined" class="text-slate-600 text-[11px]">Giá trị thực tế: <strong>{{ log.actualValue }}</strong></div>
                   <div v-if="log.status" class="text-slate-600 text-[11px]">Trạng thái: <strong>{{ getStatusLabel(log.status) }}</strong></div>
                 </div>
 
@@ -2523,13 +2526,24 @@ const globalPendingLogs = ref([]);
 const isPendingApprovalsModalOpen = ref(false);
 const isLoadingPendingLogs = ref(false);
 
+function isGoalItem(log) {
+  if (!log) return false;
+  if (log.itemType === 'Goal') return true;
+  if (log.taskCode && String(log.taskCode).toUpperCase().startsWith('MT')) return true;
+  if (log.taskTitle && String(log.taskTitle).toLowerCase().startsWith('mục tiêu')) return true;
+  return false;
+}
+
 const isRejectModalOpen = ref(false);
 const rejectLogId = ref(null);
 const rejectionReason = ref('');
 
-async function loadGlobalPendingLogs() {
+async function loadGlobalPendingLogs(isSilent = false) {
   if (!authState.isAdmin.value) return;
-  isLoadingPendingLogs.value = true;
+  const showSpinner = !isSilent && (!globalPendingLogs.value || globalPendingLogs.value.length === 0);
+  if (showSpinner) {
+    isLoadingPendingLogs.value = true;
+  }
   try {
     const res = await fetch(getApiUrl('/api/execution/pending-approvals'));
     if (res.ok) {
@@ -2540,13 +2554,15 @@ async function loadGlobalPendingLogs() {
   } catch {
     globalPendingLogs.value = [];
   } finally {
-    isLoadingPendingLogs.value = false;
+    if (showSpinner) {
+      isLoadingPendingLogs.value = false;
+    }
   }
 }
 
 function openPendingApprovalsModal() {
   isPendingApprovalsModalOpen.value = true;
-  loadGlobalPendingLogs();
+  loadGlobalPendingLogs(false);
 }
 
 async function handleApproveFromGlobalList(logId) {
@@ -2556,7 +2572,7 @@ async function handleApproveFromGlobalList(logId) {
     if (res.ok) {
       toast.success('Đã phê duyệt báo cáo tiến độ thành công!');
       try {
-        await loadGlobalPendingLogs();
+        await loadGlobalPendingLogs(true);
         if (typeof loadData === 'function') await loadData();
       } catch (e) {
         console.error('Error refreshing after approve:', e);
@@ -2590,7 +2606,7 @@ async function confirmRejectFromGlobalList() {
       isRejectModalOpen.value = false;
       rejectLogId.value = null;
       try {
-        await loadGlobalPendingLogs();
+        await loadGlobalPendingLogs(true);
         if (typeof loadData === 'function') await loadData();
       } catch (e) {
         console.error('Error refreshing after reject:', e);
@@ -2608,7 +2624,7 @@ let globalPendingPollTimer = null;
 
 function handlePendingLogsUpdate() {
   if (authState.isAdmin.value) {
-    loadGlobalPendingLogs();
+    loadGlobalPendingLogs(true);
   }
 }
 
@@ -2622,7 +2638,7 @@ function handleTargetItemDetailEvent(e) {
 
 function handleOpenPendingApprovalsModalEvent() {
   if (authState.isAdmin.value) {
-    loadGlobalPendingLogs();
+    loadGlobalPendingLogs(false);
     isPendingApprovalsModalOpen.value = true;
   }
 }
@@ -2630,8 +2646,8 @@ function handleOpenPendingApprovalsModalEvent() {
 onMounted(() => {
   loadData();
   if (authState.isAdmin.value) {
-    loadGlobalPendingLogs();
-    globalPendingPollTimer = setInterval(loadGlobalPendingLogs, 5000);
+    loadGlobalPendingLogs(false);
+    globalPendingPollTimer = setInterval(() => loadGlobalPendingLogs(true), 5000);
   }
   window.addEventListener('open-target-item-detail', handleTargetItemDetailEvent);
   window.addEventListener('open-pending-approvals-modal', handleOpenPendingApprovalsModalEvent);
