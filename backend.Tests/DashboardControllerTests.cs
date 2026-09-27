@@ -21,6 +21,7 @@ namespace Cdsqg.Tests
         public int CompletedTasks { get; set; }
         public List<AgencyStatusSummaryDto> MinistriesPerformance { get; set; } = new();
         public List<AgencyStatusSummaryDto> ProvincesPerformance { get; set; } = new();
+        public List<AgencyStatusSummaryDto> OthersPerformance { get; set; } = new();
     }
 
     public class DashboardControllerTests
@@ -224,6 +225,45 @@ namespace Cdsqg.Tests
 
             Assert.Equal(0, data.TotalGoals);
             Assert.Equal(1, data.TotalTasks); // TASK-TPHCM-01
+        }
+
+        [Fact]
+        public async Task GetDashboardMetrics_FilterBySubAgency_ReturnsSubAgencyPerformance()
+        {
+            using var context = GetInMemoryDbContext();
+            
+            // Add a sub-agency (Level 3) under BCA (Ministry)
+            var subAgencyId = Guid.NewGuid();
+            var subAgency = new Agency
+            {
+                Id = subAgencyId,
+                Code = "C01",
+                Name = "Cục Cảnh sát C300",
+                Type = AgencyTypeEnum.Internal,
+                ParentId = _bcaId
+            };
+            context.Agencies.Add(subAgency);
+
+            // Add Goal assigned to subAgency
+            context.GoalTaskItems.Add(new GoalTaskItem
+            {
+                Id = Guid.NewGuid(),
+                Code = "GOAL-C01-01",
+                Title = "Mục tiêu Cục C300",
+                ItemType = ItemTypeEnum.Goal,
+                LeadAgencyId = subAgencyId,
+                StartDate = new DateTime(2026, 1, 1),
+                DueDate = new DateTime(2030, 12, 31)
+            });
+            context.SaveChanges();
+
+            var controller = new DashboardController(context);
+            var result = await controller.GetDashboardMetrics(agencyId: new[] { subAgencyId });
+            var data = GetResponseDto(result);
+
+            Assert.Equal(1, data.TotalGoals);
+            var allPerf = data.MinistriesPerformance.Concat(data.ProvincesPerformance).Concat(data.OthersPerformance).ToList();
+            Assert.Contains(allPerf, p => p.AgencyId == subAgencyId);
         }
     }
 }

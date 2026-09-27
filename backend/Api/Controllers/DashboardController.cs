@@ -117,11 +117,11 @@ namespace Cdsqg.Api.Controllers
                         // If the filtered agency is a sub-agency (ParentId != null), DO NOT include general tasks!
                         if (hasSubAgencyOnly)
                         {
-                            query = query.Where(i => allowedAgencyIds.Contains(i.LeadAgencyId) || (i.AssignedAgencyId.HasValue && allowedAgencyIds.Contains(i.AssignedAgencyId.Value)));
+                            query = query.Where(i => allowedAgencyIds.Contains(i.LeadAgencyId) || (i.AssignedAgencyId.HasValue && allowedAgencyIds.Contains(i.AssignedAgencyId.Value)) || (i.AgencyExecutions != null && i.AgencyExecutions.Any(e => allowedAgencyIds.Contains(e.AgencyId) || (e.AssignedAgencyId.HasValue && allowedAgencyIds.Contains(e.AssignedAgencyId.Value)))));
                         }
                         else
                         {
-                            query = query.Where(i => i.LeadAgencyId == allAgenciesId || i.IsGeneralTask || allowedAgencyIds.Contains(i.LeadAgencyId) || (i.AssignedAgencyId.HasValue && allowedAgencyIds.Contains(i.AssignedAgencyId.Value)));
+                            query = query.Where(i => i.LeadAgencyId == allAgenciesId || i.IsGeneralTask || allowedAgencyIds.Contains(i.LeadAgencyId) || (i.AssignedAgencyId.HasValue && allowedAgencyIds.Contains(i.AssignedAgencyId.Value)) || (i.AgencyExecutions != null && i.AgencyExecutions.Any(e => allowedAgencyIds.Contains(e.AgencyId) || (e.AssignedAgencyId.HasValue && allowedAgencyIds.Contains(e.AssignedAgencyId.Value)))));
                         }
                     }
                 }
@@ -172,7 +172,7 @@ namespace Cdsqg.Api.Controllers
                 // Exclude special agencies and pseudo-agencies from standalone performance card lists
                 targetAgencies = targetAgencies.Where(a => 
                     a.Type != AgencyTypeEnum.Special && 
-                    (parentAgencyId.HasValue || a.Type != AgencyTypeEnum.Internal) &&
+                    (parentAgencyId.HasValue || isAgencyFilterActive || a.ParentId.HasValue || a.Type != AgencyTypeEnum.Internal) &&
                     a.Id != allAgenciesId && 
                     a.Code != "ALL_AGENCIES" && 
                     a.Code != "ALL_MINISTRIES" && 
@@ -195,6 +195,7 @@ namespace Cdsqg.Api.Controllers
                         ? items.Where(i => 
                             childIds.Contains(i.LeadAgencyId) || 
                             (i.AssignedAgencyId.HasValue && childIds.Contains(i.AssignedAgencyId.Value)) ||
+                            (i.AgencyExecutions != null && i.AgencyExecutions.Any(e => childIds.Contains(e.AgencyId) || (e.AssignedAgencyId.HasValue && childIds.Contains(e.AssignedAgencyId.Value)))) ||
                             (isMinistryOrProvince && (
                                 i.LeadAgencyId == allAgenciesId || 
                                 (i.LeadAgency != null && i.LeadAgency.Code == "ALL_AGENCIES") ||
@@ -203,7 +204,7 @@ namespace Cdsqg.Api.Controllers
                                 (i.IsGeneralTask && (i.LeadAgency == null || i.LeadAgency.Code == "ALL_AGENCIES"))
                             ))
                           ).ToList()
-                        : items.Where(i => childIds.Contains(i.LeadAgencyId) || (i.AssignedAgencyId.HasValue && childIds.Contains(i.AssignedAgencyId.Value))).ToList();
+                        : items.Where(i => childIds.Contains(i.LeadAgencyId) || (i.AssignedAgencyId.HasValue && childIds.Contains(i.AssignedAgencyId.Value)) || (i.AgencyExecutions != null && i.AgencyExecutions.Any(e => childIds.Contains(e.AgencyId) || (e.AssignedAgencyId.HasValue && childIds.Contains(e.AssignedAgencyId.Value))))).ToList();
 
                     int aNotStarted = 0, aInProgOnTime = 0, aInProgOverdue = 0, aCompOnTime = 0, aCompOverdue = 0, aExpSoon = 0;
                     int aGNotStarted = 0, aGInProgOnTime = 0, aGInProgOverdue = 0, aGCompOnTime = 0, aGCompOverdue = 0, aGExpSoon = 0;
@@ -287,20 +288,22 @@ namespace Cdsqg.Api.Controllers
                                      agency.Code == "ALL_AGENCIES" || agency.Code == "ALL_MINISTRIES" || agency.Code == "ALL_PROVINCES" || agency.Code == "ALL_PROVINCES_UBND" || agency.Code == "ALL_MINISTRIES_DIRECT" ||
                                      (agency.Name != null && (agency.Name.StartsWith("Các bộ, ngành") || agency.Name.StartsWith("Các địa phương") || agency.Name.Contains("UBND tỉnh, thành phố trực thuộc trung ương")));
 
+                    Guid? effectiveParentId = (parentAgencyId.HasValue && parentAgencyId.Value != Guid.Empty) ? parentAgencyId.Value : agency.ParentId;
+
                     if (isSpecial)
                     {
                         // Do not add special agencies to standalone performance lists
                     }
-                    else if (parentAgencyId.HasValue && parentAgencyId.Value != Guid.Empty)
+                    else if (effectiveParentId.HasValue && effectiveParentId.Value != Guid.Empty)
                     {
-                        var parentAgency = allAgencies.FirstOrDefault(p => p.Id == parentAgencyId.Value);
+                        var parentAgency = allAgencies.FirstOrDefault(p => p.Id == effectiveParentId.Value);
                         if (parentAgency != null && parentAgency.Type == AgencyTypeEnum.Province)
                         {
                             provincesPerformance.Add(summaryDto);
                         }
                         else if (parentAgency != null && (parentAgency.Type == AgencyTypeEnum.Other || parentAgency.Type == AgencyTypeEnum.Internal))
                         {
-                            if (summaryDto.TotalItems > 0)
+                            if (summaryDto.TotalItems > 0 || isAgencyFilterActive)
                             {
                                 othersPerformance.Add(summaryDto);
                             }
@@ -309,10 +312,17 @@ namespace Cdsqg.Api.Controllers
                         {
                             ministriesPerformance.Add(summaryDto);
                         }
+                        else
+                        {
+                            if (summaryDto.TotalItems > 0 || isAgencyFilterActive)
+                            {
+                                othersPerformance.Add(summaryDto);
+                            }
+                        }
                     }
                     else if (agency.Type == AgencyTypeEnum.Other || agency.Type == AgencyTypeEnum.Internal)
                     {
-                        if (summaryDto.TotalItems > 0)
+                        if (summaryDto.TotalItems > 0 || isAgencyFilterActive)
                         {
                             othersPerformance.Add(summaryDto);
                         }
@@ -324,6 +334,10 @@ namespace Cdsqg.Api.Controllers
                     else if (agency.Type == AgencyTypeEnum.Ministry)
                     {
                         ministriesPerformance.Add(summaryDto);
+                    }
+                    else
+                    {
+                        othersPerformance.Add(summaryDto);
                     }
                 }
 
@@ -366,8 +380,8 @@ namespace Cdsqg.Api.Controllers
 
                 // Global Status counts aggregated across all target agencies so that General Tasks/Goals assigned to ALL_AGENCIES
                 // are counted for every agency assigned to them.
-                totalGoals = agencySummaries.Values.Sum(s => s.TotalGoals);
-                totalTasks = agencySummaries.Values.Sum(s => s.TotalTasks);
+                totalGoals = baseItems.Count(i => i.ItemType == ItemTypeEnum.Goal);
+                totalTasks = baseItems.Count(i => i.ItemType == ItemTypeEnum.Task);
 
                 gNotStarted = agencySummaries.Values.Sum(s => s.GoalNotStarted);
                 gInProgressOnTime = agencySummaries.Values.Sum(s => s.GoalInProgressOnTime);
@@ -528,6 +542,7 @@ namespace Cdsqg.Api.Controllers
                         ? baseItems.Where(i =>
                             childIds.Contains(i.LeadAgencyId) ||
                             (i.AssignedAgencyId.HasValue && childIds.Contains(i.AssignedAgencyId.Value)) ||
+                            (i.AgencyExecutions != null && i.AgencyExecutions.Any(e => childIds.Contains(e.AgencyId) || (e.AssignedAgencyId.HasValue && childIds.Contains(e.AssignedAgencyId.Value)))) ||
                             (isMinistryOrProvince && (
                                 i.LeadAgencyId == allAgenciesId ||
                                 (i.LeadAgency != null && i.LeadAgency.Code == "ALL_AGENCIES") ||
@@ -536,7 +551,7 @@ namespace Cdsqg.Api.Controllers
                                 (i.IsGeneralTask && (i.LeadAgency == null || i.LeadAgency.Code == "ALL_AGENCIES"))
                             ))
                         ).ToList()
-                        : baseItems.Where(i => childIds.Contains(i.LeadAgencyId) || (i.AssignedAgencyId.HasValue && childIds.Contains(i.AssignedAgencyId.Value))).ToList();
+                        : baseItems.Where(i => childIds.Contains(i.LeadAgencyId) || (i.AssignedAgencyId.HasValue && childIds.Contains(i.AssignedAgencyId.Value)) || (i.AgencyExecutions != null && i.AgencyExecutions.Any(e => childIds.Contains(e.AgencyId) || (e.AssignedAgencyId.HasValue && childIds.Contains(e.AssignedAgencyId.Value))))).ToList();
                 }
                 else
                 {

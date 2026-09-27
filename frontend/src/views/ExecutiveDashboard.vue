@@ -1582,11 +1582,40 @@ const singleSubAgencyPerformance = computed(() => {
     ...(metrics.value.provincesPerformance || []),
     ...(metrics.value.othersPerformance || [])
   ];
+  let found = null;
   if (loggedUserAgencyId.value) {
-    const found = allPerf.find(p => String(p.agencyId).toLowerCase() === loggedUserAgencyId.value);
-    if (found) return found;
+    found = allPerf.find(p => String(p.agencyId).toLowerCase() === loggedUserAgencyId.value);
   }
-  return allPerf[0] || null;
+  if (!found) {
+    found = allPerf[0] || null;
+  }
+  if (!found) return null;
+
+  const filter = dashboardFilter.value;
+  if (filter === 'goals') {
+    return {
+      ...found,
+      totalItems: found.totalGoals ?? found.totalItems ?? 0,
+      notStarted: found.goalNotStarted ?? found.notStarted ?? 0,
+      inProgressOnTime: found.goalInProgressOnTime ?? found.inProgressOnTime ?? 0,
+      inProgressOverdue: found.goalInProgressOverdue ?? found.inProgressOverdue ?? 0,
+      completedOnTime: found.goalCompletedOnTime ?? found.completedOnTime ?? 0,
+      completedOverdue: found.goalCompletedOverdue ?? found.completedOverdue ?? 0,
+      expiringSoon: found.goalExpiringSoon ?? found.expiringSoon ?? 0,
+    };
+  } else if (filter === 'tasks') {
+    return {
+      ...found,
+      totalItems: found.totalTasks ?? found.totalItems ?? 0,
+      notStarted: found.taskNotStarted ?? found.notStarted ?? 0,
+      inProgressOnTime: found.taskInProgressOnTime ?? found.inProgressOnTime ?? 0,
+      inProgressOverdue: found.taskInProgressOverdue ?? found.inProgressOverdue ?? 0,
+      completedOnTime: found.taskCompletedOnTime ?? found.completedOnTime ?? 0,
+      completedOverdue: found.taskCompletedOverdue ?? found.completedOverdue ?? 0,
+      expiringSoon: found.taskExpiringSoon ?? found.expiringSoon ?? 0,
+    };
+  }
+  return found;
 });
 
 function getPct(val, total) {
