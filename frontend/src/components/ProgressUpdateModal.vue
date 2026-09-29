@@ -623,7 +623,7 @@ async function submitProgress() {
 
     const agencyName = authState.user.value?.agencyName || '';
     const userName = authState.user.value?.fullName || authState.user.value?.username || '';
-    const creatorLabel = agencyName ? (userName ? `${agencyName} (${userName})` : agencyName) : (userName || 'Đơn vị chủ trì');
+    const creatorLabel = agencyName || userName || 'Đơn vị chủ trì';
     formData.append('CreatedBy', creatorLabel);
     if (authState.user.value?.agencyId) {
       formData.append('AgencyId', authState.user.value.agencyId);

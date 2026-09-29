@@ -13,6 +13,7 @@ namespace Cdsqg.Application.Services
     public interface IPlanningService
     {
         Task<PlanningGridResponseDto> GetDocumentPlanningGridAsync(Guid documentId, Guid? agencyId = null);
+        Task<PagedResultDto<PlanningGridItemDto>> GetDocumentItemsPagedAsync(Guid documentId, DocumentItemsQueryDto queryDto);
         Task<GoalTaskItem> CreateGoalTaskItemAsync(CreateGoalTaskItemRequestDto dto);
         Task<bool> UpdateTaskCustomBaselineAsync(Guid taskId, UpdateCustomBaselineDto dto);
         Task<bool> UpdateYearlyTargetAsync(Guid taskId, UpdateYearlyTargetDto dto);
@@ -184,6 +185,209 @@ namespace Cdsqg.Application.Services
                 EndYear = endYear,
                 DynamicYears = dynamicYears,
                 Items = gridItems
+            };
+        }
+
+        public async Task<PagedResultDto<PlanningGridItemDto>> GetDocumentItemsPagedAsync(Guid documentId, DocumentItemsQueryDto queryDto)
+        {
+            var gridResponse = await GetDocumentPlanningGridAsync(documentId, queryDto.AgencyId);
+            var list = gridResponse.Items ?? new List<PlanningGridItemDto>();
+
+            // 1. Scoping for non-admin user accounts
+            if (!string.Equals(queryDto.UserRole, "Admin", StringComparison.OrdinalIgnoreCase) && queryDto.AgencyId.HasValue && queryDto.AgencyId.Value != Guid.Empty)
+            {
+                var userAgencyId = queryDto.AgencyId.Value;
+                var userAgency = await _context.Agencies.FirstOrDefaultAsync(a => a.Id == userAgencyId);
+                var isParentAgency = userAgency == null || !userAgency.ParentId.HasValue || userAgency.ParentId == Guid.Empty;
+
+                var scopedAgencyIds = new List<Guid> { userAgencyId };
+                if (isParentAgency)
+                {
+                    var childIds = await _context.Agencies
+                        .Where(a => a.ParentId == userAgencyId)
+                        .Select(a => a.Id)
+                        .ToListAsync();
+                    scopedAgencyIds.AddRange(childIds);
+                }
+
+                list = list.Where(i =>
+                {
+                    bool isGeneral = isParentAgency && (i.IsGeneralTask || (i.LeadAgencyCode != null && i.LeadAgencyCode.ToUpper().Contains("ALL_")));
+                    bool isLead = scopedAgencyIds.Contains(i.LeadAgencyId);
+                    bool isAssigned = i.AssignedAgencyId.HasValue && scopedAgencyIds.Contains(i.AssignedAgencyId.Value);
+                    bool isCoord = i.CoordinatingAgencyIds != null && i.CoordinatingAgencyIds.Any(id => scopedAgencyIds.Contains(id));
+                    bool isSubMatch = i.SubItems != null && i.SubItems.Any(s =>
+                        (isParentAgency && (s.IsGeneralTask || (s.LeadAgencyCode != null && s.LeadAgencyCode.ToUpper().Contains("ALL_")))) ||
+                        scopedAgencyIds.Contains(s.LeadAgencyId) ||
+                        (s.AssignedAgencyId.HasValue && scopedAgencyIds.Contains(s.AssignedAgencyId.Value)) ||
+                        (s.CoordinatingAgencyIds != null && s.CoordinatingAgencyIds.Any(id => scopedAgencyIds.Contains(id)))
+                    );
+                    return isGeneral || isLead || isAssigned || isCoord || isSubMatch;
+                }).ToList();
+            }
+
+            // 2. ItemType filter (Goal vs Task)
+            if (!string.IsNullOrWhiteSpace(queryDto.ItemType))
+            {
+                var targetType = queryDto.ItemType.Trim();
+                if (targetType.Equals("Goal", StringComparison.OrdinalIgnoreCase) || targetType == "1")
+                {
+                    list = list.Where(i => string.Equals(i.ItemType, "Goal", StringComparison.OrdinalIgnoreCase) || i.ItemType == "1").ToList();
+                }
+                else if (targetType.Equals("Task", StringComparison.OrdinalIgnoreCase) || targetType == "2")
+                {
+                    list = list.Where(i => string.Equals(i.ItemType, "Task", StringComparison.OrdinalIgnoreCase) || i.ItemType == "2").ToList();
+                }
+            }
+
+            // 3. Search query
+            if (!string.IsNullOrWhiteSpace(queryDto.Search))
+            {
+                var s = queryDto.Search.Trim().ToLower();
+                list = list.Where(i =>
+                    (i.Code != null && i.Code.ToLower().Contains(s)) ||
+                    (i.Title != null && i.Title.ToLower().Contains(s)) ||
+                    (i.LeadAgencyName != null && i.LeadAgencyName.ToLower().Contains(s)) ||
+                    (i.AssignedAgencyName != null && i.AssignedAgencyName.ToLower().Contains(s)) ||
+                    (i.CoordinatingAgencyNames != null && i.CoordinatingAgencyNames.Any(c => c.ToLower().Contains(s))) ||
+                    (i.SubItems != null && i.SubItems.Any(sub => (sub.Code != null && sub.Code.ToLower().Contains(s)) || (sub.Title != null && sub.Title.ToLower().Contains(s))))
+                ).ToList();
+            }
+
+            // 4. Filters
+            if (queryDto.SelectedAgencyIds != null && queryDto.SelectedAgencyIds.Count > 0)
+            {
+                list = list.Where(i => queryDto.SelectedAgencyIds.Contains(i.LeadAgencyId)).ToList();
+            }
+
+            if (queryDto.SelectedSubAgencyIds != null && queryDto.SelectedSubAgencyIds.Count > 0)
+            {
+                list = list.Where(i => i.AssignedAgencyId.HasValue && queryDto.SelectedSubAgencyIds.Contains(i.AssignedAgencyId.Value)).ToList();
+            }
+
+            if (queryDto.SelectedSections != null && queryDto.SelectedSections.Count > 0)
+            {
+                list = list.Where(i => queryDto.SelectedSections.Contains(i.Section)).ToList();
+            }
+
+            if (queryDto.SelectedGroups != null && queryDto.SelectedGroups.Count > 0)
+            {
+                list = list.Where(i => queryDto.SelectedGroups.Contains(i.Group)).ToList();
+            }
+
+            if (queryDto.OnlyOngoing)
+            {
+                list = list.Where(i => i.IsOngoing).ToList();
+            }
+
+            if (queryDto.FromYear.HasValue || queryDto.ToYear.HasValue)
+            {
+                int fYr = queryDto.FromYear ?? 2026;
+                int tYr = queryDto.ToYear ?? 2030;
+                list = list.Where(i =>
+                {
+                    if (i.IsOngoing) return true;
+                    int startY = i.StartDate.HasValue ? i.StartDate.Value.Year : 2026;
+                    int dueY = i.DueDate.HasValue ? i.DueDate.Value.Year : startY;
+                    return startY <= tYr && dueY >= fYr;
+                }).ToList();
+            }
+
+            if (queryDto.SelectedScopes != null && queryDto.SelectedScopes.Count > 0)
+            {
+                list = list.Where(i =>
+                {
+                    if (queryDto.SelectedScopes.Contains("general") && i.IsGeneralTask) return true;
+                    if (queryDto.SelectedScopes.Contains("specific") && !i.IsGeneralTask) return true;
+                    return false;
+                }).ToList();
+            }
+
+            if (queryDto.SelectedStatuses != null && queryDto.SelectedStatuses.Count > 0)
+            {
+                list = list.Where(i => queryDto.SelectedStatuses.Contains(i.CalculatedStatus)).ToList();
+            }
+
+            // 5. Column Sorting
+            bool isAsc = string.Equals(queryDto.SortOrder, "asc", StringComparison.OrdinalIgnoreCase);
+            string sortByKey = (queryDto.SortBy ?? "code").ToLower();
+
+            int GetStatusRank(string? status) => status switch
+            {
+                "NotStarted" => 1,
+                "InProgressOnTime" => 2,
+                "InProgressOverdue" => 3,
+                "ExpiringSoon" => 4,
+                "CompletedOnTime" => 5,
+                "CompletedOverdue" => 6,
+                _ => 0
+            };
+
+            switch (sortByKey)
+            {
+                case "code":
+                    list = isAsc
+                        ? list.OrderBy(i => i.Code, StringComparer.OrdinalIgnoreCase).ToList()
+                        : list.OrderByDescending(i => i.Code, StringComparer.OrdinalIgnoreCase).ToList();
+                    break;
+                case "title":
+                    list = isAsc
+                        ? list.OrderBy(i => i.Title).ToList()
+                        : list.OrderByDescending(i => i.Title).ToList();
+                    break;
+                case "leadagency":
+                case "leadagencyname":
+                    list = isAsc
+                        ? list.OrderBy(i => i.LeadAgencyName).ToList()
+                        : list.OrderByDescending(i => i.LeadAgencyName).ToList();
+                    break;
+                case "assignedagency":
+                case "assignedagencyname":
+                    list = isAsc
+                        ? list.OrderBy(i => i.AssignedAgencyName ?? "").ToList()
+                        : list.OrderByDescending(i => i.AssignedAgencyName ?? "").ToList();
+                    break;
+                case "coordinatingagency":
+                    list = isAsc
+                        ? list.OrderBy(i => i.CoordinatingAgencyNames?.FirstOrDefault() ?? "").ToList()
+                        : list.OrderByDescending(i => i.CoordinatingAgencyNames?.FirstOrDefault() ?? "").ToList();
+                    break;
+                case "period":
+                    list = isAsc
+                        ? list.OrderByDescending(i => i.IsOngoing).ThenBy(i => i.StartDate).ThenBy(i => i.DueDate).ToList()
+                        : list.OrderBy(i => i.IsOngoing).ThenByDescending(i => i.DueDate).ThenByDescending(i => i.StartDate).ToList();
+                    break;
+                case "progress":
+                    list = isAsc
+                        ? list.OrderBy(i => i.LatestProgressValue ?? -1).ToList()
+                        : list.OrderByDescending(i => i.LatestProgressValue ?? -1).ToList();
+                    break;
+                case "status":
+                    list = isAsc
+                        ? list.OrderBy(i => GetStatusRank(i.CalculatedStatus)).ToList()
+                        : list.OrderByDescending(i => GetStatusRank(i.CalculatedStatus)).ToList();
+                    break;
+                case "lastupdated":
+                case "createdat":
+                default:
+                    list = isAsc
+                        ? list.OrderBy(i => i.LastUpdated ?? i.CreatedAt).ThenBy(i => i.Code).ToList()
+                        : list.OrderByDescending(i => i.LastUpdated ?? i.CreatedAt).ThenBy(i => i.Code).ToList();
+                    break;
+            }
+
+            // 6. Server-side Pagination
+            int totalCount = list.Count;
+            int pageNum = queryDto.PageNumber > 0 ? queryDto.PageNumber : 1;
+            int pageSize = queryDto.PageSize > 0 ? queryDto.PageSize : 10;
+            var pagedItems = list.Skip((pageNum - 1) * pageSize).Take(pageSize).ToList();
+
+            return new PagedResultDto<PlanningGridItemDto>
+            {
+                Items = pagedItems,
+                TotalCount = totalCount,
+                PageNumber = pageNum,
+                PageSize = pageSize
             };
         }
 

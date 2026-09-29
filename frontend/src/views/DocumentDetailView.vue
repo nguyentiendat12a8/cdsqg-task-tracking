@@ -180,18 +180,88 @@
         <LoadingSpinner v-if="isLoading" text="Đang tải dữ liệu danh sách từ máy chủ..." />
         <div v-else class="overflow-x-auto overflow-y-auto max-h-[calc(100vh-320px)] custom-scrollbar w-full">
           <table class="w-full min-w-[1280px] text-left text-sm text-slate-700 border-collapse">
-            <thead class="bg-slate-100 text-xs text-slate-600 uppercase font-bold border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+            <thead class="bg-slate-100 text-xs text-slate-600 uppercase font-bold border-b border-slate-200 sticky top-0 z-30 shadow-xs select-none">
               <tr>
-                <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 whitespace-nowrap min-w-[75px] w-[75px] max-w-[75px] sticky left-0 z-30">Mã</th>
-                <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[280px] w-[280px] max-w-[280px] sticky left-[75px] z-30 shadow-[3px_0_6px_-1px_rgba(0,0,0,0.12)]">
-                  {{ filterItemType === 'Goal' ? 'Tên Mục Tiêu' : (filterItemType === 'Task' ? 'Tên Nhiệm Vụ' : 'Tên Mục Tiêu / Nhiệm Vụ') }}
+                <th @click="handleSort('code')" class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 whitespace-nowrap min-w-[75px] w-[75px] max-w-[75px] sticky left-0 z-30 cursor-pointer hover:bg-slate-200 transition" title="Bấm để sắp xếp theo Mã">
+                  <div class="flex items-center justify-between gap-1">
+                    <span>Mã</span>
+                    <span class="text-[10px] font-bold text-slate-400">
+                      <span v-if="sortBy === 'code' && sortOrder === 'asc'" class="text-blue-600">▲</span>
+                      <span v-else-if="sortBy === 'code' && sortOrder === 'desc'" class="text-blue-600">▼</span>
+                      <span v-else class="text-slate-300">↕</span>
+                    </span>
+                  </div>
                 </th>
-                <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[180px] w-[180px] max-w-[180px]">Cơ Quan Chủ Trì</th>
-                <th v-if="isLeadAgencyFilteredByBKHCN" class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[180px] w-[180px] max-w-[180px]">Giao Đơn Vị Trực Thuộc</th>
-                <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[180px] w-[180px] max-w-[180px]">Cơ Quan Phối Hợp</th>
-                <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 whitespace-nowrap min-w-[160px] w-[160px] max-w-[160px]">Thời Gian thực hiện</th>
-                <th class="px-3 py-2.5 border-r border-slate-200 text-center bg-slate-100 min-w-[125px] w-[125px] max-w-[125px]">Tiến Độ</th>
-                <th class="px-3 py-2.5 border-r border-slate-200 text-center bg-slate-100 min-w-[195px] w-[195px] max-w-[195px]">Trạng Thái</th>
+                <th @click="handleSort('title')" class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[280px] w-[280px] max-w-[280px] sticky left-[75px] z-30 shadow-[3px_0_6px_-1px_rgba(0,0,0,0.12)] cursor-pointer hover:bg-slate-200 transition" title="Bấm để sắp xếp theo Tên">
+                  <div class="flex items-center justify-between gap-1">
+                    <span>{{ filterItemType === 'Goal' ? 'Tên Mục Tiêu' : (filterItemType === 'Task' ? 'Tên Nhiệm Vụ' : 'Tên Mục Tiêu / Nhiệm Vụ') }}</span>
+                    <span class="text-[10px] font-bold text-slate-400">
+                      <span v-if="sortBy === 'title' && sortOrder === 'asc'" class="text-blue-600">▲</span>
+                      <span v-else-if="sortBy === 'title' && sortOrder === 'desc'" class="text-blue-600">▼</span>
+                      <span v-else class="text-slate-300">↕</span>
+                    </span>
+                  </div>
+                </th>
+                <th @click="handleSort('leadAgency')" class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[180px] w-[180px] max-w-[180px] cursor-pointer hover:bg-slate-200 transition" title="Bấm để sắp xếp theo Cơ quan chủ trì">
+                  <div class="flex items-center justify-between gap-1">
+                    <span>Cơ Quan Chủ Trì</span>
+                    <span class="text-[10px] font-bold text-slate-400">
+                      <span v-if="sortBy === 'leadAgency' && sortOrder === 'asc'" class="text-blue-600">▲</span>
+                      <span v-else-if="sortBy === 'leadAgency' && sortOrder === 'desc'" class="text-blue-600">▼</span>
+                      <span v-else class="text-slate-300">↕</span>
+                    </span>
+                  </div>
+                </th>
+                <th v-if="isLeadAgencyFilteredByBKHCN" @click="handleSort('assignedAgency')" class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[180px] w-[180px] max-w-[180px] cursor-pointer hover:bg-slate-200 transition" title="Bấm để sắp xếp theo Đơn vị trực thuộc">
+                  <div class="flex items-center justify-between gap-1">
+                    <span>Giao Đơn Vị Trực Thuộc</span>
+                    <span class="text-[10px] font-bold text-slate-400">
+                      <span v-if="sortBy === 'assignedAgency' && sortOrder === 'asc'" class="text-blue-600">▲</span>
+                      <span v-else-if="sortBy === 'assignedAgency' && sortOrder === 'desc'" class="text-blue-600">▼</span>
+                      <span v-else class="text-slate-300">↕</span>
+                    </span>
+                  </div>
+                </th>
+                <th @click="handleSort('coordinatingAgency')" class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[180px] w-[180px] max-w-[180px] cursor-pointer hover:bg-slate-200 transition" title="Bấm để sắp xếp theo Cơ quan phối hợp">
+                  <div class="flex items-center justify-between gap-1">
+                    <span>Cơ Quan Phối Hợp</span>
+                    <span class="text-[10px] font-bold text-slate-400">
+                      <span v-if="sortBy === 'coordinatingAgency' && sortOrder === 'asc'" class="text-blue-600">▲</span>
+                      <span v-else-if="sortBy === 'coordinatingAgency' && sortOrder === 'desc'" class="text-blue-600">▼</span>
+                      <span v-else class="text-slate-300">↕</span>
+                    </span>
+                  </div>
+                </th>
+                <th @click="handleSort('period')" class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 whitespace-nowrap min-w-[160px] w-[160px] max-w-[160px] cursor-pointer hover:bg-slate-200 transition" title="Bấm để sắp xếp theo Thời gian thực hiện">
+                  <div class="flex items-center justify-between gap-1">
+                    <span>Thời Gian thực hiện</span>
+                    <span class="text-[10px] font-bold text-slate-400">
+                      <span v-if="sortBy === 'period' && sortOrder === 'asc'" class="text-blue-600">▲</span>
+                      <span v-else-if="sortBy === 'period' && sortOrder === 'desc'" class="text-blue-600">▼</span>
+                      <span v-else class="text-slate-300">↕</span>
+                    </span>
+                  </div>
+                </th>
+                <th @click="handleSort('progress')" class="px-3 py-2.5 border-r border-slate-200 text-center bg-slate-100 min-w-[125px] w-[125px] max-w-[125px] cursor-pointer hover:bg-slate-200 transition" title="Bấm để sắp xếp theo Tiến độ">
+                  <div class="flex items-center justify-center gap-1">
+                    <span>Tiến Độ</span>
+                    <span class="text-[10px] font-bold text-slate-400">
+                      <span v-if="sortBy === 'progress' && sortOrder === 'asc'" class="text-blue-600">▲</span>
+                      <span v-else-if="sortBy === 'progress' && sortOrder === 'desc'" class="text-blue-600">▼</span>
+                      <span v-else class="text-slate-300">↕</span>
+                    </span>
+                  </div>
+                </th>
+                <th @click="handleSort('status')" class="px-3 py-2.5 border-r border-slate-200 text-center bg-slate-100 min-w-[195px] w-[195px] max-w-[195px] cursor-pointer hover:bg-slate-200 transition" title="Bấm để sắp xếp theo Trạng thái">
+                  <div class="flex items-center justify-center gap-1">
+                    <span>Trạng Thái</span>
+                    <span class="text-[10px] font-bold text-slate-400">
+                      <span v-if="sortBy === 'status' && sortOrder === 'asc'" class="text-blue-600">▲</span>
+                      <span v-else-if="sortBy === 'status' && sortOrder === 'desc'" class="text-blue-600">▼</span>
+                      <span v-else class="text-slate-300">↕</span>
+                    </span>
+                  </div>
+                </th>
                 <th class="px-3 py-2.5 text-center bg-slate-100 min-w-[90px] w-[90px] max-w-[90px]">Thao Tác</th>
               </tr>
             </thead>
@@ -1312,6 +1382,25 @@ const appliedFilters = ref({
 
 const currentPage = ref(1);
 const pageSize = ref(10);
+const sortBy = ref('code');
+const sortOrder = ref('asc');
+const serverTotalCount = ref(0);
+const serverTotalPages = ref(1);
+
+function handleSort(columnKey) {
+  if (sortBy.value === columnKey) {
+    sortOrder.value = sortOrder.value === 'asc' ? 'desc' : 'asc';
+  } else {
+    sortBy.value = columnKey;
+    if (columnKey === 'progress' || columnKey === 'lastUpdated') {
+      sortOrder.value = 'desc';
+    } else {
+      sortOrder.value = 'asc';
+    }
+  }
+  currentPage.value = 1;
+  loadData();
+}
 
 let docDetailSearchTimer = null;
 let docDetailSearchRequestId = 0;
@@ -1321,6 +1410,7 @@ function execFilterSearch() {
   docDetailSearchRequestId++;
   appliedFilters.value = JSON.parse(JSON.stringify(filterDraft.value));
   currentPage.value = 1;
+  loadData();
 }
 
 watch(() => filterDraft.value.searchQuery, (newVal) => {
@@ -1330,6 +1420,7 @@ watch(() => filterDraft.value.searchQuery, (newVal) => {
     if (currentId !== docDetailSearchRequestId) return;
     appliedFilters.value.searchQuery = newVal || '';
     currentPage.value = 1;
+    loadData();
   }, 300);
 });
 
@@ -1350,11 +1441,13 @@ function resetFilterSearch() {
   };
   appliedFilters.value = JSON.parse(JSON.stringify(filterDraft.value));
   currentPage.value = 1;
+  loadData();
 }
 
 function changePage(newPage) {
   if (newPage < 1 || newPage > totalPages.value) return;
   currentPage.value = newPage;
+  loadData();
 }
 
 const isCreateModalOpen = ref(false);
@@ -1893,13 +1986,10 @@ const filteredList = computed(() => {
   });
 });
 
-const totalCount = computed(() => filteredList.value.length);
-const totalPages = computed(() => Math.ceil(totalCount.value / pageSize.value) || 1);
+const totalCount = computed(() => serverTotalCount.value);
+const totalPages = computed(() => serverTotalPages.value);
 
-const paginatedPrimaryList = computed(() => {
-  const start = (currentPage.value - 1) * pageSize.value;
-  return filteredList.value.slice(start, start + pageSize.value);
-});
+const paginatedPrimaryList = computed(() => rawItemsList.value);
 
 function exportDocumentItemsToExcel() {
   const isGoal = (props.filterItemType === 'Goal');
@@ -1969,9 +2059,51 @@ async function loadData() {
   try {
     const docId = '12660000-0000-0000-0000-000000001266';
     const currentAgencyId = authState.user.value?.agencyId || '';
-    const agencyParam = currentAgencyId ? `?agencyId=${currentAgencyId}` : '';
-    const [gridRes, agRes] = await Promise.all([
-      fetch(getApiUrl(`/api/planning/documents/${docId}/grid${agencyParam}`)),
+    const userRole = userRoleStr.value;
+
+    const params = new URLSearchParams();
+    params.append('itemType', props.filterItemType || 'Task');
+    params.append('pageNumber', String(currentPage.value));
+    params.append('pageSize', String(pageSize.value));
+    params.append('sortBy', sortBy.value);
+    params.append('sortOrder', sortOrder.value);
+
+    if (currentAgencyId) params.append('agencyId', currentAgencyId);
+    if (userRole) params.append('userRole', userRole);
+
+    if (appliedFilters.value.searchQuery) {
+      params.append('search', appliedFilters.value.searchQuery.trim());
+    }
+    if (appliedFilters.value.selectedAgencyIds?.length) {
+      params.append('selectedAgencyIds', appliedFilters.value.selectedAgencyIds.join(','));
+    }
+    if (appliedFilters.value.selectedSubAgencyIds?.length) {
+      params.append('selectedSubAgencyIds', appliedFilters.value.selectedSubAgencyIds.join(','));
+    }
+    if (appliedFilters.value.selectedScopes?.length) {
+      params.append('selectedScopes', appliedFilters.value.selectedScopes.join(','));
+    }
+    if (appliedFilters.value.selectedStatuses?.length) {
+      params.append('selectedStatuses', appliedFilters.value.selectedStatuses.join(','));
+    }
+    if (appliedFilters.value.selectedSections?.length) {
+      params.append('selectedSections', appliedFilters.value.selectedSections.join(','));
+    }
+    if (appliedFilters.value.selectedGroups?.length) {
+      params.append('selectedGroups', appliedFilters.value.selectedGroups.join(','));
+    }
+    if (appliedFilters.value.fromYear) {
+      params.append('fromYear', String(appliedFilters.value.fromYear));
+    }
+    if (appliedFilters.value.toYear) {
+      params.append('toYear', String(appliedFilters.value.toYear));
+    }
+    if (appliedFilters.value.onlyOngoing) {
+      params.append('onlyOngoing', 'true');
+    }
+
+    const [itemsRes, agRes] = await Promise.all([
+      fetch(getApiUrl(`/api/documents/${docId}/items?${params.toString()}`)),
       fetch(getApiUrl('/api/agencies'))
     ]);
 
@@ -1980,17 +2112,11 @@ async function loadData() {
       agencies.value = Array.isArray(agData) ? agData : (agData.items || []);
     }
 
-    if (gridRes.ok) {
-      const data = await gridRes.json();
-      const all = data.items || [];
-      const targetType = props.filterItemType || 'Task';
-      rawItemsList.value = all.filter(i => {
-        if (targetType === 'Goal') {
-          return i.itemType === 'Goal' || i.itemType === 1 || i.itemType === '1';
-        } else {
-          return i.itemType === 'Task' || i.itemType === 2 || i.itemType === '2';
-        }
-      });
+    if (itemsRes.ok) {
+      const data = await itemsRes.json();
+      rawItemsList.value = data.items || [];
+      serverTotalCount.value = typeof data.totalCount === 'number' ? data.totalCount : rawItemsList.value.length;
+      serverTotalPages.value = typeof data.totalPages === 'number' ? data.totalPages : (Math.ceil(serverTotalCount.value / pageSize.value) || 1);
     }
   } catch (e) {
     console.error('Lỗi tải dữ liệu:', e);

@@ -160,78 +160,179 @@
     <!-- Main Dashboard Container -->
     <div v-else class="space-y-3.5 w-full">
 
-      <!-- Overall System Progress Donut Chart & 6 Status Legend Breakdown (Chỉ hiển thị cho tài khoản Cấp 1 Admin) -->
-      <div v-if="!isSubAgencyUser" class="bg-gradient-to-br from-slate-50 to-blue-50/40 rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-2xs space-y-4 w-full">
-        <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
-          
-          <!-- Big Donut Circle Chart on Left -->
-          <div class="md:col-span-5 lg:col-span-4 flex flex-col items-center justify-center p-5 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-3">
-            <MiniStatusDonut :stats="overallDonutStats" :size="160" :innerSize="105" :fontSize="32" />
-            <div class="text-center pt-1">
-              <div class="text-xs sm:text-sm font-extrabold text-slate-800">
-                Tổng số: {{ activeStatusTotal }} {{ dashboardItemNoun }}
+      <!-- 2 Biểu đồ Thống kê (Chia đôi màn hình 50%-50% trên Desktop, 1 hàng trên màn hình nhỏ) -->
+      <div v-if="!isSubAgencyUser" class="grid grid-cols-1 lg:grid-cols-2 gap-4 w-full">
+        
+        <!-- Biểu đồ 1: Thống kê mục tiêu / nhiệm vụ -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-2xs space-y-4 w-full flex flex-col justify-between">
+          <!-- Section Header -->
+          <div class="space-y-1.5 border-b border-slate-100 pb-3">
+            <h3 class="text-sm sm:text-base font-bold text-slate-800 flex items-center gap-2">
+              <span class="p-1.5 bg-purple-100 text-purple-700 rounded-lg text-xs shrink-0">🎯</span>
+              <span>Thống kê {{ dashboardItemNoun }}</span>
+            </h3>
+            <p class="text-xs text-slate-500 font-normal">
+              (Trong đó các {{ dashboardItemNoun }} giao chung không hiển thị ở biểu đồ trạng thái)
+            </p>
+
+            <!-- Summary Badges: Tổng, Mục tiêu riêng & Mục tiêu chung -->
+            <div class="flex flex-wrap items-center gap-2 text-xs font-bold pt-1">
+              <div class="px-2.5 py-1 bg-slate-50 border border-slate-200 text-slate-700 rounded-lg flex items-center gap-1.5">
+                <span>Tổng: <strong class="text-purple-700 font-bold text-xs">{{ activeCreatedTotals.total }}</strong></span>
+              </div>
+
+              <div class="px-2.5 py-1 bg-slate-50 border border-slate-200 text-slate-700 rounded-lg flex items-center gap-1.5">
+                <span>{{ dashboardFilter === 'goals' ? 'Mục tiêu riêng' : 'Nhiệm vụ riêng' }}: <strong class="text-blue-700 font-bold text-xs">{{ activeCreatedTotals.specific }}</strong></span>
+              </div>
+
+              <div class="px-2.5 py-1 bg-slate-50 border border-slate-200 text-slate-700 rounded-lg flex items-center gap-1.5">
+                <span>{{ dashboardFilter === 'goals' ? 'Mục tiêu chung' : 'Nhiệm vụ chung' }}: <strong class="text-emerald-700 font-bold text-xs">{{ activeCreatedTotals.general }}</strong></span>
               </div>
             </div>
           </div>
 
-          <!-- 6 Status Legend Breakdown Grid on Right -->
-          <div class="md:col-span-7 lg:col-span-8 grid grid-cols-1 sm:grid-cols-2 gap-2.5 font-bold text-xs">
-            <!-- 1. Chưa thực hiện -->
-            <div class="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-200 shadow-2xs">
-              <div class="flex items-center gap-2.5">
-                <span class="w-3.5 h-3.5 rounded-full bg-slate-400 shrink-0"></span>
-                <span class="text-slate-700">1. Chưa thực hiện</span>
+          <!-- Chart & Status Breakdown -->
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center flex-1">
+            <!-- Donut Circle Chart on Left -->
+            <div class="sm:col-span-5 flex flex-col items-center justify-center p-3 bg-slate-50/60 rounded-xl border border-slate-100 space-y-2">
+              <MiniStatusDonut :stats="createdDonutStats" :size="130" :innerSize="85" :fontSize="24" />
+              <div class="text-center pt-1">
+                <div class="text-xs font-bold text-slate-700">
+                  {{ dashboardFilter === 'goals' ? 'Mục tiêu riêng' : 'Nhiệm vụ riêng' }}: {{ activeCreatedTotals.specific }}
+                </div>
               </div>
-              <span class="font-extrabold text-slate-900 text-base">{{ activeStatusSummary.notStarted ?? 0 }}</span>
             </div>
 
-            <!-- 2. Đang thực hiện (trong hạn) -->
-            <div class="flex items-center justify-between p-3 rounded-xl bg-blue-50/70 border border-blue-200 shadow-2xs">
-              <div class="flex items-center gap-2.5">
-                <span class="w-3.5 h-3.5 rounded-full bg-blue-500 shrink-0"></span>
-                <span class="text-blue-800">2. Đang thực hiện (trong hạn)</span>
+            <!-- 6 Status Legend Breakdown Grid on Right -->
+            <div class="sm:col-span-7 grid grid-cols-1 gap-2 text-xs font-bold">
+              <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-200/80">
+                <div class="flex items-center gap-2">
+                  <span class="w-3 h-3 rounded-full bg-slate-400 shrink-0"></span>
+                  <span class="text-slate-700 font-medium">1. Chưa thực hiện</span>
+                </div>
+                <span class="font-bold text-slate-900">{{ activeCreatedStatusSummary.notStarted ?? 0 }}</span>
               </div>
-              <span class="font-extrabold text-blue-900 text-base">{{ activeStatusSummary.inProgressOnTime ?? 0 }}</span>
-            </div>
 
-            <!-- 3. Đang thực hiện (quá hạn) -->
-            <div class="flex items-center justify-between p-3 rounded-xl bg-rose-50/70 border border-rose-200 shadow-2xs">
-              <div class="flex items-center gap-2.5">
-                <span class="w-3.5 h-3.5 rounded-full bg-rose-500 shrink-0"></span>
-                <span class="text-rose-800">3. Đang thực hiện (quá hạn)</span>
+              <div class="flex items-center justify-between p-2 rounded-lg bg-blue-50/60 border border-blue-200/80">
+                <div class="flex items-center gap-2">
+                  <span class="w-3 h-3 rounded-full bg-blue-500 shrink-0"></span>
+                  <span class="text-blue-800 font-medium">2. Đang thực hiện (trong hạn)</span>
+                </div>
+                <span class="font-bold text-blue-900">{{ activeCreatedStatusSummary.inProgressOnTime ?? 0 }}</span>
               </div>
-              <span class="font-extrabold text-rose-900 text-base">{{ activeStatusSummary.inProgressOverdue ?? 0 }}</span>
-            </div>
 
-            <!-- 4. Hoàn thành (đúng hạn) -->
-            <div class="flex items-center justify-between p-3 rounded-xl bg-emerald-50/70 border border-emerald-200 shadow-2xs">
-              <div class="flex items-center gap-2.5">
-                <span class="w-3.5 h-3.5 rounded-full bg-emerald-500 shrink-0"></span>
-                <span class="text-emerald-800">4. Hoàn thành (đúng hạn)</span>
+              <div class="flex items-center justify-between p-2 rounded-lg bg-rose-50/60 border border-rose-200/80">
+                <div class="flex items-center gap-2">
+                  <span class="w-3 h-3 rounded-full bg-rose-500 shrink-0"></span>
+                  <span class="text-rose-800 font-medium">3. Đang thực hiện (quá hạn)</span>
+                </div>
+                <span class="font-bold text-rose-900">{{ activeCreatedStatusSummary.inProgressOverdue ?? 0 }}</span>
               </div>
-              <span class="font-extrabold text-emerald-900 text-base">{{ activeStatusSummary.completedOnTime ?? 0 }}</span>
-            </div>
 
-            <!-- 5. Hoàn thành (quá hạn) -->
-            <div class="flex items-center justify-between p-3 rounded-xl bg-teal-50/70 border border-teal-200 shadow-2xs">
-              <div class="flex items-center gap-2.5">
-                <span class="w-3.5 h-3.5 rounded-full bg-teal-500 shrink-0"></span>
-                <span class="text-teal-800">5. Hoàn thành (quá hạn)</span>
+              <div class="flex items-center justify-between p-2 rounded-lg bg-emerald-50/60 border border-emerald-200/80">
+                <div class="flex items-center gap-2">
+                  <span class="w-3 h-3 rounded-full bg-emerald-500 shrink-0"></span>
+                  <span class="text-emerald-800 font-medium">4. Hoàn thành (đúng hạn)</span>
+                </div>
+                <span class="font-bold text-emerald-900">{{ activeCreatedStatusSummary.completedOnTime ?? 0 }}</span>
               </div>
-              <span class="font-extrabold text-teal-900 text-base">{{ activeStatusSummary.completedOverdue ?? 0 }}</span>
-            </div>
 
-            <!-- 6. Sắp hết hạn -->
-            <div class="flex items-center justify-between p-3 rounded-xl bg-amber-50/70 border border-amber-200 shadow-2xs">
-              <div class="flex items-center gap-2.5">
-                <span class="w-3.5 h-3.5 rounded-full bg-amber-500 shrink-0"></span>
-                <span class="text-amber-800">6. Sắp hết hạn</span>
+              <div class="flex items-center justify-between p-2 rounded-lg bg-teal-50/60 border border-teal-200/80">
+                <div class="flex items-center gap-2">
+                  <span class="w-3 h-3 rounded-full bg-teal-500 shrink-0"></span>
+                  <span class="text-teal-800 font-medium">5. Hoàn thành (quá hạn)</span>
+                </div>
+                <span class="font-bold text-teal-900">{{ activeCreatedStatusSummary.completedOverdue ?? 0 }}</span>
               </div>
-              <span class="font-extrabold text-amber-900 text-base">{{ activeStatusSummary.expiringSoon ?? 0 }}</span>
+
+              <div class="flex items-center justify-between p-2 rounded-lg bg-amber-50/60 border border-amber-200/80">
+                <div class="flex items-center gap-2">
+                  <span class="w-3 h-3 rounded-full bg-amber-500 shrink-0"></span>
+                  <span class="text-amber-800 font-medium">6. Sắp hết hạn</span>
+                </div>
+                <span class="font-bold text-amber-900">{{ activeCreatedStatusSummary.expiringSoon ?? 0 }}</span>
+              </div>
             </div>
           </div>
-
         </div>
+
+        <!-- Biểu đồ 2: Thống kê mục tiêu / nhiệm vụ giao cho các Bộ, ngành, địa phương và đơn vị khác -->
+        <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-2xs space-y-4 w-full flex flex-col justify-between">
+          <!-- Section Header -->
+          <div class="border-b border-slate-100 pb-3">
+            <div class="flex items-center justify-between gap-2">
+              <h3 class="text-sm sm:text-base font-bold text-slate-800 flex items-center gap-2">
+                <span class="p-1.5 bg-blue-100 text-blue-700 rounded-lg text-xs shrink-0">🏛️</span>
+                <span>Thống kê {{ dashboardItemNoun }} giao cho các Bộ, ngành, địa phương và đơn vị khác</span>
+              </h3>
+            </div>
+          </div>
+
+          <!-- Chart & Status Breakdown -->
+          <div class="grid grid-cols-1 sm:grid-cols-12 gap-4 items-center flex-1">
+            <!-- Donut Circle Chart on Left -->
+            <div class="sm:col-span-5 flex flex-col items-center justify-center p-3 bg-slate-50/60 rounded-xl border border-slate-100 space-y-2">
+              <MiniStatusDonut :stats="overallDonutStats" :size="130" :innerSize="85" :fontSize="24" />
+              <div class="text-center pt-1">
+                <div class="text-xs font-bold text-slate-700">
+                  Tổng: {{ activeStatusTotal }}
+                </div>
+              </div>
+            </div>
+
+            <!-- 6 Status Legend Breakdown Grid on Right -->
+            <div class="sm:col-span-7 grid grid-cols-1 gap-2 text-xs font-bold">
+              <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-200/80">
+                <div class="flex items-center gap-2">
+                  <span class="w-3 h-3 rounded-full bg-slate-400 shrink-0"></span>
+                  <span class="text-slate-700 font-medium">1. Chưa thực hiện</span>
+                </div>
+                <span class="font-bold text-slate-900">{{ activeStatusSummary.notStarted ?? 0 }}</span>
+              </div>
+
+              <div class="flex items-center justify-between p-2 rounded-lg bg-blue-50/60 border border-blue-200/80">
+                <div class="flex items-center gap-2">
+                  <span class="w-3 h-3 rounded-full bg-blue-500 shrink-0"></span>
+                  <span class="text-blue-800 font-medium">2. Đang thực hiện (trong hạn)</span>
+                </div>
+                <span class="font-bold text-blue-900">{{ activeStatusSummary.inProgressOnTime ?? 0 }}</span>
+              </div>
+
+              <div class="flex items-center justify-between p-2 rounded-lg bg-rose-50/60 border border-rose-200/80">
+                <div class="flex items-center gap-2">
+                  <span class="w-3 h-3 rounded-full bg-rose-500 shrink-0"></span>
+                  <span class="text-rose-800 font-medium">3. Đang thực hiện (quá hạn)</span>
+                </div>
+                <span class="font-bold text-rose-900">{{ activeStatusSummary.inProgressOverdue ?? 0 }}</span>
+              </div>
+
+              <div class="flex items-center justify-between p-2 rounded-lg bg-emerald-50/60 border border-emerald-200/80">
+                <div class="flex items-center gap-2">
+                  <span class="w-3 h-3 rounded-full bg-emerald-500 shrink-0"></span>
+                  <span class="text-emerald-800 font-medium">4. Hoàn thành (đúng hạn)</span>
+                </div>
+                <span class="font-bold text-emerald-900">{{ activeStatusSummary.completedOnTime ?? 0 }}</span>
+              </div>
+
+              <div class="flex items-center justify-between p-2 rounded-lg bg-teal-50/60 border border-teal-200/80">
+                <div class="flex items-center gap-2">
+                  <span class="w-3 h-3 rounded-full bg-teal-500 shrink-0"></span>
+                  <span class="text-teal-800 font-medium">5. Hoàn thành (quá hạn)</span>
+                </div>
+                <span class="font-bold text-teal-900">{{ activeStatusSummary.completedOverdue ?? 0 }}</span>
+              </div>
+
+              <div class="flex items-center justify-between p-2 rounded-lg bg-amber-50/60 border border-amber-200/80">
+                <div class="flex items-center gap-2">
+                  <span class="w-3 h-3 rounded-full bg-amber-500 shrink-0"></span>
+                  <span class="text-amber-800 font-medium">6. Sắp hết hạn</span>
+                </div>
+                <span class="font-bold text-amber-900">{{ activeStatusSummary.expiringSoon ?? 0 }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
 
     <!-- Sub-Agency Dedicated Progress Dashboard Section (When logged in as Sub-Agency / Child Unit) -->
@@ -686,7 +787,7 @@
       <div v-if="filteredOthersPerformance?.length" class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
           <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
-            🏢 Khối Các Cơ Quan / Đơn Vị Khác
+            🏢 Khối Các Đơn Vị Khác
           </h3>
           <span class="text-xs font-bold text-purple-600 bg-purple-50 px-3 py-1 rounded-xl border border-purple-200/60">
             {{ filteredOthersPerformance?.length ?? 0 }} Cơ quan / Đơn vị
@@ -1295,6 +1396,7 @@ const metrics = ref({
   completedGoals: 0,
   totalTasks: 0,
   completedTasks: 0,
+  createdMetrics: null,
   statusSummary: {},
   goalStatusSummary: {},
   taskStatusSummary: {},
@@ -1326,6 +1428,46 @@ const overallDonutStats = computed(() => {
   };
 });
 
+const createdMetrics = computed(() => metrics.value.createdMetrics || {});
+
+const activeCreatedStatusSummary = computed(() => {
+  const cm = createdMetrics.value;
+  if (!cm) return {};
+  if (dashboardFilter.value === 'goals') return cm.goalStatusSummary || {};
+  if (dashboardFilter.value === 'tasks') return cm.taskStatusSummary || {};
+  return cm.statusSummary || {};
+});
+
+const activeCreatedTotals = computed(() => {
+  const cm = createdMetrics.value;
+  if (!cm) return { total: 0, specific: 0, general: 0 };
+  if (dashboardFilter.value === 'goals') {
+    return {
+      total: cm.totalGoals || 0,
+      specific: cm.goalsSpecific || 0,
+      general: cm.goalsGeneral || 0
+    };
+  } else if (dashboardFilter.value === 'tasks') {
+    return {
+      total: cm.totalTasks || 0,
+      specific: cm.tasksSpecific || 0,
+      general: cm.tasksGeneral || 0
+    };
+  }
+  return {
+    total: (cm.totalGoals || 0) + (cm.totalTasks || 0),
+    specific: (cm.goalsSpecific || 0) + (cm.tasksSpecific || 0),
+    general: (cm.goalsGeneral || 0) + (cm.tasksGeneral || 0)
+  };
+});
+
+const createdDonutStats = computed(() => {
+  return {
+    ...activeCreatedStatusSummary.value,
+    totalItems: activeCreatedTotals.value.specific
+  };
+});
+
 const userSubAgenciesPerformance = ref([]);
 const isMinistriesExpanded = ref(false);
 const isProvincesExpanded = ref(false);
@@ -1345,9 +1487,28 @@ function filterOutSpecialAgencies(list) {
   });
 }
 
-const filteredMinistriesPerformance = computed(() => filterOutSpecialAgencies(metrics.value.ministriesPerformance));
-const filteredProvincesPerformance = computed(() => filterOutSpecialAgencies(metrics.value.provincesPerformance));
-const filteredOthersPerformance = computed(() => filterOutSpecialAgencies(metrics.value.othersPerformance));
+function getAgencySortCount(item) {
+  if (!item) return 0;
+  if (dashboardFilter.value === 'goals') return item.totalGoals ?? item.totalItems ?? 0;
+  if (dashboardFilter.value === 'tasks') return item.totalTasks ?? item.totalItems ?? 0;
+  return item.totalItems ?? ((item.totalGoals || 0) + (item.totalTasks || 0));
+}
+
+function sortAgenciesByCount(list) {
+  const filtered = filterOutSpecialAgencies(list);
+  return [...filtered].sort((a, b) => {
+    const countA = getAgencySortCount(a);
+    const countB = getAgencySortCount(b);
+    if (countB !== countA) {
+      return countB - countA;
+    }
+    return (a.name || '').localeCompare(b.name || '', 'vi');
+  });
+}
+
+const filteredMinistriesPerformance = computed(() => sortAgenciesByCount(metrics.value.ministriesPerformance));
+const filteredProvincesPerformance = computed(() => sortAgenciesByCount(metrics.value.provincesPerformance));
+const filteredOthersPerformance = computed(() => sortAgenciesByCount(metrics.value.othersPerformance));
 
 const visibleMinistries = computed(() => {
   const list = filteredMinistriesPerformance.value;

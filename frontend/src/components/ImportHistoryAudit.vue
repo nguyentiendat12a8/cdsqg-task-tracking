@@ -147,7 +147,7 @@
 
               <!-- Imported By -->
               <td class="px-4 py-3 border-r border-slate-200 text-xs font-normal text-slate-700 whitespace-nowrap">
-                {{ log.importedBy || 'Chuyên viên' }}
+                {{ formatImportedBy(log.importedBy) }}
               </td>
 
               <!-- Imported Date -->
@@ -388,6 +388,12 @@ function resetSearch() {
   loadImportHistory();
 }
 
+function formatImportedBy(val) {
+  if (!val) return 'Chuyên viên';
+  let cleaned = String(val).replace(/\s*\([^)]*\)/g, '').trim();
+  return cleaned || val;
+}
+
 function exportExcel() {
   const headers = ["STT", "Tên File Dữ Liệu Thực Tế", "Phân Loại Dữ Liệu", "Người Thực Hiện", "Thời Gian Nạp", "Trạng Thái", "Ghi Chú Chi Tiết"];
   const minColWidths = { 0: 8, 1: 45, 2: 25, 3: 20, 4: 20, 5: 18, 6: 50 };
@@ -398,7 +404,7 @@ function exportExcel() {
       idx + 1,
       cleanFiles || log.fileName || '',
       getCategoryLabel(log.category || log.fileType),
-      log.importedBy || 'Chuyên viên',
+      formatImportedBy(log.importedBy),
       formatDate(log.importedAt),
       log.status || '',
       log.summaryNotes || ''

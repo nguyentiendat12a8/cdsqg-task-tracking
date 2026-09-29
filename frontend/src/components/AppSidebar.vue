@@ -29,10 +29,21 @@
 
           <button 
             @click.stop="toggleCollapse"
-            class="w-7 h-7 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center transition shrink-0 cursor-pointer"
-            title="Thu gọn Menu"
+            :class="[
+              'w-7 h-7 rounded-lg flex items-center justify-center transition-all duration-300 shrink-0 cursor-pointer border',
+              !isManualCollapsed 
+                ? 'bg-blue-900/40 border-blue-500/40 text-blue-400 hover:bg-blue-900/60 hover:text-blue-300 shadow-sm' 
+                : 'bg-slate-800 border-slate-700/50 text-slate-400 hover:bg-slate-700 hover:text-white'
+            ]"
+            :title="!isManualCollapsed ? 'Đang ghim cố định Menu (Bấm để bỏ ghim)' : 'Bấm để ghim cố định Menu'"
           >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg 
+              class="w-4 h-4 transition-transform duration-300"
+              :class="!isManualCollapsed ? '-rotate-90' : ''"
+              fill="none" 
+              stroke="currentColor" 
+              viewBox="0 0 24 24"
+            >
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
             </svg>
           </button>

@@ -497,6 +497,306 @@ namespace Cdsqg.Api.Controllers
             }
             return Ok(new { success = true });
         }
+
+        [HttpPost("seed-contacts")]
+        public async Task<IActionResult> SeedContactPersons()
+        {
+            var agencies = await _context.Agencies.ToListAsync();
+            int updatedCount = 0;
+            var updatedAgencies = new List<string>();
+
+            var seedMap = GetSeedContactMap();
+
+            foreach (var kvp in seedMap)
+            {
+                var keywords = kvp.Key;
+                var contacts = kvp.Value;
+
+                var matchedAgency = agencies.FirstOrDefault(a =>
+                    keywords.Any(k =>
+                        (!string.IsNullOrEmpty(a.Code) && a.Code.Equals(k, StringComparison.OrdinalIgnoreCase)) ||
+                        (!string.IsNullOrEmpty(a.Name) && a.Name.ToLower().Contains(k.ToLower()))
+                    )
+                );
+
+                if (matchedAgency != null)
+                {
+                    matchedAgency.ContactPersons = contacts;
+                    updatedCount++;
+                    updatedAgencies.Add($"{matchedAgency.Name} ({matchedAgency.Code})");
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = $"Đã cập nhật thành công thông tin đầu mối cho {updatedCount} cơ quan/đơn vị!", updatedAgencies });
+        }
+
+        private static Dictionary<string[], List<AgencyContactPerson>> GetSeedContactMap()
+        {
+            return new Dictionary<string[], List<AgencyContactPerson>>
+            {
+                // 1. Bộ Công Thương
+                {
+                    new[] { "BCT", "Bộ Công Thương", "Công Thương" },
+                    new List<AgencyContactPerson>
+                    {
+                        new AgencyContactPerson { Name = "Hoàng Ninh", Position = "Phó Cục trưởng", Department = "Cục TMĐT&KTS", Phone = "0912 524 948", Email = "NinhH@moit.gov.vn" },
+                        new AgencyContactPerson { Name = "Đinh Anh Tuấn", Position = "Trưởng phòng CĐS", Department = "Cục TMĐT", Phone = "0934 595 333", Email = "AnhDTuan@moit.gov.vn" }
+                    }
+                },
+                // 2. Bộ Khoa học và Công nghệ
+                {
+                    new[] { "BKHCN", "Bộ Khoa học và Công nghệ", "Khoa học và Công nghệ" },
+                    new List<AgencyContactPerson>
+                    {
+                        new AgencyContactPerson { Name = "Cục CĐSQG - TTCNTT", Position = "Đơn vị đầu mối", Department = "Cục CĐSQG", Phone = "", Email = "" }
+                    }
+                },
+                // 3. Bộ Nội vụ
+                {
+                    new[] { "BNV", "Bộ Nội vụ", "Nội vụ" },
+                    new List<AgencyContactPerson>
+                    {
+                        new AgencyContactPerson { Name = "Đỗ Chi Dũng", Position = "Giám đốc", Department = "TTCNTT", Phone = "0903 239 068", Email = "" },
+                        new AgencyContactPerson { Name = "Trịnh Tuấn Chung", Position = "Trưởng phòng", Department = "TT CNTT", Phone = "0903 007 068", Email = "" },
+                        new AgencyContactPerson { Name = "Nguyễn Thu Hương", Position = "Phó Trưởng phòng", Department = "TTCNTT", Phone = "0983 341 213", Email = "" }
+                    }
+                },
+                // 4. Bộ Nông nghiệp và Môi trường (hoặc BNN&PTNT)
+                {
+                    new[] { "BNNPTNT", "Bộ Nông nghiệp", "Nông nghiệp và Phát triển nông thôn", "Nông nghiệp và Môi trường" },
+                    new List<AgencyContactPerson>
+                    {
+                        new AgencyContactPerson { Name = "Lê Phú Hà", Position = "Cục trưởng", Department = "Cục CĐS", Phone = "0989 080 937", Email = "lpha@mae.gov.vn" },
+                        new AgencyContactPerson { Name = "Bùi Mạnh Khôi", Position = "Trưởng P Tài chính - Thống kê", Department = "Cục CĐS", Phone = "0902 164 919", Email = "bmkhoi@mae.gov.vn" }
+                    }
+                },
+                // 5. Bộ Quốc phòng
+                {
+                    new[] { "BQP", "Bộ Quốc phòng", "Quốc phòng" },
+                    new List<AgencyContactPerson>
+                    {
+                        new AgencyContactPerson { Name = "Nguyễn Tùng Hưng", Position = "Thiếu tướng. Phó tư lệnh", Department = "Bộ Tư lệnh 86", Phone = "0983 043 325", Email = "" },
+                        new AgencyContactPerson { Name = "Nguyễn Kiên", Position = "Đại tá. Trưởng phòng Phần mềm và CSDL", Department = "Bộ Tư lệnh 86", Phone = "0985 101 126", Email = "" },
+                        new AgencyContactPerson { Name = "Phạm Trọng Linh", Position = "Thượng úy. Trợ lý Phòng phần mềm và CSDL", Department = "Bộ Tư lệnh 86", Phone = "0879 610 286", Email = "" }
+                    }
+                },
+                // 6. Bộ Tài chính
+                {
+                    new[] { "BTC", "Bộ Tài chính", "Tài chính" },
+                    new List<AgencyContactPerson>
+                    {
+                        new AgencyContactPerson { Name = "Nguyễn Như Sơn", Position = "Phó Cục trưởng", Department = "CNTT&CĐS", Phone = "0913 382 138", Email = "nguyennhuson@mof.gov.vn" },
+                        new AgencyContactPerson { Name = "Hoàng Vương Nam", Position = "Chuyên viên", Department = "P KH-TH", Phone = "0917 232 297", Email = "hoangvuongnam@mof.gov.vn" }
+                    }
+                },
+                // 7. Bộ Văn hóa, Thể thao và Du lịch
+                {
+                    new[] { "BVHTTDL", "Bộ Văn hóa", "Văn hóa, Thể thao và Du lịch" },
+                    new List<AgencyContactPerson>
+                    {
+                        new AgencyContactPerson { Name = "Lê Mạnh Hùng", Position = "Phó Giám đốc", Department = "TT CĐS", Phone = "0905 188 881", Email = "lemanhhung@cntt.gov.vn" },
+                        new AgencyContactPerson { Name = "Dương Anh Quân", Position = "Trưởng phòng", Department = "TT CĐS", Phone = "0915 091 580", Email = "quanda@cntt.gov.vn" },
+                        new AgencyContactPerson { Name = "Nguyễn Việt Hà", Position = "Chuyên viên", Department = "TT CĐS", Phone = "0963 608 069", Email = "hanv@cntt.gov.vn" },
+                        new AgencyContactPerson { Name = "Nguyễn Thị Nga", Position = "Chuyên viên", Department = "TT CĐS", Phone = "0973 223 407", Email = "ngant@cntt.gov.vn" }
+                    }
+                },
+                // 8. Bộ Xây dựng
+                {
+                    new[] { "BXD", "Bộ Xây dựng", "Xây dựng" },
+                    new List<AgencyContactPerson>
+                    {
+                        new AgencyContactPerson { Name = "Nguyễn Ngọc Quang", Position = "Phó giám đốc", Department = "TTCNTT", Phone = "0989 089 689", Email = "nguyenngocquang@moc.gov.vn" },
+                        new AgencyContactPerson { Name = "Trần Thị Thanh Hương", Position = "Chuyên viên", Department = "P CĐS TTCNTT", Phone = "0973 031 435", Email = "huongtt@moc.gov.vn" }
+                    }
+                },
+                // 9. Bắc Ninh
+                {
+                    new[] { "BACNINH", "Bắc Ninh" },
+                    new List<AgencyContactPerson>
+                    {
+                        new AgencyContactPerson { Name = "Nguyễn Văn Khánh", Position = "Trưởng phòng", Department = "P CĐS", Phone = "0886 088 666", Email = "khanhnv107@bacninh.gov.vn" },
+                        new AgencyContactPerson { Name = "Nguyễn Văn Định", Position = "Chuyên viên", Department = "P CĐS", Phone = "0866 866 953", Email = "dinhnv@bacninh.gov.vn" }
+                    }
+                },
+                // 10. Cà Mau
+                {
+                    new[] { "CAMAU", "Cà Mau" },
+                    new List<AgencyContactPerson>
+                    {
+                        new AgencyContactPerson { Name = "Phạm Thống Nhất", Position = "Phó giám đốc", Department = "Sở KHCN", Phone = "0913 892 892", Email = "skhcn.ptnhat@gmail.com" },
+                        new AgencyContactPerson { Name = "Trần Quốc Toản", Position = "Phó Trưởng phòng", Department = "P CNS&BC", Phone = "0944 317 508", Email = "skhcn.tqtoan@camau.gov.vn" }
+                    }
+                },
+                // 11. Đắk Lắk
+                {
+                    new[] { "DAKLAK", "Đắk Lắk", "Đắc Lắc" },
+                    new List<AgencyContactPerson>
+                    {
+                        new AgencyContactPerson { Name = "Ra Lan Trương Thanh Hà", Position = "Phó giám đốc", Department = "Sở KHCN", Phone = "0914 586 911", Email = "" },
+                        new AgencyContactPerson { Name = "Lê An Pha", Position = "Trưởng phòng", Department = "P CĐS", Phone = "0836 907 788", Email = "" }
+                    }
+                },
+                // 12. Đồng Tháp
+                {
+                    new[] { "DONGTHAP", "Đồng Tháp" },
+                    new List<AgencyContactPerson>
+                    {
+                        new AgencyContactPerson { Name = "Trần Văn Dũng", Position = "Phó giám đốc", Department = "Sở KHCN", Phone = "0919 785 785", Email = "tvdung@dongthap.gov.vn" },
+                        new AgencyContactPerson { Name = "Lê Minh Hiếu", Position = "Chuyên viên", Department = "P CĐS", Phone = "0977 926 457", Email = "leminhhieu@dongthap.gov.vn" }
+                    }
+                },
+                // 13. Hưng Yên
+                {
+                    new[] { "HUNGYEN", "Hưng Yên" },
+                    new List<AgencyContactPerson>
+                    {
+                        new AgencyContactPerson { Name = "Đỗ Đình Quang", Position = "Phó giám đốc", Department = "Sở KHCN", Phone = "0982 256 237", Email = "ddquang@hungyen.gov.vn" },
+                        new AgencyContactPerson { Name = "Bùi Anh Lâm", Position = "Trưởng phòng", Department = "P CĐSBCVT", Phone = "0963 688 686", Email = "balam@hungyen.gov.vn" }
+                    }
+                },
+                // 14. Lai Châu
+                {
+                    new[] { "LAICHAU", "Lai Châu" },
+                    new List<AgencyContactPerson>
+                    {
+                        new AgencyContactPerson { Name = "Phạm Quang Cường", Position = "Phó giám đốc", Department = "Sở KHCN", Phone = "0976 819 323", Email = "cuongpq.sokhcn@laichau.gov.vn" },
+                        new AgencyContactPerson { Name = "Bùi Thị Lan", Position = "Trưởng phòng", Department = "P Bưu chính, Viễn thông, CNTT", Phone = "", Email = "lanbt.sokhcn@laichau.gov.vn" },
+                        new AgencyContactPerson { Name = "Nguyễn Thị Mai Liên", Position = "Chuyên viên", Department = "P Bưu chính, Viễn thông, CNTT", Phone = "0978 637 648", Email = "lienntm.sokhcn@laichau.gov.vn" }
+                    }
+                },
+                // 15. Lạng Sơn
+                {
+                    new[] { "LANGSON", "Lạng Sơn" },
+                    new List<AgencyContactPerson>
+                    {
+                        new AgencyContactPerson { Name = "Trần Hữu Giang", Position = "Phó giám đốc", Department = "Sở KHCN", Phone = "0913 199 838", Email = "thgiang@langson.gov.vn" },
+                        new AgencyContactPerson { Name = "Vũ Thùy Dung", Position = "Phó Trưởng phòng", Department = "P CĐS SKHCN", Phone = "0388 653 616", Email = "vtdung@langson.gov.vn" }
+                    }
+                },
+                // 16. Lào Cai
+                {
+                    new[] { "LAOCAI", "Lào Cai" },
+                    new List<AgencyContactPerson>
+                    {
+                        new AgencyContactPerson { Name = "Nguyễn Hồng Quang", Position = "Phó giám đốc", Department = "Sở KHCN", Phone = "0913 287 426", Email = "nguyenhongquang@laocai.gov.vn" },
+                        new AgencyContactPerson { Name = "Phùng Mạnh Sang", Position = "Chuyên viên", Department = "P CĐS", Phone = "0852 662 000", Email = "phungmanhsang@laocai.gov.vn" }
+                    }
+                },
+                // 17. Lâm Đồng
+                {
+                    new[] { "LAMDONG", "Lâm Đồng" },
+                    new List<AgencyContactPerson>
+                    {
+                        new AgencyContactPerson { Name = "Lê Thanh Liêm", Position = "Phó giám đốc", Department = "Sở KHCN", Phone = "0941 777 799", Email = "liemlt@lamdong.gov.vn" },
+                        new AgencyContactPerson { Name = "Võ Duy Phong", Position = "Trưởng phòng", Department = "P CĐS", Phone = "0911 364 567", Email = "phongvd.skhcn@lamdong.gov.vn" }
+                    }
+                },
+                // 18. Quảng Ngãi
+                {
+                    new[] { "QUANGNGAI", "Quảng Ngãi" },
+                    new List<AgencyContactPerson>
+                    {
+                        new AgencyContactPerson { Name = "Nguyễn Quốc Huy Hoàng", Position = "Phó giám đốc", Department = "Sở KHCN", Phone = "0982 142 211", Email = "nqhhoang-skh@quangngai.gov.vn" },
+                        new AgencyContactPerson { Name = "Hà Thanh Tuấn", Position = "Trưởng phòng", Department = "Sở KHCN", Phone = "0905 257 799", Email = "httuan-skh@quangngai.gov.vn" },
+                        new AgencyContactPerson { Name = "Đặng Bảo Hy", Position = "Chuyên viên", Department = "P BCVT&CĐS", Phone = "0905 181 088", Email = "" }
+                    }
+                },
+                // 19. Quảng Ninh
+                {
+                    new[] { "QUANGNINH", "Quảng Ninh" },
+                    new List<AgencyContactPerson>
+                    {
+                        new AgencyContactPerson { Name = "Nguyễn Trung Tiến", Position = "Phó giám đốc", Department = "Sở KHCN", Phone = "0913 388 266", Email = "" },
+                        new AgencyContactPerson { Name = "Vũ Thị Kim Minh Huệ", Position = "Phó Trưởng phòng", Department = "P Quản lý CNTT&CĐS", Phone = "0912 773 828", Email = "" },
+                        new AgencyContactPerson { Name = "Phạm Thị Trang", Position = "Chuyên viên", Department = "P QLCN&CĐS", Phone = "0834 130 448", Email = "" }
+                    }
+                },
+                // 20. Quảng Trị
+                {
+                    new[] { "QUANGTRI", "Quảng Trị" },
+                    new List<AgencyContactPerson>
+                    {
+                        new AgencyContactPerson { Name = "Nguyễn Xuân Ngọc", Position = "Phó giám đốc", Department = "Sở KHCN", Phone = "0935 596 599", Email = "" },
+                        new AgencyContactPerson { Name = "Nguyễn Thành Lê", Position = "Trưởng phòng", Department = "Sở KHCN", Phone = "0912 049 773", Email = "" },
+                        new AgencyContactPerson { Name = "Nguyễn Tiến Thành", Position = "Chuyên viên", Department = "P CNTT", Phone = "0982 576 767", Email = "" }
+                    }
+                },
+                // 21. Sơn La
+                {
+                    new[] { "SONLA", "Sơn La" },
+                    new List<AgencyContactPerson>
+                    {
+                        new AgencyContactPerson { Name = "Phạm Quốc Chinh", Position = "Phó giám đốc", Department = "Sở KHCN", Phone = "0983 002 065", Email = "chinhpq.skhcn@sonla.gov.vn" },
+                        new AgencyContactPerson { Name = "Ngô Thị Hồng Hạnh", Position = "Trưởng phòng", Department = "P CĐS", Phone = "0912 109 204", Email = "hanhntn.skhcn@sonla.gov.vn" }
+                    }
+                },
+                // 22. Tây Ninh
+                {
+                    new[] { "TAYNINH", "Tây Ninh" },
+                    new List<AgencyContactPerson>
+                    {
+                        new AgencyContactPerson { Name = "Bùi Nguyên Khôi", Position = "Phó giám đốc", Department = "Sở KHCN", Phone = "0889 691 777", Email = "nguyenkhoi@tayninh.gov.vn" },
+                        new AgencyContactPerson { Name = "Tăng Thị Ngọc Em", Position = "Trưởng phòng", Department = "P CĐS", Phone = "0946 700 369", Email = "ngocem@tayninh.gov.vn" }
+                    }
+                },
+                // 23. Thanh Hoá
+                {
+                    new[] { "THANHHOA", "Thanh Hoá", "Thanh Hóa" },
+                    new List<AgencyContactPerson>
+                    {
+                        new AgencyContactPerson { Name = "Nguyễn Thị Thu Hà", Position = "Phó Trưởng phòng", Department = "P Quản lý CNTT&CĐS", Phone = "0982 401 828", Email = "hantt.skhcn@thanhhoa.gov.vn" }
+                    }
+                },
+                // 24. Tuyên Quang
+                {
+                    new[] { "TUYENQUANG", "Tuyên Quang" },
+                    new List<AgencyContactPerson>
+                    {
+                        new AgencyContactPerson { Name = "Hồ Thị Phương Lan", Position = "Trưởng phòng", Department = "P CĐS", Phone = "0915 160 266", Email = "" },
+                        new AgencyContactPerson { Name = "Lê Thành Trung", Position = "Chuyên viên", Department = "P CĐS", Phone = "0979 982 266", Email = "" }
+                    }
+                },
+                // 25. Thành phố Cần Thơ
+                {
+                    new[] { "CANTHO", "Cần Thơ" },
+                    new List<AgencyContactPerson>
+                    {
+                        new AgencyContactPerson { Name = "Ngô Anh Tín", Position = "Giám đốc", Department = "SKHCN", Phone = "0917 939 939", Email = "anhtin@cantho.gov.vn" },
+                        new AgencyContactPerson { Name = "Lê Hồng Anh", Position = "Quyền Trưởng phòng", Department = "P CĐS", Phone = "0932 898 964", Email = "lehonganh@cantho.gov.vn" }
+                    }
+                },
+                // 26. Thành phố Hải Phòng
+                {
+                    new[] { "HAIPHONG", "Hải Phòng" },
+                    new List<AgencyContactPerson>
+                    {
+                        new AgencyContactPerson { Name = "Nguyễn Minh Kha", Position = "Phó giám đốc", Department = "Sở KHCN", Phone = "0904 081 819", Email = "" },
+                        new AgencyContactPerson { Name = "Dương Thị Tú Anh", Position = "Phó Trưởng phòng", Department = "P CNTT", Phone = "0979 831 231", Email = "" },
+                        new AgencyContactPerson { Name = "Nguyễn Việt Anh", Position = "Chuyên viên", Department = "P CNTT", Phone = "0815 433 168", Email = "" }
+                    }
+                },
+                // 27. Thành phố Hồ Chí Minh
+                {
+                    new[] { "TPHCM", "Hồ Chí Minh", "TP.HCM" },
+                    new List<AgencyContactPerson>
+                    {
+                        new AgencyContactPerson { Name = "Võ Minh Thành", Position = "Phó giám đốc", Department = "Sở KHCN", Phone = "0918 804 410", Email = "vmthanh.skhcn@tphcm.gov.vn" },
+                        new AgencyContactPerson { Name = "Nguyễn Trọng Ngân", Position = "Trưởng phòng", Department = "P CĐS", Phone = "0982 971 791", Email = "ngtngan.skhcn@tphcm.gov.vn" },
+                        new AgencyContactPerson { Name = "Lê Hoài Nam", Position = "Chuyên viên", Department = "P CĐS", Phone = "0908 270 305", Email = "lhnam.skhcn@tphcm.gov.vn" }
+                    }
+                },
+                // 28. Thành phố Huế
+                {
+                    new[] { "HUE", "Huế", "Thừa Thiên Huế" },
+                    new List<AgencyContactPerson>
+                    {
+                        new AgencyContactPerson { Name = "Nguyễn Xuân Sơn", Position = "Giám đốc", Department = "SKHCN", Phone = "0914 202 345", Email = "nxson.skhcn@hue.gov.vn" },
+                        new AgencyContactPerson { Name = "Phan Nữ Anh Thư", Position = "Phó Trưởng phòng", Department = "P CĐS SKHCN", Phone = "0905 979 772", Email = "pnathu.skhcn@hue.gov.vn" }
+                    }
+                }
+            };
+        }
     }
 
     public class UpdatePlansAndContactsDto

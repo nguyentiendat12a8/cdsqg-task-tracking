@@ -60,4 +60,26 @@ namespace Cdsqg.Application.DTOs
         public int PageSize { get; set; }
         public int TotalPages => PageSize > 0 ? (int)Math.Ceiling((double)TotalCount / PageSize) : 0;
     }
+
+    public class DocumentItemsQueryDto
+    {
+        public string? ItemType { get; set; }
+        public string? Search { get; set; }
+        public Guid? AgencyId { get; set; }
+        public string? UserRole { get; set; }
+        public List<Guid>? SelectedAgencyIds { get; set; }
+        public List<Guid>? SelectedSubAgencyIds { get; set; }
+        public List<string>? SelectedScopes { get; set; }
+        public List<string>? SelectedStatuses { get; set; }
+        public List<string>? SelectedSections { get; set; }
+        public List<string>? SelectedGroups { get; set; }
+        public int? FromYear { get; set; }
+        public int? ToYear { get; set; }
+        public bool OnlyOngoing { get; set; } = false;
+        public string SortBy { get; set; } = "code";
+        public string SortOrder { get; set; } = "asc";
+        public int PageNumber { get; set; } = 1;
+        public int PageSize { get; set; } = 10;
+    }
 }
+

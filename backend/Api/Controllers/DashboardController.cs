@@ -391,42 +391,117 @@ namespace Cdsqg.Api.Controllers
                     }
                 }
 
-                // Priority sort for Ministries: Bộ Khoa học và Công nghệ first, then alphabetical
-                bool IsBkhcn(AgencyStatusSummaryDto m)
-                {
-                    if (string.IsNullOrWhiteSpace(m.Name) && string.IsNullOrWhiteSpace(m.Code)) return false;
-                    var name = (m.Name ?? "").ToLower();
-                    var code = (m.Code ?? "").ToLower();
-                    return code == "bkhcn" || name.Contains("khoa học và công nghệ") || name.Contains("khoa học & công nghệ") || name.Contains("khoa học công nghệ");
-                }
-
                 ministriesPerformance = ministriesPerformance
-                    .OrderByDescending(m => IsBkhcn(m))
+                    .OrderByDescending(m => m.TotalItems)
                     .ThenBy(m => m.Name)
                     .ToList();
 
-                // Priority sort for Provinces: Central-governed cities (Thành phố trực thuộc trung ương) first, then alphabetical
-                bool IsCentralCity(AgencyStatusSummaryDto p)
-                {
-                    if (string.IsNullOrWhiteSpace(p.Name) && string.IsNullOrWhiteSpace(p.Code)) return false;
-                    var name = (p.Name ?? "").ToLower();
-                    var code = (p.Code ?? "").ToLower();
-                    return name.Contains("hà nội") || 
-                           name.Contains("hồ chí minh") || 
-                           name.Contains("hải phòng") || 
-                           name.Contains("đà nẵng") || 
-                           name.Contains("cần thơ") || 
-                           name.StartsWith("thành phố") || 
-                           name.StartsWith("tp.") || 
-                           name.StartsWith("ubnd tp") || 
-                           name.StartsWith("ubnd thành phố") || 
-                           code == "tphcm" || code == "hanoi" || code == "haiphong" || code == "danang" || code == "cantho";
-                }
-
                 provincesPerformance = provincesPerformance
-                    .OrderByDescending(p => IsCentralCity(p))
+                    .OrderByDescending(p => p.TotalItems)
                     .ThenBy(p => p.Name)
                     .ToList();
+
+                othersPerformance = othersPerformance
+                    .OrderByDescending(o => o.TotalItems)
+                    .ThenBy(o => o.Name)
+                    .ToList();
+
+                // Calculate Unique Created Items Metrics (not expanded by individual agencies/localities)
+                bool IsGeneralItem(GoalTaskItem item)
+                {
+                    if (item.IsGeneralTask) return true;
+                    if (item.LeadAgency != null)
+                    {
+                        string code = item.LeadAgency.Code ?? "";
+                        if (code == "ALL_AGENCIES" || code == "ALL_MINISTRIES" || code == "ALL_PROVINCES" || code == "ALL_PROVINCES_UBND" || code == "ALL_MINISTRIES_DIRECT")
+                            return true;
+                        string name = (item.LeadAgency.Name ?? "").ToLower();
+                        if (name.StartsWith("các bộ, ngành") || name.StartsWith("các địa phương") || name.Contains("ubnd tỉnh, thành phố"))
+                            return true;
+                    }
+                    return false;
+                }
+
+                int goalsTotal = baseItems.Count(i => i.ItemType == ItemTypeEnum.Goal);
+                int goalsGeneral = baseItems.Count(i => i.ItemType == ItemTypeEnum.Goal && IsGeneralItem(i));
+                int goalsSpecific = goalsTotal - goalsGeneral;
+
+                int tasksTotal = baseItems.Count(i => i.ItemType == ItemTypeEnum.Task);
+                int tasksGeneral = baseItems.Count(i => i.ItemType == ItemTypeEnum.Task && IsGeneralItem(i));
+                int tasksSpecific = tasksTotal - tasksGeneral;
+
+                int cgNotStarted = 0, cgInProgOnTime = 0, cgInProgOverdue = 0, cgCompOnTime = 0, cgCompOverdue = 0, cgExpSoon = 0;
+                int ctNotStarted = 0, ctInProgOnTime = 0, ctInProgOverdue = 0, ctCompOnTime = 0, ctCompOverdue = 0, ctExpSoon = 0;
+
+                foreach (var item in baseItems)
+                {
+                    if (IsGeneralItem(item)) continue;
+
+                    var latestLog = item.ProgressLogs != null && item.ProgressLogs.Count > 0 
+                        ? item.ProgressLogs.OrderByDescending(p => p.LogDate).FirstOrDefault() 
+                        : null;
+                    var status = PlanningService.CalculateExecutionStatus(item, latestLog, item.Deliverables);
+                    bool isGoal = item.ItemType == ItemTypeEnum.Goal;
+
+                    switch (status)
+                    {
+                        case ExecutionStatusEnum.NotStarted:
+                            if (isGoal) cgNotStarted++; else ctNotStarted++;
+                            break;
+                        case ExecutionStatusEnum.InProgressOnTime:
+                            if (isGoal) cgInProgOnTime++; else ctInProgOnTime++;
+                            break;
+                        case ExecutionStatusEnum.InProgressOverdue:
+                            if (isGoal) cgInProgOverdue++; else ctInProgOverdue++;
+                            break;
+                        case ExecutionStatusEnum.CompletedOnTime:
+                            if (isGoal) cgCompOnTime++; else ctCompOnTime++;
+                            break;
+                        case ExecutionStatusEnum.CompletedOverdue:
+                            if (isGoal) cgCompOverdue++; else ctCompOverdue++;
+                            break;
+                        case ExecutionStatusEnum.ExpiringSoon:
+                            if (isGoal) cgExpSoon++; else ctExpSoon++;
+                            break;
+                    }
+                }
+
+                var createdMetrics = new
+                {
+                    totalGoals = goalsTotal,
+                    goalsGeneral,
+                    goalsSpecific,
+                    totalTasks = tasksTotal,
+                    tasksGeneral,
+                    tasksSpecific,
+                    statusSummary = new
+                    {
+                        notStarted = cgNotStarted + ctNotStarted,
+                        inProgressOnTime = cgInProgOnTime + ctInProgOnTime,
+                        inProgressOverdue = cgInProgOverdue + ctInProgOverdue,
+                        completedOnTime = cgCompOnTime + ctCompOnTime,
+                        completedOverdue = cgCompOverdue + ctCompOverdue,
+                        expiringSoon = cgExpSoon + ctExpSoon
+                    },
+                    goalStatusSummary = new
+                    {
+                        notStarted = cgNotStarted,
+                        inProgressOnTime = cgInProgOnTime,
+                        inProgressOverdue = cgInProgOverdue,
+                        completedOnTime = cgCompOnTime,
+                        completedOverdue = cgCompOverdue,
+                        expiringSoon = cgExpSoon
+                    },
+                    taskStatusSummary = new
+                    {
+                        notStarted = ctNotStarted,
+                        inProgressOnTime = ctInProgOnTime,
+                        inProgressOverdue = ctInProgOverdue,
+                        completedOnTime = ctCompOnTime,
+                        completedOverdue = ctCompOverdue,
+                        expiringSoon = ctExpSoon
+                    }
+                };
 
                 // Global Status counts aggregated across all target agencies so that General Tasks/Goals assigned to ALL_AGENCIES
                 // are counted for every agency assigned to them.
@@ -463,6 +538,7 @@ namespace Cdsqg.Api.Controllers
                     completedGoals,
                     totalTasks,
                     completedTasks,
+                    createdMetrics,
                     statusSummary = new
                     {
                         notStarted,

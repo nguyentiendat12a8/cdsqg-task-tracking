@@ -18,11 +18,13 @@ namespace Cdsqg.Api.Controllers
     {
         private readonly AppDbContext _context;
         private readonly IFileStorageService _fileStorageService;
+        private readonly IPlanningService _planningService;
 
-        public DocumentController(AppDbContext context, IFileStorageService fileStorageService)
+        public DocumentController(AppDbContext context, IFileStorageService fileStorageService, IPlanningService planningService)
         {
             _context = context;
             _fileStorageService = fileStorageService;
+            _planningService = planningService;
         }
 
         /// <summary>
@@ -266,7 +268,7 @@ namespace Cdsqg.Api.Controllers
 
         /// <summary>
         /// GET /api/documents/{id}/items
-        /// Lấy danh sách Mục tiêu / Nhiệm vụ thuộc Văn bản có phân trang Server (Server-side Pagination)
+        /// Lấy danh sách Mục tiêu / Nhiệm vụ thuộc Văn bản có phân trang & sắp xếp Server (Server-side Pagination & Sorting)
         /// </summary>
         [HttpGet("{id:guid}/items")]
         public async Task<IActionResult> GetDocumentItems(
@@ -274,106 +276,52 @@ namespace Cdsqg.Api.Controllers
             [FromQuery] string? itemType = null,
             [FromQuery] string? search = null,
             [FromQuery] Guid? agencyId = null,
+            [FromQuery] string? userRole = null,
+            [FromQuery] string? selectedAgencyIds = null,
+            [FromQuery] string? selectedSubAgencyIds = null,
+            [FromQuery] string? selectedScopes = null,
+            [FromQuery] string? selectedStatuses = null,
+            [FromQuery] string? selectedSections = null,
+            [FromQuery] string? selectedGroups = null,
+            [FromQuery] int? fromYear = null,
+            [FromQuery] int? toYear = null,
+            [FromQuery] bool? onlyOngoing = null,
+            [FromQuery] string? sortBy = "code",
+            [FromQuery] string? sortOrder = "asc",
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 10)
         {
-            var query = _context.GoalTaskItems
-                .Include(i => i.LeadAgency)
-                .Include(i => i.Unit)
-                .Include(i => i.ProgressLogs)
-                .Include(i => i.Baselines)
-                .Where(i => i.DocumentId == id);
+            List<Guid>? agencyGuids = !string.IsNullOrWhiteSpace(selectedAgencyIds)
+                ? selectedAgencyIds.Split(',').Select(s => Guid.TryParse(s, out var g) ? g : Guid.Empty).Where(g => g != Guid.Empty).ToList()
+                : null;
 
-            if (!string.IsNullOrWhiteSpace(itemType))
+            List<Guid>? subAgencyGuids = !string.IsNullOrWhiteSpace(selectedSubAgencyIds)
+                ? selectedSubAgencyIds.Split(',').Select(s => Guid.TryParse(s, out var g) ? g : Guid.Empty).Where(g => g != Guid.Empty).ToList()
+                : null;
+
+            var queryDto = new DocumentItemsQueryDto
             {
-                if (itemType.Equals("Goal", StringComparison.OrdinalIgnoreCase) || itemType == "1")
-                    query = query.Where(i => i.ItemType == ItemTypeEnum.Goal);
-                else if (itemType.Equals("Task", StringComparison.OrdinalIgnoreCase) || itemType == "2")
-                    query = query.Where(i => i.ItemType == ItemTypeEnum.Task);
-            }
+                ItemType = itemType,
+                Search = search,
+                AgencyId = agencyId,
+                UserRole = userRole,
+                SelectedAgencyIds = agencyGuids,
+                SelectedSubAgencyIds = subAgencyGuids,
+                SelectedScopes = !string.IsNullOrWhiteSpace(selectedScopes) ? selectedScopes.Split(',').ToList() : null,
+                SelectedStatuses = !string.IsNullOrWhiteSpace(selectedStatuses) ? selectedStatuses.Split(',').ToList() : null,
+                SelectedSections = !string.IsNullOrWhiteSpace(selectedSections) ? selectedSections.Split(',').ToList() : null,
+                SelectedGroups = !string.IsNullOrWhiteSpace(selectedGroups) ? selectedGroups.Split(',').ToList() : null,
+                FromYear = fromYear,
+                ToYear = toYear,
+                OnlyOngoing = onlyOngoing ?? false,
+                SortBy = sortBy ?? "code",
+                SortOrder = sortOrder ?? "asc",
+                PageNumber = pageNumber,
+                PageSize = pageSize
+            };
 
-            if (!string.IsNullOrWhiteSpace(search))
-            {
-                var s = search.Trim().ToLower();
-                query = query.Where(i =>
-                    i.Code.ToLower().Contains(s) ||
-                    i.Title.ToLower().Contains(s) ||
-                    (i.Category != null && i.Category.ToLower().Contains(s)));
-            }
-
-            if (agencyId.HasValue && agencyId.Value != Guid.Empty)
-            {
-                query = query.Where(i => i.LeadAgencyId == agencyId.Value);
-            }
-
-            int totalCount = await query.CountAsync();
-            int pNum = pageNumber > 0 ? pageNumber : 1;
-            int pSize = pageSize > 0 ? pageSize : 10;
-            int totalPages = (int)Math.Ceiling(totalCount / (double)pSize);
-
-            var items = await query
-                .OrderBy(i => i.CreatedAt)
-                .Skip((pNum - 1) * pSize)
-                .Take(pSize)
-                .ToListAsync();
-
-            var mappedItems = items.Select(item =>
-            {
-                var latestLog = item.ProgressLogs.OrderByDescending(l => l.LogDate).FirstOrDefault();
-                var baselinesList = item.Baselines.Select(b => new
-                {
-                    year = b.Year,
-                    quarter = b.Quarter,
-                    targetQuantity = b.TargetQuantity,
-                    targetQualitativeStatus = b.TargetQualitativeStatus?.ToString()
-                }).ToList();
-
-                return new
-                {
-                    id = item.Id,
-                    documentId = item.DocumentId,
-                    itemType = item.ItemType == ItemTypeEnum.Goal ? "Goal" : "Task",
-                    itemTypeEnum = (int)item.ItemType,
-                    code = item.Code,
-                    title = item.Title,
-                    category = item.Category,
-                    leadAgencyId = item.LeadAgencyId,
-                    leadAgency = item.LeadAgency != null ? new
-                    {
-                        id = item.LeadAgency.Id,
-                        code = item.LeadAgency.Code,
-                        name = item.LeadAgency.Name,
-                        type = (int)item.LeadAgency.Type
-                    } : null,
-                    coordinatingAgencyIds = item.CoordinatingAgencyIds,
-                    unitId = item.UnitId,
-                    unitName = item.Unit?.Name ?? "%",
-                    unit = item.Unit != null ? new
-                    {
-                        id = item.Unit.Id,
-                        code = item.Unit.Code,
-                        name = item.Unit.Name,
-                        dataType = (int)item.Unit.DataType
-                    } : null,
-                    evaluationType = item.EvaluationType == EvaluationTypeEnum.Quantitative ? "Quantitative" : "Qualitative",
-                    calculationMethod = item.CalculationMethod.ToString(),
-                    customBaseline = item.CustomBaseline ?? new Dictionary<string, string>(),
-                    baselines = baselinesList,
-                    createdAt = item.CreatedAt,
-                    latestProgressValue = latestLog?.QuantitativeValue,
-                    latestProgressStatus = latestLog?.QualitativeStatus?.ToString(),
-                    lastUpdated = latestLog?.LogDate
-                };
-            }).ToList();
-
-            return Ok(new
-            {
-                items = mappedItems,
-                totalCount,
-                pageNumber = pNum,
-                pageSize = pSize,
-                totalPages = Math.Max(1, totalPages)
-            });
+            var result = await _planningService.GetDocumentItemsPagedAsync(id, queryDto);
+            return Ok(result);
         }
 
         /// <summary>

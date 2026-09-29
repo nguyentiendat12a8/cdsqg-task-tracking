@@ -380,5 +380,47 @@ namespace Cdsqg.Api.Controllers
                 return StatusCode(500, new { error = "Lỗi khi cập nhật Mục tiêu / Nhiệm vụ", details = ex.Message });
             }
         }
+
+        /// <summary>
+        /// POST /api/planning/items/update-start-dates
+        /// Cập nhật tất cả Ngày bắt đầu (StartDate) của Mục tiêu / Nhiệm vụ từ 01/01/2026 thành 14/07/2026
+        /// (theo Ngày ban hành Quyết định 1266/QĐ-TTg ngày 14/07/2026).
+        /// </summary>
+        [HttpPost("update-start-dates")]
+        public async Task<IActionResult> UpdateStartDatesToDecisionDate()
+        {
+            try
+            {
+                var targetItems = await _context.GoalTaskItems
+                    .Where(i => i.StartDate.HasValue && i.StartDate.Value.Year == 2026 && i.StartDate.Value.Month == 1 && i.StartDate.Value.Day == 1)
+                    .ToListAsync();
+
+                int count = 0;
+                var updatedCodes = new List<string>();
+
+                DateTime decisionDate = new DateTime(2026, 7, 14, 0, 0, 0, DateTimeKind.Utc);
+
+                foreach (var item in targetItems)
+                {
+                    item.StartDate = decisionDate;
+                    count++;
+                    updatedCodes.Add(item.Code);
+                }
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new
+                {
+                    success = true,
+                    message = $"Đã cập nhật Ngày bắt đầu thành 14/07/2026 cho {count} Mục tiêu / Nhiệm vụ!",
+                    updatedCount = count,
+                    updatedCodes
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Lỗi khi cập nhật ngày bắt đầu", details = ex.Message });
+            }
+        }
     }
 }
