@@ -674,15 +674,26 @@ function passesCommonFilters(i) {
   if (appliedFilters.value.selectedItemTypes?.length > 0 && !appliedFilters.value.selectedItemTypes.includes(i.itemType)) return false;
   if (appliedFilters.value.selectedSections?.length > 0 && !appliedFilters.value.selectedSections.includes(i.section)) return false;
   if (appliedFilters.value.selectedGroups?.length > 0 && !appliedFilters.value.selectedGroups.includes(i.group)) return false;
-  if (appliedFilters.value.onlyOngoing && !i.isOngoing) return false;
-  if (appliedFilters.value.fromYear || appliedFilters.value.toYear) {
+  const wantOngoingRep = !!appliedFilters.value.onlyOngoing;
+  const hasYearFilterRep = !!(appliedFilters.value.fromYear || appliedFilters.value.toYear);
+
+  if (wantOngoingRep && hasYearFilterRep) {
     const fY = appliedFilters.value.fromYear ? Number(appliedFilters.value.fromYear) : 2026;
     const tY = appliedFilters.value.toYear ? Number(appliedFilters.value.toYear) : 2030;
     if (!i.isOngoing) {
-      const sY = i.startDate ? new Date(i.startDate).getFullYear() : 2026;
-      const dY = i.dueDate ? new Date(i.dueDate).getFullYear() : sY;
-      if (sY > tY || dY < fY) return false;
+      const targetYear = i.dueDate ? new Date(i.dueDate).getFullYear() : (i.startDate ? new Date(i.startDate).getFullYear() : 2026);
+      if (appliedFilters.value.fromYear && targetYear < fY) return false;
+      if (appliedFilters.value.toYear && targetYear > tY) return false;
     }
+  } else if (wantOngoingRep) {
+    if (!i.isOngoing) return false;
+  } else if (hasYearFilterRep) {
+    if (i.isOngoing) return false;
+    const fY = appliedFilters.value.fromYear ? Number(appliedFilters.value.fromYear) : 2026;
+    const tY = appliedFilters.value.toYear ? Number(appliedFilters.value.toYear) : 2030;
+    const targetYear = i.dueDate ? new Date(i.dueDate).getFullYear() : (i.startDate ? new Date(i.startDate).getFullYear() : 2026);
+    if (appliedFilters.value.fromYear && targetYear < fY) return false;
+    if (appliedFilters.value.toYear && targetYear > tY) return false;
   }
 
   const q = (appliedFilters.value.searchQuery || '').trim().toLowerCase();

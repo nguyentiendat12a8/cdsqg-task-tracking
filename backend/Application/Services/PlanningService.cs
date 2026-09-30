@@ -292,21 +292,33 @@ namespace Cdsqg.Application.Services
                 list = list.Where(i => queryDto.SelectedGroups.Contains(i.Group)).ToList();
             }
 
-            if (queryDto.OnlyOngoing)
-            {
-                list = list.Where(i => i.IsOngoing).ToList();
-            }
+            bool wantOngoing = queryDto.OnlyOngoing;
+            bool hasYearFilter = queryDto.FromYear.HasValue || queryDto.ToYear.HasValue;
 
-            if (queryDto.FromYear.HasValue || queryDto.ToYear.HasValue)
+            if (wantOngoing && hasYearFilter)
             {
                 int fYr = queryDto.FromYear ?? 2026;
                 int tYr = queryDto.ToYear ?? 2030;
                 list = list.Where(i =>
                 {
-                    if (i.IsOngoing)
-                    {
-                        return !i.StartDate.HasValue || i.StartDate.Value.Year <= tYr;
-                    }
+                    if (i.IsOngoing) return true;
+                    int targetYear = i.DueDate.HasValue ? i.DueDate.Value.Year : (i.StartDate.HasValue ? i.StartDate.Value.Year : 2026);
+                    if (queryDto.FromYear.HasValue && targetYear < fYr) return false;
+                    if (queryDto.ToYear.HasValue && targetYear > tYr) return false;
+                    return true;
+                }).ToList();
+            }
+            else if (wantOngoing)
+            {
+                list = list.Where(i => i.IsOngoing).ToList();
+            }
+            else if (hasYearFilter)
+            {
+                int fYr = queryDto.FromYear ?? 2026;
+                int tYr = queryDto.ToYear ?? 2030;
+                list = list.Where(i =>
+                {
+                    if (i.IsOngoing) return false;
                     int targetYear = i.DueDate.HasValue ? i.DueDate.Value.Year : (i.StartDate.HasValue ? i.StartDate.Value.Year : 2026);
                     if (queryDto.FromYear.HasValue && targetYear < fYr) return false;
                     if (queryDto.ToYear.HasValue && targetYear > tYr) return false;

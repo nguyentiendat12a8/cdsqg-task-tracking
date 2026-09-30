@@ -765,23 +765,27 @@ function filterGridItem(item) {
     if (!appliedFilters.value.selectedGroups.includes(item.group)) return false;
   }
 
-  // 5. Ongoing Tasks / Goals Filter
-  if (appliedFilters.value.onlyOngoing && !item.isOngoing) {
-    return false;
-  }
+  // 5 & 6. Ongoing Tasks / Goals & Year Range Filter
+  const wantOngoing = !!appliedFilters.value.onlyOngoing;
+  const hasYearFilter = !!(appliedFilters.value.fromYear || appliedFilters.value.toYear);
 
-  // 6. Year Range Filter (From Year -> To Year)
-  if (appliedFilters.value.fromYear || appliedFilters.value.toYear) {
+  if (wantOngoing && hasYearFilter) {
     const fYr = appliedFilters.value.fromYear ? Number(appliedFilters.value.fromYear) : 2026;
     const tYr = appliedFilters.value.toYear ? Number(appliedFilters.value.toYear) : 2030;
-    if (item.isOngoing) {
-      const startY = item.startDate ? new Date(item.startDate).getFullYear() : 2026;
-      if (startY > tYr) return false;
-    } else {
+    if (!item.isOngoing) {
       const targetYear = item.dueDate ? new Date(item.dueDate).getFullYear() : (item.startDate ? new Date(item.startDate).getFullYear() : 2026);
       if (appliedFilters.value.fromYear && targetYear < fYr) return false;
       if (appliedFilters.value.toYear && targetYear > tYr) return false;
     }
+  } else if (wantOngoing) {
+    if (!item.isOngoing) return false;
+  } else if (hasYearFilter) {
+    if (item.isOngoing) return false;
+    const fYr = appliedFilters.value.fromYear ? Number(appliedFilters.value.fromYear) : 2026;
+    const tYr = appliedFilters.value.toYear ? Number(appliedFilters.value.toYear) : 2030;
+    const targetYear = item.dueDate ? new Date(item.dueDate).getFullYear() : (item.startDate ? new Date(item.startDate).getFullYear() : 2026);
+    if (appliedFilters.value.fromYear && targetYear < fYr) return false;
+    if (appliedFilters.value.toYear && targetYear > tYr) return false;
   }
 
   // 7. Progress / Alert Status Filter (Multi-select)

@@ -76,38 +76,34 @@ namespace Cdsqg.Api.Controllers
                     }
                 }
 
-                if (isOngoing.HasValue && isOngoing.Value)
-                {
-                    query = query.Where(i => i.IsOngoing);
-                }
-                else if (fromYear.HasValue || toYear.HasValue)
+                bool wantOngoing = isOngoing.HasValue && isOngoing.Value;
+                bool hasYearFilter = fromYear.HasValue || toYear.HasValue;
+
+                if (wantOngoing && hasYearFilter)
                 {
                     int fY = fromYear ?? 2026;
                     int tY = toYear ?? 2030;
-                    if (fromYear.HasValue && toYear.HasValue)
-                    {
-                        query = query.Where(i => i.IsOngoing 
-                            ? (!i.StartDate.HasValue || i.StartDate.Value.Year <= tY)
-                            : (i.DueDate.HasValue 
-                                ? (i.DueDate.Value.Year >= fY && i.DueDate.Value.Year <= tY)
-                                : (i.StartDate.HasValue ? (i.StartDate.Value.Year >= fY && i.StartDate.Value.Year <= tY) : true)));
-                    }
-                    else if (fromYear.HasValue)
-                    {
-                        query = query.Where(i => i.IsOngoing 
-                            ? true
-                            : (i.DueDate.HasValue 
-                                ? i.DueDate.Value.Year >= fY
-                                : (i.StartDate.HasValue ? i.StartDate.Value.Year >= fY : true)));
-                    }
-                    else if (toYear.HasValue)
-                    {
-                        query = query.Where(i => i.IsOngoing 
-                            ? (!i.StartDate.HasValue || i.StartDate.Value.Year <= tY)
-                            : (i.DueDate.HasValue 
-                                ? i.DueDate.Value.Year <= tY
-                                : (i.StartDate.HasValue ? i.StartDate.Value.Year <= tY : true)));
-                    }
+                    query = query.Where(i => i.IsOngoing ||
+                        (!i.IsOngoing && (fromYear.HasValue && toYear.HasValue
+                            ? (i.DueDate.HasValue ? (i.DueDate.Value.Year >= fY && i.DueDate.Value.Year <= tY) : (i.StartDate.HasValue ? (i.StartDate.Value.Year >= fY && i.StartDate.Value.Year <= tY) : true))
+                            : (fromYear.HasValue
+                                ? (i.DueDate.HasValue ? i.DueDate.Value.Year >= fY : (i.StartDate.HasValue ? i.StartDate.Value.Year >= fY : true))
+                                : (i.DueDate.HasValue ? i.DueDate.Value.Year <= tY : (i.StartDate.HasValue ? i.StartDate.Value.Year <= tY : true))))));
+                }
+                else if (wantOngoing)
+                {
+                    query = query.Where(i => i.IsOngoing);
+                }
+                else if (hasYearFilter)
+                {
+                    int fY = fromYear ?? 2026;
+                    int tY = toYear ?? 2030;
+                    query = query.Where(i => !i.IsOngoing &&
+                        (fromYear.HasValue && toYear.HasValue
+                            ? (i.DueDate.HasValue ? (i.DueDate.Value.Year >= fY && i.DueDate.Value.Year <= tY) : (i.StartDate.HasValue ? (i.StartDate.Value.Year >= fY && i.StartDate.Value.Year <= tY) : true))
+                            : (fromYear.HasValue
+                                ? (i.DueDate.HasValue ? i.DueDate.Value.Year >= fY : (i.StartDate.HasValue ? i.StartDate.Value.Year >= fY : true))
+                                : (i.DueDate.HasValue ? i.DueDate.Value.Year <= tY : (i.StartDate.HasValue ? i.StartDate.Value.Year <= tY : true)))));
                 }
 
                 var allAgencies = await _context.Agencies.Include(a => a.ChildAgencies).ToListAsync();
@@ -689,38 +685,34 @@ namespace Cdsqg.Api.Controllers
                     }
                 }
 
-                if (isOngoing.HasValue && isOngoing.Value)
-                {
-                    query = query.Where(i => i.IsOngoing);
-                }
-                else if (fromYear.HasValue || toYear.HasValue)
+                bool wantOngoing = isOngoing.HasValue && isOngoing.Value;
+                bool hasYearFilter = fromYear.HasValue || toYear.HasValue;
+
+                if (wantOngoing && hasYearFilter)
                 {
                     int fY = fromYear ?? 2026;
                     int tY = toYear ?? 2030;
-                    if (fromYear.HasValue && toYear.HasValue)
-                    {
-                        query = query.Where(i => i.IsOngoing 
-                            ? (!i.StartDate.HasValue || i.StartDate.Value.Year <= tY)
-                            : (i.DueDate.HasValue 
-                                ? (i.DueDate.Value.Year >= fY && i.DueDate.Value.Year <= tY)
-                                : (i.StartDate.HasValue ? (i.StartDate.Value.Year >= fY && i.StartDate.Value.Year <= tY) : true)));
-                    }
-                    else if (fromYear.HasValue)
-                    {
-                        query = query.Where(i => i.IsOngoing 
-                            ? true
-                            : (i.DueDate.HasValue 
-                                ? i.DueDate.Value.Year >= fY
-                                : (i.StartDate.HasValue ? i.StartDate.Value.Year >= fY : true)));
-                    }
-                    else if (toYear.HasValue)
-                    {
-                        query = query.Where(i => i.IsOngoing 
-                            ? (!i.StartDate.HasValue || i.StartDate.Value.Year <= tY)
-                            : (i.DueDate.HasValue 
-                                ? i.DueDate.Value.Year <= tY
-                                : (i.StartDate.HasValue ? i.StartDate.Value.Year <= tY : true)));
-                    }
+                    query = query.Where(i => i.IsOngoing ||
+                        (!i.IsOngoing && (fromYear.HasValue && toYear.HasValue
+                            ? (i.DueDate.HasValue ? (i.DueDate.Value.Year >= fY && i.DueDate.Value.Year <= tY) : (i.StartDate.HasValue ? (i.StartDate.Value.Year >= fY && i.StartDate.Value.Year <= tY) : true))
+                            : (fromYear.HasValue
+                                ? (i.DueDate.HasValue ? i.DueDate.Value.Year >= fY : (i.StartDate.HasValue ? i.StartDate.Value.Year >= fY : true))
+                                : (i.DueDate.HasValue ? i.DueDate.Value.Year <= tY : (i.StartDate.HasValue ? i.StartDate.Value.Year <= tY : true))))));
+                }
+                else if (wantOngoing)
+                {
+                    query = query.Where(i => i.IsOngoing);
+                }
+                else if (hasYearFilter)
+                {
+                    int fY = fromYear ?? 2026;
+                    int tY = toYear ?? 2030;
+                    query = query.Where(i => !i.IsOngoing &&
+                        (fromYear.HasValue && toYear.HasValue
+                            ? (i.DueDate.HasValue ? (i.DueDate.Value.Year >= fY && i.DueDate.Value.Year <= tY) : (i.StartDate.HasValue ? (i.StartDate.Value.Year >= fY && i.StartDate.Value.Year <= tY) : true))
+                            : (fromYear.HasValue
+                                ? (i.DueDate.HasValue ? i.DueDate.Value.Year >= fY : (i.StartDate.HasValue ? i.StartDate.Value.Year >= fY : true))
+                                : (i.DueDate.HasValue ? i.DueDate.Value.Year <= tY : (i.StartDate.HasValue ? i.StartDate.Value.Year <= tY : true)))));
                 }
 
                 var allAgencies = await _context.Agencies.Include(a => a.ChildAgencies).ToListAsync();
