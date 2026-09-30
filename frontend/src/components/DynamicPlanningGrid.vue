@@ -707,11 +707,32 @@ function filterGridItem(item) {
   // 2. Agency Filter (Multi-select)
   if (appliedFilters.value.selectedAgencyIds && appliedFilters.value.selectedAgencyIds.length > 0) {
     const selectedAgencies = agencies.value.filter(a => appliedFilters.value.selectedAgencyIds.includes(a.id));
-    const matchAg = selectedAgencies.some(ag => 
-      item.leadAgencyId === ag.id || 
-      item.leadAgencyCode === ag.code || 
-      item.leadAgencyName === ag.name
-    );
+    const selectedCodes = selectedAgencies.map(a => a.code);
+    const expandedCodes = new Set(selectedCodes);
+    const expandedIds = new Set(appliedFilters.value.selectedAgencyIds);
+
+    const ministriesGuid1 = '00000000-0000-0000-0000-000000009998';
+    const ministriesGuid2 = '00000000-0000-0000-0000-000000009995';
+    const provincesGuid1  = '00000000-0000-0000-0000-000000009997';
+    const provincesGuid2  = '00000000-0000-0000-0000-000000009996';
+
+    if (expandedIds.has(ministriesGuid1) || expandedIds.has(ministriesGuid2) || expandedCodes.has('ALL_MINISTRIES') || expandedCodes.has('ALL_MINISTRIES_DIRECT')) {
+      expandedIds.add(ministriesGuid1);
+      expandedIds.add(ministriesGuid2);
+      expandedCodes.add('ALL_MINISTRIES');
+      expandedCodes.add('ALL_MINISTRIES_DIRECT');
+    }
+    if (expandedIds.has(provincesGuid1) || expandedIds.has(provincesGuid2) || expandedCodes.has('ALL_PROVINCES') || expandedCodes.has('ALL_PROVINCES_UBND')) {
+      expandedIds.add(provincesGuid1);
+      expandedIds.add(provincesGuid2);
+      expandedCodes.add('ALL_PROVINCES');
+      expandedCodes.add('ALL_PROVINCES_UBND');
+    }
+
+    const matchAg = expandedIds.has(item.leadAgencyId) ||
+      (item.leadAgencyCode && expandedCodes.has(item.leadAgencyCode)) ||
+      selectedAgencies.some(ag => item.leadAgencyName === ag.name);
+
     if (!matchAg) return false;
   }
 
@@ -753,10 +774,13 @@ function filterGridItem(item) {
   if (appliedFilters.value.fromYear || appliedFilters.value.toYear) {
     const fYr = appliedFilters.value.fromYear ? Number(appliedFilters.value.fromYear) : 2026;
     const tYr = appliedFilters.value.toYear ? Number(appliedFilters.value.toYear) : 2030;
-    if (!item.isOngoing) {
+    if (item.isOngoing) {
       const startY = item.startDate ? new Date(item.startDate).getFullYear() : 2026;
-      const dueY = item.dueDate ? new Date(item.dueDate).getFullYear() : startY;
-      if (startY > tYr || dueY < fYr) return false;
+      if (startY > tYr) return false;
+    } else {
+      const targetYear = item.dueDate ? new Date(item.dueDate).getFullYear() : (item.startDate ? new Date(item.startDate).getFullYear() : 2026);
+      if (appliedFilters.value.fromYear && targetYear < fYr) return false;
+      if (appliedFilters.value.toYear && targetYear > tYr) return false;
     }
   }
 

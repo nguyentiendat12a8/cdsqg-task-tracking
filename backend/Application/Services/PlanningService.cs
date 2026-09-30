@@ -257,7 +257,24 @@ namespace Cdsqg.Application.Services
             // 4. Filters
             if (queryDto.SelectedAgencyIds != null && queryDto.SelectedAgencyIds.Count > 0)
             {
-                list = list.Where(i => queryDto.SelectedAgencyIds.Contains(i.LeadAgencyId)).ToList();
+                var expandedAgencyIds = new HashSet<Guid>(queryDto.SelectedAgencyIds);
+                var ministriesGuid1 = Guid.Parse("00000000-0000-0000-0000-000000009998");
+                var ministriesGuid2 = Guid.Parse("00000000-0000-0000-0000-000000009995");
+                var provincesGuid1  = Guid.Parse("00000000-0000-0000-0000-000000009997");
+                var provincesGuid2  = Guid.Parse("00000000-0000-0000-0000-000000009996");
+
+                if (expandedAgencyIds.Contains(ministriesGuid1) || expandedAgencyIds.Contains(ministriesGuid2))
+                {
+                    expandedAgencyIds.Add(ministriesGuid1);
+                    expandedAgencyIds.Add(ministriesGuid2);
+                }
+                if (expandedAgencyIds.Contains(provincesGuid1) || expandedAgencyIds.Contains(provincesGuid2))
+                {
+                    expandedAgencyIds.Add(provincesGuid1);
+                    expandedAgencyIds.Add(provincesGuid2);
+                }
+
+                list = list.Where(i => expandedAgencyIds.Contains(i.LeadAgencyId)).ToList();
             }
 
             if (queryDto.SelectedSubAgencyIds != null && queryDto.SelectedSubAgencyIds.Count > 0)
@@ -286,10 +303,14 @@ namespace Cdsqg.Application.Services
                 int tYr = queryDto.ToYear ?? 2030;
                 list = list.Where(i =>
                 {
-                    if (i.IsOngoing) return true;
-                    int startY = i.StartDate.HasValue ? i.StartDate.Value.Year : 2026;
-                    int dueY = i.DueDate.HasValue ? i.DueDate.Value.Year : startY;
-                    return startY <= tYr && dueY >= fYr;
+                    if (i.IsOngoing)
+                    {
+                        return !i.StartDate.HasValue || i.StartDate.Value.Year <= tYr;
+                    }
+                    int targetYear = i.DueDate.HasValue ? i.DueDate.Value.Year : (i.StartDate.HasValue ? i.StartDate.Value.Year : 2026);
+                    if (queryDto.FromYear.HasValue && targetYear < fYr) return false;
+                    if (queryDto.ToYear.HasValue && targetYear > tYr) return false;
+                    return true;
                 }).ToList();
             }
 

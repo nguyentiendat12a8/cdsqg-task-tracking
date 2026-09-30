@@ -84,7 +84,30 @@ namespace Cdsqg.Api.Controllers
                 {
                     int fY = fromYear ?? 2026;
                     int tY = toYear ?? 2030;
-                    query = query.Where(i => i.IsOngoing || ((!i.StartDate.HasValue || i.StartDate.Value.Year <= tY) && (!i.DueDate.HasValue || i.DueDate.Value.Year >= fY)));
+                    if (fromYear.HasValue && toYear.HasValue)
+                    {
+                        query = query.Where(i => i.IsOngoing 
+                            ? (!i.StartDate.HasValue || i.StartDate.Value.Year <= tY)
+                            : (i.DueDate.HasValue 
+                                ? (i.DueDate.Value.Year >= fY && i.DueDate.Value.Year <= tY)
+                                : (i.StartDate.HasValue ? (i.StartDate.Value.Year >= fY && i.StartDate.Value.Year <= tY) : true)));
+                    }
+                    else if (fromYear.HasValue)
+                    {
+                        query = query.Where(i => i.IsOngoing 
+                            ? true
+                            : (i.DueDate.HasValue 
+                                ? i.DueDate.Value.Year >= fY
+                                : (i.StartDate.HasValue ? i.StartDate.Value.Year >= fY : true)));
+                    }
+                    else if (toYear.HasValue)
+                    {
+                        query = query.Where(i => i.IsOngoing 
+                            ? (!i.StartDate.HasValue || i.StartDate.Value.Year <= tY)
+                            : (i.DueDate.HasValue 
+                                ? i.DueDate.Value.Year <= tY
+                                : (i.StartDate.HasValue ? i.StartDate.Value.Year <= tY : true)));
+                    }
                 }
 
                 var allAgencies = await _context.Agencies.Include(a => a.ChildAgencies).ToListAsync();
@@ -94,6 +117,10 @@ namespace Cdsqg.Api.Controllers
                 // Scope to specific agency + child agencies if agencyId supplied
                 HashSet<Guid>? allowedAgencyIds = null;
                 bool isAgencyFilterActive = false;
+                bool anyMinistrySelected = false;
+                bool anyProvinceSelected = false;
+                bool anySpecialAllSelected = false;
+
                 if (agencyId != null && agencyId.Length > 0)
                 {
                     var validAgencyIds = agencyId.Where(id => id != Guid.Empty).ToList();
@@ -101,10 +128,6 @@ namespace Cdsqg.Api.Controllers
                     {
                         isAgencyFilterActive = true;
                         allowedAgencyIds = new HashSet<Guid>();
-
-                        bool anyMinistrySelected = false;
-                        bool anyProvinceSelected = false;
-                        bool anySpecialAllSelected = false;
 
                         foreach (var agId in validAgencyIds)
                         {
@@ -380,18 +403,11 @@ namespace Cdsqg.Api.Controllers
                     else if (effectiveParentId.HasValue && effectiveParentId.Value != Guid.Empty)
                     {
                         var parentAgency = allAgencies.FirstOrDefault(p => p.Id == effectiveParentId.Value);
-                        if (parentAgency != null && parentAgency.Type == AgencyTypeEnum.Province)
+                        if (parentAgency != null && IsProvinceAgency(parentAgency, allAgencies))
                         {
                             provincesPerformance.Add(summaryDto);
                         }
-                        else if (parentAgency != null && (parentAgency.Type == AgencyTypeEnum.Other || parentAgency.Type == AgencyTypeEnum.Internal))
-                        {
-                            if (summaryDto.TotalItems > 0 || isAgencyFilterActive)
-                            {
-                                othersPerformance.Add(summaryDto);
-                            }
-                        }
-                        else if (parentAgency != null && parentAgency.Type == AgencyTypeEnum.Ministry)
+                        else if (parentAgency != null && IsMinistryAgency(parentAgency, allAgencies))
                         {
                             ministriesPerformance.Add(summaryDto);
                         }
@@ -403,24 +419,34 @@ namespace Cdsqg.Api.Controllers
                             }
                         }
                     }
-                    else if (agency.Type == AgencyTypeEnum.Other || agency.Type == AgencyTypeEnum.Internal)
+                    else if (IsProvinceAgency(agency, allAgencies))
+                    {
+                        provincesPerformance.Add(summaryDto);
+                    }
+                    else if (IsMinistryAgency(agency, allAgencies))
+                    {
+                        ministriesPerformance.Add(summaryDto);
+                    }
+                    else
                     {
                         if (summaryDto.TotalItems > 0 || isAgencyFilterActive)
                         {
                             othersPerformance.Add(summaryDto);
                         }
                     }
-                    else if (agency.Type == AgencyTypeEnum.Province)
+                }
+
+                if (isAgencyFilterActive)
+                {
+                    if (anyMinistrySelected && !anyProvinceSelected && !anySpecialAllSelected)
                     {
-                        provincesPerformance.Add(summaryDto);
+                        provincesPerformance.Clear();
+                        othersPerformance.Clear();
                     }
-                    else if (agency.Type == AgencyTypeEnum.Ministry)
+                    else if (anyProvinceSelected && !anyMinistrySelected && !anySpecialAllSelected)
                     {
-                        ministriesPerformance.Add(summaryDto);
-                    }
-                    else
-                    {
-                        othersPerformance.Add(summaryDto);
+                        ministriesPerformance.Clear();
+                        othersPerformance.Clear();
                     }
                 }
 
@@ -671,7 +697,30 @@ namespace Cdsqg.Api.Controllers
                 {
                     int fY = fromYear ?? 2026;
                     int tY = toYear ?? 2030;
-                    query = query.Where(i => i.IsOngoing || ((!i.StartDate.HasValue || i.StartDate.Value.Year <= tY) && (!i.DueDate.HasValue || i.DueDate.Value.Year >= fY)));
+                    if (fromYear.HasValue && toYear.HasValue)
+                    {
+                        query = query.Where(i => i.IsOngoing 
+                            ? (!i.StartDate.HasValue || i.StartDate.Value.Year <= tY)
+                            : (i.DueDate.HasValue 
+                                ? (i.DueDate.Value.Year >= fY && i.DueDate.Value.Year <= tY)
+                                : (i.StartDate.HasValue ? (i.StartDate.Value.Year >= fY && i.StartDate.Value.Year <= tY) : true)));
+                    }
+                    else if (fromYear.HasValue)
+                    {
+                        query = query.Where(i => i.IsOngoing 
+                            ? true
+                            : (i.DueDate.HasValue 
+                                ? i.DueDate.Value.Year >= fY
+                                : (i.StartDate.HasValue ? i.StartDate.Value.Year >= fY : true)));
+                    }
+                    else if (toYear.HasValue)
+                    {
+                        query = query.Where(i => i.IsOngoing 
+                            ? (!i.StartDate.HasValue || i.StartDate.Value.Year <= tY)
+                            : (i.DueDate.HasValue 
+                                ? i.DueDate.Value.Year <= tY
+                                : (i.StartDate.HasValue ? i.StartDate.Value.Year <= tY : true)));
+                    }
                 }
 
                 var allAgencies = await _context.Agencies.Include(a => a.ChildAgencies).ToListAsync();
@@ -876,8 +925,17 @@ namespace Cdsqg.Api.Controllers
                 }
             }
 
-            string name = (ag.Name ?? "").ToLower();
-            return name.StartsWith("bộ") || name.StartsWith("bảo hiểm") || name.StartsWith("ngân hàng") || name.StartsWith("viện") || name.StartsWith("đài") || name.StartsWith("thông tấn");
+            string name = (ag.Name ?? "").Trim().ToLower();
+            return name.StartsWith("bộ") || 
+                   name.StartsWith("bảo hiểm") || 
+                   name.StartsWith("ngân hàng") || 
+                   name.StartsWith("viện") || 
+                   name.StartsWith("đài") || 
+                   name.StartsWith("thông tấn") || 
+                   name.StartsWith("văn phòng chính phủ") || 
+                   name.StartsWith("thanh tra chính phủ") || 
+                   name.StartsWith("học viện") || 
+                   name.StartsWith("ủy ban");
         }
 
         private static bool IsProvinceAgency(Agency ag, List<Agency>? allAgencies = null)
@@ -895,8 +953,13 @@ namespace Cdsqg.Api.Controllers
                 }
             }
 
-            string name = (ag.Name ?? "").ToLower();
-            return name.StartsWith("ubnd") || name.StartsWith("tỉnh") || name.StartsWith("thành phố") || name.StartsWith("tp.");
+            string name = (ag.Name ?? "").Trim().ToLower();
+            return name.StartsWith("ubnd") || 
+                   name.StartsWith("tỉnh") || 
+                   name.StartsWith("thành phố") || 
+                   name.StartsWith("tp.") || 
+                   name.Contains("tỉnh") || 
+                   name.Contains("thành phố");
         }
     }
 
