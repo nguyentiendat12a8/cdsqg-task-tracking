@@ -101,40 +101,73 @@ namespace Cdsqg.Api.Controllers
                     {
                         isAgencyFilterActive = true;
                         allowedAgencyIds = new HashSet<Guid>();
+
+                        bool anyMinistrySelected = false;
+                        bool anyProvinceSelected = false;
+                        bool anySpecialAllSelected = false;
+
                         foreach (var agId in validAgencyIds)
                         {
                             var childs = GetAgencyAndChildIds(agId, allAgencies);
                             foreach (var c in childs) allowedAgencyIds.Add(c);
 
                             var selectedAg = allAgencies.FirstOrDefault(a => a.Id == agId);
-                            if (selectedAg != null && (selectedAg.Type == AgencyTypeEnum.Special || selectedAg.Code == "ALL_AGENCIES" || selectedAg.Code == "ALL_MINISTRIES" || selectedAg.Code == "ALL_PROVINCES" || selectedAg.Code == "ALL_PROVINCES_UBND" || selectedAg.Code == "ALL_MINISTRIES_DIRECT" || (selectedAg.Name != null && (selectedAg.Name.StartsWith("Các bộ, ngành") || selectedAg.Name.StartsWith("Các địa phương") || selectedAg.Name.Contains("UBND tỉnh, thành phố trực thuộc trung ương")))))
+                            if (selectedAg != null)
                             {
-                                if (selectedAg.Code == "ALL_MINISTRIES" || selectedAg.Code == "ALL_MINISTRIES_DIRECT" || (selectedAg.Name != null && selectedAg.Name.StartsWith("Các bộ, ngành") && !selectedAg.Name.Contains("địa phương")))
+                                if (IsMinistryAgency(selectedAg, allAgencies) || selectedAg.Code == "ALL_MINISTRIES" || selectedAg.Code == "ALL_MINISTRIES_DIRECT")
+                                    anyMinistrySelected = true;
+                                if (IsProvinceAgency(selectedAg, allAgencies) || selectedAg.Code == "ALL_PROVINCES" || selectedAg.Code == "ALL_PROVINCES_UBND")
+                                    anyProvinceSelected = true;
+                                if (selectedAg.Code == "ALL_AGENCIES" || (selectedAg.Name != null && selectedAg.Name.Contains("Các bộ, ngành, địa phương")))
+                                    anySpecialAllSelected = true;
+
+                                if (selectedAg.Type == AgencyTypeEnum.Special || selectedAg.Code == "ALL_AGENCIES" || selectedAg.Code == "ALL_MINISTRIES" || selectedAg.Code == "ALL_PROVINCES" || selectedAg.Code == "ALL_PROVINCES_UBND" || selectedAg.Code == "ALL_MINISTRIES_DIRECT" || (selectedAg.Name != null && (selectedAg.Name.StartsWith("Các bộ, ngành") || selectedAg.Name.StartsWith("Các địa phương") || selectedAg.Name.Contains("UBND tỉnh, thành phố trực thuộc trung ương"))))
                                 {
-                                    var ministryIds = allAgencies.Where(IsMinistryAgency).Select(a => a.Id);
-                                    foreach (var mId in ministryIds)
+                                    if (selectedAg.Code == "ALL_MINISTRIES" || selectedAg.Code == "ALL_MINISTRIES_DIRECT" || (selectedAg.Name != null && selectedAg.Name.StartsWith("Các bộ, ngành") && !selectedAg.Name.Contains("địa phương")))
                                     {
-                                        var cList = GetAgencyAndChildIds(mId, allAgencies);
-                                        foreach (var c in cList) allowedAgencyIds.Add(c);
+                                        anyMinistrySelected = true;
+                                        var ministryIds = allAgencies.Where(a => IsMinistryAgency(a, allAgencies)).Select(a => a.Id);
+                                        foreach (var mId in ministryIds)
+                                        {
+                                            var cList = GetAgencyAndChildIds(mId, allAgencies);
+                                            foreach (var c in cList) allowedAgencyIds.Add(c);
+                                        }
                                     }
-                                }
-                                else if (selectedAg.Code == "ALL_PROVINCES" || selectedAg.Code == "ALL_PROVINCES_UBND" || (selectedAg.Name != null && (selectedAg.Name.StartsWith("Các địa phương") || selectedAg.Name.Contains("UBND tỉnh"))))
-                                {
-                                    var provinceIds = allAgencies.Where(IsProvinceAgency).Select(a => a.Id);
-                                    foreach (var pId in provinceIds)
+                                    else if (selectedAg.Code == "ALL_PROVINCES" || selectedAg.Code == "ALL_PROVINCES_UBND" || (selectedAg.Name != null && (selectedAg.Name.StartsWith("Các địa phương") || selectedAg.Name.Contains("UBND tỉnh"))))
                                     {
-                                        var cList = GetAgencyAndChildIds(pId, allAgencies);
-                                        foreach (var c in cList) allowedAgencyIds.Add(c);
+                                        anyProvinceSelected = true;
+                                        var provinceIds = allAgencies.Where(a => IsProvinceAgency(a, allAgencies)).Select(a => a.Id);
+                                        foreach (var pId in provinceIds)
+                                        {
+                                            var cList = GetAgencyAndChildIds(pId, allAgencies);
+                                            foreach (var c in cList) allowedAgencyIds.Add(c);
+                                        }
                                     }
-                                }
-                                else if (selectedAg.Code == "ALL_AGENCIES" || (selectedAg.Name != null && selectedAg.Name.Contains("Các bộ, ngành, địa phương")))
-                                {
-                                    foreach (var a in allAgencies) allowedAgencyIds.Add(a.Id);
+                                    else if (selectedAg.Code == "ALL_AGENCIES" || (selectedAg.Name != null && selectedAg.Name.Contains("Các bộ, ngành, địa phương")))
+                                    {
+                                        anySpecialAllSelected = true;
+                                        foreach (var a in allAgencies) allowedAgencyIds.Add(a.Id);
+                                    }
                                 }
                             }
                         }
 
-                        query = query.Where(i => allowedAgencyIds.Contains(i.LeadAgencyId) || (i.AssignedAgencyId.HasValue && allowedAgencyIds.Contains(i.AssignedAgencyId.Value)) || (i.AgencyExecutions != null && i.AgencyExecutions.Any(e => allowedAgencyIds.Contains(e.AgencyId) || (e.AssignedAgencyId.HasValue && allowedAgencyIds.Contains(e.AssignedAgencyId.Value)))));
+                        query = query.Where(i => 
+                            allowedAgencyIds.Contains(i.LeadAgencyId) || 
+                            (i.AssignedAgencyId.HasValue && allowedAgencyIds.Contains(i.AssignedAgencyId.Value)) || 
+                            (i.AgencyExecutions != null && i.AgencyExecutions.Any(e => allowedAgencyIds.Contains(e.AgencyId) || (e.AssignedAgencyId.HasValue && allowedAgencyIds.Contains(e.AssignedAgencyId.Value)))) ||
+                            (anySpecialAllSelected) ||
+                            (anyMinistrySelected && (
+                                i.LeadAgencyId == allAgenciesId ||
+                                (i.LeadAgency != null && (i.LeadAgency.Code == "ALL_AGENCIES" || i.LeadAgency.Code == "ALL_MINISTRIES" || i.LeadAgency.Code == "ALL_MINISTRIES_DIRECT")) ||
+                                (i.IsGeneralTask && (i.LeadAgency == null || i.LeadAgency.Code == "ALL_AGENCIES"))
+                            )) ||
+                            (anyProvinceSelected && (
+                                i.LeadAgencyId == allAgenciesId ||
+                                (i.LeadAgency != null && (i.LeadAgency.Code == "ALL_AGENCIES" || i.LeadAgency.Code == "ALL_PROVINCES" || i.LeadAgency.Code == "ALL_PROVINCES_UBND")) ||
+                                (i.IsGeneralTask && (i.LeadAgency == null || i.LeadAgency.Code == "ALL_AGENCIES"))
+                            ))
+                        );
                     }
                 }
 
@@ -189,12 +222,12 @@ namespace Cdsqg.Api.Controllers
                         {
                             if (ag.Code == "ALL_MINISTRIES" || ag.Code == "ALL_MINISTRIES_DIRECT" || (ag.Name != null && ag.Name.StartsWith("Các bộ, ngành") && !ag.Name.Contains("địa phương")))
                             {
-                                var ministries = allAgencies.Where(a => !a.ParentId.HasValue && IsMinistryAgency(a));
+                                var ministries = allAgencies.Where(a => !a.ParentId.HasValue && IsMinistryAgency(a, allAgencies));
                                 foreach (var m in ministries) if (!targetList.Any(t => t.Id == m.Id)) targetList.Add(m);
                             }
                             else if (ag.Code == "ALL_PROVINCES" || ag.Code == "ALL_PROVINCES_UBND" || (ag.Name != null && (ag.Name.StartsWith("Các địa phương") || ag.Name.Contains("UBND tỉnh"))))
                             {
-                                var provinces = allAgencies.Where(a => !a.ParentId.HasValue && IsProvinceAgency(a));
+                                var provinces = allAgencies.Where(a => !a.ParentId.HasValue && IsProvinceAgency(a, allAgencies));
                                 foreach (var p in provinces) if (!targetList.Any(t => t.Id == p.Id)) targetList.Add(p);
                             }
                             else if (ag.Code == "ALL_AGENCIES" || (ag.Name != null && ag.Name.Contains("Các bộ, ngành, địa phương")))
@@ -239,7 +272,7 @@ namespace Cdsqg.Api.Controllers
                     
                     bool includeGeneral = !agency.ParentId.HasValue && (!parentAgencyId.HasValue || parentAgencyId.Value == Guid.Empty);
 
-                    bool isMinistryOrProvince = IsMinistryAgency(agency) || IsProvinceAgency(agency);
+                    bool isMinistryOrProvince = IsMinistryAgency(agency, allAgencies) || IsProvinceAgency(agency, allAgencies);
 
                     var agencyItems = includeGeneral
                         ? items.Where(i => 
@@ -249,8 +282,8 @@ namespace Cdsqg.Api.Controllers
                             (isMinistryOrProvince && (
                                 i.LeadAgencyId == allAgenciesId || 
                                 (i.LeadAgency != null && i.LeadAgency.Code == "ALL_AGENCIES") ||
-                                (i.LeadAgency != null && (i.LeadAgency.Code == "ALL_MINISTRIES" || i.LeadAgency.Code == "ALL_MINISTRIES_DIRECT") && IsMinistryAgency(agency)) ||
-                                (i.LeadAgency != null && (i.LeadAgency.Code == "ALL_PROVINCES" || i.LeadAgency.Code == "ALL_PROVINCES_UBND") && IsProvinceAgency(agency)) ||
+                                (i.LeadAgency != null && (i.LeadAgency.Code == "ALL_MINISTRIES" || i.LeadAgency.Code == "ALL_MINISTRIES_DIRECT") && IsMinistryAgency(agency, allAgencies)) ||
+                                (i.LeadAgency != null && (i.LeadAgency.Code == "ALL_PROVINCES" || i.LeadAgency.Code == "ALL_PROVINCES_UBND") && IsProvinceAgency(agency, allAgencies)) ||
                                 (i.IsGeneralTask && (i.LeadAgency == null || i.LeadAgency.Code == "ALL_AGENCIES"))
                             ))
                           ).ToList()
@@ -666,7 +699,7 @@ namespace Cdsqg.Api.Controllers
                     {
                         if (currentAg.Code == "ALL_MINISTRIES" || currentAg.Code == "ALL_MINISTRIES_DIRECT")
                         {
-                            var ministryIds = allAgencies.Where(IsMinistryAgency).Select(a => a.Id);
+                            var ministryIds = allAgencies.Where(a => IsMinistryAgency(a, allAgencies)).Select(a => a.Id);
                             foreach (var mId in ministryIds)
                             {
                                 var cList = GetAgencyAndChildIds(mId, allAgencies);
@@ -675,7 +708,7 @@ namespace Cdsqg.Api.Controllers
                         }
                         else if (currentAg.Code == "ALL_PROVINCES" || currentAg.Code == "ALL_PROVINCES_UBND")
                         {
-                            var provinceIds = allAgencies.Where(IsProvinceAgency).Select(a => a.Id);
+                            var provinceIds = allAgencies.Where(a => IsProvinceAgency(a, allAgencies)).Select(a => a.Id);
                             foreach (var pId in provinceIds)
                             {
                                 var cList = GetAgencyAndChildIds(pId, allAgencies);
@@ -688,7 +721,7 @@ namespace Cdsqg.Api.Controllers
                         }
                     }
 
-                    bool isMinistryOrProvince = currentAg != null && (IsMinistryAgency(currentAg) || IsProvinceAgency(currentAg) || currentAg.Type == AgencyTypeEnum.Special || currentAg.Code == "ALL_AGENCIES" || currentAg.Code == "ALL_MINISTRIES" || currentAg.Code == "ALL_PROVINCES" || currentAg.Code == "ALL_PROVINCES_UBND" || currentAg.Code == "ALL_MINISTRIES_DIRECT");
+                    bool isMinistryOrProvince = currentAg != null && (IsMinistryAgency(currentAg, allAgencies) || IsProvinceAgency(currentAg, allAgencies) || currentAg.Type == AgencyTypeEnum.Special || currentAg.Code == "ALL_AGENCIES" || currentAg.Code == "ALL_MINISTRIES" || currentAg.Code == "ALL_PROVINCES" || currentAg.Code == "ALL_PROVINCES_UBND" || currentAg.Code == "ALL_MINISTRIES_DIRECT");
 
                     agencyItems = includeGeneral
                         ? baseItems.Where(i =>
@@ -698,8 +731,8 @@ namespace Cdsqg.Api.Controllers
                             (isMinistryOrProvince && (
                                 i.LeadAgencyId == allAgenciesId ||
                                 (i.LeadAgency != null && i.LeadAgency.Code == "ALL_AGENCIES") ||
-                                (currentAg != null && i.LeadAgency != null && (i.LeadAgency.Code == "ALL_MINISTRIES" || i.LeadAgency.Code == "ALL_MINISTRIES_DIRECT") && IsMinistryAgency(currentAg)) ||
-                                (currentAg != null && i.LeadAgency != null && (i.LeadAgency.Code == "ALL_PROVINCES" || i.LeadAgency.Code == "ALL_PROVINCES_UBND") && IsProvinceAgency(currentAg)) ||
+                                (currentAg != null && i.LeadAgency != null && (i.LeadAgency.Code == "ALL_MINISTRIES" || i.LeadAgency.Code == "ALL_MINISTRIES_DIRECT") && IsMinistryAgency(currentAg, allAgencies)) ||
+                                (currentAg != null && i.LeadAgency != null && (i.LeadAgency.Code == "ALL_PROVINCES" || i.LeadAgency.Code == "ALL_PROVINCES_UBND") && IsProvinceAgency(currentAg, allAgencies)) ||
                                 (i.IsGeneralTask && (i.LeadAgency == null || i.LeadAgency.Code == "ALL_AGENCIES"))
                             ))
                         ).ToList()
@@ -813,20 +846,55 @@ namespace Cdsqg.Api.Controllers
             return result;
         }
 
-        private static bool IsMinistryAgency(Agency ag)
+        private static Agency GetRootParentAgency(Agency ag, List<Agency> allAgencies)
+        {
+            if (ag == null) return null!;
+            var current = ag;
+            var visited = new HashSet<Guid> { current.Id };
+            while (current.ParentId.HasValue && current.ParentId.Value != Guid.Empty)
+            {
+                var parent = allAgencies.FirstOrDefault(a => a.Id == current.ParentId.Value);
+                if (parent == null || visited.Contains(parent.Id)) break;
+                visited.Add(parent.Id);
+                current = parent;
+            }
+            return current;
+        }
+
+        private static bool IsMinistryAgency(Agency ag, List<Agency>? allAgencies = null)
         {
             if (ag == null) return false;
             if (ag.Type == AgencyTypeEnum.Ministry) return true;
             if (ag.Type == AgencyTypeEnum.Province || ag.Type == AgencyTypeEnum.Special) return false;
+
+            if (allAgencies != null && ag.ParentId.HasValue && ag.ParentId.Value != Guid.Empty)
+            {
+                var root = GetRootParentAgency(ag, allAgencies);
+                if (root != null && root.Id != ag.Id)
+                {
+                    return IsMinistryAgency(root, null);
+                }
+            }
+
             string name = (ag.Name ?? "").ToLower();
             return name.StartsWith("bộ") || name.StartsWith("bảo hiểm") || name.StartsWith("ngân hàng") || name.StartsWith("viện") || name.StartsWith("đài") || name.StartsWith("thông tấn");
         }
 
-        private static bool IsProvinceAgency(Agency ag)
+        private static bool IsProvinceAgency(Agency ag, List<Agency>? allAgencies = null)
         {
             if (ag == null) return false;
             if (ag.Type == AgencyTypeEnum.Province) return true;
             if (ag.Type == AgencyTypeEnum.Ministry || ag.Type == AgencyTypeEnum.Special) return false;
+
+            if (allAgencies != null && ag.ParentId.HasValue && ag.ParentId.Value != Guid.Empty)
+            {
+                var root = GetRootParentAgency(ag, allAgencies);
+                if (root != null && root.Id != ag.Id)
+                {
+                    return IsProvinceAgency(root, null);
+                }
+            }
+
             string name = (ag.Name ?? "").ToLower();
             return name.StartsWith("ubnd") || name.StartsWith("tỉnh") || name.StartsWith("thành phố") || name.StartsWith("tp.");
         }

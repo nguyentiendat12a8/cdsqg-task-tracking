@@ -71,5 +71,49 @@ namespace Cdsqg.Api.Controllers
                 return StatusCode(500, new { error = "Lỗi khi xóa dữ liệu demo: " + ex.Message });
             }
         }
+
+        /// <summary>
+        /// POST /api/masterdata/reset-progress
+        /// Reset trạng thái, tiến độ cập nhật, lịch sử báo cáo tiến độ, đôn đốc và thông báo của tất cả Mục tiêu & Nhiệm vụ.
+        /// Giữ nguyên danh sách Mục tiêu, Nhiệm vụ đã tạo/nhập và Cài đặt hệ thống.
+        /// </summary>
+        [HttpPost("reset-progress")]
+        [HttpDelete("reset-progress")]
+        public async Task<IActionResult> ResetProgressData()
+        {
+            try
+            {
+                _context.ProgressLogs.RemoveRange(_context.ProgressLogs);
+                _context.TaskUrgeLogs.RemoveRange(_context.TaskUrgeLogs);
+                _context.Notifications.RemoveRange(_context.Notifications);
+                _context.AgencyTaskExecutions.RemoveRange(_context.AgencyTaskExecutions);
+
+                var items = await _context.GoalTaskItems.ToListAsync();
+                foreach (var item in items)
+                {
+                    item.LastUpdated = null;
+                    if (item.Deliverables != null && item.Deliverables.Count > 0)
+                    {
+                        foreach (var del in item.Deliverables)
+                        {
+                            del.CurrentStatus = "NotStarted";
+                            del.DocumentNumber = null;
+                            del.PromulgationDate = null;
+                            del.AttachmentUrl = null;
+                            del.AttachmentName = null;
+                        }
+                    }
+                    item.AgencyDeliverables = new Dictionary<string, List<TaskDeliverable>>();
+                }
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new { success = true, message = "Đã reset toàn bộ tiến độ, lịch sử cập nhật báo cáo, đôn đốc và thông báo của tất cả mục tiêu, nhiệm vụ thành công." });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Lỗi khi reset tiến độ dữ liệu: " + ex.Message });
+            }
+        }
     }
 }

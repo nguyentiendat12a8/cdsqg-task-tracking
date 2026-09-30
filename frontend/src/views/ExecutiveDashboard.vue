@@ -1933,7 +1933,7 @@ async function loadSubAgencies(parentAgencyId) {
     const res = await fetch(getApiUrl(`/api/dashboard/metrics?${params.toString()}`));
     if (res.ok) {
       const data = await res.json();
-      subAgenciesList.value = [...(data.ministriesPerformance || []), ...(data.provincesPerformance || [])];
+      subAgenciesList.value = [...(data.ministriesPerformance || []), ...(data.provincesPerformance || []), ...(data.othersPerformance || [])];
     }
   } catch (e) {
     console.error('Lỗi khi tải đơn vị trực thuộc:', e);
