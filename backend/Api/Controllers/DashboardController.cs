@@ -906,7 +906,7 @@ namespace Cdsqg.Api.Controllers
         {
             if (ag == null) return false;
             if (ag.Type == AgencyTypeEnum.Ministry) return true;
-            if (ag.Type == AgencyTypeEnum.Province || ag.Type == AgencyTypeEnum.Special) return false;
+            if (ag.Type == AgencyTypeEnum.Province || ag.Type == AgencyTypeEnum.Special || ag.Type == AgencyTypeEnum.Other) return false;
 
             if (allAgencies != null && ag.ParentId.HasValue && ag.ParentId.Value != Guid.Empty)
             {
@@ -921,20 +921,15 @@ namespace Cdsqg.Api.Controllers
             return name.StartsWith("bộ") || 
                    name.StartsWith("bảo hiểm") || 
                    name.StartsWith("ngân hàng") || 
-                   name.StartsWith("viện") || 
-                   name.StartsWith("đài") || 
-                   name.StartsWith("thông tấn") || 
                    name.StartsWith("văn phòng chính phủ") || 
-                   name.StartsWith("thanh tra chính phủ") || 
-                   name.StartsWith("học viện") || 
-                   name.StartsWith("ủy ban");
+                   name.StartsWith("thanh tra chính phủ");
         }
 
         private static bool IsProvinceAgency(Agency ag, List<Agency>? allAgencies = null)
         {
             if (ag == null) return false;
             if (ag.Type == AgencyTypeEnum.Province) return true;
-            if (ag.Type == AgencyTypeEnum.Ministry || ag.Type == AgencyTypeEnum.Special) return false;
+            if (ag.Type == AgencyTypeEnum.Ministry || ag.Type == AgencyTypeEnum.Special || ag.Type == AgencyTypeEnum.Other) return false;
 
             if (allAgencies != null && ag.ParentId.HasValue && ag.ParentId.Value != Guid.Empty)
             {
@@ -949,9 +944,7 @@ namespace Cdsqg.Api.Controllers
             return name.StartsWith("ubnd") || 
                    name.StartsWith("tỉnh") || 
                    name.StartsWith("thành phố") || 
-                   name.StartsWith("tp.") || 
-                   name.Contains("tỉnh") || 
-                   name.Contains("thành phố");
+                   name.StartsWith("tp.");
         }
     }
 

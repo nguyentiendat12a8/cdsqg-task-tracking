@@ -543,239 +543,269 @@
       </div>
     </div>
 
-    <!-- 2 Main Sections: Khối Bộ / Ngành & Khối Địa Phương (Admin / Parent Agency View) -->
+    <!-- Main Sections: Admin / Parent Agency View -->
     <div v-else class="space-y-6 w-full">
       
+      <!-- Collapsible Overall Agencies Ranking Line & Stacked Chart -->
+      <AllAgenciesProgressChart 
+        :ministriesData="metrics.ministriesPerformance" 
+        :provincesData="metrics.provincesPerformance" 
+        :othersData="metrics.othersPerformance" 
+        :filterType="dashboardFilter" 
+        @select-agency="drilldownAgency"
+      />
+
       <!-- Section 1: Khối Bộ / Ngành -->
       <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div 
+          @click="isSection1Collapsed = !isSection1Collapsed"
+          class="flex items-center justify-between border-b border-slate-100 pb-3 cursor-pointer select-none hover:opacity-80 transition"
+        >
           <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
-            🏢 Khối Các Bộ / Ngành Trung Ương
+            <span>🏢 Khối Các Bộ / Ngành Trung Ương</span>
+            <span class="text-xs font-normal text-slate-400">({{ isSection1Collapsed ? 'Nhấp để mở rộng' : 'Nhấp để thu gọn' }})</span>
           </h3>
-          <span class="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-xl border border-blue-200/60">
-            {{ filteredMinistriesPerformance?.length ?? 0 }} Bộ/Ngành
-          </span>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-xl border border-blue-200/60">
+              {{ filteredMinistriesPerformance?.length ?? 0 }} Bộ/Ngành
+            </span>
+            <span class="text-slate-500 text-xs font-bold px-2.5 py-1 bg-slate-100 rounded-lg">
+              {{ isSection1Collapsed ? '▼ Mở rộng' : '▲ Thu gọn' }}
+            </span>
+          </div>
         </div>
 
-        <div v-if="filteredMinistriesPerformance?.length" class="space-y-3">
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-            <div 
-              v-for="(item, index) in visibleMinistries" 
-              :key="item.agencyId"
-              @click="drilldownAgency(item)"
-              class="bg-white rounded-2xl border border-slate-200/90 p-3.5 shadow-2xs hover:shadow-md transition-all duration-200 cursor-pointer space-y-3 group flex flex-col justify-between"
-            >
-              <!-- Card Header: Agency Name & Blue Index Badge -->
-              <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
-                <div class="min-w-0 flex-1">
-                  <h4 class="text-xs sm:text-sm font-bold text-slate-800 group-hover:text-blue-600 transition leading-snug truncate">
-                    {{ item.name }}
-                  </h4>
+        <div v-show="!isSection1Collapsed" class="space-y-4 pt-1">
+          <div v-if="filteredMinistriesPerformance?.length" class="space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+              <div 
+                v-for="(item, index) in visibleMinistries" 
+                :key="item.agencyId"
+                @click="drilldownAgency(item)"
+                class="bg-white rounded-2xl border border-slate-200/90 p-3.5 shadow-2xs hover:shadow-md transition-all duration-200 cursor-pointer space-y-3 group flex flex-col justify-between"
+              >
+                <!-- Card Header: Agency Name & Blue Index Badge -->
+                <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
+                  <div class="min-w-0 flex-1">
+                    <h4 class="text-xs sm:text-sm font-bold text-slate-800 group-hover:text-blue-600 transition leading-snug truncate">
+                      {{ item.name }}
+                    </h4>
+                  </div>
+
+                  <div class="w-7 h-7 bg-blue-600 text-white font-bold text-xs rounded-xl flex items-center justify-center shrink-0 shadow-2xs">
+                    {{ index + 1 }}
+                  </div>
                 </div>
 
-                <div class="w-7 h-7 bg-blue-600 text-white font-bold text-xs rounded-xl flex items-center justify-center shrink-0 shadow-2xs">
-                  {{ index + 1 }}
+                <!-- Card Body: Donut Chart on Left, Legend Breakdown List on Right -->
+                <div class="flex items-center gap-3 py-0.5">
+                  <!-- Donut Chart -->
+                  <div class="shrink-0 flex items-center justify-center">
+                    <MiniStatusDonut :stats="item" :size="84" :innerSize="54" :fontSize="18" />
+                  </div>
+
+                  <!-- 5-6 Status Legend List -->
+                  <div class="flex-1 min-w-0 space-y-1 text-[10px] font-bold">
+                    <div class="flex items-center justify-between gap-1.5">
+                      <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0"></span>
+                        <span class="text-slate-600 truncate">Đang t/h quá hạn</span>
+                      </div>
+                      <span class="font-bold text-slate-900">{{ item.inProgressOverdue || 0 }}</span>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-1.5">
+                      <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
+                        <span class="text-slate-600 truncate">Đang t/h trong hạn</span>
+                      </div>
+                      <span class="font-bold text-slate-900">{{ item.inProgressOnTime || 0 }}</span>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-1.5">
+                      <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
+                        <span class="text-slate-600 truncate">Sắp tới hạn</span>
+                      </div>
+                      <span class="font-bold text-slate-900">{{ item.expiringSoon || 0 }}</span>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-1.5">
+                      <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="w-2.5 h-2.5 rounded-full bg-teal-500 shrink-0"></span>
+                        <span class="text-slate-600 truncate">Đã h/t quá hạn</span>
+                      </div>
+                      <span class="font-bold text-slate-900">{{ item.completedOverdue || 0 }}</span>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-1.5">
+                      <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+                        <span class="text-slate-600 truncate">Đã h/t trong hạn</span>
+                      </div>
+                      <span class="font-bold text-slate-900">{{ item.completedOnTime || 0 }}</span>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-1.5" v-if="item.notStarted > 0">
+                      <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0"></span>
+                        <span class="text-slate-600 truncate">Chưa thực hiện</span>
+                      </div>
+                      <span class="font-bold text-slate-900">{{ item.notStarted || 0 }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Card Footer: Sub-badges -->
+                <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-bold">
+                  <div class="flex items-center gap-1.5">
+                    <span v-if="dashboardFilter === 'goals'" class="text-purple-800 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200/60">🎯 {{ item.totalGoals || 0 }} Mục tiêu</span>
+                    <span v-else class="text-blue-800 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200/60">📋 {{ item.totalTasks || 0 }} Nhiệm vụ</span>
+                  </div>
+                  <span class="text-blue-600 group-hover:underline">Chi tiết →</span>
                 </div>
               </div>
+            </div>
 
-              <!-- Card Body: Donut Chart on Left, Legend Breakdown List on Right -->
-              <div class="flex items-center gap-3 py-0.5">
-                <!-- Donut Chart -->
-                <div class="shrink-0 flex items-center justify-center">
-                  <MiniStatusDonut :stats="item" :size="84" :innerSize="54" :fontSize="18" />
-                </div>
-
-                <!-- 5-6 Status Legend List -->
-                <div class="flex-1 min-w-0 space-y-1 text-[10px] font-bold">
-                  <div class="flex items-center justify-between gap-1.5">
-                    <div class="flex items-center gap-1.5 min-w-0">
-                      <span class="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0"></span>
-                      <span class="text-slate-600 truncate">Đang t/h quá hạn</span>
-                    </div>
-                    <span class="font-bold text-slate-900">{{ item.inProgressOverdue || 0 }}</span>
-                  </div>
-
-                  <div class="flex items-center justify-between gap-1.5">
-                    <div class="flex items-center gap-1.5 min-w-0">
-                      <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
-                      <span class="text-slate-600 truncate">Đang t/h trong hạn</span>
-                    </div>
-                    <span class="font-bold text-slate-900">{{ item.inProgressOnTime || 0 }}</span>
-                  </div>
-
-                  <div class="flex items-center justify-between gap-1.5">
-                    <div class="flex items-center gap-1.5 min-w-0">
-                      <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
-                      <span class="text-slate-600 truncate">Sắp tới hạn</span>
-                    </div>
-                    <span class="font-bold text-slate-900">{{ item.expiringSoon || 0 }}</span>
-                  </div>
-
-                  <div class="flex items-center justify-between gap-1.5">
-                    <div class="flex items-center gap-1.5 min-w-0">
-                      <span class="w-2.5 h-2.5 rounded-full bg-teal-500 shrink-0"></span>
-                      <span class="text-slate-600 truncate">Đã h/t quá hạn</span>
-                    </div>
-                    <span class="font-bold text-slate-900">{{ item.completedOverdue || 0 }}</span>
-                  </div>
-
-                  <div class="flex items-center justify-between gap-1.5">
-                    <div class="flex items-center gap-1.5 min-w-0">
-                      <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
-                      <span class="text-slate-600 truncate">Đã h/t trong hạn</span>
-                    </div>
-                    <span class="font-bold text-slate-900">{{ item.completedOnTime || 0 }}</span>
-                  </div>
-
-                  <div class="flex items-center justify-between gap-1.5" v-if="item.notStarted > 0">
-                    <div class="flex items-center gap-1.5 min-w-0">
-                      <span class="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0"></span>
-                      <span class="text-slate-600 truncate">Chưa thực hiện</span>
-                    </div>
-                    <span class="font-bold text-slate-900">{{ item.notStarted || 0 }}</span>
-                  </div>
-                </div>
-              </div>
-
-              <!-- Card Footer: Sub-badges -->
-              <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-bold">
-                <div class="flex items-center gap-1.5">
-                  <span v-if="dashboardFilter === 'goals'" class="text-purple-800 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200/60">🎯 {{ item.totalGoals || 0 }} Mục tiêu</span>
-                  <span v-else class="text-blue-800 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200/60">📋 {{ item.totalTasks || 0 }} Nhiệm vụ</span>
-                </div>
-                <span class="text-blue-600 group-hover:underline">Chi tiết →</span>
-              </div>
+            <!-- Expand / Collapse Button -->
+            <div v-if="(filteredMinistriesPerformance?.length || 0) > 8" class="pt-2 text-center border-t border-slate-100">
+              <button 
+                @click="isMinistriesExpanded = !isMinistriesExpanded" 
+                class="px-5 py-2 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
+              >
+                <span>{{ isMinistriesExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${filteredMinistriesPerformance.length - 8} Bộ/Ngành khác)` }}</span>
+              </button>
             </div>
           </div>
 
-          <!-- Expand / Collapse Button -->
-          <div v-if="(filteredMinistriesPerformance?.length || 0) > 8" class="pt-2 text-center border-t border-slate-100">
-            <button 
-              @click="isMinistriesExpanded = !isMinistriesExpanded" 
-              class="px-5 py-2 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
-            >
-              <span>{{ isMinistriesExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${filteredMinistriesPerformance.length - 8} Bộ/Ngành khác)` }}</span>
-            </button>
+          <div v-if="!filteredMinistriesPerformance?.length" class="p-8 text-center text-xs text-slate-400 italic font-semibold">
+            Không có dữ liệu Bộ/Ngành.
           </div>
-        </div>
-
-        <div v-if="!filteredMinistriesPerformance?.length" class="p-8 text-center text-xs text-slate-400 italic font-semibold">
-          Không có dữ liệu Bộ/Ngành.
         </div>
       </div>
 
       <!-- Section 2: Khối Địa Phương -->
       <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div 
+          @click="isSection2Collapsed = !isSection2Collapsed"
+          class="flex items-center justify-between border-b border-slate-100 pb-3 cursor-pointer select-none hover:opacity-80 transition"
+        >
           <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
-            🏛️ Khối Các Tỉnh / Thành Phố
+            <span>🏛️ Khối Các Tỉnh / Thành Phố</span>
+            <span class="text-xs font-normal text-slate-400">({{ isSection2Collapsed ? 'Nhấp để mở rộng' : 'Nhấp để thu gọn' }})</span>
           </h3>
-          <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-xl border border-emerald-200/60">
-            {{ filteredProvincesPerformance?.length ?? 0 }} Địa phương
-          </span>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-xl border border-emerald-200/60">
+              {{ filteredProvincesPerformance?.length ?? 0 }} Địa phương
+            </span>
+            <span class="text-slate-500 text-xs font-bold px-2.5 py-1 bg-slate-100 rounded-lg">
+              {{ isSection2Collapsed ? '▼ Mở rộng' : '▲ Thu gọn' }}
+            </span>
+          </div>
         </div>
 
-        <div v-if="filteredProvincesPerformance?.length" class="space-y-3">
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-            <div 
-              v-for="(item, index) in visibleProvinces" 
-              :key="item.agencyId"
-              @click="drilldownAgency(item)"
-              class="bg-white rounded-2xl border border-slate-200/90 p-3.5 shadow-2xs hover:shadow-md transition-all duration-200 cursor-pointer space-y-3 group flex flex-col justify-between"
-            >
-              <!-- Card Header: Agency Name & Blue Index Badge -->
-              <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
-                <div class="min-w-0 flex-1">
-                  <h4 class="text-xs sm:text-sm font-bold text-slate-800 group-hover:text-emerald-700 transition leading-snug truncate">
-                    {{ item.name }}
-                  </h4>
-                </div>
-
-                <div class="w-7 h-7 bg-blue-600 text-white font-bold text-xs rounded-xl flex items-center justify-center shrink-0 shadow-2xs">
-                  {{ index + 1 }}
-                </div>
-              </div>
-
-              <!-- Card Body: Donut Chart on Left, Legend Breakdown List on Right -->
-              <div class="flex items-center gap-3 py-0.5">
-                <!-- Donut Chart -->
-                <div class="shrink-0 flex items-center justify-center">
-                  <MiniStatusDonut :stats="item" :size="84" :innerSize="54" :fontSize="18" />
-                </div>
-
-                <!-- 5-6 Status Legend List -->
-                <div class="flex-1 min-w-0 space-y-1 text-[10px] font-bold">
-                  <div class="flex items-center justify-between gap-1.5">
-                    <div class="flex items-center gap-1.5 min-w-0">
-                      <span class="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0"></span>
-                      <span class="text-slate-600 truncate">Đang t/h quá hạn</span>
-                    </div>
-                    <span class="font-bold text-slate-900">{{ item.inProgressOverdue || 0 }}</span>
+        <div v-show="!isSection2Collapsed" class="space-y-4 pt-1">
+          <div v-if="filteredProvincesPerformance?.length" class="space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+              <div 
+                v-for="(item, index) in visibleProvinces" 
+                :key="item.agencyId"
+                @click="drilldownAgency(item)"
+                class="bg-white rounded-2xl border border-slate-200/90 p-3.5 shadow-2xs hover:shadow-md transition-all duration-200 cursor-pointer space-y-3 group flex flex-col justify-between"
+              >
+                <!-- Card Header: Agency Name & Blue Index Badge -->
+                <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
+                  <div class="min-w-0 flex-1">
+                    <h4 class="text-xs sm:text-sm font-bold text-slate-800 group-hover:text-emerald-700 transition leading-snug truncate">
+                      {{ item.name }}
+                    </h4>
                   </div>
 
-                  <div class="flex items-center justify-between gap-1.5">
-                    <div class="flex items-center gap-1.5 min-w-0">
-                      <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
-                      <span class="text-slate-600 truncate">Đang t/h trong hạn</span>
-                    </div>
-                    <span class="font-bold text-slate-900">{{ item.inProgressOnTime || 0 }}</span>
-                  </div>
-
-                  <div class="flex items-center justify-between gap-1.5">
-                    <div class="flex items-center gap-1.5 min-w-0">
-                      <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
-                      <span class="text-slate-600 truncate">Sắp tới hạn</span>
-                    </div>
-                    <span class="font-bold text-slate-900">{{ item.expiringSoon || 0 }}</span>
-                  </div>
-
-                  <div class="flex items-center justify-between gap-1.5">
-                    <div class="flex items-center gap-1.5 min-w-0">
-                      <span class="w-2.5 h-2.5 rounded-full bg-teal-500 shrink-0"></span>
-                      <span class="text-slate-600 truncate">Đã h/t quá hạn</span>
-                    </div>
-                    <span class="font-bold text-slate-900">{{ item.completedOverdue || 0 }}</span>
-                  </div>
-
-                  <div class="flex items-center justify-between gap-1.5">
-                    <div class="flex items-center gap-1.5 min-w-0">
-                      <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
-                      <span class="text-slate-600 truncate">Đã h/t trong hạn</span>
-                    </div>
-                    <span class="font-bold text-slate-900">{{ item.completedOnTime || 0 }}</span>
-                  </div>
-
-                  <div class="flex items-center justify-between gap-1.5" v-if="item.notStarted > 0">
-                    <div class="flex items-center gap-1.5 min-w-0">
-                      <span class="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0"></span>
-                      <span class="text-slate-600 truncate">Chưa thực hiện</span>
-                    </div>
-                    <span class="font-bold text-slate-900">{{ item.notStarted || 0 }}</span>
+                  <div class="w-7 h-7 bg-blue-600 text-white font-bold text-xs rounded-xl flex items-center justify-center shrink-0 shadow-2xs">
+                    {{ index + 1 }}
                   </div>
                 </div>
-              </div>
 
-              <!-- Card Footer: Sub-badges -->
-              <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-bold">
-                <div class="flex items-center gap-1.5">
-                  <span v-if="dashboardFilter === 'goals'" class="text-purple-800 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200/60">🎯 {{ item.totalGoals || 0 }} Mục tiêu</span>
-                  <span v-else class="text-blue-800 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200/60">📋 {{ item.totalTasks || 0 }} Nhiệm vụ</span>
+                <!-- Card Body: Donut Chart on Left, Legend Breakdown List on Right -->
+                <div class="flex items-center gap-3 py-0.5">
+                  <!-- Donut Chart -->
+                  <div class="shrink-0 flex items-center justify-center">
+                    <MiniStatusDonut :stats="item" :size="84" :innerSize="54" :fontSize="18" />
+                  </div>
+
+                  <!-- 5-6 Status Legend List -->
+                  <div class="flex-1 min-w-0 space-y-1 text-[10px] font-bold">
+                    <div class="flex items-center justify-between gap-1.5">
+                      <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0"></span>
+                        <span class="text-slate-600 truncate">Đang t/h quá hạn</span>
+                      </div>
+                      <span class="font-bold text-slate-900">{{ item.inProgressOverdue || 0 }}</span>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-1.5">
+                      <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
+                        <span class="text-slate-600 truncate">Đang t/h trong hạn</span>
+                      </div>
+                      <span class="font-bold text-slate-900">{{ item.inProgressOnTime || 0 }}</span>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-1.5">
+                      <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
+                        <span class="text-slate-600 truncate">Sắp tới hạn</span>
+                      </div>
+                      <span class="font-bold text-slate-900">{{ item.expiringSoon || 0 }}</span>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-1.5">
+                      <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="w-2.5 h-2.5 rounded-full bg-teal-500 shrink-0"></span>
+                        <span class="text-slate-600 truncate">Đã h/t quá hạn</span>
+                      </div>
+                      <span class="font-bold text-slate-900">{{ item.completedOverdue || 0 }}</span>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-1.5">
+                      <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+                        <span class="text-slate-600 truncate">Đã h/t trong hạn</span>
+                      </div>
+                      <span class="font-bold text-slate-900">{{ item.completedOnTime || 0 }}</span>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-1.5" v-if="item.notStarted > 0">
+                      <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0"></span>
+                        <span class="text-slate-600 truncate">Chưa thực hiện</span>
+                      </div>
+                      <span class="font-bold text-slate-900">{{ item.notStarted || 0 }}</span>
+                    </div>
+                  </div>
                 </div>
-                <span class="text-emerald-700 group-hover:underline">Chi tiết →</span>
+
+                <!-- Card Footer: Sub-badges -->
+                <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-bold">
+                  <div class="flex items-center gap-1.5">
+                    <span v-if="dashboardFilter === 'goals'" class="text-purple-800 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200/60">🎯 {{ item.totalGoals || 0 }} Mục tiêu</span>
+                    <span v-else class="text-blue-800 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200/60">📋 {{ item.totalTasks || 0 }} Nhiệm vụ</span>
+                  </div>
+                  <span class="text-emerald-700 group-hover:underline">Chi tiết →</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <!-- Expand / Collapse Button -->
-          <div v-if="(filteredProvincesPerformance?.length || 0) > 8" class="pt-2 text-center border-t border-slate-100">
-            <button 
-              @click="isProvincesExpanded = !isProvincesExpanded" 
-              class="px-5 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
-            >
-              <span>{{ isProvincesExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${filteredProvincesPerformance.length - 8} Địa phương khác)` }}</span>
-            </button>
+            <!-- Expand / Collapse Button -->
+            <div v-if="(filteredProvincesPerformance?.length || 0) > 8" class="pt-2 text-center border-t border-slate-100">
+              <button 
+                @click="isProvincesExpanded = !isProvincesExpanded" 
+                class="px-5 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
+              >
+                <span>{{ isProvincesExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${filteredProvincesPerformance.length - 8} Địa phương khác)` }}</span>
+              </button>
+            </div>
           </div>
-        </div>
 
           <div v-if="!filteredProvincesPerformance?.length" class="col-span-full p-8 text-center text-xs text-slate-400 italic font-semibold">
             Không có dữ liệu Địa phương.
@@ -785,118 +815,255 @@
 
       <!-- Section 3: Khối Các Cơ Quan / Đơn Vị Khác (Hiển thị khi có dữ liệu được gán chủ trì) -->
       <div v-if="filteredOthersPerformance?.length" class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
-        <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+        <div 
+          @click="isSection3Collapsed = !isSection3Collapsed"
+          class="flex items-center justify-between border-b border-slate-100 pb-3 cursor-pointer select-none hover:opacity-80 transition"
+        >
           <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
-            🏢 Khối Các Đơn Vị Khác
+            <span>🏢 Khối Các Đơn Vị Khác</span>
+            <span class="text-xs font-normal text-slate-400">({{ isSection3Collapsed ? 'Nhấp để mở rộng' : 'Nhấp để thu gọn' }})</span>
           </h3>
-          <span class="text-xs font-bold text-purple-600 bg-purple-50 px-3 py-1 rounded-xl border border-purple-200/60">
-            {{ filteredOthersPerformance?.length ?? 0 }} Cơ quan / Đơn vị
-          </span>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-purple-600 bg-purple-50 px-3 py-1 rounded-xl border border-purple-200/60">
+              {{ filteredOthersPerformance?.length ?? 0 }} Cơ quan / Đơn vị
+            </span>
+            <span class="text-slate-500 text-xs font-bold px-2.5 py-1 bg-slate-100 rounded-lg">
+              {{ isSection3Collapsed ? '▼ Mở rộng' : '▲ Thu gọn' }}
+            </span>
+          </div>
         </div>
 
-        <div class="space-y-3">
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-            <div 
-              v-for="(item, index) in visibleOthers" 
-              :key="item.agencyId"
-              @click="drilldownAgency(item)"
-              class="bg-white rounded-2xl border border-slate-200/90 p-3.5 shadow-2xs hover:shadow-md transition-all duration-200 cursor-pointer space-y-3 group flex flex-col justify-between"
-            >
-              <!-- Card Header: Agency Name & Purple Index Badge -->
-              <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
-                <div class="min-w-0 flex-1">
-                  <h4 class="text-xs sm:text-sm font-bold text-slate-800 group-hover:text-purple-700 transition leading-snug truncate">
-                    {{ item.name }}
-                  </h4>
-                </div>
-
-                <div class="w-7 h-7 bg-purple-600 text-white font-bold text-xs rounded-xl flex items-center justify-center shrink-0 shadow-2xs">
-                  {{ index + 1 }}
-                </div>
-              </div>
-
-              <!-- Card Body: Donut Chart on Left, Legend Breakdown List on Right -->
-              <div class="flex items-center gap-3 py-0.5">
-                <!-- Donut Chart -->
-                <div class="shrink-0 flex items-center justify-center">
-                  <MiniStatusDonut :stats="item" :size="84" :innerSize="54" :fontSize="18" />
-                </div>
-
-                <!-- Status Legend List -->
-                <div class="flex-1 min-w-0 space-y-1 text-[10px] font-bold">
-                  <div class="flex items-center justify-between gap-1.5">
-                    <div class="flex items-center gap-1.5 min-w-0">
-                      <span class="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0"></span>
-                      <span class="text-slate-600 truncate">Đang t/h quá hạn</span>
-                    </div>
-                    <span class="font-bold text-slate-900">{{ item.inProgressOverdue || 0 }}</span>
+        <div v-show="!isSection3Collapsed" class="space-y-4 pt-1">
+          <div class="space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+              <div 
+                v-for="(item, index) in visibleOthers" 
+                :key="item.agencyId"
+                @click="drilldownAgency(item)"
+                class="bg-white rounded-2xl border border-slate-200/90 p-3.5 shadow-2xs hover:shadow-md transition-all duration-200 cursor-pointer space-y-3 group flex flex-col justify-between"
+              >
+                <!-- Card Header: Agency Name & Purple Index Badge -->
+                <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
+                  <div class="min-w-0 flex-1">
+                    <h4 class="text-xs sm:text-sm font-bold text-slate-800 group-hover:text-purple-700 transition leading-snug truncate">
+                      {{ item.name }}
+                    </h4>
                   </div>
 
-                  <div class="flex items-center justify-between gap-1.5">
-                    <div class="flex items-center gap-1.5 min-w-0">
-                      <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
-                      <span class="text-slate-600 truncate">Đang t/h trong hạn</span>
-                    </div>
-                    <span class="font-bold text-slate-900">{{ item.inProgressOnTime || 0 }}</span>
-                  </div>
-
-                  <div class="flex items-center justify-between gap-1.5">
-                    <div class="flex items-center gap-1.5 min-w-0">
-                      <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
-                      <span class="text-slate-600 truncate">Sắp tới hạn</span>
-                    </div>
-                    <span class="font-bold text-slate-900">{{ item.expiringSoon || 0 }}</span>
-                  </div>
-
-                  <div class="flex items-center justify-between gap-1.5">
-                    <div class="flex items-center gap-1.5 min-w-0">
-                      <span class="w-2.5 h-2.5 rounded-full bg-teal-500 shrink-0"></span>
-                      <span class="text-slate-600 truncate">Đã h/t quá hạn</span>
-                    </div>
-                    <span class="font-bold text-slate-900">{{ item.completedOverdue || 0 }}</span>
-                  </div>
-
-                  <div class="flex items-center justify-between gap-1.5">
-                    <div class="flex items-center gap-1.5 min-w-0">
-                      <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
-                      <span class="text-slate-600 truncate">Đã h/t trong hạn</span>
-                    </div>
-                    <span class="font-bold text-slate-900">{{ item.completedOnTime || 0 }}</span>
-                  </div>
-
-                  <div class="flex items-center justify-between gap-1.5" v-if="item.notStarted > 0">
-                    <div class="flex items-center gap-1.5 min-w-0">
-                      <span class="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0"></span>
-                      <span class="text-slate-600 truncate">Chưa thực hiện</span>
-                    </div>
-                    <span class="font-bold text-slate-900">{{ item.notStarted || 0 }}</span>
+                  <div class="w-7 h-7 bg-purple-600 text-white font-bold text-xs rounded-xl flex items-center justify-center shrink-0 shadow-2xs">
+                    {{ index + 1 }}
                   </div>
                 </div>
-              </div>
 
-              <!-- Card Footer: Sub-badges -->
-              <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-bold">
-                <div class="flex items-center gap-1.5">
-                  <span v-if="dashboardFilter === 'goals'" class="text-purple-800 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200/60">🎯 {{ item.totalGoals || 0 }} Mục tiêu</span>
-                  <span v-else class="text-blue-800 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200/60">📋 {{ item.totalTasks || 0 }} Nhiệm vụ</span>
+                <!-- Card Body: Donut Chart on Left, Legend Breakdown List on Right -->
+                <div class="flex items-center gap-3 py-0.5">
+                  <!-- Donut Chart -->
+                  <div class="shrink-0 flex items-center justify-center">
+                    <MiniStatusDonut :stats="item" :size="84" :innerSize="54" :fontSize="18" />
+                  </div>
+
+                  <!-- Status Legend List -->
+                  <div class="flex-1 min-w-0 space-y-1 text-[10px] font-bold">
+                    <div class="flex items-center justify-between gap-1.5">
+                      <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0"></span>
+                        <span class="text-slate-600 truncate">Đang t/h quá hạn</span>
+                      </div>
+                      <span class="font-bold text-slate-900">{{ item.inProgressOverdue || 0 }}</span>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-1.5">
+                      <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
+                        <span class="text-slate-600 truncate">Đang t/h trong hạn</span>
+                      </div>
+                      <span class="font-bold text-slate-900">{{ item.inProgressOnTime || 0 }}</span>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-1.5">
+                      <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
+                        <span class="text-slate-600 truncate">Sắp tới hạn</span>
+                      </div>
+                      <span class="font-bold text-slate-900">{{ item.expiringSoon || 0 }}</span>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-1.5">
+                      <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="w-2.5 h-2.5 rounded-full bg-teal-500 shrink-0"></span>
+                        <span class="text-slate-600 truncate">Đã h/t quá hạn</span>
+                      </div>
+                      <span class="font-bold text-slate-900">{{ item.completedOverdue || 0 }}</span>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-1.5">
+                      <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+                        <span class="text-slate-600 truncate">Đã h/t trong hạn</span>
+                      </div>
+                      <span class="font-bold text-slate-900">{{ item.completedOnTime || 0 }}</span>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-1.5" v-if="item.notStarted > 0">
+                      <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0"></span>
+                        <span class="text-slate-600 truncate">Chưa thực hiện</span>
+                      </div>
+                      <span class="font-bold text-slate-900">{{ item.notStarted || 0 }}</span>
+                    </div>
+                  </div>
                 </div>
-                <span class="text-purple-700 group-hover:underline">Chi tiết →</span>
+
+                <!-- Card Footer: Sub-badges -->
+                <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-bold">
+                  <div class="flex items-center gap-1.5">
+                    <span v-if="dashboardFilter === 'goals'" class="text-purple-800 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200/60">🎯 {{ item.totalGoals || 0 }} Mục tiêu</span>
+                    <span v-else class="text-blue-800 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200/60">📋 {{ item.totalTasks || 0 }} Nhiệm vụ</span>
+                  </div>
+                  <span class="text-purple-700 group-hover:underline">Chi tiết →</span>
+                </div>
               </div>
             </div>
-          </div>
 
-          <!-- Expand / Collapse Button -->
-          <div v-if="(filteredOthersPerformance?.length || 0) > 8" class="pt-2 text-center border-t border-slate-100">
-            <button 
-              @click="isOthersExpanded = !isOthersExpanded" 
-              class="px-5 py-2 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-xl transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
-            >
-              <span>{{ isOthersExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${filteredOthersPerformance.length - 8} Đơn vị khác)` }}</span>
-            </button>
+            <!-- Expand / Collapse Button -->
+            <div v-if="(filteredOthersPerformance?.length || 0) > 8" class="pt-2 text-center border-t border-slate-100">
+              <button 
+                @click="isOthersExpanded = !isOthersExpanded" 
+                class="px-5 py-2 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-xl transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
+              >
+                <span>{{ isOthersExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${filteredOthersPerformance.length - 8} Đơn vị khác)` }}</span>
+              </button>
+            </div>
           </div>
         </div>
       </div>
 
+      <!-- Section 4 (Admin View Only): Khối Các Đơn Vị Trực Thuộc Bộ Khoa học và Công nghệ -->
+      <div v-if="authState.isAdmin.value && filteredMostSubAgenciesPerformance?.length" class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
+        <div 
+          @click="isSection4Collapsed = !isSection4Collapsed"
+          class="flex items-center justify-between border-b border-slate-100 pb-3 cursor-pointer select-none hover:opacity-80 transition"
+        >
+          <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+            <span>🏛️ Các Đơn Vị Trực Thuộc Bộ Khoa Học và Công Nghệ</span>
+            <span class="text-xs font-normal text-slate-400">({{ isSection4Collapsed ? 'Nhấp để mở rộng' : 'Nhấp để thu gọn' }})</span>
+          </h3>
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-xl border border-indigo-200/60">
+              {{ filteredMostSubAgenciesPerformance?.length ?? 0 }} Đơn vị trực thuộc
+            </span>
+            <span class="text-slate-500 text-xs font-bold px-2.5 py-1 bg-slate-100 rounded-lg">
+              {{ isSection4Collapsed ? '▼ Mở rộng' : '▲ Thu gọn' }}
+            </span>
+          </div>
+        </div>
+
+        <div v-show="!isSection4Collapsed" class="space-y-4 pt-1">
+          <div class="space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+              <div 
+                v-for="(item, index) in visibleMostSubAgencies" 
+                :key="item.agencyId"
+                @click="drilldownAgency(item)"
+                class="bg-white rounded-2xl border border-slate-200/90 p-3.5 shadow-2xs hover:shadow-md transition-all duration-200 cursor-pointer space-y-3 group flex flex-col justify-between"
+              >
+                <!-- Card Header: Agency Name & Indigo Index Badge -->
+                <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
+                  <div class="min-w-0 flex-1">
+                    <h4 class="text-xs sm:text-sm font-bold text-slate-800 group-hover:text-indigo-700 transition leading-snug truncate">
+                      {{ item.name }}
+                    </h4>
+                  </div>
+
+                  <div class="w-7 h-7 bg-indigo-600 text-white font-bold text-xs rounded-xl flex items-center justify-center shrink-0 shadow-2xs">
+                    {{ index + 1 }}
+                  </div>
+                </div>
+
+                <!-- Card Body: Donut Chart on Left, Legend Breakdown List on Right -->
+                <div class="flex items-center gap-3 py-0.5">
+                  <!-- Donut Chart -->
+                  <div class="shrink-0 flex items-center justify-center">
+                    <MiniStatusDonut :stats="item" :size="84" :innerSize="54" :fontSize="18" />
+                  </div>
+
+                  <!-- Status Legend List -->
+                  <div class="flex-1 min-w-0 space-y-1 text-[10px] font-bold">
+                    <div class="flex items-center justify-between gap-1.5">
+                      <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0"></span>
+                        <span class="text-slate-600 truncate">Đang t/h quá hạn</span>
+                      </div>
+                      <span class="font-bold text-slate-900">{{ item.inProgressOverdue || 0 }}</span>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-1.5">
+                      <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
+                        <span class="text-slate-600 truncate">Đang t/h trong hạn</span>
+                      </div>
+                      <span class="font-bold text-slate-900">{{ item.inProgressOnTime || 0 }}</span>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-1.5">
+                      <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
+                        <span class="text-slate-600 truncate">Sắp tới hạn</span>
+                      </div>
+                      <span class="font-bold text-slate-900">{{ item.expiringSoon || 0 }}</span>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-1.5">
+                      <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="w-2.5 h-2.5 rounded-full bg-teal-500 shrink-0"></span>
+                        <span class="text-slate-600 truncate">Đã h/t quá hạn</span>
+                      </div>
+                      <span class="font-bold text-slate-900">{{ item.completedOverdue || 0 }}</span>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-1.5">
+                      <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
+                        <span class="text-slate-600 truncate">Đã h/t trong hạn</span>
+                      </div>
+                      <span class="font-bold text-slate-900">{{ item.completedOnTime || 0 }}</span>
+                    </div>
+
+                    <div class="flex items-center justify-between gap-1.5" v-if="item.notStarted > 0">
+                      <div class="flex items-center gap-1.5 min-w-0">
+                        <span class="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0"></span>
+                        <span class="text-slate-600 truncate">Chưa thực hiện</span>
+                      </div>
+                      <span class="font-bold text-slate-900">{{ item.notStarted || 0 }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Card Footer: Sub-badges -->
+                <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-bold">
+                  <div class="flex items-center gap-1.5">
+                    <span v-if="dashboardFilter === 'goals'" class="text-purple-800 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200/60">🎯 {{ item.totalGoals || 0 }} Mục tiêu</span>
+                    <span v-else class="text-blue-800 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200/60">📋 {{ item.totalTasks || 0 }} Nhiệm vụ</span>
+                  </div>
+                  <span class="text-indigo-700 group-hover:underline">Chi tiết →</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Expand / Collapse Button -->
+            <div v-if="(filteredMostSubAgenciesPerformance?.length || 0) > 8" class="pt-2 text-center border-t border-slate-100">
+              <button 
+                @click="isMostExpanded = !isMostExpanded" 
+                class="px-5 py-2 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-xl transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
+              >
+                <span>{{ isMostExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${filteredMostSubAgenciesPerformance.length - 8} Đơn vị khác)` }}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
     </div>
 
     <!-- Drilldown Sub-agencies, Tasks List & Contact Persons Modal -->
@@ -1286,6 +1453,7 @@ import OverlayPanel from '../components/OverlayPanel.vue';
 import ItemDetailModal from '../components/ItemDetailModal.vue';
 import LegalFileViewerModal from '../components/LegalFileViewerModal.vue';
 import LegalDocumentStackedChart from '../components/LegalDocumentStackedChart.vue';
+import AllAgenciesProgressChart from '../components/AllAgenciesProgressChart.vue';
 import { getApiUrl } from '../config/api';
 import { authState } from '../services/auth';
 import { GOAL_SECTIONS, GOAL_GROUPS, TASK_SECTIONS, TASK_GROUPS } from '../config/planningStructureConfig';
@@ -1474,6 +1642,11 @@ const isProvincesExpanded = ref(false);
 const isOthersExpanded = ref(false);
 const isSubAgenciesExpanded = ref(false);
 
+const isSection1Collapsed = ref(true);
+const isSection2Collapsed = ref(true);
+const isSection3Collapsed = ref(true);
+const isSection4Collapsed = ref(true);
+
 function filterOutSpecialAgencies(list) {
   return (list || []).filter(item => {
     if (!item) return false;
@@ -1531,6 +1704,16 @@ const visibleOthers = computed(() => {
 const visibleSubAgencies = computed(() => {
   const list = userSubAgenciesPerformance.value || [];
   if (isSubAgenciesExpanded.value || list.length <= 8) return list;
+  return list.slice(0, 8);
+});
+
+const mostSubAgenciesPerformance = ref([]);
+const isMostExpanded = ref(false);
+
+const filteredMostSubAgenciesPerformance = computed(() => sortAgenciesByCount(mostSubAgenciesPerformance.value));
+const visibleMostSubAgencies = computed(() => {
+  const list = filteredMostSubAgenciesPerformance.value;
+  if (isMostExpanded.value || list.length <= 8) return list;
   return list.slice(0, 8);
 });
 const selectedDrilldownAgency = ref(null);
@@ -1850,9 +2033,37 @@ async function loadDashboardMetrics() {
       fetchSubPromise = fetch(getApiUrl(`/api/dashboard/metrics?${subParams.toString()}`));
     }
 
-    const [res, subRes] = await Promise.all([
+    // Concurrently fetch subordinate units performance for Bộ Khoa học và Công nghệ (Admin View)
+    let fetchMostSubPromise = Promise.resolve(null);
+    if (authState.isAdmin.value) {
+      const mostAgency = agencies.value.find(a => a.name && (a.name.toLowerCase().includes('khoa học và công nghệ') || a.code === 'AG-77c4bef6'));
+      const mostAgencyId = mostAgency ? mostAgency.id : '3e6c7022-b1b8-42ae-bbeb-0acdd30735f4';
+
+      const mostParams = new URLSearchParams();
+      mostParams.append('parentAgencyId', mostAgencyId);
+      if (dashboardFilter.value && dashboardFilter.value !== 'all') {
+        mostParams.append('itemType', dashboardFilter.value === 'goals' ? 'Goal' : 'Task');
+      }
+      if (selectedScopes.value && selectedScopes.value.length === 1) {
+        mostParams.append('scope', selectedScopes.value[0]);
+      }
+      if (selectedSections.value && selectedSections.value.length > 0) {
+        selectedSections.value.forEach(sec => mostParams.append('section', sec));
+      }
+      if (selectedGroups.value && selectedGroups.value.length > 0) {
+        selectedGroups.value.forEach(grp => mostParams.append('group', grp));
+      }
+      if (fromYear.value) mostParams.append('fromYear', fromYear.value);
+      if (toYear.value) mostParams.append('toYear', toYear.value);
+      if (isOngoingOnly.value) mostParams.append('isOngoing', 'true');
+
+      fetchMostSubPromise = fetch(getApiUrl(`/api/dashboard/metrics?${mostParams.toString()}`));
+    }
+
+    const [res, subRes, mostSubRes] = await Promise.all([
       fetch(url),
-      fetchSubPromise
+      fetchSubPromise,
+      fetchMostSubPromise
     ]);
 
     if (res && res.ok) {
@@ -1871,6 +2082,14 @@ async function loadDashboardMetrics() {
         }
         return (a.name || '').localeCompare(b.name || '', 'vi');
       });
+    }
+
+    if (mostSubRes && mostSubRes.ok) {
+      const mostData = await mostSubRes.json();
+      const rawMostList = [...(mostData.ministriesPerformance || []), ...(mostData.provincesPerformance || []), ...(mostData.othersPerformance || [])];
+      mostSubAgenciesPerformance.value = rawMostList;
+    } else {
+      mostSubAgenciesPerformance.value = [];
     }
   } catch (e) {
     // Silent catch
