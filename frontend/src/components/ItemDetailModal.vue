@@ -335,7 +335,7 @@
                 <span>{{ notif.recipientsSummary }}</span>
               </div>
 
-              <div class="prose max-w-none text-xs text-slate-800 bg-white p-3 rounded-lg border border-amber-100" v-html="notif.urgeContent"></div>
+              <div class="prose max-w-none text-xs text-slate-800 bg-white p-3 rounded-lg border border-amber-100" v-html="sanitizeHtml(notif.urgeContent)"></div>
             </div>
           </div>
         </div>
@@ -529,6 +529,9 @@
 </template>
 
 <script setup>
+import { sanitizeHtml } from '../utils/sanitizeHtml';
+import { fetchWithAuth } from '../services/auth';
+
 import { ref, computed, watch } from 'vue';
 import { toast } from 'vue3-toastify';
 import LoadingSpinner from './LoadingSpinner.vue';
@@ -741,7 +744,7 @@ async function loadHistories() {
       : (selectedAgencyFilter.value || authState.user.value?.agencyId || '');
 
     const queryStr = userAgId ? `?agencyId=${userAgId}` : '';
-    const res = await fetch(getApiUrl(`/api/execution/tasks/${taskId}/progress-history${queryStr}`));
+    const res = await fetchWithAuth(getApiUrl(`/api/execution/tasks/${taskId}/progress-history${queryStr}`));
     if (res.ok) {
       const data = await res.json();
       reportHistory.value = data;
@@ -774,7 +777,7 @@ async function loadHistories() {
   // 2. Fetch Notification / Urge History
   isLoadingNotifications.value = true;
   try {
-    const res = await fetch(getApiUrl(`/api/execution/tasks/${taskId}/urge-history`));
+    const res = await fetchWithAuth(getApiUrl(`/api/execution/tasks/${taskId}/urge-history`));
     if (res.ok) {
       notificationHistory.value = await res.json();
     } else {
@@ -834,7 +837,7 @@ async function openAssignModal() {
   isLoadingSubAgencies.value = true;
   selectedSubAgencyId.value = props.item.assignedAgencyId || '';
   try {
-    const res = await fetch(getApiUrl('/api/agencies'));
+    const res = await fetchWithAuth(getApiUrl('/api/agencies'));
     if (res.ok) {
       const data = await res.json();
       const allAgencies = Array.isArray(data) ? data : (data.items || []);
@@ -874,7 +877,7 @@ async function submitAssignTask() {
   if (!props.item) return;
   const taskId = props.item.taskId || props.item.id;
   try {
-    const res = await fetch(getApiUrl(`/api/planning/items/${taskId}/assign`), {
+    const res = await fetchWithAuth(getApiUrl(`/api/planning/items/${taskId}/assign`), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ assignedAgencyId: selectedSubAgencyId.value || null })
@@ -920,7 +923,7 @@ async function loadAgenciesMatrix() {
   if (!taskId) return;
   isLoadingMatrix.value = true;
   try {
-    const res = await fetch(getApiUrl(`/api/execution/tasks/${taskId}/agencies-execution`));
+    const res = await fetchWithAuth(getApiUrl(`/api/execution/tasks/${taskId}/agencies-execution`));
     if (res.ok) {
       matrixData.value = await res.json();
     } else {
@@ -944,7 +947,7 @@ function switchTab(tabName) {
 async function approveProgressLog(logId) {
   if (!logId) return;
   try {
-    const res = await fetch(getApiUrl(`/api/execution/approve/${logId}`), { method: 'POST' });
+    const res = await fetchWithAuth(getApiUrl(`/api/execution/approve/${logId}`), { method: 'POST' });
     if (res.ok) {
       toast.success('Đã phê duyệt báo cáo tiến độ thành công!');
       loadHistories();
@@ -966,7 +969,7 @@ function openRejectModal(logId) {
 async function submitRejectProgressLog() {
   if (!rejectTargetLogId.value) return;
   try {
-    const res = await fetch(getApiUrl(`/api/execution/reject/${rejectTargetLogId.value}`), {
+    const res = await fetchWithAuth(getApiUrl(`/api/execution/reject/${rejectTargetLogId.value}`), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ reason: rejectionReasonInput.value || 'Chưa đạt yêu cầu' })

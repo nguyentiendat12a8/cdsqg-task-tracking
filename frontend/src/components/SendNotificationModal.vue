@@ -155,6 +155,9 @@
 </template>
 
 <script setup>
+import { sanitizeHtml } from '../utils/sanitizeHtml';
+import { fetchWithAuth } from '../services/auth';
+
 import { ref, computed, watch } from 'vue';
 import { toast } from 'vue3-toastify';
 import LoadingSpinner from './LoadingSpinner.vue';
@@ -287,7 +290,7 @@ async function fetchRecipientOptions() {
     const isAdmin = authState.isAdmin.value;
     const url = getApiUrl(`/api/notification/recipients-for-task?leadAgencyId=${props.leadAgencyId || ''}&coordinatingAgencyIds=${coordsStr}&isAdmin=${isAdmin}`);
     
-    const res = await fetch(url);
+    const res = await fetchWithAuth(url);
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data) && data.length > 0) {
@@ -352,7 +355,7 @@ function close() {
 function stripHtml(html) {
   if (!html) return '';
   const tmp = document.createElement('div');
-  tmp.innerHTML = html;
+  tmp.innerHTML = sanitizeHtml(html);
   return tmp.textContent || tmp.innerText || '';
 }
 
@@ -388,7 +391,7 @@ async function submitNotification() {
       recipientsSummary: recipientsSummaryStr
     };
 
-    const res = await fetch(getApiUrl('/api/notification/send'), {
+    const res = await fetchWithAuth(getApiUrl('/api/notification/send'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)

@@ -34,7 +34,7 @@
         <div class="space-y-1.5">
           <label class="text-xs font-bold text-slate-700 uppercase">Nội Dung Văn Bản Thông Báo</label>
           <div 
-            v-html="log.urgeContent"
+            v-html="sanitizeHtml(log.urgeContent)"
             class="p-5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 font-medium leading-relaxed shadow-2xs space-y-2 whitespace-pre-line"
           ></div>
         </div>
@@ -53,6 +53,7 @@
 </template>
 
 <script setup>
+import { sanitizeHtml } from '../utils/sanitizeHtml';
 import { ref } from 'vue';
 
 const props = defineProps({

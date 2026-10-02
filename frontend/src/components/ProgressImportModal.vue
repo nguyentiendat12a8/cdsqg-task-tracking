@@ -212,6 +212,8 @@
 </template>
 
 <script setup>
+import { fetchWithAuth } from '../services/auth';
+
 import { ref, computed } from 'vue';
 import XLSX from 'xlsx-js-style';
 import { toast } from 'vue3-toastify';
@@ -509,7 +511,7 @@ async function submitImport() {
       }))
     };
 
-    const res = await fetch(getApiUrl('/api/execution/import-progress-bulk'), {
+    const res = await fetchWithAuth(getApiUrl('/api/execution/import-progress-bulk'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)

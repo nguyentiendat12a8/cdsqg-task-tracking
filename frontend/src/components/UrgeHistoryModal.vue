@@ -58,6 +58,8 @@
 </template>
 
 <script setup>
+import { fetchWithAuth } from '../services/auth';
+
 import { ref, watch } from 'vue';
 import LoadingSpinner from './LoadingSpinner.vue';
 import { getApiUrl } from '../config/api';
@@ -94,7 +96,7 @@ async function loadLogs() {
       ? getApiUrl(`/api/execution/tasks/${props.taskId}/urge-history`)
       : getApiUrl('/api/execution/urge-logs');
       
-    const res = await fetch(url);
+    const res = await fetchWithAuth(url);
     if (res.ok) {
       logs.value = await res.json();
     }

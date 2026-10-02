@@ -1266,6 +1266,8 @@
 </template>
 
 <script setup>
+import { fetchWithAuth } from '../services/auth';
+
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue';
 import { toast } from 'vue3-toastify';
 import { confirmModal } from '../services/confirm';
@@ -2103,8 +2105,8 @@ async function loadData() {
     }
 
     const [itemsRes, agRes] = await Promise.all([
-      fetch(getApiUrl(`/api/documents/${docId}/items?${params.toString()}`)),
-      fetch(getApiUrl('/api/agencies'))
+      fetchWithAuth(getApiUrl(`/api/documents/${docId}/items?${params.toString()}`)),
+      fetchWithAuth(getApiUrl('/api/agencies'))
     ]);
 
     if (agRes.ok) {
@@ -2251,7 +2253,7 @@ async function submitCreateItem() {
       deliverables: createForm.value.deliverables || []
     };
 
-    const res = await fetch(getApiUrl('/api/planning/items'), {
+    const res = await fetchWithAuth(getApiUrl('/api/planning/items'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -2375,7 +2377,7 @@ async function submitAssignTaskFromList() {
   if (!assignItemTarget.value) return;
   try {
     const targetId = assignItemTarget.value.taskId || assignItemTarget.value.id;
-    const res = await fetch(getApiUrl(`/api/planning/items/${targetId}/assign`), {
+    const res = await fetchWithAuth(getApiUrl(`/api/planning/items/${targetId}/assign`), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ assignedAgencyId: selectedSubAgencyId.value || null })
@@ -2461,7 +2463,7 @@ async function handleDeleteItem(item) {
 
   try {
     const targetId = item.taskId || item.id;
-    const res = await fetch(getApiUrl(`/api/planning/items/${targetId}`), {
+    const res = await fetchWithAuth(getApiUrl(`/api/planning/items/${targetId}`), {
       method: 'DELETE'
     });
 
@@ -2625,7 +2627,7 @@ async function submitEditItem() {
     };
 
     const targetId = editingItem.value.taskId || editingItem.value.id;
-    const res = await fetch(getApiUrl(`/api/planning/items/${targetId}`), {
+    const res = await fetchWithAuth(getApiUrl(`/api/planning/items/${targetId}`), {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -2671,7 +2673,7 @@ async function loadGlobalPendingLogs(isSilent = false) {
     isLoadingPendingLogs.value = true;
   }
   try {
-    const res = await fetch(getApiUrl('/api/execution/pending-approvals'));
+    const res = await fetchWithAuth(getApiUrl('/api/execution/pending-approvals'));
     if (res.ok) {
       globalPendingLogs.value = await res.json();
     } else {
@@ -2694,7 +2696,7 @@ function openPendingApprovalsModal() {
 async function handleApproveFromGlobalList(logId) {
   if (!logId) return;
   try {
-    const res = await fetch(getApiUrl(`/api/execution/approve/${logId}`), { method: 'POST' });
+    const res = await fetchWithAuth(getApiUrl(`/api/execution/approve/${logId}`), { method: 'POST' });
     if (res.ok) {
       toast.success('Đã phê duyệt báo cáo tiến độ thành công!');
       try {
@@ -2722,7 +2724,7 @@ function openRejectModalFromGlobalList(logId) {
 async function confirmRejectFromGlobalList() {
   if (!rejectLogId.value) return;
   try {
-    const res = await fetch(getApiUrl(`/api/execution/reject/${rejectLogId.value}`), {
+    const res = await fetchWithAuth(getApiUrl(`/api/execution/reject/${rejectLogId.value}`), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ reason: rejectionReason.value || 'Chưa đạt yêu cầu' })

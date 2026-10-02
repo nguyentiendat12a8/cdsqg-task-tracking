@@ -73,6 +73,8 @@
 </template>
 
 <script setup>
+import { fetchWithAuth } from './services/auth';
+
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import LoginView from './views/LoginView.vue';
 import AppSidebar from './components/AppSidebar.vue';
@@ -191,7 +193,7 @@ async function handleOpenNotificationDetail(event) {
     const docId = '12660000-0000-0000-0000-000000001266';
     const currentAgencyId = authState.user.value?.agencyId || '';
     const agencyParam = currentAgencyId ? `?agencyId=${currentAgencyId}` : '';
-    const res = await fetch(getApiUrl(`/api/planning/documents/${docId}/grid${agencyParam}`));
+    const res = await fetchWithAuth(getApiUrl(`/api/planning/documents/${docId}/grid${agencyParam}`));
     if (!res.ok) return;
 
     const data = await res.json();

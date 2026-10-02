@@ -1442,6 +1442,8 @@
 </template>
 
 <script setup>
+import { fetchWithAuth } from '../services/auth';
+
 import { ref, computed, onMounted } from 'vue';
 import { toast } from 'vue3-toastify';
 import XLSX from 'xlsx-js-style';
@@ -1969,7 +1971,7 @@ function getPct(val, total) {
 
 async function loadAgencies() {
   try {
-    const res = await fetch(getApiUrl('/api/agencies'));
+    const res = await fetchWithAuth(getApiUrl('/api/agencies'));
     if (res.ok) {
       const data = await res.json();
       agencies.value = Array.isArray(data) ? data : (data.items || []);
@@ -2030,7 +2032,7 @@ async function loadDashboardMetrics() {
       if (toYear.value) subParams.append('toYear', toYear.value);
       if (isOngoingOnly.value) subParams.append('isOngoing', 'true');
 
-      fetchSubPromise = fetch(getApiUrl(`/api/dashboard/metrics?${subParams.toString()}`));
+      fetchSubPromise = fetchWithAuth(getApiUrl(`/api/dashboard/metrics?${subParams.toString()}`));
     }
 
     // Concurrently fetch subordinate units performance for Bộ Khoa học và Công nghệ (Admin View)
@@ -2057,11 +2059,11 @@ async function loadDashboardMetrics() {
       if (toYear.value) mostParams.append('toYear', toYear.value);
       if (isOngoingOnly.value) mostParams.append('isOngoing', 'true');
 
-      fetchMostSubPromise = fetch(getApiUrl(`/api/dashboard/metrics?${mostParams.toString()}`));
+      fetchMostSubPromise = fetchWithAuth(getApiUrl(`/api/dashboard/metrics?${mostParams.toString()}`));
     }
 
     const [res, subRes, mostSubRes] = await Promise.all([
-      fetch(url),
+      fetchWithAuth(url),
       fetchSubPromise,
       fetchMostSubPromise
     ]);
@@ -2116,7 +2118,7 @@ async function loadAgencyItems(agencyId) {
     if (toYear.value) params.append('toYear', toYear.value);
     if (isOngoingOnly.value) params.append('isOngoing', 'true');
 
-    const res = await fetch(getApiUrl(`/api/dashboard/agency-items?${params.toString()}`));
+    const res = await fetchWithAuth(getApiUrl(`/api/dashboard/agency-items?${params.toString()}`));
     if (res.ok) {
       agencyItemsList.value = await res.json();
     }
@@ -2149,7 +2151,7 @@ async function loadSubAgencies(parentAgencyId) {
     if (toYear.value) params.append('toYear', toYear.value);
     if (isOngoingOnly.value) params.append('isOngoing', 'true');
 
-    const res = await fetch(getApiUrl(`/api/dashboard/metrics?${params.toString()}`));
+    const res = await fetchWithAuth(getApiUrl(`/api/dashboard/metrics?${params.toString()}`));
     if (res.ok) {
       const data = await res.json();
       subAgenciesList.value = [...(data.ministriesPerformance || []), ...(data.provincesPerformance || []), ...(data.othersPerformance || [])];
@@ -2422,7 +2424,7 @@ async function exportDashboardExcelReport() {
         if (toYear.value) subParams.append('toYear', toYear.value);
         if (isOngoingOnly.value) subParams.append('isOngoing', 'true');
 
-        const subRes = await fetch(getApiUrl(`/api/dashboard/metrics?${subParams.toString()}`));
+        const subRes = await fetchWithAuth(getApiUrl(`/api/dashboard/metrics?${subParams.toString()}`));
         if (subRes.ok) {
           const subData = await subRes.json();
           subAgencies = filterOutSpecialAgencies([
@@ -2446,7 +2448,7 @@ async function exportDashboardExcelReport() {
         if (toYear.value) agParams.append('toYear', toYear.value);
         if (isOngoingOnly.value) agParams.append('isOngoing', 'true');
 
-        const agItemsRes = await fetch(getApiUrl(`/api/dashboard/agency-items?${agParams.toString()}`));
+        const agItemsRes = await fetchWithAuth(getApiUrl(`/api/dashboard/agency-items?${agParams.toString()}`));
         if (agItemsRes.ok) {
           agencyItems = await agItemsRes.json();
         }
@@ -2803,7 +2805,7 @@ async function loadLegalDashboardStats() {
 
     const queryString = params.toString();
     const url = getApiUrl(`/api/legaldocuments/dashboard-stats${queryString ? '?' + queryString : ''}`);
-    const res = await fetch(url);
+    const res = await fetchWithAuth(url);
     if (res.ok) {
       legalStats.value = await res.json();
     }
@@ -2937,7 +2939,7 @@ async function exportLegalStatsExcelReport() {
       if (userRole) docParams.append('userRole', userRole);
       if (authState.user.value?.agencyId) docParams.append('userAgencyId', authState.user.value.agencyId);
 
-      const docRes = await fetch(getApiUrl(`/api/legaldocuments?${docParams.toString()}`));
+      const docRes = await fetchWithAuth(getApiUrl(`/api/legaldocuments?${docParams.toString()}`));
       if (docRes.ok) {
         const docData = await docRes.json();
         const docItems = docData.items || (Array.isArray(docData) ? docData : []);

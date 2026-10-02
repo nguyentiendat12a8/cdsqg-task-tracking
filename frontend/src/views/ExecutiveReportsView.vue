@@ -428,6 +428,8 @@
 </template>
 
 <script setup>
+import { fetchWithAuth } from '../services/auth';
+
 import { ref, computed, onMounted, watch } from 'vue';
 import SearchableSelect from '../components/SearchableSelect.vue';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
@@ -855,7 +857,7 @@ async function loadReportData() {
   const currentId = ++reportFetchRequestId;
   isLoading.value = true;
   try {
-    const agRes = await fetch(getApiUrl('/api/agencies'));
+    const agRes = await fetchWithAuth(getApiUrl('/api/agencies'));
     if (agRes.ok) {
       const agData = await agRes.json();
       if (currentId !== reportFetchRequestId) return;
@@ -884,7 +886,7 @@ async function loadReportData() {
     if (appliedFilters.value.toYear) params.append('toYear', appliedFilters.value.toYear);
     if (appliedFilters.value.onlyOngoing) params.append('isOngoing', 'true');
 
-    const mRes = await fetch(getApiUrl(`/api/dashboard/metrics${params.toString() ? '?' + params.toString() : ''}`));
+    const mRes = await fetchWithAuth(getApiUrl(`/api/dashboard/metrics${params.toString() ? '?' + params.toString() : ''}`));
     if (mRes.ok) {
       const mData = await mRes.json();
       if (currentId !== reportFetchRequestId) return;
@@ -892,7 +894,7 @@ async function loadReportData() {
     }
 
     const docId = '12660000-0000-0000-0000-000000001266';
-    const gridRes = await fetch(getApiUrl(`/api/planning/documents/${docId}/grid`));
+    const gridRes = await fetchWithAuth(getApiUrl(`/api/planning/documents/${docId}/grid`));
     if (gridRes.ok) {
       const data = await gridRes.json();
       if (currentId !== reportFetchRequestId) return;

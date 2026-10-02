@@ -167,6 +167,8 @@
 </template>
 
 <script setup>
+import { fetchWithAuth } from '../services/auth';
+
 import { ref, computed, watch, onMounted } from 'vue';
 import SearchableSelect from './SearchableSelect.vue';
 import { toast } from 'vue3-toastify';
@@ -275,7 +277,7 @@ async function fetchUnits() {
       url.searchParams.append('search', appliedSearch.value.trim());
     }
 
-    const res = await fetch(url);
+    const res = await fetchWithAuth(url);
     if (res.ok) {
       const data = await res.json();
       if (currentRequestId !== unitFetchRequestId) return;
@@ -311,13 +313,13 @@ async function saveUnit() {
 
     let res;
     if (isEditing.value && editingId.value) {
-      res = await fetch(getApiUrl(`/api/units/${editingId.value}`), {
+      res = await fetchWithAuth(getApiUrl(`/api/units/${editingId.value}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
     } else {
-      res = await fetch(getApiUrl('/api/units'), {
+      res = await fetchWithAuth(getApiUrl('/api/units'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -353,7 +355,7 @@ async function deleteUnit(unit) {
 
   if (confirmed) {
     try {
-      const res = await fetch(getApiUrl(`/api/units/${unit.id}`), { method: 'DELETE' });
+      const res = await fetchWithAuth(getApiUrl(`/api/units/${unit.id}`), { method: 'DELETE' });
       if (res.ok) {
         toast.success('Đã xóa đơn vị tính thành công!');
         await fetchUnits();

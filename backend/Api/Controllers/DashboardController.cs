@@ -44,6 +44,8 @@ namespace Cdsqg.Api.Controllers
                     .Include(i => i.Baselines)
                     .Include(i => i.ProgressLogs)
                     .Include(i => i.AgencyExecutions)
+                    .AsNoTracking()
+                    .AsSplitQuery()
                     .AsQueryable();
 
                 if (!string.IsNullOrWhiteSpace(scope) && !scope.Equals("all", StringComparison.OrdinalIgnoreCase))
@@ -106,7 +108,8 @@ namespace Cdsqg.Api.Controllers
                                 : (i.DueDate.HasValue ? i.DueDate.Value.Year <= tY : (i.StartDate.HasValue ? i.StartDate.Value.Year <= tY : true)))));
                 }
 
-                var allAgencies = await _context.Agencies.Include(a => a.ChildAgencies).ToListAsync();
+                var allAgencies = await _context.Agencies.AsNoTracking().ToListAsync();
+                var agencyChildren = allAgencies.ToLookup(a => a.ParentId);
                 var allAgenciesEntity = allAgencies.FirstOrDefault(a => a.Code == "ALL_AGENCIES");
                 Guid allAgenciesId = allAgenciesEntity?.Id ?? Guid.Parse("00000000-0000-0000-0000-000000009999");
 
@@ -127,7 +130,7 @@ namespace Cdsqg.Api.Controllers
 
                         foreach (var agId in validAgencyIds)
                         {
-                            var childs = GetAgencyAndChildIds(agId, allAgencies);
+                            var childs = GetAgencyAndChildIds(agId, agencyChildren);
                             foreach (var c in childs) allowedAgencyIds.Add(c);
 
                             var selectedAg = allAgencies.FirstOrDefault(a => a.Id == agId);
@@ -148,7 +151,7 @@ namespace Cdsqg.Api.Controllers
                                         var ministryIds = allAgencies.Where(a => IsMinistryAgency(a, allAgencies)).Select(a => a.Id);
                                         foreach (var mId in ministryIds)
                                         {
-                                            var cList = GetAgencyAndChildIds(mId, allAgencies);
+                                            var cList = GetAgencyAndChildIds(mId, agencyChildren);
                                             foreach (var c in cList) allowedAgencyIds.Add(c);
                                         }
                                     }
@@ -158,7 +161,7 @@ namespace Cdsqg.Api.Controllers
                                         var provinceIds = allAgencies.Where(a => IsProvinceAgency(a, allAgencies)).Select(a => a.Id);
                                         foreach (var pId in provinceIds)
                                         {
-                                            var cList = GetAgencyAndChildIds(pId, allAgencies);
+                                            var cList = GetAgencyAndChildIds(pId, agencyChildren);
                                             foreach (var c in cList) allowedAgencyIds.Add(c);
                                         }
                                     }
@@ -287,7 +290,7 @@ namespace Cdsqg.Api.Controllers
                 var agencySummaries = new Dictionary<Guid, AgencyStatusSummaryDto>();
                 foreach (var agency in targetAgencies)
                 {
-                    var childIds = GetAgencyAndChildIds(agency.Id, allAgencies);
+                    var childIds = GetAgencyAndChildIds(agency.Id, agencyChildren);
                     
                     bool includeGeneral = !agency.ParentId.HasValue && (!parentAgencyId.HasValue || parentAgencyId.Value == Guid.Empty);
 
@@ -357,7 +360,7 @@ namespace Cdsqg.Api.Controllers
                         Code = agency.Code,
                         Name = agency.Name,
                         Type = agency.Type.ToString(),
-                        HasChildAgencies = agency.ChildAgencies.Any(),
+                        HasChildAgencies = agencyChildren[agency.Id].Any(),
                         ContactPersons = agency.ContactPersons ?? new List<AgencyContactPerson>(),
                         TotalItems = agencyItems.Count,
                         TotalGoals = aGoals,
@@ -653,6 +656,8 @@ namespace Cdsqg.Api.Controllers
                     .Include(i => i.Baselines)
                     .Include(i => i.ProgressLogs)
                     .Include(i => i.AgencyExecutions)
+                    .AsNoTracking()
+                    .AsSplitQuery()
                     .AsQueryable();
 
                 if (!string.IsNullOrWhiteSpace(scope) && !scope.Equals("all", StringComparison.OrdinalIgnoreCase))
@@ -715,7 +720,8 @@ namespace Cdsqg.Api.Controllers
                                 : (i.DueDate.HasValue ? i.DueDate.Value.Year <= tY : (i.StartDate.HasValue ? i.StartDate.Value.Year <= tY : true)))));
                 }
 
-                var allAgencies = await _context.Agencies.Include(a => a.ChildAgencies).ToListAsync();
+                var allAgencies = await _context.Agencies.AsNoTracking().ToListAsync();
+                var agencyChildren = allAgencies.ToLookup(a => a.ParentId);
                 var allAgenciesEntity = allAgencies.FirstOrDefault(a => a.Code == "ALL_AGENCIES");
                 Guid allAgenciesId = allAgenciesEntity?.Id ?? Guid.Parse("00000000-0000-0000-0000-000000009999");
 
@@ -734,7 +740,7 @@ namespace Cdsqg.Api.Controllers
                 {
                     var currentAg = allAgencies.FirstOrDefault(a => a.Id == agencyId);
                     bool includeGeneral = currentAg == null || !currentAg.ParentId.HasValue;
-                    var childIds = GetAgencyAndChildIds(agencyId, allAgencies);
+                    var childIds = GetAgencyAndChildIds(agencyId, agencyChildren);
 
                     if (currentAg != null && (currentAg.Type == AgencyTypeEnum.Special || currentAg.Code == "ALL_AGENCIES" || currentAg.Code == "ALL_MINISTRIES" || currentAg.Code == "ALL_PROVINCES" || currentAg.Code == "ALL_PROVINCES_UBND" || currentAg.Code == "ALL_MINISTRIES_DIRECT"))
                     {
@@ -743,7 +749,7 @@ namespace Cdsqg.Api.Controllers
                             var ministryIds = allAgencies.Where(a => IsMinistryAgency(a, allAgencies)).Select(a => a.Id);
                             foreach (var mId in ministryIds)
                             {
-                                var cList = GetAgencyAndChildIds(mId, allAgencies);
+                                var cList = GetAgencyAndChildIds(mId, agencyChildren);
                                 foreach (var c in cList) if (!childIds.Contains(c)) childIds.Add(c);
                             }
                         }
@@ -752,7 +758,7 @@ namespace Cdsqg.Api.Controllers
                             var provinceIds = allAgencies.Where(a => IsProvinceAgency(a, allAgencies)).Select(a => a.Id);
                             foreach (var pId in provinceIds)
                             {
-                                var cList = GetAgencyAndChildIds(pId, allAgencies);
+                                var cList = GetAgencyAndChildIds(pId, agencyChildren);
                                 foreach (var c in cList) if (!childIds.Contains(c)) childIds.Add(c);
                             }
                         }
@@ -865,19 +871,20 @@ namespace Cdsqg.Api.Controllers
             }
         }
 
-        private static List<Guid> GetAgencyAndChildIds(Guid rootAgencyId, List<Agency> allAgencies)
+        private static List<Guid> GetAgencyAndChildIds(Guid rootAgencyId, ILookup<Guid?, Agency> agencyChildren)
         {
             var result = new List<Guid> { rootAgencyId };
+            var visited = new HashSet<Guid> { rootAgencyId };
             var queue = new Queue<Guid>();
             queue.Enqueue(rootAgencyId);
 
             while (queue.Count > 0)
             {
                 var curr = queue.Dequeue();
-                var children = allAgencies.Where(a => a.ParentId == curr).Select(a => a.Id);
+                var children = agencyChildren[curr].Select(a => a.Id);
                 foreach (var childId in children)
                 {
-                    if (!result.Contains(childId))
+                    if (visited.Add(childId))
                     {
                         result.Add(childId);
                         queue.Enqueue(childId);

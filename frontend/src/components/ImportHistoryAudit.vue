@@ -206,6 +206,8 @@
 </template>
 
 <script setup>
+import { fetchWithAuth } from '../services/auth';
+
 import { ref, computed, watch, onMounted } from 'vue';
 import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
@@ -289,7 +291,7 @@ function parseCleanFileList(log) {
 async function downloadFile(url, fileName) {
   if (!url || url === '#') return;
   try {
-    const response = await fetch(url);
+    const response = await fetchWithAuth(url);
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
     const blob = await response.blob();
     const blobUrl = window.URL.createObjectURL(blob);
@@ -461,7 +463,7 @@ async function loadImportHistory() {
       url.searchParams.append('category', appliedCategory.value);
     }
 
-    const res = await fetch(url);
+    const res = await fetchWithAuth(url);
     if (res.ok) {
       const data = await res.json();
       if (currentRequestId !== importFetchRequestId) return;
@@ -509,7 +511,7 @@ async function handleClearDemoData() {
   if (!confirmed) return;
 
   try {
-    const res = await fetch(getApiUrl('/api/masterdata/clear-demo-data'), {
+    const res = await fetchWithAuth(getApiUrl('/api/masterdata/clear-demo-data'), {
       method: 'POST'
     });
 

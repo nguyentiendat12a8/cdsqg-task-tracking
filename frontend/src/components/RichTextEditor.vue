@@ -152,6 +152,7 @@
 </template>
 
 <script setup>
+import { sanitizeHtml } from '../utils/sanitizeHtml';
 import { ref, watch, onMounted } from 'vue';
 
 const props = defineProps({
@@ -170,19 +171,19 @@ function exec(command, value = null) {
 
 function onInput() {
   if (editorRef.value) {
-    emit('update:modelValue', editorRef.value.innerHTML);
+    emit('update:modelValue', sanitizeHtml(editorRef.value.innerHTML));
   }
 }
 
 watch(() => props.modelValue, (newVal) => {
   if (editorRef.value && editorRef.value.innerHTML !== newVal) {
-    editorRef.value.innerHTML = newVal || '';
+    editorRef.value.innerHTML = sanitizeHtml(newVal);
   }
 });
 
 onMounted(() => {
   if (editorRef.value) {
-    editorRef.value.innerHTML = props.modelValue || '';
+    editorRef.value.innerHTML = sanitizeHtml(props.modelValue);
   }
 });
 </script>

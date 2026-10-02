@@ -409,6 +409,8 @@
 </template>
 
 <script setup>
+import { fetchWithAuth } from '../services/auth';
+
 import { ref, computed, watch, onMounted } from 'vue';
 import { authState } from '../services/auth';
 import BaselineOverrideModal from './BaselineOverrideModal.vue';
@@ -635,7 +637,7 @@ function showToast(msg) {
 
 async function loadAgencies() {
   try {
-    const res = await fetch(getApiUrl('/api/agencies'));
+    const res = await fetchWithAuth(getApiUrl('/api/agencies'));
     if (res.ok) {
       const data = await res.json();
       agencies.value = Array.isArray(data) ? data : (data.items || []);
@@ -905,7 +907,7 @@ async function saveYearlyTarget(item, year, val) {
   };
 
   try {
-    const res = await fetch(getApiUrl(`/api/planning/tasks/${item.taskId}/yearly-target`), {
+    const res = await fetchWithAuth(getApiUrl(`/api/planning/tasks/${item.taskId}/yearly-target`), {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -927,7 +929,7 @@ async function loadGridData() {
   try {
     const currentAgencyId = authState.user.value?.agencyId || '';
     const agencyParam = currentAgencyId ? `?agencyId=${currentAgencyId}` : '';
-    const res = await fetch(getApiUrl(`/api/planning/documents/${props.documentId}/grid${agencyParam}`));
+    const res = await fetchWithAuth(getApiUrl(`/api/planning/documents/${props.documentId}/grid${agencyParam}`));
     if (res.ok) {
       const data = await res.json();
       gridData.value = {

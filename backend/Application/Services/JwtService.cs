@@ -17,7 +17,6 @@ namespace Cdsqg.Application.Services
     public class JwtService : IJwtService
     {
         private readonly IConfiguration _config;
-        private static readonly string FallbackSecret = "CdsqgNationalDigitalTransformationSecretKey2026MustBeAtLeast32BytesLong!";
 
         public JwtService(IConfiguration config)
         {
@@ -26,7 +25,7 @@ namespace Cdsqg.Application.Services
 
         public string GenerateToken(User user)
         {
-            var secretKey = _config["Jwt:SecretKey"] ?? FallbackSecret;
+            var secretKey = _config["Jwt:SecretKey"] ?? throw new InvalidOperationException("JWT signing key is not configured.");
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(secretKey));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
 

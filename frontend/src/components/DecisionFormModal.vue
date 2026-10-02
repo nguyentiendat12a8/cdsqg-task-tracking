@@ -120,6 +120,8 @@
 </template>
 
 <script setup>
+import { fetchWithAuth } from '../services/auth';
+
 import { ref, computed, watch } from 'vue';
 import SearchableSelect from './SearchableSelect.vue';
 import DatePicker from './DatePicker.vue';
@@ -245,7 +247,7 @@ async function submitDocument() {
 
     const method = isEditing.value ? 'PUT' : 'POST';
 
-    const response = await fetch(url, {
+    const response = await fetchWithAuth(url, {
       method,
       body: formData
     });

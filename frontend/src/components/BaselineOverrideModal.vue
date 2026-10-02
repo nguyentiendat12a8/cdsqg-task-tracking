@@ -166,6 +166,8 @@
 </template>
 
 <script setup>
+import { fetchWithAuth } from '../services/auth';
+
 import { ref, computed, watch } from 'vue';
 import { toast } from 'vue3-toastify';
 import SearchableSelect from './SearchableSelect.vue';
@@ -251,7 +253,7 @@ async function saveCustomBaseline() {
     payload.hasQuarter = hasQuarter.value ? 'true' : 'false';
     payload.hasMonth = hasMonth.value ? 'true' : 'false';
 
-    const response = await fetch(getApiUrl(`/api/planning/tasks/${props.taskId}/custom-baseline`), {
+    const response = await fetchWithAuth(getApiUrl(`/api/planning/tasks/${props.taskId}/custom-baseline`), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ milestones: payload })

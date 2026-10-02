@@ -903,7 +903,8 @@ namespace Cdsqg.Application.Services
                     Status = item.Status,
                     SummaryNotes = item.SummaryNotes ?? string.Empty,
                     AgencyId = userAgency?.Id ?? task.LeadAgencyId,
-                    CreatedBy = userAgency?.Name ?? "Import Excel"
+                    CreatedBy = userAgency?.Name ?? "Import Excel",
+                    UserRole = isAdmin ? "Admin" : "AgencyUser"
                 };
 
                 try

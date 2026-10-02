@@ -404,6 +404,8 @@
 </template>
 
 <script setup>
+import { fetchWithAuth } from '../services/auth';
+
 import { ref, computed, watch, onMounted } from 'vue';
 import SearchableSelect from '../components/SearchableSelect.vue';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
@@ -528,7 +530,7 @@ function formatDate(dateStr) {
 
 async function loadAgencies() {
   try {
-    const res = await fetch(getApiUrl('/api/agency'));
+    const res = await fetchWithAuth(getApiUrl('/api/agency'));
     if (res.ok) {
       agencies.value = await res.json();
     }
@@ -559,7 +561,7 @@ async function fetchUsers() {
       url.searchParams.append('subAgencyId', selectedSubAgencyFilters.value[0]);
     }
 
-    const res = await fetch(url);
+    const res = await fetchWithAuth(url);
     if (res.ok) {
       const data = await res.json();
       if (currentRequestId !== userFetchRequestId) return;
@@ -633,7 +635,7 @@ async function saveNewUser() {
       agencyId: newUserForm.value.agencyId || null
     };
 
-    const res = await fetch(getApiUrl('/api/user'), {
+    const res = await fetchWithAuth(getApiUrl('/api/user'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -681,7 +683,7 @@ async function saveEditUser() {
       isActive: editUserForm.value.isActive
     };
 
-    const res = await fetch(getApiUrl(`/api/user/${editUserForm.value.id}`), {
+    const res = await fetchWithAuth(getApiUrl(`/api/user/${editUserForm.value.id}`), {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -709,7 +711,7 @@ function openResetPasswordModal(user) {
 async function saveResetPassword() {
   if (!selectedUserForReset.value) return;
   try {
-    const res = await fetch(getApiUrl(`/api/user/${selectedUserForReset.value.id}/reset-password`), {
+    const res = await fetchWithAuth(getApiUrl(`/api/user/${selectedUserForReset.value.id}/reset-password`), {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ newPassword: newPasswordInput.value })
@@ -738,7 +740,7 @@ async function deleteAccount(user) {
   if (!confirmed) return;
 
   try {
-    const res = await fetch(getApiUrl(`/api/user/${user.id}`), { method: 'DELETE' });
+    const res = await fetchWithAuth(getApiUrl(`/api/user/${user.id}`), { method: 'DELETE' });
     if (res.ok) {
       toast.success(`Đã xóa tài khoản '${user.username}'.`);
       fetchUsers();

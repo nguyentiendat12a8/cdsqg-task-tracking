@@ -1,9 +1,22 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import axios from 'axios';
+import axiosLibrary from 'axios';
 import { getApiUrl } from '../config/api';
+import { getAuthHeaders, logout } from '../services/auth';
 
 const API_BASE_URL = getApiUrl('/api');
+const axios = axiosLibrary.create();
+axios.interceptors.request.use(config => {
+  const url = new URL(config.url, window.location.href);
+  if (url.origin === new URL(API_BASE_URL).origin && url.pathname.startsWith('/api/')) {
+    Object.assign(config.headers, getAuthHeaders());
+  }
+  return config;
+});
+axios.interceptors.response.use(response => response, error => {
+  if (error.response?.status === 401) logout();
+  return Promise.reject(error);
+});
 
 export const useTrackingStore = defineStore('tracking', () => {
   // State

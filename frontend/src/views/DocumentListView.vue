@@ -234,6 +234,8 @@
 </template>
 
 <script setup>
+import { fetchWithAuth } from '../services/auth';
+
 import { ref, computed, watch, onMounted } from 'vue';
 import DecisionFormModal from '../components/DecisionFormModal.vue';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
@@ -358,7 +360,7 @@ async function fetchDocuments() {
       url.searchParams.append('search', searchQuery.value.trim());
     }
 
-    const res = await fetch(url);
+    const res = await fetchWithAuth(url);
     if (res.ok) {
       const data = await res.json();
       if (currentRequestId !== docFetchRequestId) return; // switchMap: ignore stale response
@@ -400,7 +402,7 @@ async function deleteDoc(doc) {
   if (!confirmed) return;
 
   try {
-    const res = await fetch(getApiUrl(`/api/documents/${doc.id}`), { method: 'DELETE' });
+    const res = await fetchWithAuth(getApiUrl(`/api/documents/${doc.id}`), { method: 'DELETE' });
     if (res.ok) {
       toast.success('Đã xóa dữ liệu thành công!');
       fetchDocuments();

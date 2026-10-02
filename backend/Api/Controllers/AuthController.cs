@@ -26,6 +26,7 @@ namespace Cdsqg.Api.Controllers
             _jwtService = jwtService;
         }
 
+        [AllowAnonymous]
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
@@ -105,38 +106,20 @@ namespace Cdsqg.Api.Controllers
             });
         }
 
+        [AllowAnonymous]
         [HttpPost("forgot-password")]
-        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
+        public IActionResult ForgotPassword([FromBody] ForgotPasswordDto dto)
         {
             if (string.IsNullOrWhiteSpace(dto.EmailOrUsername))
             {
                 return BadRequest(new { message = "Vui lòng nhập Email hoặc Tên đăng nhập của tài khoản." });
             }
 
-            var query = dto.EmailOrUsername.Trim().ToLower();
-            var user = await _db.Users.FirstOrDefaultAsync(u => 
-                u.Username.ToLower() == query || 
-                (!string.IsNullOrEmpty(u.Email) && u.Email.ToLower() == query));
-
-            if (user == null)
-            {
-                return NotFound(new { message = "Không tìm thấy tài khoản tương ứng với thông tin đã nhập." });
-            }
-
-            // Generate a secure temporary reset password
-            var randomDigits = new Random().Next(1000, 9999);
-            var tempPassword = $"Reset#{randomDigits}";
-
-            user.PasswordHash = _passwordHasher.HashPassword(tempPassword);
-            await _db.SaveChangesAsync();
-
-            var targetEmail = string.IsNullOrWhiteSpace(user.Email) ? $"{user.Username}@cdsqg.gov.vn" : user.Email;
-
+            // Self-service resets require a verified delivery channel. Until configured,
+            // do not change passwords, disclose account existence, or return credentials.
             return Ok(new
             {
-                message = $"Mật khẩu tạm thời đã được tạo và gửi thành công về email {targetEmail}!",
-                email = targetEmail,
-                tempPassword = tempPassword
+                message = "Vui lòng liên hệ quản trị viên để xác minh và đặt lại mật khẩu. Hệ thống chưa hỗ trợ khôi phục mật khẩu qua email."
             });
         }
     }

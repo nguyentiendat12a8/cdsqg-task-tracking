@@ -12,6 +12,9 @@ using Cdsqg.Core.Enums;
 using System;
 using System.Linq;
 using System.Text;
+using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
+using Cdsqg.Api.Security;
 
 // Enable Npgsql Legacy Timestamp Behavior for seamless DateTime support in PostgreSQL
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -29,7 +32,8 @@ System.IO.Directory.CreateDirectory(System.IO.Path.Combine(wwwrootFolder, "uploa
 builder.Environment.WebRootPath = wwwrootFolder;
 
 // Add services to the container.
-builder.Services.AddControllers().AddJsonOptions(options =>
+builder.Services.AddScoped<ApiPermissionFilter>();
+builder.Services.AddControllers(options => options.Filters.AddService<ApiPermissionFilter>()).AddJsonOptions(options =>
 {
     options.JsonSerializerOptions.PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase;
     options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
@@ -41,12 +45,8 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Read PostgreSQL flag from appsettings.json or environment variables
-bool usePostgreSql = builder.Configuration.GetValue<bool>("UsePostgreSQL") || 
-                     !string.IsNullOrEmpty(builder.Configuration.GetConnectionString("DefaultConnection"));
-
-string connectionString = builder.Configuration.GetConnectionString("DefaultConnection") 
-                         ?? builder.Configuration["DATABASE_URL"] 
-                         ?? string.Empty;
+string connectionString = DatabaseConfiguration.ResolveConnectionString(builder.Configuration);
+bool usePostgreSql = DatabaseConfiguration.UsePostgreSql(builder.Configuration);
 
 connectionString = ConvertPostgresConnectionString(connectionString);
 
@@ -57,6 +57,8 @@ if (usePostgreSql && !string.IsNullOrWhiteSpace(connectionString))
 }
 else
 {
+    if (!builder.Environment.IsDevelopment() || !builder.Configuration.GetValue<bool>("AllowInMemoryDatabase"))
+        throw new InvalidOperationException("Configure PostgreSQL. InMemory requires Development and AllowInMemoryDatabase=true.");
     builder.Services.AddDbContext<AppDbContext>(options =>
         options.UseInMemoryDatabase("CdsqgTaskTrackingDb"));
 }
@@ -94,7 +96,16 @@ builder.Services.AddScoped<IPlanningService, PlanningService>();
 builder.Services.AddScoped<IExecutionService, ExecutionService>();
 
 // JWT Authentication Configuration
-string jwtSecret = builder.Configuration["Jwt:SecretKey"] ?? "CdsqgNationalDigitalTransformationSecretKey2026MustBeAtLeast32BytesLong!";
+string? jwtSecret = builder.Configuration["Jwt:SecretKey"];
+if (string.IsNullOrWhiteSpace(jwtSecret))
+{
+    if (!builder.Environment.IsDevelopment())
+        throw new InvalidOperationException("Configure Jwt:SecretKey (environment variable Jwt__SecretKey) before starting in production.");
+    jwtSecret = Convert.ToBase64String(System.Security.Cryptography.RandomNumberGenerator.GetBytes(48));
+    builder.Configuration["Jwt:SecretKey"] = jwtSecret;
+}
+if (Encoding.UTF8.GetByteCount(jwtSecret) < 32)
+    throw new InvalidOperationException("Jwt:SecretKey must contain at least 32 UTF-8 bytes.");
 builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
@@ -102,6 +113,20 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
+    options.Events = new JwtBearerEvents
+    {
+        OnTokenValidated = async context =>
+        {
+            var db = context.HttpContext.RequestServices.GetRequiredService<AppDbContext>();
+            var principal = context.Principal;
+            if (!Guid.TryParse(principal?.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
+            { context.Fail("Invalid user."); return; }
+            var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
+            if (user == null || !user.IsActive || principal?.FindFirstValue(ClaimTypes.Role) != user.Role.ToString()
+                || principal?.FindFirstValue("AgencyId") != (user.AgencyId?.ToString() ?? ""))
+                context.Fail("Account is inactive or permissions have changed.");
+        }
+    };
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
@@ -112,6 +137,10 @@ builder.Services.AddAuthentication(options =>
         ValidAudience = builder.Configuration["Jwt:Audience"] ?? "CdsqgClients",
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwtSecret))
     };
+});
+builder.Services.AddAuthorization(options =>
+{
+    options.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
 });
 
 // CORS Policy: Allow Vue Dev Server (localhost:5173, 5174) and wildcard for local dev

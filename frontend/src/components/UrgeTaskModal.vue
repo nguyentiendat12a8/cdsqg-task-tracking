@@ -112,6 +112,9 @@
 </template>
 
 <script setup>
+import { sanitizeHtml } from '../utils/sanitizeHtml';
+import { fetchWithAuth } from '../services/auth';
+
 import { ref, watch } from 'vue';
 import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
@@ -156,7 +159,7 @@ function generateDraftText() {
 async function loadTaskUrgeHistory() {
   if (!props.taskId) return;
   try {
-    const res = await fetch(getApiUrl(`/api/execution/tasks/${props.taskId}/urge-history`));
+    const res = await fetchWithAuth(getApiUrl(`/api/execution/tasks/${props.taskId}/urge-history`));
     if (res.ok) {
       historyLogs.value = await res.json();
     }
@@ -168,7 +171,7 @@ async function loadTaskUrgeHistory() {
 function stripHtml(html) {
   if (!html) return '';
   const tmp = document.createElement('div');
-  tmp.innerHTML = html;
+  tmp.innerHTML = sanitizeHtml(html);
   return tmp.textContent || tmp.innerText || '';
 }
 
@@ -224,7 +227,7 @@ async function submitUrge() {
       CreatedBy: 'Chuyên viên CĐS'
     };
 
-    const res = await fetch(getApiUrl(`/api/execution/tasks/${props.taskId}/urge`), {
+    const res = await fetchWithAuth(getApiUrl(`/api/execution/tasks/${props.taskId}/urge`), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)

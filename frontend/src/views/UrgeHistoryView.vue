@@ -236,6 +236,9 @@
 </template>
 
 <script setup>
+import { sanitizeHtml } from '../utils/sanitizeHtml';
+import { fetchWithAuth } from '../services/auth';
+
 import { ref, computed, onMounted, watch } from 'vue';
 import SearchableSelect from '../components/SearchableSelect.vue';
 import { exportToExcel } from '../utils/excelExport';
@@ -313,7 +316,7 @@ const isDetailModalOpen = ref(false);
 function stripHtml(html) {
   if (!html) return '';
   const tmp = document.createElement('div');
-  tmp.innerHTML = html;
+  tmp.innerHTML = sanitizeHtml(html);
   return tmp.textContent || tmp.innerText || '';
 }
 
@@ -340,7 +343,7 @@ function loadSavedQuery() {
 
 async function loadAgencies() {
   try {
-    const res = await fetch(getApiUrl('/api/agencies'));
+    const res = await fetchWithAuth(getApiUrl('/api/agencies'));
     if (res.ok) {
       const data = await res.json();
       agencies.value = Array.isArray(data) ? data : (data.items || []);
@@ -466,7 +469,7 @@ async function checkAndOpenLogFromHash() {
     if (match && match[1]) {
       const targetLogId = match[1];
       try {
-        const res = await fetch(getApiUrl(`/api/execution/urge-logs/${targetLogId}`));
+        const res = await fetchWithAuth(getApiUrl(`/api/execution/urge-logs/${targetLogId}`));
         if (res.ok) {
           const logData = await res.json();
           if (logData) {
@@ -504,7 +507,7 @@ async function loadLogs() {
       url.searchParams.append('toDate', appliedToDate.value);
     }
 
-    const res = await fetch(url);
+    const res = await fetchWithAuth(url);
     if (res.ok) {
       const data = await res.json();
       if (currentRequestId !== urgeFetchRequestId) return;

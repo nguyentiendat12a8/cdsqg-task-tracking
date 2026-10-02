@@ -67,6 +67,8 @@
 </template>
 
 <script setup>
+import { fetchWithAuth } from '../services/auth';
+
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { getApiUrl } from '../config/api';
 import { authState } from '../services/auth';
@@ -113,7 +115,7 @@ async function fetchNotifications() {
       url += '?' + params.toString();
     }
 
-    const res = await fetch(url);
+    const res = await fetchWithAuth(url);
     if (res.ok) {
       const data = await res.json();
       const rawItems = data.items || [];
@@ -150,7 +152,7 @@ async function markAllRead() {
       url += '?' + params.toString();
     }
 
-    await fetch(url, { method: 'PUT' });
+    await fetchWithAuth(url, { method: 'PUT' });
     unreadCount.value = 0;
     notifications.value.forEach(n => n.isRead = true);
   } catch (e) {}
@@ -159,7 +161,7 @@ async function markAllRead() {
 async function clickNotification(notif) {
   notif.isRead = true;
   try {
-    await fetch(getApiUrl(`/api/notification/${notif.id}/read`), { method: 'PUT' });
+    await fetchWithAuth(getApiUrl(`/api/notification/${notif.id}/read`), { method: 'PUT' });
   } catch (e) {}
   isOpen.value = false;
 

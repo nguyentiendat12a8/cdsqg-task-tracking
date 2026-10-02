@@ -289,6 +289,8 @@
 </template>
 
 <script setup>
+import { fetchWithAuth } from '../services/auth';
+
 import { ref, reactive, computed, watch, onMounted } from 'vue';
 import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
@@ -481,7 +483,7 @@ async function uploadAttachment() {
     const formData = new FormData();
     formData.append('file', selectedFileToUpload.value);
 
-    const res = await fetch(getApiUrl(`/api/legaldocuments/upload-file?fileType=${encodeURIComponent(uploadFileType.value)}`), {
+    const res = await fetchWithAuth(getApiUrl(`/api/legaldocuments/upload-file?fileType=${encodeURIComponent(uploadFileType.value)}`), {
       method: 'POST',
       body: formData
     });
@@ -565,7 +567,7 @@ async function save() {
       method = 'PUT';
     }
 
-    const res = await fetch(url, {
+    const res = await fetchWithAuth(url, {
       method,
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)

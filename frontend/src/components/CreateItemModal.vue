@@ -170,6 +170,8 @@
 </template>
 
 <script setup>
+import { fetchWithAuth } from '../services/auth';
+
 import { ref, computed, watch, onMounted } from 'vue';
 import SearchableSelect from './SearchableSelect.vue';
 import DatePicker from './DatePicker.vue';
@@ -347,8 +349,8 @@ watch(() => props.documentId, (newVal) => {
 async function loadCatalogs() {
   try {
     const [agencyRes, unitRes] = await Promise.all([
-      fetch(getApiUrl('/api/agencies')),
-      fetch(getApiUrl('/api/units'))
+      fetchWithAuth(getApiUrl('/api/agencies')),
+      fetchWithAuth(getApiUrl('/api/units'))
     ]);
     if (agencyRes.ok) agencies.value = await agencyRes.json();
     if (unitRes.ok) units.value = await unitRes.json();
@@ -401,7 +403,7 @@ async function submitItem() {
   isSubmitting.value = true;
 
   try {
-    const response = await fetch(getApiUrl('/api/planning/items'), {
+    const response = await fetchWithAuth(getApiUrl('/api/planning/items'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form.value)

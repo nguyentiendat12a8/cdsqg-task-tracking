@@ -104,7 +104,7 @@
         </div>
 
         <p class="text-xs text-slate-500 font-semibold leading-relaxed">
-          Nhập Email (hoặc Username) đã liên kết với tài khoản. Hệ thống sẽ tạo và gửi lại mật khẩu mới về Email của bạn.
+          Hệ thống chưa hỗ trợ khôi phục qua email. Vui lòng liên hệ quản trị viên để xác minh chủ tài khoản và đặt lại mật khẩu.
         </p>
 
         <!-- Forgot Password Messages -->
@@ -114,9 +114,6 @@
 
         <div v-if="forgotSuccessMessage" class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs font-semibold text-emerald-800 space-y-1">
           <div class="font-bold text-emerald-900">✓ {{ forgotSuccessMessage }}</div>
-          <div v-if="generatedTempPassword" class="text-[11px] bg-white p-2 rounded-lg border border-emerald-200 mt-1">
-            Mật khẩu tạm thời mới: <strong class="text-blue-900 text-xs font-bold">{{ generatedTempPassword }}</strong>
-          </div>
         </div>
 
         <form @submit.prevent="handleForgotPassword" class="space-y-4">
@@ -148,7 +145,7 @@
               class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5"
             >
               <svg v-if="isForgotSubmitting" class="w-4 h-4 animate-spin text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-              <span>Gửi Yêu Cầu Mật Khẩu</span>
+              <span>Xem Hướng Dẫn</span>
             </button>
           </div>
         </form>
@@ -159,6 +156,8 @@
 </template>
 
 <script setup>
+import { fetchWithAuth } from '../services/auth';
+
 import { ref } from 'vue';
 import { login } from '../services/auth';
 import { getApiUrl } from '../config/api';
@@ -176,14 +175,12 @@ const isForgotPasswordOpen = ref(false);
 const forgotInput = ref('');
 const forgotErrorMessage = ref('');
 const forgotSuccessMessage = ref('');
-const generatedTempPassword = ref('');
 const isForgotSubmitting = ref(false);
 
 function openForgotPasswordModal() {
   forgotInput.value = username.value || '';
   forgotErrorMessage.value = '';
   forgotSuccessMessage.value = '';
-  generatedTempPassword.value = '';
   isForgotPasswordOpen.value = true;
 }
 
@@ -203,7 +200,6 @@ async function handleLogin() {
 async function handleForgotPassword() {
   forgotErrorMessage.value = '';
   forgotSuccessMessage.value = '';
-  generatedTempPassword.value = '';
 
   if (!forgotInput.value.trim()) {
     forgotErrorMessage.value = 'Vui lòng nhập Email hoặc Username.';
@@ -212,7 +208,7 @@ async function handleForgotPassword() {
 
   isForgotSubmitting.value = true;
   try {
-    const res = await fetch(getApiUrl('/api/auth/forgot-password'), {
+    const res = await fetchWithAuth(getApiUrl('/api/auth/forgot-password'), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ emailOrUsername: forgotInput.value.trim() })
@@ -220,10 +216,7 @@ async function handleForgotPassword() {
 
     if (res.ok) {
       const data = await res.json();
-      forgotSuccessMessage.value = data.message || `Đã gửi mật khẩu mới về email ${data.email}`;
-      if (data.tempPassword) {
-        generatedTempPassword.value = data.tempPassword;
-      }
+      forgotSuccessMessage.value = data.message || 'Vui lòng liên hệ quản trị viên để đặt lại mật khẩu.';
     } else {
       const errData = await res.json().catch(() => ({}));
       forgotErrorMessage.value = errData.message || 'Không tìm thấy tài khoản tương ứng.';

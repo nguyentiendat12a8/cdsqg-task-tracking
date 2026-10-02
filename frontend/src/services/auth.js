@@ -54,17 +54,18 @@ export function getAuthHeaders() {
 }
 
 export async function fetchWithAuth(url, options = {}) {
-  const headers = {
-    ...options.headers,
-    ...getAuthHeaders()
-  };
+  const target = new URL(url instanceof Request ? url.url : url, window.location.href);
+  const api = new URL(getApiUrl());
+  const isApi = target.origin === api.origin && target.pathname.startsWith('/api/');
+  const headers = new Headers(options.headers || (url instanceof Request ? url.headers : undefined));
+  if (isApi && token.value) headers.set('Authorization', `Bearer ${token.value}`);
 
   const response = await fetch(url, {
     ...options,
     headers
   });
 
-  if (response.status === 401) {
+  if (isApi && response.status === 401) {
     logout();
   }
 

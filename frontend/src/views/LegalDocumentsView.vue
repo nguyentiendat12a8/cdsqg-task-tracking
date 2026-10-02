@@ -341,6 +341,8 @@
 </template>
 
 <script setup>
+import { fetchWithAuth } from '../services/auth';
+
 import { ref, computed, reactive, onMounted } from 'vue';
 import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
@@ -521,7 +523,7 @@ async function handleImportExcelFile(event) {
     }
 
     const userRoleStr = authState.user.value?.role || (authState.isAdmin.value ? 'Admin' : 'Level2');
-    const res = await fetch(getApiUrl(`/api/legaldocuments/bulk-import?userRole=${encodeURIComponent(userRoleStr)}`), {
+    const res = await fetchWithAuth(getApiUrl(`/api/legaldocuments/bulk-import?userRole=${encodeURIComponent(userRoleStr)}`), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ items })
@@ -728,7 +730,7 @@ const userRoleStr = computed(() => authState.user.value?.role || (authState.isAd
 
 async function fetchAgencies() {
   try {
-    const res = await fetch(getApiUrl('/api/agencies'));
+    const res = await fetchWithAuth(getApiUrl('/api/agencies'));
     if (res.ok) {
       agencies.value = await res.json();
     }
@@ -757,7 +759,7 @@ async function fetchDocuments() {
     if (userAgencyId.value) params.append('userAgencyId', userAgencyId.value);
     if (userRoleStr.value) params.append('userRole', String(userRoleStr.value));
 
-    const res = await fetch(getApiUrl(`/api/legaldocuments?${params.toString()}`));
+    const res = await fetchWithAuth(getApiUrl(`/api/legaldocuments?${params.toString()}`));
     if (res.ok) {
       const data = await res.json();
       documents.value = data.items || [];
@@ -830,7 +832,7 @@ async function handleClearAll() {
 
   try {
     const userRoleStr = authState.user.value?.role || (authState.isAdmin.value ? 'Admin' : 'Level2');
-    const res = await fetch(getApiUrl(`/api/legaldocuments/clear-all?userRole=${encodeURIComponent(userRoleStr)}`), {
+    const res = await fetchWithAuth(getApiUrl(`/api/legaldocuments/clear-all?userRole=${encodeURIComponent(userRoleStr)}`), {
       method: 'DELETE'
     });
 
@@ -858,7 +860,7 @@ async function handleDelete(doc) {
   if (!confirmed) return;
 
   try {
-    const res = await fetch(getApiUrl(`/api/legaldocuments/${doc.id}`), {
+    const res = await fetchWithAuth(getApiUrl(`/api/legaldocuments/${doc.id}`), {
       method: 'DELETE'
     });
 

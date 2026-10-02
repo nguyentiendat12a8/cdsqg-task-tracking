@@ -119,6 +119,17 @@ namespace Cdsqg.Tests
         }
 
         [Fact]
+        public async Task GetDashboardMetrics_DoesNotTrackLoadedEntities()
+        {
+            using var context = GetInMemoryDbContext();
+            context.ChangeTracker.Clear();
+            var data = GetResponseDto(await new DashboardController(context).GetDashboardMetrics());
+            Assert.Equal(2, data.TotalGoals);
+            Assert.Equal(2, data.TotalTasks);
+            Assert.Empty(context.ChangeTracker.Entries());
+        }
+
+        [Fact]
         public async Task GetDashboardMetrics_NoFilters_ReturnsAllItems()
         {
             using var context = GetInMemoryDbContext();

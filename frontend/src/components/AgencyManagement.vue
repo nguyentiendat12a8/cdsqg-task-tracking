@@ -393,6 +393,8 @@
 </template>
 
 <script setup>
+import { fetchWithAuth } from '../services/auth';
+
 import { ref, computed, watch, onMounted } from 'vue';
 import SearchableSelect from './SearchableSelect.vue';
 import { toast } from 'vue3-toastify';
@@ -703,7 +705,7 @@ async function fetchAgencies() {
       url.searchParams.append('search', searchQuery.value.trim());
     }
 
-    const res = await fetch(url);
+    const res = await fetchWithAuth(url);
     if (res.ok) {
       const data = await res.json();
       if (currentRequestId !== agencyFetchRequestId) return;
@@ -729,7 +731,7 @@ async function fetchAgencies() {
 
 async function fetchAllParentOptions() {
   try {
-    const res = await fetch(getApiUrl('/api/agencies'));
+    const res = await fetchWithAuth(getApiUrl('/api/agencies'));
     if (res.ok) {
       const data = await res.json();
       allParentOptions.value = Array.isArray(data) ? data : (data.items || []);
@@ -769,13 +771,13 @@ async function saveAgency() {
 
     let res;
     if (isEditing.value && editingId.value) {
-      res = await fetch(getApiUrl(`/api/agencies/${editingId.value}`), {
+      res = await fetchWithAuth(getApiUrl(`/api/agencies/${editingId.value}`), {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
     } else {
-      res = await fetch(getApiUrl('/api/agencies'), {
+      res = await fetchWithAuth(getApiUrl('/api/agencies'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -816,7 +818,7 @@ async function deleteAgency(agency) {
 
   if (confirmed) {
     try {
-      const res = await fetch(getApiUrl(`/api/agencies/${agency.id}`), { method: 'DELETE' });
+      const res = await fetchWithAuth(getApiUrl(`/api/agencies/${agency.id}`), { method: 'DELETE' });
       if (res.ok) {
         toast.success('Đã xóa dữ liệu thành công!');
         await fetchAgencies();

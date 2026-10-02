@@ -557,6 +557,8 @@
 </template>
 
 <script setup>
+import { fetchWithAuth } from '../services/auth';
+
 import { ref, computed, onMounted } from 'vue';
 import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
@@ -675,7 +677,7 @@ async function fetchAllAgenciesOptions() {
     if (!isUserLevel1.value) {
       params.append('restrictForUser', 'true');
     }
-    const res = await fetch(getApiUrl(`/api/agencies?${params.toString()}`));
+    const res = await fetchWithAuth(getApiUrl(`/api/agencies?${params.toString()}`));
     if (res.ok) {
       const data = await res.json();
       allAgenciesOptions.value = Array.isArray(data) ? data : (data.items || []);
@@ -716,7 +718,7 @@ async function fetchAgencies() {
       params.append('planFileFilter', planFileFilter.value);
     }
 
-    const res = await fetch(getApiUrl(`/api/agencies?${params.toString()}`));
+    const res = await fetchWithAuth(getApiUrl(`/api/agencies?${params.toString()}`));
     if (res.ok) {
       const data = await res.json();
       let rawItems = [];
@@ -887,7 +889,7 @@ async function handleFileUpload(event) {
       formData.append('file', file);
       formData.append('agencyId', editingAgency.value.id);
 
-      const res = await fetch(getApiUrl('/api/agencies/upload-plan-file'), {
+      const res = await fetchWithAuth(getApiUrl('/api/agencies/upload-plan-file'), {
         method: 'POST',
         body: formData
       });
@@ -929,7 +931,7 @@ async function deletePlanFile(fileId) {
   if (!confirmed) return;
 
   try {
-    const res = await fetch(getApiUrl(`/api/agencies/plan-files/${fileId}`), {
+    const res = await fetchWithAuth(getApiUrl(`/api/agencies/plan-files/${fileId}`), {
       method: 'DELETE'
     });
 
@@ -956,7 +958,7 @@ async function saveAgencyDetails() {
       planFileIds: planFilesForm.value.map(f => f.id)
     };
 
-    const res = await fetch(getApiUrl(`/api/agencies/${editingAgency.value.id}/plans-and-contacts?userAgencyId=${currentUserAgencyId.value || ''}`), {
+    const res = await fetchWithAuth(getApiUrl(`/api/agencies/${editingAgency.value.id}/plans-and-contacts?userAgencyId=${currentUserAgencyId.value || ''}`), {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
@@ -1013,7 +1015,7 @@ async function exportAgencyPlansToExcel() {
       params.append('planFileFilter', planFileFilter.value);
     }
 
-    const res = await fetch(getApiUrl(`/api/agencies?${params.toString()}`));
+    const res = await fetchWithAuth(getApiUrl(`/api/agencies?${params.toString()}`));
     if (!res.ok) throw new Error('Không thể lấy dữ liệu danh sách đơn vị từ máy chủ');
     
     const data = await res.json();

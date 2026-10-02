@@ -285,6 +285,8 @@
 </template>
 
 <script setup>
+import { fetchWithAuth } from '../services/auth';
+
 import { ref, computed, watch } from 'vue';
 import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
@@ -460,7 +462,7 @@ async function fetchExistingProgress() {
     const qParam = periodType.value === 'quarterly' ? form.value.periodQuarter : (periodType.value === 'monthly' ? form.value.periodMonth : 0);
     const userAgencyId = authState.user.value?.agencyId || '';
     const agencyQuery = userAgencyId ? `&agencyId=${userAgencyId}` : '';
-    const res = await fetch(getApiUrl(`/api/execution/tasks/${props.taskId}/progress?year=${form.value.periodYear}&period=${qParam}${agencyQuery}`));
+    const res = await fetchWithAuth(getApiUrl(`/api/execution/tasks/${props.taskId}/progress?year=${form.value.periodYear}&period=${qParam}${agencyQuery}`));
     if (res.ok && res.status !== 204) {
       const text = await res.text();
       if (text && text.trim().length > 0) {
@@ -641,7 +643,7 @@ async function submitProgress() {
       }
     }
 
-    const response = await fetch(getApiUrl(`/api/execution/tasks/${props.taskId}/progress`), {
+    const response = await fetchWithAuth(getApiUrl(`/api/execution/tasks/${props.taskId}/progress`), {
       method: 'POST',
       body: formData
     });
