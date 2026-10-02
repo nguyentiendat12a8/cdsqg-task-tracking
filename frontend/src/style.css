@@ -90,3 +90,42 @@ input[type="number"] {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* -------------------------------------------------------------
+   Active Focus Controls & Border Visibility Enhancements
+   Ensures active focus borders on all inputs, textareas, selects, 
+   and SearchableSelect triggers are never clipped or hidden on top/sides.
+   ------------------------------------------------------------- */
+input:not([type="checkbox"]):not([type="radio"]),
+textarea,
+select,
+.searchable-select-trigger-open {
+  transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out, background-color 0.15s ease-in-out !important;
+}
+
+input:not([type="checkbox"]):not([type="radio"]):focus,
+textarea:focus,
+select:focus,
+.searchable-select-trigger-open {
+  border-color: #2563eb !important; /* Vivid Blue-600 */
+  box-shadow: inset 0 0 0 1px #2563eb, 0 0 0 3px rgba(37, 99, 235, 0.2) !important;
+  outline: none !important;
+  background-color: #ffffff !important;
+}
+
+/* Ensure checkboxes & radio buttons have crisp unclipped focus rings */
+input[type="checkbox"]:focus,
+input[type="radio"]:focus {
+  outline: none !important;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3) !important;
+  border-color: #2563eb !important;
+}
+
+/* Ensure scrollable form containers have adequate padding so focus glow is not clipped */
+.overflow-y-auto,
+.overflow-x-auto,
+.custom-scrollbar {
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+

@@ -13,7 +13,7 @@
       </div>
 
       <form @submit.prevent="submitItem" class="flex-1 flex flex-col min-h-0 pt-3">
-        <div class="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-1">
+        <div class="flex-1 overflow-y-auto custom-scrollbar space-y-4 p-1">
           <div v-if="errorMessage" class="p-3 bg-rose-50 border border-rose-200 text-rose-700 rounded-xl text-xs font-bold">
             {{ errorMessage }}
           </div>

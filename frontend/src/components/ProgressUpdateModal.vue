@@ -13,7 +13,7 @@
 
       <form @submit.prevent="submitProgress" class="flex-1 flex flex-col min-h-0 pt-3">
         
-        <div class="flex-1 overflow-y-auto custom-scrollbar pr-1 space-y-4">
+        <div class="flex-1 overflow-y-auto custom-scrollbar p-1 space-y-4">
           <!-- Pending Approval Warning Banner -->
           <div v-if="hasPendingApproval" class="p-3.5 bg-amber-50 text-amber-900 border border-amber-300/80 rounded-xl text-xs font-bold flex items-start gap-2.5 leading-relaxed shadow-2xs">
             <span class="text-base leading-none">⏳</span>
@@ -260,7 +260,7 @@
               v-model="form.notes" 
               rows="3" 
               placeholder="Tóm tắt kết quả triển khai hoặc khó khăn vướng mắc..."
-              class="w-full text-xs text-slate-800 bg-slate-50 border border-slate-300 rounded-xl p-3 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              class="w-full text-xs text-slate-800 bg-slate-50 border border-slate-300 rounded-xl p-3 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
             ></textarea>
           </div>
         </div>

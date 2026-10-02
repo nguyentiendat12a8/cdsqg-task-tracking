@@ -207,31 +207,31 @@
       <template v-else>
       
       <!-- BÁO CÁO 1: TỔNG HỢP TIẾN ĐỘ THEO BỘ / ĐỊA PHƯƠNG -->
-      <div v-if="activeReportType === 'summary'" class="overflow-x-auto">
+      <div v-if="activeReportType === 'summary'" class="overflow-x-auto max-h-[560px] overflow-y-auto custom-scrollbar">
         <table class="w-full text-left text-xs text-slate-700 border-collapse">
-          <thead class="bg-slate-100 font-bold text-slate-600 border-b border-slate-200">
+          <thead class="bg-slate-100 font-bold text-slate-700 border-b border-slate-200 sticky top-0 z-10 shadow-2xs">
             <tr>
-              <th class="p-3">STT</th>
-              <th class="p-3">Tên Cơ Quan / Địa Phương</th>
-              <th class="p-3 text-center">Tổng Mục Tiêu</th>
-              <th class="p-3 text-center">Tổng Nhiệm Vụ</th>
-              <th class="p-3 text-center">Đã Hoàn Thành</th>
-              <th class="p-3 text-center">Đang Thực Hiện</th>
-              <th class="p-3 text-center text-amber-700">Sắp Hết Hạn</th>
-              <th class="p-3 text-center text-rose-700">Quá Hạn</th>
-              <th class="p-3 text-center">Tỷ Lệ Hoàn Thành</th>
+              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center w-12">STT</th>
+              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-xs sm:text-sm font-bold min-w-[250px]">Tên Cơ Quan / Địa Phương</th>
+              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center min-w-[110px]">Tổng Mục Tiêu</th>
+              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center min-w-[110px]">Tổng Nhiệm Vụ</th>
+              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center min-w-[120px]">Đã Hoàn Thành</th>
+              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center min-w-[120px]">Đang Thực Hiện</th>
+              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center text-amber-700 min-w-[110px]">Sắp Hết Hạn</th>
+              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center text-rose-700 min-w-[110px]">Quá Hạn</th>
+              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center min-w-[130px]">Tỷ Lệ Hoàn Thành</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-200">
             <tr v-for="(ag, idx) in paginatedAgencySummaries" :key="ag.agencyId" class="hover:bg-slate-50 transition">
-              <td class="p-3 font-bold text-slate-500">{{ (currentPage - 1) * pageSize + idx + 1 }}</td>
-              <td class="p-3 font-bold text-slate-900">{{ ag.name }}</td>
-              <td class="p-3 text-center font-bold">{{ ag.totalGoals }}</td>
-              <td class="p-3 text-center font-bold">{{ ag.totalTasks }}</td>
+              <td class="p-3 text-center font-bold text-slate-500">{{ (currentPage - 1) * pageSize + idx + 1 }}</td>
+              <td class="p-3 font-bold text-sm text-slate-900 leading-relaxed min-w-[250px]">{{ ag.name }}</td>
+              <td class="p-3 text-center font-bold text-slate-900">{{ ag.totalGoals }}</td>
+              <td class="p-3 text-center font-bold text-slate-900">{{ ag.totalTasks }}</td>
               <td class="p-3 text-center font-bold text-emerald-700">{{ ag.completedOnTime + ag.completedOverdue }}</td>
               <td class="p-3 text-center font-bold text-blue-700">{{ ag.inProgressOnTime }}</td>
               <td class="p-3 text-center font-bold text-amber-700">{{ ag.expiringSoon }}</td>
-              <td class="p-3 text-center font-bold text-rose-700">{{ ag.inProgressOverdue }}</td>
+              <td class="p-3 text-center font-bold text-rose-700 bg-rose-50/30">{{ ag.inProgressOverdue }}</td>
               <td class="p-3 text-center font-bold text-blue-800">
                 {{ getPct(ag.completedOnTime + ag.completedOverdue, ag.totalItems) }}%
               </td>
@@ -244,16 +244,16 @@
       </div>
 
       <!-- BÁO CÁO 2: DANH SÁCH NHIỆM VỤ SẮP HẾT HẠN & QUÁ HẠN -->
-      <div v-else-if="activeReportType === 'urgent'" class="overflow-x-auto">
+      <div v-else-if="activeReportType === 'urgent'" class="overflow-x-auto max-h-[560px] overflow-y-auto custom-scrollbar">
         <table class="w-full text-left text-xs text-slate-700 border-collapse">
-          <thead class="bg-rose-50 text-rose-900 font-bold border-b border-rose-200">
+          <thead class="bg-rose-100 text-rose-950 font-bold border-b border-rose-200 sticky top-0 z-10 shadow-2xs">
             <tr>
-              <th class="p-3">Mã</th>
-              <th class="p-3">Phân Loại</th>
-              <th class="p-3">Tiêu Đề Mục Tiêu / Nhiệm Vụ</th>
-              <th class="p-3">Đơn Vị Chủ Trì</th>
-              <th class="p-3">Hạn Chót</th>
-              <th class="p-3 text-center">Trạng Thái Cảnh Báo</th>
+              <th class="p-3 bg-rose-100 sticky top-0 z-10 min-w-[90px]">Mã</th>
+              <th class="p-3 bg-rose-100 sticky top-0 z-10 min-w-[110px]">Phân Loại</th>
+              <th class="p-3 bg-rose-100 sticky top-0 z-10 min-w-[280px]">Tiêu Đề Mục Tiêu / Nhiệm Vụ</th>
+              <th class="p-3 bg-rose-100 sticky top-0 z-10 text-xs sm:text-sm font-bold min-w-[220px]">Đơn Vị Chủ Trì</th>
+              <th class="p-3 bg-rose-100 sticky top-0 z-10 min-w-[110px]">Hạn Chót</th>
+              <th class="p-3 bg-rose-100 sticky top-0 z-10 text-center min-w-[140px]">Trạng Thái Cảnh Báo</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-200">
@@ -264,7 +264,7 @@
                   {{ item.itemType === 'Goal' ? '🎯 Mục tiêu' : '📋 Nhiệm vụ' }}
                 </span>
               </td>
-              <td class="p-3 font-semibold text-slate-900">
+              <td class="p-3 font-semibold text-slate-900 min-w-[280px]">
                 <VTooltip theme="custom-dark" placement="top" :delay="{ show: 1500, hide: 0 }">
                   <div class="line-clamp-2 font-semibold text-slate-900 leading-relaxed cursor-help">
                     {{ item.title }}
@@ -277,7 +277,7 @@
                   </template>
                 </VTooltip>
               </td>
-              <td class="p-3 font-bold text-slate-800">{{ item.leadAgencyName }}</td>
+              <td class="p-3 font-bold text-sm text-slate-900 leading-relaxed min-w-[220px]">{{ item.leadAgencyName }}</td>
               <td class="p-3 font-semibold text-slate-600">{{ formatDate(item.dueDate) }}</td>
               <td class="p-3 text-center">
                 <span :class="['px-2.5 py-1 rounded-full text-[11px] font-bold', item.calculatedStatus === 'ExpiringSoon' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-rose-100 text-rose-900 border border-rose-300']">
@@ -293,26 +293,26 @@
       </div>
 
       <!-- BÁO CÁO 3 MỚI: THỐNG KÊ ĐÔN ĐỐC & TÍNH TUÂN THỦ BÁO CÁO -->
-      <div v-else-if="activeReportType === 'governance'" class="overflow-x-auto">
+      <div v-else-if="activeReportType === 'governance'" class="overflow-x-auto max-h-[560px] overflow-y-auto custom-scrollbar">
         <table class="w-full text-left text-xs text-slate-700 border-collapse">
-          <thead class="bg-indigo-50 text-indigo-900 font-bold border-b border-indigo-200">
+          <thead class="bg-indigo-100 text-indigo-950 font-bold border-b border-indigo-200 sticky top-0 z-10 shadow-2xs">
             <tr>
-              <th class="p-3 text-center w-12">STT</th>
-              <th class="p-3">Tên Cơ Quan / Địa Phương</th>
-              <th class="p-3 text-center min-w-[120px]">Tổng NV Được Giao</th>
-              <th class="p-3 text-center text-amber-800 min-w-[110px]">Số Lần Đã Đôn Đốc</th>
-              <th class="p-3 text-center min-w-[120px]">Báo Cáo Đã Nạp</th>
-              <th class="p-3 text-center text-emerald-800 min-w-[120px]">Báo Cáo Đúng Hạn</th>
-              <th class="p-3 text-center text-rose-800 min-w-[120px]">Trễ Báo Cáo / Chưa Nạp</th>
-              <th class="p-3 text-center min-w-[140px]">Tỷ Lệ Tuân Thủ (%)</th>
-              <th class="p-3 text-center min-w-[130px]">Đánh Giá Tuân Thủ</th>
+              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-center w-12">STT</th>
+              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-xs sm:text-sm font-bold min-w-[250px]">Tên Cơ Quan / Địa Phương</th>
+              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-center min-w-[120px]">Tổng NV Được Giao</th>
+              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-center text-amber-900 min-w-[110px]">Số Lần Đã Đôn Đốc</th>
+              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-center min-w-[120px]">Báo Cáo Đã Nạp</th>
+              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-center text-emerald-900 min-w-[120px]">Báo Cáo Đúng Hạn</th>
+              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-center text-rose-900 min-w-[120px]">Trễ Báo Cáo / Chưa Nạp</th>
+              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-center min-w-[140px]">Tỷ Lệ Tuân Thủ (%)</th>
+              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-center min-w-[130px]">Đánh Giá Tuân Thủ</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-200">
             <tr v-for="(ag, idx) in paginatedGovernanceSummaries" :key="ag.agencyId" class="hover:bg-slate-50 transition">
               <td class="p-3 text-center font-bold text-slate-500">{{ (currentPage - 1) * pageSize + idx + 1 }}</td>
-              <td class="p-3 font-bold text-slate-900">{{ ag.name }}</td>
-              <td class="p-3 text-center font-bold">{{ ag.totalItems }}</td>
+              <td class="p-3 font-bold text-sm text-slate-900 leading-relaxed min-w-[250px]">{{ ag.name }}</td>
+              <td class="p-3 text-center font-bold text-slate-900">{{ ag.totalItems }}</td>
               <td class="p-3 text-center font-bold text-amber-700 bg-amber-50/40">{{ ag.urgedCount }}</td>
               <td class="p-3 text-center font-bold text-blue-700">{{ ag.totalReportsSubmitted }}</td>
               <td class="p-3 text-center font-bold text-emerald-700">{{ ag.onTimeReports }}</td>
@@ -339,25 +339,25 @@
       </div>
 
       <!-- BÁO CÁO 4 MỚI: PHÂN LOẠI THEO LĨNH VỰC & TRỤ CỘT CHIẾN LƯỢC -->
-      <div v-else-if="activeReportType === 'domain'" class="overflow-x-auto">
+      <div v-else-if="activeReportType === 'domain'" class="overflow-x-auto max-h-[560px] overflow-y-auto custom-scrollbar">
         <table class="w-full text-left text-xs text-slate-700 border-collapse">
-          <thead class="bg-purple-50 text-purple-900 font-bold border-b border-purple-200">
+          <thead class="bg-purple-100 text-purple-950 font-bold border-b border-purple-200 sticky top-0 z-10 shadow-2xs">
             <tr>
-              <th class="p-3 text-center w-12">STT</th>
-              <th class="p-3 min-w-[200px]">Lĩnh Vực / Trụ Cột Chiến Lược</th>
-              <th class="p-3 text-center min-w-[100px]">Tổng Số</th>
-              <th class="p-3 text-center text-emerald-800 min-w-[110px]">Đã Hoàn Thành</th>
-              <th class="p-3 text-center text-blue-800 min-w-[110px]">Đang Thực Hiện</th>
-              <th class="p-3 text-center text-amber-800 min-w-[100px]">Sắp Hết Hạn</th>
-              <th class="p-3 text-center text-rose-800 min-w-[100px]">Quá Hạn</th>
-              <th class="p-3 text-center text-slate-500 min-w-[100px]">Chưa Thực Hiện</th>
-              <th class="p-3 text-center min-w-[150px]">Tỷ Lệ Hoàn Thành (%)</th>
+              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center w-12">STT</th>
+              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-xs sm:text-sm font-bold min-w-[220px]">Lĩnh Vực / Trụ Cột Chiến Lược</th>
+              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center min-w-[100px]">Tổng Số</th>
+              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center text-emerald-900 min-w-[110px]">Đã Hoàn Thành</th>
+              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center text-blue-900 min-w-[110px]">Đang Thực Hiện</th>
+              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center text-amber-900 min-w-[100px]">Sắp Hết Hạn</th>
+              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center text-rose-900 min-w-[100px]">Quá Hạn</th>
+              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center text-slate-600 min-w-[100px]">Chưa Thực Hiện</th>
+              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center min-w-[150px]">Tỷ Lệ Hoàn Thành (%)</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-200">
             <tr v-for="(dom, idx) in paginatedDomainSummaries" :key="dom.domainName" class="hover:bg-slate-50 transition">
               <td class="p-3 text-center font-bold text-slate-500">{{ (currentPage - 1) * pageSize + idx + 1 }}</td>
-              <td class="p-3 font-bold text-purple-900 flex items-center gap-2">
+              <td class="p-3 font-bold text-sm text-purple-950 flex items-center gap-2 min-w-[220px] leading-relaxed">
                 <span class="w-2 h-2 rounded-full bg-purple-600 shrink-0"></span>
                 <span>{{ dom.domainName }}</span>
               </td>
@@ -385,8 +385,17 @@
 
       <!-- Server Pagination Controls Footer -->
       <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50/70 p-4 border-t border-slate-200/80 text-xs text-slate-600 font-semibold">
-        <div>
-          Hiển thị <span class="font-bold text-slate-900">{{ currentActiveTotalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0 }} - {{ Math.min(currentPage * pageSize, currentActiveTotalCount) }}</span> trên tổng số <span class="font-bold text-slate-900">{{ currentActiveTotalCount }}</span> bản ghi
+        <div class="flex flex-wrap items-center gap-3">
+          <span>Hiển thị <strong class="text-slate-900">{{ currentActiveTotalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0 }} - {{ Math.min(currentPage * pageSize, currentActiveTotalCount) }}</strong> trên tổng số <strong class="text-slate-900">{{ currentActiveTotalCount }}</strong> bản ghi</span>
+          <div class="flex items-center gap-1.5 ml-2">
+            <span class="text-slate-500 font-normal">Kích thước trang:</span>
+            <select v-model="pageSize" @change="currentPage = 1" class="py-1 px-2 text-xs bg-white border border-slate-200 rounded-lg font-bold text-slate-700 cursor-pointer shadow-2xs">
+              <option :value="10">10 dòng/trang</option>
+              <option :value="25">25 dòng/trang</option>
+              <option :value="50">50 dòng/trang</option>
+              <option :value="100">100 dòng/trang</option>
+            </select>
+          </div>
         </div>
 
         <div class="flex items-center gap-2">

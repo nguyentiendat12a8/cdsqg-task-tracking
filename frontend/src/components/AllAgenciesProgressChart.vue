@@ -64,10 +64,21 @@
       </div>
 
       <!-- Chart Container -->
-      <div v-if="sortedAgencies.length > 0" class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs">
-        <div class="relative w-full h-[380px] sm:h-[440px]">
-          <Bar v-if="chartType === 'bar'" :data="chartData" :options="chartOptions" />
-          <Line v-else :data="lineChartData" :options="lineChartOptions" />
+      <div v-if="sortedAgencies.length > 0" class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs space-y-2">
+        <div class="flex items-center justify-between text-xs text-slate-500 font-semibold px-1 pb-1">
+          <span class="flex items-center gap-1.5 text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200/60 font-bold">
+            💡 Cuộn ngang để xem chi tiết {{ sortedAgencies.length }} cơ quan / địa phương
+          </span>
+          <span class="text-slate-600 hidden sm:inline-block">
+            Tên cơ quan to, nằm ngang • Nhấp vào cột/điểm để xem chi tiết
+          </span>
+        </div>
+
+        <div class="overflow-x-auto custom-scrollbar pb-3 pt-1">
+          <div :style="{ width: dynamicChartWidth, height: '460px' }" class="relative min-w-full">
+            <Bar v-if="chartType === 'bar'" :data="chartData" :options="chartOptions" />
+            <Line v-else :data="lineChartData" :options="lineChartOptions" />
+          </div>
         </div>
       </div>
 
@@ -177,24 +188,47 @@ const grandTotalOverdue = computed(() => {
   }, 0);
 });
 
+// Dynamic Chart Width based on number of agencies for horizontal scroll view
+const dynamicChartWidth = computed(() => {
+  const count = sortedAgencies.value.length;
+  if (count === 0) return '100%';
+  const minWidthPerAgency = 85; // 85px per agency for closer columns & clean multiline labels
+  return `${Math.max(1000, count * minWidthPerAgency)}px`;
+});
+
 // Helper to format short labels for X axis
 function shortenName(name) {
   if (!name) return '';
   let str = name.trim();
-  if (str.length > 22) {
-    str = str.replace('Bộ Khoa học và Công nghệ', 'Bộ KH&CN')
-             .replace('Bộ Thông tin và Truyền thông', 'Bộ TT&TT')
-             .replace('Bộ Kế hoạch và Đầu tư', 'Bộ KH&ĐT')
-             .replace('Bộ Văn hóa, Thể thao và Du lịch', 'Bộ VHTTDL')
-             .replace('Bộ Giáo dục và Đào tạo', 'Bộ GD&ĐT')
-             .replace('Bộ Nông nghiệp và Môi trường', 'Bộ NN&MT')
-             .replace('Thành phố Hồ Chí Minh', 'TP.HCM')
-             .replace('Thành phố Hà Nội', 'Hà Nội')
-             .replace('Thành phố Đà Nẵng', 'Đà Nẵng')
-             .replace('Thành phố Hải Phòng', 'Hải Phòng')
-             .replace('Thành phố Cần Thơ', 'Cần Thơ')
-             .replace('Thành phố', 'TP.')
-             .replace('UBND ', '');
+  str = str.replace('Bộ Khoa học và Công nghệ', 'Bộ KH&CN')
+           .replace('Bộ Thông tin và Truyền thông', 'Bộ TT&TT')
+           .replace('Bộ Kế hoạch và Đầu tư', 'Bộ KH&ĐT')
+           .replace('Bộ Văn hóa, Thể thao và Du lịch', 'Bộ VHTTDL')
+           .replace('Bộ Giáo dục và Đào tạo', 'Bộ GD&ĐT')
+           .replace('Bộ Nông nghiệp và Môi trường', 'Bộ NN&MT')
+           .replace('Bộ Dân tộc và Tôn giáo', 'Bộ DT & TG')
+           .replace('Ngân hàng Nhà nước Việt Nam', 'NHNN VN')
+           .replace('Thành phố Hồ Chí Minh', 'TP.HCM')
+           .replace('Thành phố Hà Nội', 'TP. Hà Nội')
+           .replace('Thành phố Đà Nẵng', 'TP. Đà Nẵng')
+           .replace('Thành phố Hải Phòng', 'TP. Hải Phòng')
+           .replace('Thành phố Cần Thơ', 'TP. Cần Thơ')
+           .replace('Thành phố Huế', 'TP. Huế')
+           .replace('Thành phố', 'TP.')
+           .replace('Văn phòng Chính phủ', 'VP Chính phủ')
+           .replace('Thanh tra Chính phủ', 'Thanh tra CP')
+           .replace('UBND ', '');
+  return str;
+}
+
+// Format X axis labels: wrap long names into 2 short lines if needed
+function formatXAxisLabel(name) {
+  if (!name) return '';
+  let str = shortenName(name);
+  if (str.length > 9 && str.includes(' ')) {
+    const parts = str.split(' ');
+    const mid = Math.ceil(parts.length / 2);
+    return [parts.slice(0, mid).join(' '), parts.slice(mid).join(' ')];
   }
   return str;
 }
@@ -210,7 +244,7 @@ function getStatValues(statusKeyGoal, statusKeyTask, statusKeyAll) {
 
 // 1. Stacked Bar Chart Data
 const chartData = computed(() => {
-  const labels = sortedAgencies.value.map(ag => shortenName(ag.name));
+  const labels = sortedAgencies.value.map(ag => formatXAxisLabel(ag.name));
 
   const datasetConfigs = [
     { label: 'Đang t/h quá hạn', keyG: 'goalInProgressOverdue', keyT: 'taskInProgressOverdue', keyA: 'inProgressOverdue', color: '#f43f5e' },
@@ -225,8 +259,10 @@ const chartData = computed(() => {
     label: cfg.label,
     data: getStatValues(cfg.keyG, cfg.keyT, cfg.keyA),
     backgroundColor: cfg.color,
-    borderRadius: 3,
-    maxBarThickness: 36
+    borderRadius: 4,
+    maxBarThickness: 45,
+    barPercentage: 0.7,
+    categoryPercentage: 0.8
   }));
 
   return { labels, datasets };
@@ -234,7 +270,7 @@ const chartData = computed(() => {
 
 // 2. Line Chart Data
 const lineChartData = computed(() => {
-  const labels = sortedAgencies.value.map(ag => shortenName(ag.name));
+  const labels = sortedAgencies.value.map(ag => formatXAxisLabel(ag.name));
 
   const datasetConfigs = [
     { label: 'Đang t/h quá hạn', keyG: 'goalInProgressOverdue', keyT: 'taskInProgressOverdue', keyA: 'inProgressOverdue', color: '#f43f5e' },
@@ -338,10 +374,12 @@ const chartOptions = computed(() => ({
       stacked: true,
       grid: { display: false },
       ticks: {
-        font: { size: 10, weight: 'bold' },
-        color: '#475569',
-        maxRotation: 45,
-        minRotation: 15
+        font: { size: 11, weight: 'bold' },
+        color: '#1e293b',
+        maxRotation: 0,
+        minRotation: 0,
+        autoSkip: false,
+        padding: 6
       }
     },
     y: {
@@ -349,7 +387,7 @@ const chartOptions = computed(() => ({
       beginAtZero: true,
       ticks: {
         precision: 0,
-        font: { size: 10, weight: '600' },
+        font: { size: 11, weight: '600' },
         color: '#64748b'
       },
       grid: { color: '#f1f5f9' }
@@ -363,17 +401,19 @@ const lineChartOptions = computed(() => ({
     x: {
       grid: { display: false },
       ticks: {
-        font: { size: 10, weight: 'bold' },
-        color: '#475569',
-        maxRotation: 45,
-        minRotation: 15
+        font: { size: 11, weight: 'bold' },
+        color: '#1e293b',
+        maxRotation: 0,
+        minRotation: 0,
+        autoSkip: false,
+        padding: 6
       }
     },
     y: {
       beginAtZero: true,
       ticks: {
         precision: 0,
-        font: { size: 10, weight: '600' },
+        font: { size: 11, weight: '600' },
         color: '#64748b'
       },
       grid: { color: '#f1f5f9' }

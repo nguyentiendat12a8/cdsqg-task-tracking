@@ -348,38 +348,63 @@
             📭 Chưa có thông tin thực hiện của các cơ quan cho nhiệm vụ này.
           </div>
 
-          <div v-else class="space-y-4">
-            <!-- Matrix Status Counter Badges -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs flex items-center justify-between">
-                <span class="text-xs font-bold text-slate-600 uppercase">Tổng cơ quan/địa phương</span>
-                <span class="text-lg font-bold text-slate-800">{{ matrixData.agencyExecutions.length }}</span>
+          <div v-else class="space-y-3">
+            <!-- Header: Matrix Status Counter Badges (Row 1) & Search Input (Row 2) -->
+            <div class="bg-white pb-1 space-y-3">
+              <!-- Row 1: 3 Counter Cards -->
+              <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs flex items-center justify-between">
+                  <span class="text-xs font-bold text-slate-600 uppercase">Tổng cơ quan/địa phương</span>
+                  <span class="text-lg font-bold text-slate-800">{{ matrixData.agencyExecutions.length }}</span>
+                </div>
+                <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-200 shadow-2xs flex items-center justify-between">
+                  <span class="text-xs font-bold text-emerald-800 uppercase">Đã hoàn thành</span>
+                  <span class="text-lg font-bold text-emerald-900">{{ matrixData.agencyExecutions.filter(a => (a.calculatedStatus || '').includes('Completed')).length }}</span>
+                </div>
+                <div class="bg-blue-50 p-3 rounded-xl border border-blue-200 shadow-2xs flex items-center justify-between">
+                  <span class="text-xs font-bold text-blue-800 uppercase">Đang thực hiện</span>
+                  <span class="text-lg font-bold text-blue-900">{{ matrixData.agencyExecutions.filter(a => (a.calculatedStatus || '').includes('InProgress')).length }}</span>
+                </div>
               </div>
-              <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-200 shadow-2xs flex items-center justify-between">
-                <span class="text-xs font-bold text-emerald-800 uppercase">Đã hoàn thành</span>
-                <span class="text-lg font-bold text-emerald-900">{{ matrixData.agencyExecutions.filter(a => (a.calculatedStatus || '').includes('Completed')).length }}</span>
-              </div>
-              <div class="bg-blue-50 p-3 rounded-xl border border-blue-200 shadow-2xs flex items-center justify-between">
-                <span class="text-xs font-bold text-blue-800 uppercase">Đang thực hiện</span>
-                <span class="text-lg font-bold text-blue-900">{{ matrixData.agencyExecutions.filter(a => (a.calculatedStatus || '').includes('InProgress')).length }}</span>
+
+              <!-- Row 2: Search Input for Agency Name (Full Width on separate row below) -->
+              <div class="relative w-full">
+                <input 
+                  v-model="agencyMatrixSearchKeyword"
+                  type="text" 
+                  placeholder="Tìm kiếm theo tên cơ quan / địa phương..." 
+                  class="w-full text-xs font-semibold pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition shadow-2xs"
+                />
+                <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <button 
+                  v-if="agencyMatrixSearchKeyword"
+                  @click="agencyMatrixSearchKeyword = ''"
+                  type="button"
+                  class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 text-xs font-bold cursor-pointer p-0.5"
+                  title="Xóa từ khóa tìm kiếm"
+                >
+                  ✕
+                </button>
               </div>
             </div>
 
-            <!-- Agency Executions Table -->
+            <!-- Agency Executions Table Container -->
             <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-              <div class="overflow-x-auto max-h-[500px] custom-scrollbar">
+              <div class="overflow-x-auto overflow-y-auto max-h-[480px] custom-scrollbar">
                 <table class="w-full text-left text-xs border-collapse">
                   <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200 sticky top-0 z-10">
                     <tr>
-                      <th class="px-3 py-2.5 border-r border-slate-200 w-10 text-center">STT</th>
-                      <th class="px-3.5 py-2.5 border-r border-slate-200 min-w-[220px]">Cơ Quan / Địa Phương Thực Hiện</th>
-                      <th class="px-3 py-2.5 border-r border-slate-200 text-center min-w-[120px]">Tiến Độ (%)</th>
-                      <th class="px-3 py-2.5 border-r border-slate-200 text-center min-w-[150px]">Trạng Thái</th>
-                      <th class="px-3.5 py-2.5 border-r border-slate-200 min-w-[250px]">Nội Dung Báo Cáo & File Minh Chứng</th>
+                      <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 sticky top-0 z-10 w-10 text-center">STT</th>
+                      <th class="px-3.5 py-2.5 border-r border-slate-200 bg-slate-100 sticky top-0 z-10 min-w-[220px]">Cơ Quan / Địa Phương Thực Hiện</th>
+                      <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 sticky top-0 z-10 text-center min-w-[120px]">Tiến Độ (%)</th>
+                      <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 sticky top-0 z-10 text-center min-w-[150px]">Trạng Thái</th>
+                      <th class="px-3.5 py-2.5 border-r border-slate-200 bg-slate-100 sticky top-0 z-10 min-w-[250px]">Nội Dung Báo Cáo & File Minh Chứng</th>
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-slate-200 font-semibold text-slate-800">
-                    <tr v-for="(row, idx) in matrixData.agencyExecutions" :key="row.agencyId" class="hover:bg-slate-50/80 transition">
+                    <tr v-for="(row, idx) in filteredAgencyExecutions" :key="row.agencyId" class="hover:bg-slate-50/80 transition">
                       <td class="px-3 py-2.5 border-r border-slate-200 text-center text-slate-500 font-bold">{{ idx + 1 }}</td>
                       <td class="px-3.5 py-2.5 border-r border-slate-200 font-bold text-slate-900">
                         <div>{{ row.agencyName }}</div>
@@ -404,6 +429,11 @@
                             📎 {{ formatFileName(fileUrl) }}
                           </a>
                         </div>
+                      </td>
+                    </tr>
+                    <tr v-if="filteredAgencyExecutions.length === 0">
+                      <td colspan="5" class="px-4 py-8 text-center text-slate-400 italic font-medium">
+                        🔍 Không tìm thấy cơ quan nào phù hợp với từ khóa "{{ agencyMatrixSearchKeyword }}".
                       </td>
                     </tr>
                   </tbody>
@@ -867,6 +897,17 @@ async function submitAssignTask() {
 
 const matrixData = ref(null);
 const isLoadingMatrix = ref(false);
+const agencyMatrixSearchKeyword = ref('');
+
+const filteredAgencyExecutions = computed(() => {
+  const list = matrixData.value?.agencyExecutions || [];
+  const kw = agencyMatrixSearchKeyword.value?.trim().toLowerCase();
+  if (!kw) return list;
+  return list.filter(ag => {
+    const name = (ag.agencyName || ag.name || '').toLowerCase();
+    return name.includes(kw);
+  });
+});
 
 const matrixPendingCount = computed(() => {
   if (!matrixData.value?.agencyExecutions) return 0;
@@ -895,6 +936,7 @@ async function loadAgenciesMatrix() {
 function switchTab(tabName) {
   activeTab.value = tabName;
   if (tabName === 'agencies-matrix') {
+    agencyMatrixSearchKeyword.value = '';
     loadAgenciesMatrix();
   }
 }
