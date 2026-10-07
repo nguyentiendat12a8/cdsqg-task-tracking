@@ -44,9 +44,11 @@ backend/wwwroot/uploads/*
 *.sln.docstates
 
 # ==========================================
-# 4. OS / System Junk Files
+# 4. OS / System Junk Files & Development Docs
 # ==========================================
 .DS_Store
 Thumbs.db
 desktop.ini
 *.log
+tài liệu phát triển/
+

@@ -1,8 +1,8 @@
 <template>
-  <div class="w-full space-y-3.5 font-sans">
+  <div class="w-full space-y-4 font-sans">
     
     <!-- Top Header Bar -->
-    <div class="bg-white p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200/80 space-y-3 w-full">
+    <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-3.5 w-full">
       <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div class="flex items-center gap-2.5">
           <span class="p-2 bg-blue-600 text-white rounded-xl shadow-sm font-bold text-sm">

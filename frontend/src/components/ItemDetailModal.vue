@@ -149,6 +149,8 @@
               </div>
             </div>
           </div>
+
+
         </div>
 
         <!-- TAB 2: Report History (2-Column Before vs After Update Layout) -->
@@ -557,7 +559,7 @@ function canEditItem(item) {
   if (!authState.isAdmin.value) return false;
 
   const st = item.calculatedStatus || item.status;
-  if (st && st !== 'NotStarted' && st !== '1. Chưa thực hiện') {
+  if (st && st !== 'NotStarted' && st !== 'Chưa thực hiện' && st !== '1. Chưa thực hiện') {
     return false;
   }
 
@@ -695,13 +697,13 @@ function getDeliverableStatusLabel(st) {
   const map = {
     'NotStarted': 'Chưa thực hiện',
     '1': 'Chưa thực hiện',
-    'Drafting': 'Đang xây dựng / Soạn thảo',
-    '2': 'Đang xây dựng / Soạn thảo',
-    'Reviewing': 'Đang xin ý kiến / Thẩm định',
-    '3': 'Đang xin ý kiến / Thẩm định',
-    'Submitted': 'Đang xin ý kiến / Thẩm định',
-    'Completed': 'Đã hoàn thành / Ban hành',
-    '4': 'Đã hoàn thành / Ban hành'
+    'Drafting': 'Đang thực hiện',
+    '2': 'Đang thực hiện',
+    'Reviewing': 'Đang thực hiện',
+    '3': 'Đang thực hiện',
+    'Submitted': 'Đang thực hiện',
+    'Completed': 'Đã hoàn thành',
+    '4': 'Đã hoàn thành'
   };
   return map[st] || st || 'Chưa thực hiện';
 }

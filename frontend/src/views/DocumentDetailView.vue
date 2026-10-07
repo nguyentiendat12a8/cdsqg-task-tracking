@@ -1,9 +1,11 @@
 <template>
-  <div class="w-full space-y-3.5 font-sans">
+  <div class="w-full space-y-4 font-sans">
     
-    <!-- Top Header Bar -->
-    <div class="bg-white p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200/80 space-y-3 w-full">
-      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+    <!-- UNIFIED MAIN CONTENT CARD BLOCK -->
+    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden w-full">
+      
+      <!-- Integrated Top Header Bar -->
+      <div class="p-4 sm:p-5 border-b border-slate-200/80 bg-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
           <h2 class="text-sm sm:text-base font-bold text-slate-800">
             {{ filterItemType === 'Goal' ? '🎯 Danh Sách Mục Tiêu' : '📋 Danh Sách Nhiệm Vụ' }}
@@ -20,8 +22,6 @@
             <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
             <span>Xuất Excel Danh Sách</span>
           </button>
-
-
 
           <button 
             v-if="authState.isAdmin.value"
@@ -45,10 +45,9 @@
           </button>
         </div>
       </div>
-    </div>
 
-    <!-- MAIN CONTENT CARD BLOCK -->
-    <div class="bg-white p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200/80 space-y-3.5 w-full">
+      <!-- Main Body Container -->
+      <div class="p-3.5 sm:p-4 space-y-3.5 w-full">
 
       <!-- DYNAMIC PLANNING GRID SUB-TAB -->
       <div v-show="activeSubTab === 'grid'" class="w-full">
@@ -242,7 +241,7 @@
                     </span>
                   </div>
                 </th>
-                <th @click="handleSort('progress')" class="px-3 py-2.5 border-r border-slate-200 text-center bg-slate-100 min-w-[125px] w-[125px] max-w-[125px] cursor-pointer hover:bg-slate-200 transition" title="Bấm để sắp xếp theo Tiến độ">
+                <th v-if="filterItemType === 'Goal'" @click="handleSort('progress')" class="px-3 py-2.5 border-r border-slate-200 text-center bg-slate-100 min-w-[125px] w-[125px] max-w-[125px] cursor-pointer hover:bg-slate-200 transition" title="Bấm để sắp xếp theo Tiến độ">
                   <div class="flex items-center justify-center gap-1">
                     <span>Tiến Độ</span>
                     <span class="text-[10px] font-bold text-slate-400">
@@ -318,7 +317,7 @@
                       {{ formatDateRange(item.startDate, item.dueDate) }}
                     </span>
                   </td>
-                  <td class="px-3 py-2.5 border-r border-slate-200 text-center text-xs min-w-[125px] w-[125px] max-w-[125px] overflow-hidden">
+                  <td v-if="filterItemType === 'Goal'" class="px-3 py-2.5 border-r border-slate-200 text-center text-xs min-w-[125px] w-[125px] max-w-[125px] overflow-hidden">
                     <span v-if="authState.isAdmin.value && isGeneralTaskOrAllAgencies(item)" class="text-slate-400 font-normal">—</span>
                     <span v-else class="font-normal text-xs text-slate-700 line-clamp-2 break-words leading-tight block" :title="formatProgressDisplay(item)">
                       {{ formatProgressDisplay(item) }}
@@ -474,7 +473,7 @@
                       {{ formatDateRange(sub.startDate, sub.dueDate) }}
                     </span>
                   </td>
-                  <td class="px-3 py-2 border-r border-slate-200 text-center font-normal text-xs min-w-[125px] w-[125px] max-w-[125px] overflow-hidden">
+                  <td v-if="filterItemType === 'Goal'" class="px-3 py-2 border-r border-slate-200 text-center font-normal text-xs min-w-[125px] w-[125px] max-w-[125px] overflow-hidden">
                     <span v-if="authState.isAdmin.value && isGeneralTaskOrAllAgencies(sub)" class="text-slate-400 font-normal">—</span>
                     <span v-else class="font-normal text-xs text-slate-700 line-clamp-2 break-words leading-tight block" :title="formatProgressDisplay(sub)">
                       {{ formatProgressDisplay(sub) }}
@@ -609,6 +608,7 @@
       </div>
 
     </div>
+    </div>
 
     <!-- Create Goal/Task/Sub-task Modal with Date Validation -->
     <div v-if="isCreateModalOpen" @click.self="isCreateModalOpen = false" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
@@ -626,21 +626,20 @@
               </div>
               <button type="button" @click="createErrorMessage = ''" class="text-rose-400 hover:text-rose-600 font-bold text-sm cursor-pointer p-1">✕</button>
             </div>
-          <div>
-            <label class="text-xs font-bold text-slate-700 uppercase">
-              {{ createItemType === 'Goal' ? 'Tên Mục Tiêu' : 'Tên Nhiệm Vụ' }} <span class="text-rose-500">*</span>
-            </label>
-            <textarea 
-              v-model="createForm.title" 
-              required 
-              rows="2" 
-              :placeholder="createItemType === 'Goal' ? 'Nhập tên chi tiết mục tiêu...' : 'Nhập tên chi tiết nhiệm vụ...'"
-              class="w-full text-xs font-semibold bg-slate-50 border border-slate-300 rounded-xl p-2.5 mt-1 focus:bg-white focus:ring-2 focus:ring-blue-500"
-            ></textarea>
-          </div>
+          <!-- Row 1: Code, Section & Group -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="text-xs font-bold text-slate-700 uppercase block mb-1">
+                Mã {{ createItemType === 'Goal' ? 'Mục Tiêu' : 'Nhiệm Vụ' }}
+              </label>
+              <input 
+                v-model="createForm.code" 
+                type="text"
+                :placeholder="createItemType === 'Goal' ? 'e.g. MT-01' : 'e.g. NV-01'"
+                class="w-full text-xs font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 focus:bg-white focus:ring-2 focus:ring-blue-500 uppercase h-[38px]"
+              />
+            </div>
 
-          <!-- Section & Group Selects according to Phụ lục I & II -->
-          <div :class="createItemType === 'Goal' ? 'grid grid-cols-2 gap-3' : 'block'">
             <div v-if="createItemType === 'Goal'">
               <SearchableSelect 
                 v-model="createForm.section" 
@@ -652,7 +651,7 @@
               />
             </div>
 
-            <div>
+            <div :class="createItemType === 'Goal' ? '' : 'sm:col-span-2'">
               <SearchableSelect 
                 v-model="createForm.group" 
                 :options="currentFormGroups" 
@@ -661,6 +660,20 @@
                 placeholder="-- Chọn Nhóm --"
               />
             </div>
+          </div>
+
+          <!-- Row 2: Title (Full Width) -->
+          <div>
+            <label class="text-xs font-bold text-slate-700 uppercase block mb-1">
+              {{ createItemType === 'Goal' ? 'Tên Mục Tiêu' : 'Tên Nhiệm Vụ' }} <span class="text-rose-500">*</span>
+            </label>
+            <textarea 
+              v-model="createForm.title" 
+              required 
+              rows="2" 
+              :placeholder="createItemType === 'Goal' ? 'Nhập tên chi tiết mục tiêu...' : 'Nhập tên chi tiết nhiệm vụ...'"
+              class="w-full text-xs font-semibold bg-slate-50 border border-slate-300 rounded-xl p-3 focus:bg-white focus:ring-2 focus:ring-blue-500"
+            ></textarea>
           </div>
 
           <!-- Unit Selection for Goals -->
@@ -732,7 +745,7 @@
                 :options="leadAgencyOptions" 
                 :isMulti="false" 
                 :required="true"
-                label="Đơn Vị Chủ Trì (Cấp 2)" 
+                label="Đơn Vị Chủ Trì" 
                 placeholder="-- Chọn đơn vị chủ trì --"
               />
             </div>
@@ -761,7 +774,7 @@
           <div v-if="createItemType === 'Task'" class="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 space-y-3">
             <div class="flex items-center justify-between">
               <label class="text-xs font-bold text-slate-800 uppercase flex items-center gap-1.5">
-                <span>📋 Danh Mục Sản Phẩm Đầu Ra Dự Kiến (Phụ Lục II - Phương Án 1)</span>
+                <span>📋 DANH MỤC SẢN PHẨM ĐẦU RA DỰ KIẾN</span>
               </label>
               <button 
                 type="button" 
@@ -800,7 +813,7 @@
                       v-model="del.title" 
                       required 
                       placeholder="Ví dụ: Nghị định quy định về Dữ liệu số / Nền tảng chia sẻ..." 
-                      class="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500" 
+                      class="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 h-[38px]" 
                     />
                   </div>
                   <div>
@@ -833,6 +846,11 @@
       :custom-baseline="selectedTaskForProgress.customBaseline || {}"
       :deliverables="selectedTaskForProgress.deliverables || []"
       :has-pending-approval="!!selectedTaskForProgress.hasPendingApproval"
+      :is-general-task="isGeneralTaskOrAllAgencies(selectedTaskForProgress)"
+      :lead-agency-id="selectedTaskForProgress.leadAgencyId || ''"
+      :lead-agency-name="selectedTaskForProgress.leadAgencyName || ''"
+      :coordinating-agency-ids="selectedTaskForProgress.coordinatingAgencyIds || []"
+      :agencies="agencies || []"
       @close="isProgressModalOpen = false"
       @submitted="loadData"
     />
@@ -868,22 +886,22 @@
             </div>
             <button type="button" @click="editErrorMessage = ''" class="text-rose-400 hover:text-rose-600 font-bold text-sm cursor-pointer p-1">✕</button>
           </div>
-          <div>
-            <label class="text-xs font-bold text-slate-700 uppercase">
-              Tên {{ editingItem?.itemType === 'Goal' ? 'Mục Tiêu' : 'Nhiệm Vụ' }} <span class="text-rose-500">*</span>
-            </label>
-            <textarea 
-              v-model="editForm.title" 
-              required 
-              rows="2" 
-              placeholder="Nhập tên chi tiết..."
-              class="w-full text-xs font-semibold bg-slate-50 border border-slate-300 rounded-xl p-2.5 mt-1 focus:bg-white focus:ring-2 focus:ring-blue-500"
-            ></textarea>
-          </div>
+          <!-- Row 1: Code, Section & Group -->
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div>
+              <label class="text-xs font-bold text-slate-700 uppercase block mb-1">
+                Mã {{ editingItem?.itemType === 'Goal' ? 'Mục Tiêu' : 'Nhiệm Vụ' }} <span class="text-rose-500">*</span>
+              </label>
+              <input 
+                v-model="editForm.code" 
+                type="text"
+                required
+                :placeholder="editingItem?.itemType === 'Goal' ? 'e.g. MT-01' : 'e.g. NV-01'"
+                class="w-full text-xs font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 focus:bg-white focus:ring-2 focus:ring-blue-500 uppercase h-[38px]"
+              />
+            </div>
 
-          <!-- Section & Group Selects -->
-          <div :class="editingItem?.itemType === 'Goal' ? 'grid grid-cols-2 gap-3' : 'block'">
-            <div v-if="editingItem?.itemType === 'Goal'">
+            <div v-if="editingItem?.itemType === 'Goal' || editingItem?.itemType === 1 || editingItem?.itemType === '1'">
               <SearchableSelect 
                 v-model="editForm.section" 
                 :options="sectionFilterOptions" 
@@ -894,7 +912,7 @@
               />
             </div>
 
-            <div>
+            <div :class="(editingItem?.itemType === 'Goal' || editingItem?.itemType === 1 || editingItem?.itemType === '1') ? '' : 'sm:col-span-2'">
               <SearchableSelect 
                 v-model="editForm.group" 
                 :options="groupFilterOptions" 
@@ -903,6 +921,20 @@
                 placeholder="-- Chọn Nhóm --"
               />
             </div>
+          </div>
+
+          <!-- Row 2: Title (Full Width) -->
+          <div>
+            <label class="text-xs font-bold text-slate-700 uppercase block mb-1">
+              Tên {{ editingItem?.itemType === 'Goal' ? 'Mục Tiêu' : 'Nhiệm Vụ' }} <span class="text-rose-500">*</span>
+            </label>
+            <textarea 
+              v-model="editForm.title" 
+              required 
+              rows="2" 
+              placeholder="Nhập tên chi tiết..."
+              class="w-full text-xs font-semibold bg-slate-50 border border-slate-300 rounded-xl p-3 focus:bg-white focus:ring-2 focus:ring-blue-500"
+            ></textarea>
           </div>
 
           <!-- Unit Selection for Goals -->
@@ -971,7 +1003,7 @@
                 :options="leadAgencyOptions" 
                 :isMulti="false" 
                 :required="true"
-                label="Đơn Vị Chủ Trì (Cấp 2)" 
+                label="Đơn Vị Chủ Trì" 
                 placeholder="-- Chọn đơn vị chủ trì --"
               />
             </div>
@@ -1000,7 +1032,7 @@
           <div v-if="editingItem?.itemType !== 'Goal'" class="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 space-y-3">
             <div class="flex items-center justify-between">
               <label class="text-xs font-bold text-slate-800 uppercase flex items-center gap-1.5">
-                <span>📋 Danh Mục Sản Phẩm Đầu Ra Dự Kiến (Phụ Lục II - Phương Án 1)</span>
+                <span>📋 DANH MỤC SẢN PHẨM ĐẦU RA DỰ KIẾN</span>
               </label>
               <button 
                 type="button" 
@@ -1039,7 +1071,7 @@
                       v-model="del.title" 
                       required 
                       placeholder="Ví dụ: Nghị định quy định về Dữ liệu số / Nền tảng chia sẻ..." 
-                      class="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500" 
+                      class="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 h-[38px]" 
                     />
                   </div>
                   <div>
@@ -1651,12 +1683,12 @@ const scopeOptions = computed(() => [
 ]);
 
 const statusOptions = ref([
-  { value: 'NotStarted', label: '1. Chưa thực hiện' },
-  { value: 'InProgressOnTime', label: '2. Đang thực hiện (trong hạn)' },
-  { value: 'InProgressOverdue', label: '3. Đang thực hiện (quá hạn)' },
-  { value: 'CompletedOnTime', label: '4. Hoàn thành (đúng hạn)' },
-  { value: 'CompletedOverdue', label: '5. Hoàn thành (quá hạn)' },
-  { value: 'ExpiringSoon', label: '6. Sắp hết hạn' }
+  { value: 'NotStarted', label: 'Chưa thực hiện' },
+  { value: 'InProgressOnTime', label: 'Đang thực hiện (trong hạn)' },
+  { value: 'InProgressOverdue', label: 'Đang thực hiện (quá hạn)' },
+  { value: 'CompletedOnTime', label: 'Hoàn thành (đúng hạn)' },
+  { value: 'CompletedOverdue', label: 'Hoàn thành (quá hạn)' },
+  { value: 'ExpiringSoon', label: 'Sắp hết hạn' }
 ]);
 
 function formatDate(dateInput) {
@@ -1822,8 +1854,8 @@ function canCreateSubTask(item) {
 
 function canUpdateProgress(item) {
   if (!item) return false;
-  // Tài khoản Quản trị viên (Admin) KHÔNG hiển thị nút Cập nhật tiến độ
-  if (authState.isAdmin.value) return false;
+  // Tài khoản Quản trị viên (Admin) cho phép thực hiện cập nhật tiến độ
+  if (authState.isAdmin.value) return true;
   const userAgencyId = authState.user.value?.agencyId ? String(authState.user.value.agencyId).toLowerCase() : '';
   if (!userAgencyId) return false;
 
@@ -2008,20 +2040,14 @@ function exportDocumentItemsToExcel() {
     "Giao Đơn Vị Trực Thuộc",
     "Cơ Quan Phối Hợp",
     "Thời Gian Thực Hiện",
-    "Tiến Độ Hiện Tại",
+    ...(isGoal ? ["Tiến Độ Hiện Tại"] : []),
     "Trạng Thái"
   ];
 
-  const minColWidths = {
-    0: 8,
-    1: 15,
-    2: 50,
-    3: 30,
-    4: 28,
-    5: 25,
-    6: 22,
-    7: 18,
-    8: 22
+  const minColWidths = isGoal ? {
+    0: 8, 1: 15, 2: 50, 3: 30, 4: 28, 5: 25, 6: 22, 7: 18, 8: 22
+  } : {
+    0: 8, 1: 15, 2: 50, 3: 30, 4: 28, 5: 25, 6: 22, 7: 22
   };
 
   const rows = filteredList.value.map((item, idx) => {
@@ -2033,17 +2059,20 @@ function exportDocumentItemsToExcel() {
     const progStr = isGeneral ? '—' : formatProgressDisplay(item);
     const statusStr = isGeneral ? '—' : getStatusLabel(item.calculatedStatus);
 
-    return [
+    const row = [
       idx + 1,
       item.code || '',
       item.title || '',
       item.leadAgencyName || '',
       item.assignedAgencyName || '—',
       item.cooperatingAgencies || '',
-      dateStr,
-      progStr,
-      statusStr
+      dateStr
     ];
+    if (isGoal) {
+      row.push(progStr);
+    }
+    row.push(statusStr);
+    return row;
   });
 
   exportToExcel({
@@ -2135,8 +2164,12 @@ watch(() => props.filterItemType, () => {
 function openCreateModal(type) {
   createItemType.value = type;
   parentTaskForSubTask.value = null;
+  const count = rawItemsList.value.filter(i => i.itemType === type || (type === 'Goal' && (i.itemType === 1 || i.itemType === '1')) || (type === 'Task' && (i.itemType === 2 || i.itemType === '2'))).length;
+  const prefix = type === 'Goal' ? 'MT' : 'NV';
+  const autoCode = `${prefix}-${String(count + 1).padStart(2, '0')}`;
+
   createForm.value = {
-    code: '',
+    code: autoCode,
     title: '',
     section: type === 'Goal' ? 'Mục A' : '',
     group: '',
@@ -2158,8 +2191,11 @@ function openCreateModal(type) {
 function openCreateSubTaskModal(parentItem) {
   createItemType.value = 'Task';
   parentTaskForSubTask.value = parentItem;
+  const count = (parentItem.subItems || []).length;
+  const autoCode = `${parentItem.code || 'NV'}.${count + 1}`;
+
   createForm.value = {
-    code: '',
+    code: autoCode,
     title: '',
     section: '',
     group: parentItem.group || '',
@@ -2237,7 +2273,7 @@ async function submitCreateItem() {
       documentId: docId,
       parentId: parentTaskForSubTask.value ? parentTaskForSubTask.value.taskId : null,
       itemType: createItemType.value,
-      code: '',
+      code: createForm.value.code ? createForm.value.code.trim() : '',
       title: createForm.value.title,
       section: createItemType.value === 'Goal' ? createForm.value.section : '',
       group: createForm.value.group,
@@ -2277,11 +2313,7 @@ async function submitCreateItem() {
 }
 
 function openProgressModal(item) {
-  if (authState.isAdmin.value) {
-    toast.warning('Tài khoản Quản trị viên (Admin) không thực hiện cập nhật tiến độ. Thao tác này dành cho tài khoản cán bộ đầu mối của các Cơ quan / Bộ / Ngành.');
-    return;
-  }
-  if (item && item.hasPendingApproval) {
+  if (item && item.hasPendingApproval && !authState.isAdmin.value) {
     toast.warning('Nhiệm vụ này đang ở trạng thái Chờ duyệt. Vui lòng chờ Cấp 2 phê duyệt hoặc từ chối trước khi gửi báo cáo mới.');
     return;
   }
@@ -2420,7 +2452,7 @@ function openItemDetailModal(item, initialTab = 'info') {
 function hasProgress(item) {
   if (!item) return false;
 
-  if (item.calculatedStatus && item.calculatedStatus !== 'NotStarted' && item.calculatedStatus !== '1. Chưa thực hiện') {
+  if (item.calculatedStatus && item.calculatedStatus !== 'NotStarted' && item.calculatedStatus !== 'Chưa thực hiện' && item.calculatedStatus !== '1. Chưa thực hiện') {
     return true;
   }
 
@@ -2515,6 +2547,7 @@ function openEditModal(item) {
   }
 
   editForm.value = {
+    code: item.code || '',
     title: item.title || '',
     section: item.section || '',
     group: item.group || '',
@@ -2612,6 +2645,7 @@ async function submitEditItem() {
     }
 
     const payload = {
+      code: editForm.value.code ? editForm.value.code.trim() : '',
       title: editForm.value.title,
       section: editForm.value.section,
       group: editForm.value.group,

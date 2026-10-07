@@ -485,9 +485,8 @@ const yearRangeOptions = computed(() => [2026, 2027, 2028, 2029, 2030].map(y => 
 
 const gridStatusCellOptions = ref([
   { value: 'NotStarted', label: 'Chưa thực hiện' },
-  { value: 'Drafting', label: 'Đang xây dựng / Soạn thảo' },
-  { value: 'Reviewing', label: 'Đang xin ý kiến / Thẩm định' },
-  { value: 'Completed', label: 'Đã hoàn thành / Ban hành' }
+  { value: 'Drafting', label: 'Đang thực hiện' },
+  { value: 'Completed', label: 'Đã hoàn thành' }
 ]);
 
 const yearOptions = ref([

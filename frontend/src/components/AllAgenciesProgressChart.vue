@@ -13,9 +13,6 @@
               (Bộ, Ngành, Địa phương, Cơ quan, Doanh nghiệp)
             </span>
           </h3>
-          <p class="text-xs text-slate-500 truncate mt-0.5">
-            Tự động sắp xếp đơn vị có nhiều {{ filterNoun }} lên trước • Phân rã theo trạng thái thực hiện
-          </p>
         </div>
       </div>
 
@@ -64,16 +61,43 @@
       </div>
 
       <!-- Chart Container -->
-      <div v-if="sortedAgencies.length > 0" class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs space-y-2">
-        <div class="flex items-center justify-between text-xs text-slate-500 font-semibold px-1 pb-1">
-          <span class="flex items-center gap-1.5 text-blue-700 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200/60 font-bold">
-            💡 Cuộn ngang để xem chi tiết {{ sortedAgencies.length }} cơ quan / địa phương
-          </span>
-          <span class="text-slate-600 hidden sm:inline-block">
-            Tên cơ quan to, nằm ngang • Nhấp vào cột/điểm để xem chi tiết
-          </span>
+      <div v-if="sortedAgencies.length > 0" class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs space-y-3">
+        <!-- Static Fixed Legend Header Bar -->
+        <div class="flex flex-wrap items-center justify-end gap-2.5 bg-slate-50/90 p-3 rounded-xl border border-slate-200/70 text-xs font-semibold">
+          <!-- Fixed Visible Status Legend Badges -->
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] font-bold shrink-0">
+            <div v-if="chartType === 'line'" class="flex items-center gap-1.5 text-slate-700">
+              <span class="w-3 h-0.5 border-t-2 border-dashed border-indigo-600 inline-block"></span>
+              <span>Tổng {{ filterNoun }}</span>
+            </div>
+            <div class="flex items-center gap-1.5 text-slate-700">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#f43f5e] inline-block"></span>
+              <span>Đang t/h quá hạn</span>
+            </div>
+            <div class="flex items-center gap-1.5 text-slate-700">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#3b82f6] inline-block"></span>
+              <span>Đang t/h trong hạn</span>
+            </div>
+            <div class="flex items-center gap-1.5 text-slate-700">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#f59e0b] inline-block"></span>
+              <span>Sắp tới hạn</span>
+            </div>
+            <div class="flex items-center gap-1.5 text-slate-700">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#14b8a6] inline-block"></span>
+              <span>Đã h/t quá hạn</span>
+            </div>
+            <div class="flex items-center gap-1.5 text-slate-700">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#10b981] inline-block"></span>
+              <span>Đã h/t trong hạn</span>
+            </div>
+            <div class="flex items-center gap-1.5 text-slate-700">
+              <span class="w-2.5 h-2.5 rounded-full bg-[#94a3b8] inline-block"></span>
+              <span>Chưa thực hiện</span>
+            </div>
+          </div>
         </div>
 
+        <!-- Scrollable Chart Area -->
         <div class="overflow-x-auto custom-scrollbar pb-3 pt-1">
           <div :style="{ width: dynamicChartWidth, height: '460px' }" class="relative min-w-full">
             <Bar v-if="chartType === 'bar'" :data="chartData" :options="chartOptions" />
@@ -192,7 +216,7 @@ const grandTotalOverdue = computed(() => {
 const dynamicChartWidth = computed(() => {
   const count = sortedAgencies.value.length;
   if (count === 0) return '100%';
-  const minWidthPerAgency = 85; // 85px per agency for closer columns & clean multiline labels
+  const minWidthPerAgency = 58; // 58px per agency brings columns much closer together
   return `${Math.max(1000, count * minWidthPerAgency)}px`;
 });
 
@@ -225,7 +249,7 @@ function shortenName(name) {
 function formatXAxisLabel(name) {
   if (!name) return '';
   let str = shortenName(name);
-  if (str.length > 9 && str.includes(' ')) {
+  if (str.length > 8 && str.includes(' ')) {
     const parts = str.split(' ');
     const mid = Math.ceil(parts.length / 2);
     return [parts.slice(0, mid).join(' '), parts.slice(mid).join(' ')];
@@ -260,9 +284,9 @@ const chartData = computed(() => {
     data: getStatValues(cfg.keyG, cfg.keyT, cfg.keyA),
     backgroundColor: cfg.color,
     borderRadius: 4,
-    maxBarThickness: 45,
-    barPercentage: 0.7,
-    categoryPercentage: 0.8
+    maxBarThickness: 38,
+    barPercentage: 0.85,
+    categoryPercentage: 0.9
   }));
 
   return { labels, datasets };
@@ -328,17 +352,7 @@ const sharedOptions = computed(() => ({
   },
   plugins: {
     legend: {
-      position: 'top',
-      align: 'end',
-      labels: {
-        usePointStyle: true,
-        pointStyle: 'circle',
-        boxWidth: 8,
-        boxHeight: 8,
-        padding: 12,
-        font: { family: 'system-ui, sans-serif', size: 11, weight: 'bold' },
-        color: '#334155'
-      }
+      display: false
     },
     tooltip: {
       backgroundColor: '#0f172a',

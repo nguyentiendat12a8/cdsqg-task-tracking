@@ -101,8 +101,15 @@ namespace Cdsqg.Api.Controllers
                     finalCode = $"{prefix}-{(existingCount + 1):D2}";
                 }
 
+                bool isDuplicateCode = await _context.GoalTaskItems.AnyAsync(i => i.DocumentId == dto.DocumentId && i.Code.ToLower() == finalCode.ToLower());
+                if (isDuplicateCode)
+                {
+                    return BadRequest(new { error = $"Mã '{finalCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác." });
+                }
+
                 var leadAgency = await _context.Agencies.FirstOrDefaultAsync(a => a.Id == dto.LeadAgencyId);
-                bool isGeneral = dto.IsGeneralTask || (leadAgency != null && (leadAgency.Code == "ALL_AGENCIES" || leadAgency.Code == "ALL_MINISTRIES" || leadAgency.Code == "ALL_PROVINCES" || leadAgency.Code == "ALL_PROVINCES_UBND" || leadAgency.Code == "ALL_MINISTRIES_DIRECT"));
+                bool isSpecialGeneralAgency = leadAgency != null && (leadAgency.Code.StartsWith("ALL_") || leadAgency.Code == "ALL_AGENCIES" || leadAgency.Code == "ALL_MINISTRIES" || leadAgency.Code == "ALL_PROVINCES" || leadAgency.Code == "ALL_PROVINCES_UBND" || leadAgency.Code == "ALL_MINISTRIES_DIRECT");
+                bool isGeneral = isSpecialGeneralAgency || (dto.IsGeneralTask && leadAgency == null);
 
                 Guid? unitIdToAssign = dto.UnitId;
                 if (!unitIdToAssign.HasValue && !string.IsNullOrWhiteSpace(dto.UnitName))
@@ -346,8 +353,20 @@ namespace Cdsqg.Api.Controllers
                     return BadRequest(new { error = "Tên mục tiêu/nhiệm vụ không được để trống." });
                 }
 
+                string updatedCode = dto.Code?.Trim() ?? item.Code;
+                if (!string.IsNullOrWhiteSpace(updatedCode) && !string.Equals(updatedCode, item.Code, StringComparison.OrdinalIgnoreCase))
+                {
+                    bool isDuplicate = await _context.GoalTaskItems.AnyAsync(i => i.DocumentId == item.DocumentId && i.Id != id && i.Code.ToLower() == updatedCode.ToLower());
+                    if (isDuplicate)
+                    {
+                        return BadRequest(new { error = $"Mã '{updatedCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác." });
+                    }
+                    item.Code = updatedCode;
+                }
+
                 var leadAgency = await _context.Agencies.FirstOrDefaultAsync(a => a.Id == dto.LeadAgencyId);
-                bool isGeneral = dto.IsGeneralTask || (leadAgency != null && (leadAgency.Code == "ALL_AGENCIES" || leadAgency.Code == "ALL_MINISTRIES" || leadAgency.Code == "ALL_PROVINCES" || leadAgency.Code == "ALL_PROVINCES_UBND" || leadAgency.Code == "ALL_MINISTRIES_DIRECT"));
+                bool isSpecialGeneralAgency = leadAgency != null && (leadAgency.Code.StartsWith("ALL_") || leadAgency.Code == "ALL_AGENCIES" || leadAgency.Code == "ALL_MINISTRIES" || leadAgency.Code == "ALL_PROVINCES" || leadAgency.Code == "ALL_PROVINCES_UBND" || leadAgency.Code == "ALL_MINISTRIES_DIRECT");
+                bool isGeneral = isSpecialGeneralAgency || (dto.IsGeneralTask && leadAgency == null);
 
                 item.Title = dto.Title.Trim();
                 item.Section = dto.Section;

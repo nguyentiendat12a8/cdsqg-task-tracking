@@ -9,7 +9,7 @@
       ref="triggerRef"
       @click="toggleDropdown"
       :class="[
-        'w-full border rounded-xl px-2.5 py-1 text-xs font-semibold flex items-center justify-between transition shadow-2xs h-[34px] min-h-[34px] max-h-[34px]',
+        'w-full border rounded-xl px-2.5 py-1 text-xs font-semibold flex items-center justify-between transition shadow-2xs h-[38px] min-h-[38px] max-h-[38px]',
         disabled ? 'bg-slate-100 border-slate-200 text-slate-500 cursor-not-allowed opacity-75' : 'bg-white text-slate-800 cursor-pointer',
         isOpen ? 'border-blue-600 searchable-select-trigger-open ring-2 ring-blue-500/20' : (disabled ? '' : 'border-slate-200 hover:border-slate-300')
       ]"

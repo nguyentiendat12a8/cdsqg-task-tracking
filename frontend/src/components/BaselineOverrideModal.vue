@@ -204,9 +204,8 @@ const yearOptions = computed(() => {
 
 const qualitativeStatusOptions = ref([
   { value: 'NotStarted', label: 'Chưa thực hiện' },
-  { value: 'Drafting', label: 'Đang xây dựng / Soạn thảo' },
-  { value: 'Reviewing', label: 'Đang xin ý kiến / Thẩm định' },
-  { value: 'Completed', label: 'Đã hoàn thành / Ban hành' }
+  { value: 'Drafting', label: 'Đang thực hiện' },
+  { value: 'Completed', label: 'Đã hoàn thành' }
 ]);
 
 const isQuant = computed(() => {

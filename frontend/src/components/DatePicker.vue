@@ -19,7 +19,7 @@
         :placeholder="placeholder"
         :disabled="disabled"
         :required="required"
-        class="w-full text-xs font-semibold bg-slate-50 group-hover:bg-white border border-slate-200 rounded-xl pl-3 pr-8 py-2 text-slate-800 transition shadow-2xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/80 focus:border-blue-500 cursor-pointer"
+        class="w-full text-xs font-semibold bg-slate-50 group-hover:bg-white border border-slate-200 rounded-xl pl-3 pr-8 py-2 text-slate-800 transition shadow-2xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/80 focus:border-blue-500 cursor-pointer h-[38px]"
         :class="inputClass"
       />
       

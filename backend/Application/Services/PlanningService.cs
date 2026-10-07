@@ -212,12 +212,12 @@ namespace Cdsqg.Application.Services
 
                 list = list.Where(i =>
                 {
-                    bool isGeneral = isParentAgency && (i.IsGeneralTask || (i.LeadAgencyCode != null && i.LeadAgencyCode.ToUpper().Contains("ALL_")));
+                    bool isGeneral = isParentAgency && (i.IsGeneralTask || (i.LeadAgencyCode != null && i.LeadAgencyCode.ToUpper().StartsWith("ALL_"))) && (i.LeadAgencyCode == null || i.LeadAgencyCode.ToUpper().StartsWith("ALL_"));
                     bool isLead = scopedAgencyIds.Contains(i.LeadAgencyId);
                     bool isAssigned = i.AssignedAgencyId.HasValue && scopedAgencyIds.Contains(i.AssignedAgencyId.Value);
                     bool isCoord = i.CoordinatingAgencyIds != null && i.CoordinatingAgencyIds.Any(id => scopedAgencyIds.Contains(id));
                     bool isSubMatch = i.SubItems != null && i.SubItems.Any(s =>
-                        (isParentAgency && (s.IsGeneralTask || (s.LeadAgencyCode != null && s.LeadAgencyCode.ToUpper().Contains("ALL_")))) ||
+                        (isParentAgency && (s.IsGeneralTask || (s.LeadAgencyCode != null && s.LeadAgencyCode.ToUpper().StartsWith("ALL_"))) && (s.LeadAgencyCode == null || s.LeadAgencyCode.ToUpper().StartsWith("ALL_"))) ||
                         scopedAgencyIds.Contains(s.LeadAgencyId) ||
                         (s.AssignedAgencyId.HasValue && scopedAgencyIds.Contains(s.AssignedAgencyId.Value)) ||
                         (s.CoordinatingAgencyIds != null && s.CoordinatingAgencyIds.Any(id => scopedAgencyIds.Contains(id)))

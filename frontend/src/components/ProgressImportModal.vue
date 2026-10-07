@@ -270,10 +270,10 @@ function mapQualitativeStatus(str) {
 
 function mapQualitativeStatusDisplay(statusKey) {
   switch (statusKey) {
-    case 'Drafting': return '🟡 Đang xây dựng / Soạn thảo';
-    case 'Reviewing': return '🔵 Đang xin ý kiến / Thẩm định';
-    case 'Completed': return '🟢 Đã hoàn thành / Ban hành';
-    case 'NotStarted': default: return '⚪ Chưa thực hiện';
+    case 'Drafting': return 'Đang xây dựng / Soạn thảo';
+    case 'Reviewing': return 'Đang xin ý kiến / Thẩm định';
+    case 'Completed': return 'Đã hoàn thành / Ban hành';
+    case 'NotStarted': default: return 'Chưa thực hiện';
   }
 }
 
@@ -395,16 +395,16 @@ async function handleFileUpload(e) {
       let parsedValue = null;
       let parsedStatus = null;
       let newValueDisplay = '—';
-      let statusText = '⚪ Chưa rõ';
+      let statusText = 'Chưa rõ';
       let statusBadgeClass = 'bg-slate-100 text-slate-700 border-slate-300';
 
       if (!matchedTask) {
-        statusText = '⚠️ Mã không tồn tại';
+        statusText = 'Mã không tồn tại';
         statusBadgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
       } else {
         hasPerm = checkUserPermission(matchedTask);
         if (!hasPerm) {
-          statusText = '🔴 Không có quyền';
+          statusText = 'Không có quyền';
           statusBadgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
         } else {
           isPending = checkIsLevel3Pending(matchedTask);
@@ -420,11 +420,11 @@ async function handleFileUpload(e) {
                 newValueDisplay = `${num} ${matchedTask.unitName || ''}`;
                 isValid = true;
               } else {
-                statusText = '⚠️ Con số không hợp lệ';
+                statusText = 'Con số không hợp lệ';
                 statusBadgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
               }
             } else {
-              statusText = '⚠️ Chưa nhập giá trị';
+              statusText = 'Chưa nhập giá trị';
               statusBadgeClass = 'bg-amber-50 text-amber-700 border-amber-200';
             }
           } else {
@@ -439,17 +439,17 @@ async function handleFileUpload(e) {
               parsedStatus = 'Drafting'; // Fallback
               isValid = true;
             } else {
-              statusText = '⚠️ Chưa nhập trạng thái';
+              statusText = 'Chưa nhập trạng thái';
               statusBadgeClass = 'bg-amber-50 text-amber-700 border-amber-200';
             }
           }
 
           if (isValid) {
             if (isPending) {
-              statusText = '⏳ Hợp lệ (Chờ Cấp 2 duyệt)';
+              statusText = 'Hợp lệ (Chờ Cấp 2 duyệt)';
               statusBadgeClass = 'bg-amber-50 text-amber-800 border-amber-200';
             } else {
-              statusText = '🟢 Hợp lệ (Duyệt ngay)';
+              statusText = 'Hợp lệ (Duyệt ngay)';
               statusBadgeClass = 'bg-emerald-50 text-emerald-800 border-emerald-200';
             }
           }

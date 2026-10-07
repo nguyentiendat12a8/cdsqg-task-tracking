@@ -34,21 +34,20 @@ export const YEAR_LIST = [
 
 export const QUALITATIVE_STATUS_OPTIONS = [
   { value: 'NotStarted', label: 'Chưa thực hiện' },
-  { value: 'Drafting', label: 'Đang xây dựng / Soạn thảo' },
-  { value: 'Reviewing', label: 'Đang xin ý kiến / Thẩm định' },
-  { value: 'Completed', label: 'Đã hoàn thành / Ban hành' }
+  { value: 'Drafting', label: 'Đang thực hiện' },
+  { value: 'Completed', label: 'Đã hoàn thành' }
 ];
 
 export const QUALITATIVE_STATUS_MAP = {
   'NotStarted': 'Chưa thực hiện',
   '1': 'Chưa thực hiện',
-  'Drafting': 'Đang xây dựng / Soạn thảo',
-  '2': 'Đang xây dựng / Soạn thảo',
-  'Reviewing': 'Đang xin ý kiến / Thẩm định',
-  '3': 'Đang xin ý kiến / Thẩm định',
-  'Submitted': 'Đang xin ý kiến / Thẩm định',
-  'Completed': 'Đã hoàn thành / Ban hành',
-  '4': 'Đã hoàn thành / Ban hành'
+  'Drafting': 'Đang thực hiện',
+  '2': 'Đang thực hiện',
+  'Reviewing': 'Đang thực hiện',
+  '3': 'Đang thực hiện',
+  'Submitted': 'Đang thực hiện',
+  'Completed': 'Đã hoàn thành',
+  '4': 'Đã hoàn thành'
 };
 
 export function getQualitativeStatusLabel(status) {

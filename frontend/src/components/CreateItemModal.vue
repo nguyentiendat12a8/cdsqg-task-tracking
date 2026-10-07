@@ -21,12 +21,12 @@
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="text-xs font-bold text-slate-700 uppercase">Mã <span class="text-rose-500">*</span></label>
-            <input v-model="form.code" required placeholder="e.g. MT-01, NV-05" class="w-full text-xs font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2" />
+            <input v-model="form.code" required placeholder="e.g. MT-01, NV-05" class="w-full text-xs font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 h-[38px]" />
           </div>
 
           <div>
             <label class="text-xs font-bold text-slate-700 uppercase">Phân Nhóm</label>
-            <input v-model="form.category" placeholder="Chính phủ số, Kinh tế số..." class="w-full text-xs font-semibold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2" />
+            <input v-model="form.category" placeholder="Chính phủ số, Kinh tế số..." class="w-full text-xs font-semibold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 h-[38px]" />
           </div>
         </div>
 
@@ -105,7 +105,7 @@
         <div v-if="form.itemType === 'Task'" class="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 space-y-3">
           <div class="flex items-center justify-between">
             <label class="text-xs font-bold text-slate-800 uppercase flex items-center gap-1.5">
-              <span>📋 Danh Mục Sản Phẩm Đầu Ra Dự Kiến (Phụ Lục II)</span>
+              <span>📋 DANH MỤC SẢN PHẨM ĐẦU RA DỰ KIẾN</span>
             </label>
             <button 
               type="button" 
@@ -116,9 +116,7 @@
             </button>
           </div>
 
-          <div v-if="!form.deliverables || form.deliverables.length === 0" class="text-xs text-slate-400 italic text-center py-2">
-            Chưa khai báo sản phẩm đầu ra. Nhấn nút trên để thêm sản phẩm cụ thể.
-          </div>
+
 
           <div v-else class="space-y-2.5 max-h-48 overflow-y-auto pr-1">
             <div 
@@ -181,7 +179,8 @@ import { parseApiError } from '../utils/errorUtils';
 const props = defineProps({
   isOpen: { type: Boolean, default: false },
   documentId: { type: String, required: true },
-  itemType: { type: String, default: 'Task' }
+  itemType: { type: String, default: 'Task' },
+  suggestedCode: { type: String, default: '' }
 });
 
 const emit = defineEmits(['close', 'created']);
@@ -314,7 +313,7 @@ function resetForm() {
   form.value = {
     documentId: props.documentId,
     itemType: props.itemType,
-    code: '',
+    code: props.suggestedCode || (props.itemType === 'Goal' ? 'MT-01' : 'NV-01'),
     title: '',
     category: 'Chính phủ số',
     leadAgencyId: firstLevel2 ? firstLevel2.id : (agencies.value.length > 0 ? agencies.value[0].id : ''),

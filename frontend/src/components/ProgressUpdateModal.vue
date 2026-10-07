@@ -15,12 +15,27 @@
         
         <div class="flex-1 overflow-y-auto custom-scrollbar p-1 space-y-4">
           <!-- Pending Approval Warning Banner -->
-          <div v-if="hasPendingApproval" class="p-3.5 bg-amber-50 text-amber-900 border border-amber-300/80 rounded-xl text-xs font-bold flex items-start gap-2.5 leading-relaxed shadow-2xs">
+          <div v-if="hasPendingApproval && !authState.isAdmin.value" class="p-3.5 bg-amber-50 text-amber-900 border border-amber-300/80 rounded-xl text-xs font-bold flex items-start gap-2.5 leading-relaxed shadow-2xs">
             <span class="text-base leading-none">⏳</span>
             <div>
               <strong class="font-bold">Nhiệm vụ này đang ở trạng thái Chờ duyệt:</strong>
               <span class="font-medium text-amber-950 block mt-0.5"> Báo cáo tiến độ trước đó đang chờ Cấp 1 (Admin) xem xét phê duyệt hoặc từ chối. Bạn không thể gửi báo cáo tiến độ mới cho tới khi cấp trên duyệt xong.</span>
             </div>
+          </div>
+
+          <!-- Select Reporting Agency for General Task / Admin -->
+          <div v-if="showAgencySelector" class="space-y-1.5 bg-purple-50/80 p-3.5 rounded-xl border border-purple-200/90 shadow-2xs">
+            <label class="text-xs font-bold text-purple-950 uppercase flex items-center gap-1.5 flex-wrap">
+              <span>🏛️ Cơ Quan / Đơn Vị Báo Cáo Tiến Độ</span>
+              <span class="text-rose-500">*</span>
+            </label>
+            <SearchableSelect 
+              v-model="form.selectedAgencyId" 
+              :options="reportingAgencyOptions" 
+              :isMulti="false" 
+              :clearable="false"
+              placeholder="-- Chọn cơ quan / đơn vị báo cáo --"
+            />
           </div>
 
           <!-- Period Selection Bar (Yearly default, Quarterly, Monthly) -->
@@ -112,14 +127,15 @@
             </div>
           </div>
 
-          <!-- Qualitative Progress Inputs (Only shown when task has NO deliverables) -->
-          <div v-if="evaluationType !== 'Quantitative' && (!localDeliverables || localDeliverables.length === 0)" class="space-y-1">
-            <label class="text-xs font-bold text-slate-700 uppercase">Trạng Thái Thực Tế Văn Bản <span class="text-rose-500">*</span></label>
+          <!-- Status Input (Only shown when task has NO deliverables and is Qualitative) -->
+          <div v-if="(!localDeliverables || localDeliverables.length === 0) && evaluationType !== 'Quantitative'" class="space-y-1">
+            <label class="text-xs font-bold text-slate-700 uppercase block">TRẠNG THÁI THỰC HIỆN NHIỆM VỤ <span class="text-rose-500">*</span></label>
             <SearchableSelect 
               v-model="form.status" 
               :options="qualitativeStatusOptions" 
               :isMulti="false" 
-              placeholder="Chọn trạng thái"
+              :clearable="false"
+              placeholder="Chọn trạng thái thực hiện"
             />
           </div>
 
@@ -159,7 +175,7 @@
                     <input 
                       v-model="del.documentNumber" 
                       placeholder="VD: 45/2026/NĐ-CP" 
-                      class="w-full text-xs font-semibold bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500" 
+                      class="w-full text-xs font-semibold bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 h-[38px]" 
                     />
                   </div>
                 </div>
@@ -270,8 +286,8 @@
           <button type="button" @click="close" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Hủy</button>
           <button 
             type="submit" 
-            :disabled="isSubmitting || hasPendingApproval"
-            :class="['px-5 py-2.5 text-xs font-bold text-white rounded-xl shadow-2xs transition flex items-center gap-1.5 cursor-pointer', (isSubmitting || hasPendingApproval) ? 'bg-slate-400 cursor-not-allowed opacity-60' : 'bg-blue-600 hover:bg-blue-700']"
+            :disabled="isSubmitting || (hasPendingApproval && !authState.isAdmin.value)"
+            :class="['px-5 py-2.5 text-xs font-bold text-white rounded-xl shadow-2xs transition flex items-center gap-1.5 cursor-pointer', (isSubmitting || (hasPendingApproval && !authState.isAdmin.value)) ? 'bg-slate-400 cursor-not-allowed opacity-60' : 'bg-blue-600 hover:bg-blue-700']"
           >
             <span v-if="isSubmitting" class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
             {{ isSubmitting ? 'Đang gửi...' : 'Gửi Báo Cáo Tiến Độ' }}
@@ -304,10 +320,62 @@ const props = defineProps({
   unitName: { type: String, default: '%' },
   customBaseline: { type: Object, default: () => ({}) },
   deliverables: { type: Array, default: () => [] },
-  hasPendingApproval: { type: Boolean, default: false }
+  hasPendingApproval: { type: Boolean, default: false },
+  isGeneralTask: { type: Boolean, default: false },
+  leadAgencyId: { type: String, default: '' },
+  leadAgencyName: { type: String, default: '' },
+  coordinatingAgencyIds: { type: Array, default: () => [] },
+  agencies: { type: Array, default: () => [] }
 });
 
 const localDeliverables = ref([]);
+const internalAgencies = ref([]);
+
+async function loadAgenciesCatalog() {
+  if (props.agencies && props.agencies.length > 0) {
+    internalAgencies.value = props.agencies;
+    return;
+  }
+  try {
+    const res = await fetchWithAuth(getApiUrl('/api/agencies'));
+    if (res.ok) {
+      const data = await res.json();
+      internalAgencies.value = Array.isArray(data) ? data : (data.items || []);
+    }
+  } catch (e) {
+    console.error('Failed to load agencies in ProgressUpdateModal:', e);
+  }
+}
+
+const showAgencySelector = computed(() => authState.isAdmin.value || props.isGeneralTask);
+
+const isSpecialAgencyCode = (code) => code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES' || code === 'ALL_PROVINCES_UBND' || code === 'ALL_MINISTRIES_DIRECT';
+
+const reportingAgencyOptions = computed(() => {
+  const agList = internalAgencies.value.length > 0 ? internalAgencies.value : (props.agencies || []);
+  const filtered = agList.filter(a => !isSpecialAgencyCode(a.code));
+  
+  const leadId = props.leadAgencyId ? String(props.leadAgencyId).toLowerCase() : '';
+  const coordIds = (props.coordinatingAgencyIds || []).map(id => String(id).toLowerCase());
+
+  return filtered.map(ag => {
+    const agId = String(ag.id).toLowerCase();
+    let label = ag.name;
+    if (ag.parentId) {
+      const parentAg = agList.find(p => String(p.id).toLowerCase() === String(ag.parentId).toLowerCase());
+      label = parentAg ? `${ag.name} (Trực thuộc ${parentAg.name})` : ag.name;
+    }
+    if (agId === leadId) {
+      label = `🏛️ ${label} (Cơ quan chủ trì)`;
+    } else if (coordIds.includes(agId)) {
+      label = `🤝 ${label} (Cơ quan phối hợp)`;
+    }
+    return {
+      value: ag.id,
+      label: label
+    };
+  });
+});
 
 function formatDate(dStr) {
   if (!dStr) return '';
@@ -340,12 +408,14 @@ const monthOptions = Array.from({ length: 12 }, (_, i) => ({
 
 const qualitativeStatusOptions = [
   { value: 'NotStarted', label: 'Chưa thực hiện' },
-  { value: 'Drafting', label: 'Đang xây dựng / Soạn thảo' },
-  { value: 'Reviewing', label: 'Đang xin ý kiến / Thẩm định' },
-  { value: 'Completed', label: 'Đã hoàn thành / Ban hành' }
+  { value: 'Drafting', label: 'Đang thực hiện' },
+  { value: 'Completed', label: 'Đã hoàn thành' }
 ];
 
 function getQualitativeStatusLabel(val) {
+  if (val === 'Reviewing' || val === 'Submitted' || val === '2' || val === '3') return 'Đang thực hiện';
+  if (val === 'Completed' || val === '4') return 'Đã hoàn thành';
+  if (val === 'NotStarted' || val === '1') return 'Chưa thực hiện';
   const found = qualitativeStatusOptions.find(o => o.value === val);
   return found ? found.label : (val || 'Chưa thực hiện');
 }
@@ -363,6 +433,7 @@ const showMonthOption = computed(() => {
 const periodType = ref('yearly'); // 'yearly' | 'quarterly' | 'monthly'
 
 const form = ref({
+  selectedAgencyId: '',
   periodYear: 2026,
   periodQuarter: 0,
   periodMonth: 1,
@@ -370,6 +441,21 @@ const form = ref({
   status: 'Drafting',
   notes: ''
 });
+
+function initSelectedAgencyId() {
+  const options = reportingAgencyOptions.value;
+  if (!options || options.length === 0) return;
+  const userAgencyId = authState.user.value?.agencyId || authState.user.value?.agency?.id;
+  const hasUserAgency = userAgencyId && options.some(o => String(o.value).toLowerCase() === String(userAgencyId).toLowerCase());
+  
+  if (hasUserAgency && !authState.isAdmin.value) {
+    form.value.selectedAgencyId = userAgencyId;
+  } else if (props.leadAgencyId && options.some(o => String(o.value).toLowerCase() === String(props.leadAgencyId).toLowerCase())) {
+    form.value.selectedAgencyId = props.leadAgencyId;
+  } else if (!form.value.selectedAgencyId && options.length > 0) {
+    form.value.selectedAgencyId = options[0].value;
+  }
+}
 
 function setPeriodType(type) {
   periodType.value = type;
@@ -401,6 +487,7 @@ function captureSnapshot() {
     docNum: (d.documentNumber || d.DocumentNumber || '').trim()
   }));
   return JSON.stringify({
+    selectedAgencyId: form.value.selectedAgencyId,
     periodType: periodType.value,
     periodYear: form.value.periodYear,
     periodQuarter: form.value.periodQuarter,
@@ -460,8 +547,8 @@ async function fetchExistingProgress() {
   isLoadingExisting.value = true;
   try {
     const qParam = periodType.value === 'quarterly' ? form.value.periodQuarter : (periodType.value === 'monthly' ? form.value.periodMonth : 0);
-    const userAgencyId = authState.user.value?.agencyId || '';
-    const agencyQuery = userAgencyId ? `&agencyId=${userAgencyId}` : '';
+    const targetAgencyId = form.value.selectedAgencyId || authState.user.value?.agencyId || props.leadAgencyId || '';
+    const agencyQuery = targetAgencyId ? `&agencyId=${targetAgencyId}` : '';
     const res = await fetchWithAuth(getApiUrl(`/api/execution/tasks/${props.taskId}/progress?year=${form.value.periodYear}&period=${qParam}${agencyQuery}`));
     if (res.ok && res.status !== 204) {
       const text = await res.text();
@@ -499,8 +586,11 @@ async function fetchExistingProgress() {
   }
 }
 
-watch(() => [props.isOpen, props.customBaseline, props.deliverables], ([newOpen]) => {
+watch(() => [props.isOpen, props.customBaseline, props.deliverables], async ([newOpen]) => {
   if (newOpen) {
+    await loadAgenciesCatalog();
+    initSelectedAgencyId();
+
     if (Array.isArray(props.deliverables)) {
       localDeliverables.value = props.deliverables.map(d => ({
         id: d.id || d.Id || '',
@@ -524,7 +614,7 @@ watch(() => [props.isOpen, props.customBaseline, props.deliverables], ([newOpen]
   }
 }, { immediate: true });
 
-watch(() => [form.value.periodYear, form.value.periodQuarter, form.value.periodMonth, periodType.value, props.isOpen, props.taskId], async () => {
+watch(() => [form.value.periodYear, form.value.periodQuarter, form.value.periodMonth, periodType.value, props.isOpen, props.taskId, form.value.selectedAgencyId], async () => {
   if (props.isOpen && props.taskId) {
     await fetchExistingProgress();
   }
@@ -551,11 +641,7 @@ function close() {
 }
 
 async function submitProgress() {
-  if (authState.isAdmin.value) {
-    toast.warning("Tài khoản Quản trị viên (Admin) không thực hiện cập nhật tiến độ. Thao tác này dành cho tài khoản cán bộ đầu mối của các Cơ quan / Bộ / Ngành.");
-    return;
-  }
-  if (props.hasPendingApproval) {
+  if (props.hasPendingApproval && !authState.isAdmin.value) {
     toast.warning("Nhiệm vụ này đang ở trạng thái Chờ duyệt. Vui lòng chờ Cấp 2 phê duyệt hoặc từ chối trước khi gửi báo cáo mới.");
     return;
   }
@@ -572,6 +658,10 @@ async function submitProgress() {
     toast.error("Vui lòng chọn Tháng Báo Cáo!");
     return;
   }
+  if (showAgencySelector.value && !form.value.selectedAgencyId) {
+    toast.error("Vui lòng chọn cơ quan/đơn vị báo cáo!");
+    return;
+  }
   if (props.evaluationType === 'Quantitative') {
     if (form.value.value === null || form.value.value === '' || isNaN(form.value.value)) {
       toast.error("Vui lòng nhập con số giá trị đạt được!");
@@ -580,7 +670,7 @@ async function submitProgress() {
   } else {
     if (!localDeliverables.value || localDeliverables.value.length === 0) {
       if (!form.value.status) {
-        toast.error("Vui lòng chọn trạng thái thực tế văn bản!");
+        toast.error("Vui lòng chọn trạng thái thực hiện nhiệm vụ!");
         return;
       }
     }
@@ -623,13 +713,19 @@ async function submitProgress() {
       formData.append('SummaryNotes', form.value.notes);
     }
 
-    const agencyName = authState.user.value?.agencyName || '';
-    const userName = authState.user.value?.fullName || authState.user.value?.username || '';
-    const creatorLabel = agencyName || userName || 'Đơn vị chủ trì';
-    formData.append('CreatedBy', creatorLabel);
-    if (authState.user.value?.agencyId) {
-      formData.append('AgencyId', authState.user.value.agencyId);
+    const targetAgencyId = form.value.selectedAgencyId || authState.user.value?.agencyId || props.leadAgencyId || '';
+    if (targetAgencyId) {
+      formData.append('AgencyId', targetAgencyId);
     }
+
+    const roleStr = authState.isAdmin.value ? 'Admin' : (authState.user.value?.role || 'Level2');
+    formData.append('UserRole', roleStr);
+
+    const selectedAgObj = reportingAgencyOptions.value.find(a => String(a.value).toLowerCase() === String(targetAgencyId).toLowerCase());
+    const cleanAgName = selectedAgObj ? selectedAgObj.label.replace(/^🏛️\s*|^🤝\s*/, '') : (authState.user.value?.agencyName || '');
+    const userName = authState.user.value?.fullName || authState.user.value?.username || '';
+    const creatorLabel = authState.isAdmin.value ? `Quản trị viên (Admin) - ${cleanAgName || userName}` : (cleanAgName || userName || 'Đơn vị chủ trì');
+    formData.append('CreatedBy', creatorLabel);
 
     if (existingFiles.value.length > 0) {
       for (const fileUrl of existingFiles.value) {

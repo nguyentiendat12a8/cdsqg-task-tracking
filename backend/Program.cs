@@ -489,19 +489,22 @@ void SeedInitialData(AppDbContext db, IPasswordHasher hasher)
     }
     db.SaveChanges();
 
-    // Set IsGeneralTask = true for items assigned to any of the 5 special agencies
-    var specialAgencies = db.Agencies.Where(a => a.Code == "ALL_AGENCIES" || a.Code == "ALL_MINISTRIES" || a.Code == "ALL_PROVINCES" || a.Code == "ALL_PROVINCES_UBND" || a.Code == "ALL_MINISTRIES_DIRECT").Select(a => a.Id).ToList();
+    // Enforce IsGeneralTask = true ONLY for items assigned to special general agencies (code starting with ALL_)
+    var specialAgencies = db.Agencies.Where(a => a.Code.StartsWith("ALL_")).Select(a => a.Id).ToList();
     if (specialAgencies.Count > 0)
     {
         var itemsToSetGeneral = db.GoalTaskItems.Where(i => !i.IsGeneralTask && specialAgencies.Contains(i.LeadAgencyId)).ToList();
-        if (itemsToSetGeneral.Count > 0)
+        foreach (var item in itemsToSetGeneral)
         {
-            foreach (var item in itemsToSetGeneral)
-            {
-                item.IsGeneralTask = true;
-            }
-            db.SaveChanges();
+            item.IsGeneralTask = true;
         }
+
+        var itemsToUnsetGeneral = db.GoalTaskItems.Where(i => i.IsGeneralTask && !specialAgencies.Contains(i.LeadAgencyId)).ToList();
+        foreach (var item in itemsToUnsetGeneral)
+        {
+            item.IsGeneralTask = false;
+        }
+        db.SaveChanges();
     }
 
     var specialCodes = specialItems.Select(s => s.Code).ToList();

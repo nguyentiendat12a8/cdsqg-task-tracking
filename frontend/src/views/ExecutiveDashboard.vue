@@ -1,8 +1,8 @@
 <template>
-  <div class="w-full space-y-3.5 font-sans">
+  <div class="w-full space-y-4 font-sans">
     
     <!-- Top Header Bar -->
-    <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200/80 w-full">
+    <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/80 w-full">
       <div class="flex items-center gap-2.5">
         <span class="p-2 bg-blue-600 text-white rounded-xl shadow-sm">
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
@@ -208,7 +208,7 @@
               <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-200/80">
                 <div class="flex items-center gap-2">
                   <span class="w-3 h-3 rounded-full bg-slate-400 shrink-0"></span>
-                  <span class="text-slate-700 font-medium">1. Chưa thực hiện</span>
+                  <span class="text-slate-700 font-medium">Chưa thực hiện</span>
                 </div>
                 <span class="font-bold text-slate-900">{{ activeCreatedStatusSummary.notStarted ?? 0 }}</span>
               </div>
@@ -216,7 +216,7 @@
               <div class="flex items-center justify-between p-2 rounded-lg bg-blue-50/60 border border-blue-200/80">
                 <div class="flex items-center gap-2">
                   <span class="w-3 h-3 rounded-full bg-blue-500 shrink-0"></span>
-                  <span class="text-blue-800 font-medium">2. Đang thực hiện (trong hạn)</span>
+                  <span class="text-blue-800 font-medium">Đang thực hiện (trong hạn)</span>
                 </div>
                 <span class="font-bold text-blue-900">{{ activeCreatedStatusSummary.inProgressOnTime ?? 0 }}</span>
               </div>
@@ -224,7 +224,7 @@
               <div class="flex items-center justify-between p-2 rounded-lg bg-rose-50/60 border border-rose-200/80">
                 <div class="flex items-center gap-2">
                   <span class="w-3 h-3 rounded-full bg-rose-500 shrink-0"></span>
-                  <span class="text-rose-800 font-medium">3. Đang thực hiện (quá hạn)</span>
+                  <span class="text-rose-800 font-medium">Đang thực hiện (quá hạn)</span>
                 </div>
                 <span class="font-bold text-rose-900">{{ activeCreatedStatusSummary.inProgressOverdue ?? 0 }}</span>
               </div>
@@ -232,7 +232,7 @@
               <div class="flex items-center justify-between p-2 rounded-lg bg-emerald-50/60 border border-emerald-200/80">
                 <div class="flex items-center gap-2">
                   <span class="w-3 h-3 rounded-full bg-emerald-500 shrink-0"></span>
-                  <span class="text-emerald-800 font-medium">4. Hoàn thành (đúng hạn)</span>
+                  <span class="text-emerald-800 font-medium">Hoàn thành (đúng hạn)</span>
                 </div>
                 <span class="font-bold text-emerald-900">{{ activeCreatedStatusSummary.completedOnTime ?? 0 }}</span>
               </div>
@@ -240,7 +240,7 @@
               <div class="flex items-center justify-between p-2 rounded-lg bg-teal-50/60 border border-teal-200/80">
                 <div class="flex items-center gap-2">
                   <span class="w-3 h-3 rounded-full bg-teal-500 shrink-0"></span>
-                  <span class="text-teal-800 font-medium">5. Hoàn thành (quá hạn)</span>
+                  <span class="text-teal-800 font-medium">Hoàn thành (quá hạn)</span>
                 </div>
                 <span class="font-bold text-teal-900">{{ activeCreatedStatusSummary.completedOverdue ?? 0 }}</span>
               </div>
@@ -248,7 +248,7 @@
               <div class="flex items-center justify-between p-2 rounded-lg bg-amber-50/60 border border-amber-200/80">
                 <div class="flex items-center gap-2">
                   <span class="w-3 h-3 rounded-full bg-amber-500 shrink-0"></span>
-                  <span class="text-amber-800 font-medium">6. Sắp hết hạn</span>
+                  <span class="text-amber-800 font-medium">Sắp hết hạn</span>
                 </div>
                 <span class="font-bold text-amber-900">{{ activeCreatedStatusSummary.expiringSoon ?? 0 }}</span>
               </div>
@@ -285,7 +285,7 @@
               <div class="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-200/80">
                 <div class="flex items-center gap-2">
                   <span class="w-3 h-3 rounded-full bg-slate-400 shrink-0"></span>
-                  <span class="text-slate-700 font-medium">1. Chưa thực hiện</span>
+                  <span class="text-slate-700 font-medium">Chưa thực hiện</span>
                 </div>
                 <span class="font-bold text-slate-900">{{ activeStatusSummary.notStarted ?? 0 }}</span>
               </div>
@@ -293,7 +293,7 @@
               <div class="flex items-center justify-between p-2 rounded-lg bg-blue-50/60 border border-blue-200/80">
                 <div class="flex items-center gap-2">
                   <span class="w-3 h-3 rounded-full bg-blue-500 shrink-0"></span>
-                  <span class="text-blue-800 font-medium">2. Đang thực hiện (trong hạn)</span>
+                  <span class="text-blue-800 font-medium">Đang thực hiện (trong hạn)</span>
                 </div>
                 <span class="font-bold text-blue-900">{{ activeStatusSummary.inProgressOnTime ?? 0 }}</span>
               </div>
@@ -301,7 +301,7 @@
               <div class="flex items-center justify-between p-2 rounded-lg bg-rose-50/60 border border-rose-200/80">
                 <div class="flex items-center gap-2">
                   <span class="w-3 h-3 rounded-full bg-rose-500 shrink-0"></span>
-                  <span class="text-rose-800 font-medium">3. Đang thực hiện (quá hạn)</span>
+                  <span class="text-rose-800 font-medium">Đang thực hiện (quá hạn)</span>
                 </div>
                 <span class="font-bold text-rose-900">{{ activeStatusSummary.inProgressOverdue ?? 0 }}</span>
               </div>
@@ -309,7 +309,7 @@
               <div class="flex items-center justify-between p-2 rounded-lg bg-emerald-50/60 border border-emerald-200/80">
                 <div class="flex items-center gap-2">
                   <span class="w-3 h-3 rounded-full bg-emerald-500 shrink-0"></span>
-                  <span class="text-emerald-800 font-medium">4. Hoàn thành (đúng hạn)</span>
+                  <span class="text-emerald-800 font-medium">Hoàn thành (đúng hạn)</span>
                 </div>
                 <span class="font-bold text-emerald-900">{{ activeStatusSummary.completedOnTime ?? 0 }}</span>
               </div>
@@ -317,7 +317,7 @@
               <div class="flex items-center justify-between p-2 rounded-lg bg-teal-50/60 border border-teal-200/80">
                 <div class="flex items-center gap-2">
                   <span class="w-3 h-3 rounded-full bg-teal-500 shrink-0"></span>
-                  <span class="text-teal-800 font-medium">5. Hoàn thành (quá hạn)</span>
+                  <span class="text-teal-800 font-medium">Hoàn thành (quá hạn)</span>
                 </div>
                 <span class="font-bold text-teal-900">{{ activeStatusSummary.completedOverdue ?? 0 }}</span>
               </div>
@@ -325,7 +325,7 @@
               <div class="flex items-center justify-between p-2 rounded-lg bg-amber-50/60 border border-amber-200/80">
                 <div class="flex items-center gap-2">
                   <span class="w-3 h-3 rounded-full bg-amber-500 shrink-0"></span>
-                  <span class="text-amber-800 font-medium">6. Sắp hết hạn</span>
+                  <span class="text-amber-800 font-medium">Sắp hết hạn</span>
                 </div>
                 <span class="font-bold text-amber-900">{{ activeStatusSummary.expiringSoon ?? 0 }}</span>
               </div>
@@ -375,7 +375,7 @@
               <div class="flex items-center justify-between p-2.5 rounded-xl bg-white border border-slate-200">
                 <div class="flex items-center gap-2">
                   <span class="w-3 h-3 rounded-full bg-slate-400"></span>
-                  <span class="text-slate-700">1. Chưa thực hiện</span>
+                  <span class="text-slate-700">Chưa thực hiện</span>
                 </div>
                 <span class="font-bold text-slate-900 text-sm">{{ singleSubAgencyPerformance.notStarted || 0 }}</span>
               </div>
@@ -383,7 +383,7 @@
               <div class="flex items-center justify-between p-2.5 rounded-xl bg-blue-50/70 border border-blue-200">
                 <div class="flex items-center gap-2">
                   <span class="w-3 h-3 rounded-full bg-blue-500"></span>
-                  <span class="text-blue-800">2. Đang thực hiện (trong hạn)</span>
+                  <span class="text-blue-800">Đang thực hiện (trong hạn)</span>
                 </div>
                 <span class="font-bold text-blue-900 text-sm">{{ singleSubAgencyPerformance.inProgressOnTime || 0 }}</span>
               </div>
@@ -391,7 +391,7 @@
               <div class="flex items-center justify-between p-2.5 rounded-xl bg-rose-50/70 border border-rose-200">
                 <div class="flex items-center gap-2">
                   <span class="w-3 h-3 rounded-full bg-rose-500"></span>
-                  <span class="text-rose-800">3. Đang thực hiện (quá hạn)</span>
+                  <span class="text-rose-800">Đang thực hiện (quá hạn)</span>
                 </div>
                 <span class="font-bold text-rose-900 text-sm">{{ singleSubAgencyPerformance.inProgressOverdue || 0 }}</span>
               </div>
@@ -399,7 +399,7 @@
               <div class="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200">
                 <div class="flex items-center gap-2">
                   <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
-                  <span class="text-emerald-800">4. Hoàn thành (đúng hạn)</span>
+                  <span class="text-emerald-800">Hoàn thành (đúng hạn)</span>
                 </div>
                 <span class="font-bold text-emerald-900 text-sm">{{ singleSubAgencyPerformance.completedOnTime || 0 }}</span>
               </div>
@@ -407,7 +407,7 @@
               <div class="flex items-center justify-between p-2.5 rounded-xl bg-teal-50/70 border border-teal-200">
                 <div class="flex items-center gap-2">
                   <span class="w-3 h-3 rounded-full bg-teal-500"></span>
-                  <span class="text-teal-800">5. Hoàn thành (quá hạn)</span>
+                  <span class="text-teal-800">Hoàn thành (quá hạn)</span>
                 </div>
                 <span class="font-bold text-teal-900 text-sm">{{ singleSubAgencyPerformance.completedOverdue || 0 }}</span>
               </div>
@@ -415,7 +415,7 @@
               <div class="flex items-center justify-between p-2.5 rounded-xl bg-amber-50/70 border border-amber-200">
                 <div class="flex items-center gap-2">
                   <span class="w-3 h-3 rounded-full bg-amber-500"></span>
-                  <span class="text-amber-800">6. Sắp hết hạn</span>
+                  <span class="text-amber-800">Sắp hết hạn</span>
                 </div>
                 <span class="font-bold text-amber-900 text-sm">{{ singleSubAgencyPerformance.expiringSoon || 0 }}</span>
               </div>
@@ -1249,12 +1249,12 @@
                 class="py-1.5 px-2.5 text-xs bg-white border border-slate-200 rounded-lg font-medium text-slate-700 focus:outline-none focus:border-blue-500 cursor-pointer"
               >
                 <option value="all">Tất cả trạng thái</option>
-                <option value="InProgressOverdue">🔴 Đang t/h quá hạn</option>
-                <option value="InProgressOnTime">🟢 Đang t/h trong hạn</option>
-                <option value="ExpiringSoon">🟣 Sắp tới hạn</option>
-                <option value="CompletedOverdue">🟠 Đã h/t quá hạn</option>
-                <option value="CompletedOnTime">🔵 Đã h/t trong hạn</option>
-                <option value="NotStarted">⚪ Chưa thực hiện</option>
+                <option value="InProgressOverdue">Đang t/h quá hạn</option>
+                <option value="InProgressOnTime">Đang t/h trong hạn</option>
+                <option value="ExpiringSoon">Sắp tới hạn</option>
+                <option value="CompletedOverdue">Đã h/t quá hạn</option>
+                <option value="CompletedOnTime">Đã h/t trong hạn</option>
+                <option value="NotStarted">Chưa thực hiện</option>
               </select>
             </div>
           </div>
@@ -1278,7 +1278,7 @@
                     </th>
                     <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[140px] w-[140px]">Cơ Quan Chủ Trì</th>
                     <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 whitespace-nowrap min-w-[130px] w-[130px]">Thời Gian</th>
-                    <th class="px-3 py-2.5 border-r border-slate-200 text-center bg-slate-100 whitespace-nowrap min-w-[100px] w-[100px]">Tiến Độ</th>
+                    <th v-if="drilldownTab === 'goals'" class="px-3 py-2.5 border-r border-slate-200 text-center bg-slate-100 whitespace-nowrap min-w-[100px] w-[100px]">Tiến Độ</th>
                     <th class="px-3 py-2.5 border-r border-slate-200 text-center bg-slate-100 whitespace-nowrap min-w-[150px] w-[150px]">Trạng Thái</th>
                     <th class="px-3 py-2.5 text-center bg-slate-100 whitespace-nowrap min-w-[90px] w-[90px]">Chi Tiết</th>
                   </tr>
@@ -1330,7 +1330,7 @@
                     </td>
 
                     <!-- Tiến độ -->
-                    <td class="px-3 py-2.5 border-r border-slate-200 text-center text-xs whitespace-nowrap">
+                    <td v-if="drilldownTab === 'goals'" class="px-3 py-2.5 border-r border-slate-200 text-center text-xs whitespace-nowrap">
                       <span v-if="formatItemProgressDisplay(item) !== '—'" class="font-bold px-2 py-0.5 rounded-lg text-xs bg-blue-50 text-blue-900 border border-blue-200">
                         {{ formatItemProgressDisplay(item) }}
                       </span>
@@ -1784,18 +1784,18 @@ function getStatusBadgeClass(status) {
 function getStatusLabel(status) {
   switch (status) {
     case 'InProgressOverdue':
-      return '🔴 Đang t/h quá hạn';
+      return 'Đang t/h quá hạn';
     case 'InProgressOnTime':
-      return '🟢 Đang t/h trong hạn';
+      return 'Đang t/h trong hạn';
     case 'ExpiringSoon':
-      return '🟣 Sắp tới hạn';
+      return 'Sắp tới hạn';
     case 'CompletedOverdue':
-      return '🟠 Đã h/t quá hạn';
+      return 'Đã h/t quá hạn';
     case 'CompletedOnTime':
-      return '🔵 Đã h/t trong hạn';
+      return 'Đã h/t trong hạn';
     case 'NotStarted':
     default:
-      return '⚪ Chưa thực hiện';
+      return 'Chưa thực hiện';
   }
 }
 
@@ -2643,17 +2643,16 @@ async function exportDashboardExcelReport() {
         if (tasksList.length > 0) {
           sheetRows.push([
             "STT", "Mã Nhiệm Vụ", "Tên Nhiệm Vụ", "Cơ Quan Chủ Trì", "Giao Đơn Vị Trực Thuộc", "Phạm Vi", "Lĩnh Vực / Nhóm",
-            "Thời Gian / Hạn Chót", "Tiến Độ Hiện Tại", "Trạng Thái Thực Hiện"
+            "Thời Gian / Hạn Chót", "Trạng Thái Thực Hiện"
           ]);
           tasksList.forEach((t, tIdx) => {
             let dateStr = t.isOngoing ? 'Hằng năm' : (t.dueDate ? formatDate(t.dueDate) : '—');
-            let progStr = formatItemProgressDisplay(t);
 
             sheetRows.push([
               tIdx + 1, t.code || '—', t.title, t.leadAgencyName, t.assignedAgencyName || '—',
               t.isGeneralTask ? 'Phạm vi chung' : 'Phạm vi riêng',
               [t.section, t.group].filter(Boolean).join(' - ') || '—',
-              dateStr, progStr, getStatusLabelClean(t.status)
+              dateStr, getStatusLabelClean(t.status)
             ]);
           });
         } else {

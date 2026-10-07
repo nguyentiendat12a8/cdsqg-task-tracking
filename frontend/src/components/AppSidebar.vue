@@ -78,8 +78,8 @@
           <span v-if="!isCollapsed" class="truncate">Trang Chủ</span>
         </button>
 
-        <!-- Submenu: Mục tiêu (Goals) -->
-        <div>
+        <!-- Submenu: Mục tiêu (Goals) - Dropdown for Admin, Direct Button for Level 2/3 -->
+        <div v-if="authState.isAdmin.value">
           <button 
             @click="handleGoalsClick"
             :class="[
@@ -104,7 +104,6 @@
               Danh sách mục tiêu
             </button>
             <button 
-              v-if="authState.isAdmin.value"
               @click="selectTab('goals-grid')"
               :class="['w-full text-left py-2 px-3 rounded-lg text-xs font-semibold transition whitespace-nowrap cursor-pointer', activeTab === 'goals-grid' ? 'text-blue-400 bg-slate-800' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50']"
             >
@@ -112,6 +111,20 @@
             </button>
           </div>
         </div>
+
+        <button 
+          v-else
+          @click="selectTab('goals-list')"
+          :class="[
+            'w-full flex items-center gap-3 py-3 rounded-xl font-bold text-xs transition-all duration-200 whitespace-nowrap overflow-hidden cursor-pointer',
+            isCollapsed ? 'justify-center px-0 w-12 h-12 mx-auto' : 'px-3',
+            ['goals', 'goals-list', 'goals-grid'].includes(activeTab) ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+          ]"
+          :title="isCollapsed ? 'Mục Tiêu' : ''"
+        >
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
+          <span v-if="!isCollapsed" class="truncate">Mục Tiêu</span>
+        </button>
 
         <!-- Nhiệm vụ (Tasks) -->
         <button 

@@ -109,6 +109,7 @@ namespace Cdsqg.Application.DTOs
 
     public class UpdateGoalTaskItemRequestDto
     {
+        public string? Code { get; set; }
         public string Title { get; set; } = string.Empty;
         public string? Section { get; set; }
         public string? Group { get; set; }

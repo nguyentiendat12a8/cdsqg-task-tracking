@@ -27,7 +27,7 @@
         />
 
         <!-- Scrollable Dynamic View Content -->
-        <main class="flex-1 overflow-y-auto p-3 sm:p-4 custom-scrollbar">
+        <main class="flex-1 overflow-y-auto px-4 sm:px-6 pb-6 custom-scrollbar" style="padding-top: 16px;">
           
           <!-- Trang chủ (Executive / Agency User Dashboard) -->
           <ExecutiveDashboard 

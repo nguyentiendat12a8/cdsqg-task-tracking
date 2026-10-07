@@ -1,8 +1,8 @@
 <template>
-  <div class="w-full space-y-3.5 font-sans">
+  <div class="w-full space-y-4 font-sans">
     
     <!-- Header Bar -->
-    <div class="bg-white p-3.5 sm:p-4 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col md:flex-row md:items-center justify-between gap-3 w-full">
+    <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col md:flex-row md:items-center justify-between gap-3 w-full">
       <div>
         <div class="flex items-center gap-2.5">
           <span class="p-2 bg-blue-600 text-white rounded-xl shadow-sm">
@@ -570,12 +570,12 @@ function getFileName(path) {
 
 function getStatusLabel(st) {
   const map = {
-    'NotStarted': '1. Chưa thực hiện',
-    'InProgressOnTime': '2. Đang thực hiện (trong hạn)',
-    'InProgressOverdue': '3. Đang thực hiện (quá hạn)',
-    'CompletedOnTime': '4. Hoàn thành (đúng hạn)',
-    'CompletedOverdue': '5. Hoàn thành (quá hạn)',
-    'ExpiringSoon': '6. Sắp hết hạn'
+    'NotStarted': 'Chưa thực hiện',
+    'InProgressOnTime': 'Đang thực hiện (trong hạn)',
+    'InProgressOverdue': 'Đang thực hiện (quá hạn)',
+    'CompletedOnTime': 'Hoàn thành (đúng hạn)',
+    'CompletedOverdue': 'Hoàn thành (quá hạn)',
+    'ExpiringSoon': 'Sắp hết hạn'
   };
   return map[st] || st || 'Chưa thực hiện';
 }
@@ -962,8 +962,8 @@ function exportCurrentReportToExcel() {
     kpiTitle = "1. CHỈ SỐ CẢNH BÁO TIẾN ĐỘ THỰC HIỆN";
     kpiSection = [
       ["Tổng số nhiệm vụ cần gửi thông báo", urgentItems.value.length],
-      ["Số lượng nhiệm vụ đang thực hiện quá hạn (🔴)", urgentItems.value.filter(i => i.calculatedStatus === 'InProgressOverdue').length],
-      ["Số lượng nhiệm vụ sắp tới hạn (🟣)", urgentItems.value.filter(i => i.calculatedStatus === 'ExpiringSoon').length]
+      ["Số lượng nhiệm vụ đang thực hiện quá hạn", urgentItems.value.filter(i => i.calculatedStatus === 'InProgressOverdue').length],
+      ["Số lượng nhiệm vụ sắp tới hạn", urgentItems.value.filter(i => i.calculatedStatus === 'ExpiringSoon').length]
     ];
     tableTitle = "2. DANH SÁCH CHI TIẾT NHIỆM VỤ CẦN GỬI THÔNG BÁO";
     fileName = "Bao_Cao_Nhiem_Vu_Can_Gui_Thong_Bao";
