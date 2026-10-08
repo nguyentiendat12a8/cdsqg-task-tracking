@@ -34,6 +34,10 @@ namespace Cdsqg.Api.Controllers
             {
                 return NotFound(new { error = ex.Message });
             }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
             catch (Exception ex)
             {
                 return StatusCode(500, new { error = "Lỗi hệ thống khi tải Planning Grid", details = ex.Message });
@@ -42,7 +46,7 @@ namespace Cdsqg.Api.Controllers
 
         /// <summary>
         /// Endpoint: POST /api/planning/tasks/{taskId}/custom-baseline
-        /// Cập nhật cột JSONB CustomBaseline lưu cấu hình ghi đè mốc chỉ tiêu theo Quý (e.g. {"Q1_2026": 10, "Q2_2026": 40})
+        /// Cập nhật cột JSONB CustomBaseline lưu chỉ tiêu tùy chỉnh theo năm (ví dụ {"2026": "40"})
         /// </summary>
         [HttpPost("tasks/{taskId:guid}/custom-baseline")]
         public async Task<IActionResult> UpdateTaskCustomBaseline(Guid taskId, [FromBody] UpdateCustomBaselineDto dto)
@@ -58,6 +62,10 @@ namespace Cdsqg.Api.Controllers
             {
                 return NotFound(new { error = ex.Message });
             }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
             catch (Exception ex)
             {
                 return StatusCode(500, new { error = "Lỗi khi cập nhật Custom Baseline", details = ex.Message });
@@ -66,7 +74,7 @@ namespace Cdsqg.Api.Controllers
 
         /// <summary>
         /// Endpoint: PUT /api/planning/tasks/{taskId}/yearly-target
-        /// Auto-save chỉ tiêu hằng năm của một Task/Goal (Quarter == 0)
+        /// Auto-save chỉ tiêu hằng năm của một Task/Goal
         /// </summary>
         [HttpPut("tasks/{taskId:guid}/yearly-target")]
         public async Task<IActionResult> UpdateYearlyTarget(Guid taskId, [FromBody] UpdateYearlyTargetDto dto)
@@ -81,6 +89,10 @@ namespace Cdsqg.Api.Controllers
             catch (KeyNotFoundException ex)
             {
                 return NotFound(new { error = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
             }
             catch (Exception ex)
             {

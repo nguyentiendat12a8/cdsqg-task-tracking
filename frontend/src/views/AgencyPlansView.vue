@@ -562,7 +562,7 @@ import { fetchWithAuth } from '../services/auth';
 import { ref, computed, onMounted } from 'vue';
 import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
-import XLSX from 'xlsx-js-style';
+import { loadExcelWriter } from '../utils/excelRuntime';
 import { getApiUrl } from '../config/api';
 import { authState } from '../services/auth';
 import { confirmModal } from '../services/confirm';
@@ -986,6 +986,7 @@ async function saveAgencyDetails() {
 }
 
 async function exportAgencyPlansToExcel() {
+  const XLSX = await loadExcelWriter();
   try {
     toast.info('Đang khởi tạo báo cáo Excel...', { autoClose: 1500 });
 

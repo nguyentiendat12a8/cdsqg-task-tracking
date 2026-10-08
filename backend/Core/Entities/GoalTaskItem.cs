@@ -21,11 +21,6 @@ namespace Cdsqg.Core.Entities
         /// </summary>
         public ItemTypeEnum ItemType { get; set; } = ItemTypeEnum.Task;
 
-        /// <summary>
-        /// ID Mục tiêu / Nhiệm vụ cha (Nếu là Nhiệm vụ con / Sub-task)
-        /// </summary>
-        public Guid? ParentId { get; set; }
-        public GoalTaskItem? ParentItem { get; set; }
 
         public string Code { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
@@ -78,7 +73,7 @@ namespace Cdsqg.Core.Entities
         public EvaluationTypeEnum EvaluationType { get; set; } = EvaluationTypeEnum.Quantitative;
 
         /// <summary>
-        /// Động cơ tính toán: Cumulative (Cộng dồn) hoặc LatestValue (Ghi đè giá trị mới nhất)
+        /// Mã phương pháp legacy; cả hai dùng tổng kết quả đã đạt đến năm báo cáo.
         /// </summary>
         public CalculationMethodEnum CalculationMethod { get; set; } = CalculationMethodEnum.LatestValue;
 
@@ -123,7 +118,6 @@ namespace Cdsqg.Core.Entities
         public ExecutionStatusEnum CalculatedStatus { get; set; } = ExecutionStatusEnum.NotStarted;
 
         // Navigation Collections
-        public ICollection<GoalTaskItem> SubItems { get; set; } = new List<GoalTaskItem>();
         public ICollection<TargetBaseline> Baselines { get; set; } = new List<TargetBaseline>();
         public ICollection<ProgressLog> ProgressLogs { get; set; } = new List<ProgressLog>();
         public ICollection<AgencyTaskExecution> AgencyExecutions { get; set; } = new List<AgencyTaskExecution>();

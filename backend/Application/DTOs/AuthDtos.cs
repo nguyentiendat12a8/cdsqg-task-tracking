@@ -64,4 +64,9 @@ namespace Cdsqg.Application.DTOs
     {
         public string EmailOrUsername { get; set; } = string.Empty;
     }
+    public class RecoverPasswordDto
+    {
+        public string Token { get; set; } = string.Empty;
+        public string NewPassword { get; set; } = string.Empty;
+    }
 }

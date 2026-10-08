@@ -9,6 +9,7 @@ const type = ref('danger'); // 'danger' | 'warning' | 'info'
 let resolvePromise = null;
 
 export function confirmModal(options) {
+  if (resolvePromise) handleConfirmResponse(false);
   if (typeof options === 'string') {
     options = { message: options };
   }

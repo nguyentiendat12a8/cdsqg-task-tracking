@@ -663,15 +663,8 @@ function passesCommonFilters(i) {
     const isLead = scopedAgencyIds.includes(itemLeadId);
     const isAssigned = itemAssignedId && scopedAgencyIds.includes(itemAssignedId);
     const isCoord = itemCoordIds.some(id => scopedAgencyIds.includes(id));
-    const isSubMatch = i.subItems?.some(s => {
-      const sLeadId = s.leadAgencyId ? String(s.leadAgencyId).toLowerCase() : '';
-      const sAssignedId = s.assignedAgencyId ? String(s.assignedAgencyId).toLowerCase() : '';
-      const sCoordIds = (s.coordinatingAgencyIds || []).map(id => String(id).toLowerCase());
-      const sIsGeneral = isParentAgency && (s.isGeneralTask || isSpecialAgencyCode(s.leadAgencyCode) || ['00000000-0000-0000-0000-000000009999', '00000000-0000-0000-0000-000000009998', '00000000-0000-0000-0000-000000009997', '00000000-0000-0000-0000-000000009996', '00000000-0000-0000-0000-000000009995'].includes(sLeadId));
-      return sIsGeneral || scopedAgencyIds.includes(sLeadId) || (sAssignedId && scopedAgencyIds.includes(sAssignedId)) || sCoordIds.some(id => scopedAgencyIds.includes(id));
-    });
 
-    if (!isGeneral && !isLead && !isAssigned && !isCoord && !isSubMatch) return false;
+    if (!isGeneral && !isLead && !isAssigned && !isCoord) return false;
   }
 
   if (appliedFilters.value.selectedAgencyIds?.length > 0 && !appliedFilters.value.selectedAgencyIds.includes(i.leadAgencyId)) return false;

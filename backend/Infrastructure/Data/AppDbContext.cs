@@ -125,12 +125,6 @@ namespace Cdsqg.Infrastructure.Data
                 entity.Property(e => e.EvaluationType).HasConversion<string>();
                 entity.Property(e => e.CalculationMethod).HasConversion<string>();
 
-                // Self-referencing relationship for Sub-tasks
-                entity.HasOne(e => e.ParentItem)
-                      .WithMany(g => g.SubItems)
-                      .HasForeignKey(e => e.ParentId)
-                      .OnDelete(DeleteBehavior.Cascade);
-
                 // Lead Agency Relationship
                 entity.HasOne(e => e.LeadAgency)
                       .WithMany()
@@ -185,7 +179,7 @@ namespace Cdsqg.Infrastructure.Data
             modelBuilder.Entity<TargetBaseline>(entity =>
             {
                 entity.HasKey(e => e.Id);
-                entity.HasIndex(e => new { e.GoalTaskId, e.Year, e.Quarter }).IsUnique();
+                entity.HasIndex(e => new { e.GoalTaskId, e.Year }).IsUnique();
                 entity.Property(e => e.TargetQualitativeStatus).HasConversion<string>();
 
                 entity.HasOne(e => e.GoalTaskItem)

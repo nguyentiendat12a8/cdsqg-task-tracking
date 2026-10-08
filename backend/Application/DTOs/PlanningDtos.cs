@@ -19,7 +19,6 @@ namespace Cdsqg.Application.DTOs
     public class PlanningGridItemDto
     {
         public Guid TaskId { get; set; }
-        public Guid? ParentId { get; set; }
         public string ItemType { get; set; } = "Task"; // Goal (1A) or Task (1B)
         public string Code { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
@@ -47,6 +46,8 @@ namespace Cdsqg.Application.DTOs
         public string UnitName { get; set; } = "%";
         public string CalculationMethod { get; set; } = "LatestValue";
 
+        public decimal? CompletionPercentage { get; set; }
+        public decimal? ExpectedBaselineTarget { get; set; }
         public decimal? LatestProgressValue { get; set; }
         public string? LatestProgressStatus { get; set; }
         public DateTime? LastUpdated { get; set; }
@@ -58,18 +59,18 @@ namespace Cdsqg.Application.DTOs
         /// 6-status execution evaluation status: NotStarted, InProgressOnTime, InProgressOverdue, CompletedOnTime, CompletedOverdue, ExpiringSoon
         /// </summary>
         public string CalculatedStatus { get; set; } = "NotStarted";
+        public string CalculatedAlert { get; set; } = "Red";
 
         public Dictionary<string, string> CustomBaseline { get; set; } = new Dictionary<string, string>();
         public List<TaskDeliverable> Deliverables { get; set; } = new List<TaskDeliverable>();
         public Dictionary<int, object?> YearlyTargets { get; set; } = new Dictionary<int, object?>();
 
-        public List<PlanningGridItemDto> SubItems { get; set; } = new List<PlanningGridItemDto>();
     }
 
+    [System.Text.Json.Serialization.JsonUnmappedMemberHandling(System.Text.Json.Serialization.JsonUnmappedMemberHandling.Disallow)]
     public class CreateGoalTaskItemRequestDto
     {
         public Guid DocumentId { get; set; }
-        public Guid? ParentId { get; set; }
         public string ItemType { get; set; } = "Task";
         public string Code { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;

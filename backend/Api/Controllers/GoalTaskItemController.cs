@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Cdsqg.Application.DTOs;
+using Cdsqg.Application.Services;
 using Cdsqg.Core.Entities;
 using Cdsqg.Core.Enums;
 using Cdsqg.Infrastructure.Data;
@@ -33,6 +34,9 @@ namespace Cdsqg.Api.Controllers
 
             try
             {
+                ProgressCalculator.ValidateAnnualBaselines(dto.CustomBaseline);
+                if (dto.YearlyTargets?.Any(kv => kv.Key is < 1900 or > 9999 || kv.Value <= 0) == true)
+                    return BadRequest(new { error = "Chỉ tiêu năm phải lớn hơn 0." });
                 var doc = await _context.Documents.FirstOrDefaultAsync(d => d.Id == dto.DocumentId) 
                           ?? await _context.Documents.FirstOrDefaultAsync();
 
@@ -122,7 +126,6 @@ namespace Cdsqg.Api.Controllers
                 {
                     Id = Guid.NewGuid(),
                     DocumentId = dto.DocumentId,
-                    ParentId = dto.ParentId,
                     ItemType = itemType,
                     Code = finalCode,
                     Title = dto.Title.Trim(),
@@ -156,7 +159,6 @@ namespace Cdsqg.Api.Controllers
                             Id = Guid.NewGuid(),
                             GoalTaskId = newItem.Id,
                             Year = kvp.Key,
-                            Quarter = 0,
                             TargetQuantity = kvp.Value
                         };
                         _context.TargetBaselines.Add(targetBaseline);
@@ -185,6 +187,10 @@ namespace Cdsqg.Api.Controllers
                     customBaseline = newItem.CustomBaseline,
                     createdAt = newItem.CreatedAt
                 });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
             }
             catch (Exception ex)
             {
@@ -228,6 +234,10 @@ namespace Cdsqg.Api.Controllers
                 await _context.SaveChangesAsync();
                 return Ok(new { success = true, message = "Đã giao cho đơn vị trực thuộc thành công." });
             }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
             catch (Exception ex)
             {
                 return StatusCode(500, new { error = "Không thể giao đơn vị trực thuộc", details = ex.Message });
@@ -236,7 +246,7 @@ namespace Cdsqg.Api.Controllers
 
         /// <summary>
         /// DELETE /api/planning/items/{id}
-        /// Xóa một Mục tiêu (1A), Nhiệm vụ (1B) hoặc Sub-Task.
+        /// Xóa một Mục tiêu (1A), Nhiệm vụ (1B).
         /// Chỉ cho phép xóa khi ở trạng thái Chưa bắt đầu (chưa cập nhật tiến độ).
         /// </summary>
         [HttpDelete("{id:guid}")]
@@ -250,13 +260,7 @@ namespace Cdsqg.Api.Controllers
                     return NotFound(new { error = "Không tìm thấy Mục tiêu / Nhiệm vụ để xóa." });
                 }
 
-                var childSubTaskIds = await _context.GoalTaskItems
-                    .Where(sub => sub.ParentId == id)
-                    .Select(sub => sub.Id)
-                    .ToListAsync();
-
                 var allTargetIds = new List<Guid> { id };
-                allTargetIds.AddRange(childSubTaskIds);
 
                 var hasProgressLogs = await _context.ProgressLogs.AnyAsync(p => allTargetIds.Contains(p.GoalTaskId));
 
@@ -291,16 +295,14 @@ namespace Cdsqg.Api.Controllers
                     _context.ProgressLogs.RemoveRange(logs);
                 }
 
-                if (childSubTaskIds.Count > 0)
-                {
-                    var childItems = await _context.GoalTaskItems.Where(sub => sub.ParentId == id).ToListAsync();
-                    _context.GoalTaskItems.RemoveRange(childItems);
-                }
-
                 _context.GoalTaskItems.Remove(item);
                 await _context.SaveChangesAsync();
 
                 return Ok(new { success = true, message = $"Đã xóa thành công {item.Code}: {item.Title}" });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
             }
             catch (Exception ex)
             {
@@ -310,7 +312,7 @@ namespace Cdsqg.Api.Controllers
 
         /// <summary>
         /// PUT /api/planning/items/{id}
-        /// Cập nhật thông tin một Mục tiêu (1A), Nhiệm vụ (1B) hoặc Sub-Task.
+        /// Cập nhật thông tin một Mục tiêu (1A), Nhiệm vụ (1B).
         /// Chỉ cho phép chỉnh sửa khi ở trạng thái Chưa bắt đầu.
         /// </summary>
         [HttpPut("{id:guid}")]
@@ -326,13 +328,7 @@ namespace Cdsqg.Api.Controllers
                     return NotFound(new { error = "Không tìm thấy Mục tiêu / Nhiệm vụ để cập nhật." });
                 }
 
-                var childSubTaskIds = await _context.GoalTaskItems
-                    .Where(sub => sub.ParentId == id)
-                    .Select(sub => sub.Id)
-                    .ToListAsync();
-
                 var allTargetIds = new List<Guid> { id };
-                allTargetIds.AddRange(childSubTaskIds);
 
                 var hasProgressLogs = await _context.ProgressLogs.AnyAsync(p => allTargetIds.Contains(p.GoalTaskId));
 
@@ -394,6 +390,10 @@ namespace Cdsqg.Api.Controllers
 
                 return Ok(new { success = true, message = $"Cập nhật thành công {item.Code}: {item.Title}" });
             }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
             catch (Exception ex)
             {
                 return StatusCode(500, new { error = "Lỗi khi cập nhật Mục tiêu / Nhiệm vụ", details = ex.Message });
@@ -435,6 +435,10 @@ namespace Cdsqg.Api.Controllers
                     updatedCount = count,
                     updatedCodes
                 });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
             }
             catch (Exception ex)
             {

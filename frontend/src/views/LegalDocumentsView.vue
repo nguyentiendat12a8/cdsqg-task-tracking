@@ -346,7 +346,7 @@ import { fetchWithAuth } from '../services/auth';
 import { ref, computed, reactive, onMounted } from 'vue';
 import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
-import XLSX from 'xlsx-js-style';
+import { loadExcelReader } from '../utils/excelRuntime';
 import SearchableSelect from '../components/SearchableSelect.vue';
 import OverlayPanel from '../components/OverlayPanel.vue';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
@@ -406,6 +406,7 @@ async function handleImportExcelFile(event) {
 
   isImporting.value = true;
   try {
+    const XLSX = await loadExcelReader(file.name);
     const arrayBuffer = await file.arrayBuffer();
     const workbook = XLSX.read(arrayBuffer, { type: 'array' });
     const sheetName = workbook.SheetNames[0];
@@ -563,7 +564,7 @@ async function handleImportExcelFile(event) {
         numCols: range.e.c + 1,
         headerRowIndex: headerRowIdx,
         titleRowIndex: 0
-      });
+      }, XLSX);
 
       // 2. Dark Red Header style for "CHI TIẾT LỖI IMPORT" column
       const headerCellRef = XLSX.utils.encode_cell({ r: headerRowIdx, c: errColIdx });

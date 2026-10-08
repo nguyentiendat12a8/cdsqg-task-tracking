@@ -22,6 +22,16 @@ public sealed class ApiPermissionFilter(AppDbContext db) : IAsyncActionFilter
         Guid? userId = Guid.TryParse(user.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : null;
         var action = context.RouteData.Values["action"]?.ToString();
         var args = context.ActionArguments;
+        if (controller == "Execution" && action is "SubmitProgress" or "GetProgress" or "ImportProgressBulk")
+        {
+            var request = context.HttpContext.Request;
+            var fields = request.HasFormContentType ? (await request.ReadFormAsync()).Keys : request.Query.Keys;
+            if (fields.Any(k => new[] { "PeriodQuarter", "PeriodMonth", "PeriodType", "quarter", "period" }.Contains(k, StringComparer.OrdinalIgnoreCase)))
+            {
+                context.Result = new BadRequestObjectResult(new { message = "Hệ thống chỉ hỗ trợ báo cáo theo năm (PeriodYear)." });
+                return;
+            }
+        }
         if (args.ContainsKey("userRole")) args["userRole"] = admin ? "Admin" : "AgencyUser";
         if (args.ContainsKey("userAgencyId")) args["userAgencyId"] = agencyId;
         if (args.ContainsKey("isAdmin")) args["isAdmin"] = admin;

@@ -49,6 +49,28 @@ public class SecurityTests
         return called;
     }
 
+    [Theory]
+    [InlineData("PeriodQuarter")]
+    [InlineData("PeriodMonth")]
+    [InlineData("PeriodType")]
+    public async Task RetiredReportFieldsAreRejectedRatherThanSavedAsAnnual(string field)
+    {
+        using var db = Database();
+        var ctx = Context("Execution", "SubmitProgress", "POST", admin: true);
+        ctx.HttpContext.Request.ContentType = "application/x-www-form-urlencoded";
+        ctx.HttpContext.Request.Form = new FormCollection(new Dictionary<string, Microsoft.Extensions.Primitives.StringValues> { [field] = "1" });
+        Assert.False(await Run(db, ctx));
+        Assert.IsType<BadRequestObjectResult>(ctx.Result);
+    }
+
+    [Fact]
+    public void ChildCreationAndQuarterlyImportAreRejectedByTheJsonContract()
+    {
+        var options = new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true };
+        Assert.Throws<System.Text.Json.JsonException>(() => System.Text.Json.JsonSerializer.Deserialize<CreateGoalTaskItemRequestDto>("{\"parentId\":\"11111111-1111-1111-1111-111111111111\"}", options));
+        Assert.Throws<System.Text.Json.JsonException>(() => System.Text.Json.JsonSerializer.Deserialize<ImportProgressBulkItemDto>("{\"periodQuarter\":1}", options));
+    }
+
     [Fact]
     public async Task AnonymousCannotAccessMaintenance()
     {
@@ -130,7 +152,7 @@ public class SecurityTests
         db.Users.Add(user);
         await db.SaveChangesAsync();
         var controller = new AuthController(db, new PasswordHasher(), new JwtService(new ConfigurationBuilder().Build()));
-        var result = Assert.IsType<OkObjectResult>(controller.ForgotPassword(new ForgotPasswordDto { EmailOrUsername = name }));
+        var result = Assert.IsType<OkObjectResult>(await controller.ForgotPassword(new ForgotPasswordDto { EmailOrUsername = name }));
         var json = System.Text.Json.JsonSerializer.Serialize(result.Value);
         Assert.DoesNotContain("tempPassword", json);
         using var payload = System.Text.Json.JsonDocument.Parse(json);

@@ -1,6 +1,8 @@
 <template>
   <div 
+    class="app-sidebar"
     :class="[
+      { 'mobile-open': mobileOpen },
       'relative h-full shrink-0 z-50 transition-all duration-300 ease-in-out',
       isManualCollapsed ? 'w-20' : 'w-64'
     ]"
@@ -249,14 +251,15 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, onUnmounted } from 'vue';
 import { authState } from '../services/auth';
 
 const props = defineProps({
-  activeTab: { type: String, default: 'dashboard' }
+  activeTab: { type: String, default: 'dashboard' },
+  mobileOpen: { type: Boolean, default: false }
 });
 
-const emit = defineEmits(['navigate']);
+const emit = defineEmits(['navigate', 'close']);
 
 const isManualCollapsed = ref(true);
 const isHovered = ref(false);
@@ -266,7 +269,7 @@ const isGoalsOpen = ref(props.activeTab.startsWith('goals'));
 const isSettingsOpen = ref(['agencies', 'units', 'users', 'import-history'].includes(props.activeTab));
 
 const isCollapsed = computed(() => {
-  return isManualCollapsed.value && !isHovered.value;
+  return !props.mobileOpen && isManualCollapsed.value && !isHovered.value;
 });
 
 watch(() => props.activeTab, (newTab) => {
@@ -305,8 +308,10 @@ function handleSettingsClick() {
 function selectTab(tab) {
   if (hoverTimer) clearTimeout(hoverTimer);
   emit('navigate', tab);
+  emit('close');
   if (isManualCollapsed.value) {
     isHovered.value = false;
   }
 }
+onUnmounted(() => clearTimeout(hoverTimer));
 </script>

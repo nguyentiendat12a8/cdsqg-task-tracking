@@ -1,5 +1,5 @@
 <template>
-  <div :class="['w-full flex flex-col items-center justify-center gap-3', pyClass]">
+  <div role="status" aria-live="polite" :class="['w-full flex flex-col items-center justify-center gap-3', pyClass]">
     <div class="relative flex items-center justify-center">
       <!-- Outer Pulsing Glow -->
       <div class="absolute w-12 h-12 rounded-full bg-blue-400/20 animate-ping"></div>

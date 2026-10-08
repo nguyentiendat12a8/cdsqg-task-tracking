@@ -1,6 +1,6 @@
 <template>
   <VDropdown 
-    :triggers="['click']" 
+    :triggers="disabled || readonly ? [] : ['click']"
     :auto-hide="true" 
     placement="bottom-start"
     :distance="6"
@@ -13,6 +13,8 @@
       :class="{ 'opacity-60 pointer-events-none': disabled }"
     >
       <input
+        ref="trigger" role="combobox" :aria-expanded="isOpen" aria-haspopup="dialog" :aria-label="placeholder || 'Chọn ngày'"
+        @keydown.enter.prevent="openCalendar" @keydown.space.prevent="openCalendar" @keydown.down.prevent="openCalendar"
         type="text"
         readonly
         :value="formattedDisplay"
@@ -42,7 +44,7 @@
 
     <!-- Calendar Popper Content -->
     <template #popper>
-      <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 p-3.5 w-[280px] font-sans text-slate-800 z-50 select-none">
+      <div ref="calendarPanel" role="dialog" aria-label="Chọn ngày" @keydown="calendarKey" class="bg-white rounded-2xl shadow-2xl border border-slate-200 p-3.5 w-[280px] font-sans text-slate-800 z-50 select-none">
         
         <!-- Header Controls: Prev, Month/Year Selects, Next -->
         <div class="flex items-center justify-between gap-1 pb-3 mb-2 border-b border-slate-100">
@@ -59,6 +61,7 @@
             <!-- Month Select -->
             <select 
               v-model="selectedMonth" 
+              aria-label="Tháng"
               class="text-xs font-bold text-slate-800 bg-slate-100 hover:bg-slate-200 border-none rounded-lg px-2 py-1 cursor-pointer focus:ring-2 focus:ring-blue-500 outline-none"
             >
               <option v-for="(mName, idx) in monthNames" :key="idx" :value="idx">
@@ -69,6 +72,7 @@
             <!-- Year Select -->
             <select 
               v-model="selectedYear" 
+              aria-label="Năm"
               class="text-xs font-bold text-slate-800 bg-slate-100 hover:bg-slate-200 border-none rounded-lg px-2 py-1 cursor-pointer focus:ring-2 focus:ring-blue-500 outline-none"
             >
               <option v-for="y in yearOptions" :key="y" :value="y">
@@ -104,6 +108,7 @@
           <button
             v-for="(item, idx) in calendarDays"
             :key="idx"
+            :aria-label="item.dateStr" :aria-pressed="item.isSelected" :data-date="item.dateStr" :disabled="disabled || readonly"
             type="button"
             @click="selectDay(item)"
             class="h-7 w-7 rounded-lg text-xs font-bold flex items-center justify-center transition-all cursor-pointer relative"
@@ -145,7 +150,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch } from 'vue';
+import { ref, computed, watch, nextTick } from 'vue';
 
 const props = defineProps({
   modelValue: { type: String, default: '' }, // YYYY-MM-DD
@@ -159,6 +164,23 @@ const props = defineProps({
 const emit = defineEmits(['update:modelValue', 'change']);
 
 const isOpen = ref(false);
+const trigger = ref(null);
+const calendarPanel = ref(null);
+function openCalendar() { if (!props.disabled && !props.readonly) isOpen.value = true; }
+watch(isOpen, async open => {
+  if (open) { await nextTick(); calendarPanel.value?.querySelector('[aria-pressed="true"], [data-date]')?.focus(); }
+  else trigger.value?.focus();
+});
+function calendarKey(event) {
+  if (event.key === 'Escape') { event.stopPropagation(); isOpen.value = false; }
+  const steps = {ArrowLeft:-1,ArrowRight:1,ArrowUp:-7,ArrowDown:7};
+  if (event.key in steps && document.activeElement?.dataset.date) {
+    event.preventDefault();
+    const dates = [...calendarPanel.value.querySelectorAll('[data-date]')];
+    const index = dates.indexOf(document.activeElement);
+    dates[Math.max(0, Math.min(dates.length - 1, index + steps[event.key]))]?.focus();
+  }
+}
 const viewDate = ref(new Date());
 
 const monthNames = ['Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4', 'Tháng 5', 'Tháng 6', 'Tháng 7', 'Tháng 8', 'Tháng 9', 'Tháng 10', 'Tháng 11', 'Tháng 12'];

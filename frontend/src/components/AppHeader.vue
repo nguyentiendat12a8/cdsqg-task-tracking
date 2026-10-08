@@ -1,5 +1,6 @@
 <template>
   <header class="h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between shrink-0 shadow-xs z-40">
+    <button class="md:hidden shrink-0 mr-2 p-2 rounded-lg border border-slate-200" aria-label="Mở hoặc đóng menu" :aria-expanded="menuOpen" @click="$emit('toggle-menu')">☰</button>
     <!-- System Official Title Branding -->
     <div class="flex items-center gap-3">
       <div>
@@ -78,10 +79,11 @@ import NotificationCenter from './NotificationCenter.vue';
 import { authState } from '../services/auth';
 
 const props = defineProps({
+  menuOpen: { type: Boolean, default: false },
   user: { type: Object, default: null }
 });
 
-const emit = defineEmits(['logout']);
+const emit = defineEmits(['logout', 'toggle-menu']);
 
 const isUserMenuOpen = ref(false);
 const userMenuContainer = ref(null);

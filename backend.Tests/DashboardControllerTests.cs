@@ -141,7 +141,7 @@ namespace Cdsqg.Tests
             Assert.Equal(2, data.TotalGoals);
             Assert.Equal(2, data.TotalTasks);
             Assert.Equal(2, data.MinistriesPerformance.Count); // BCA & BTTTT
-            Assert.Equal(1, data.ProvincesPerformance.Count);  // TPHCM
+            Assert.Single(data.ProvincesPerformance);  // TPHCM
         }
 
         [Fact]

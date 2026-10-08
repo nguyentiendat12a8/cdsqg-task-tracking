@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isOpen" @click.self="close" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+  <div v-if="isOpen" @click.self="close" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4" v-accessible-dialog="close">
     <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-4xl sm:max-w-5xl w-full p-5 sm:p-6 font-sans max-h-[90vh] flex flex-col animate-in fade-in duration-150">
       
       <!-- Modal Header -->
@@ -38,82 +38,16 @@
             />
           </div>
 
-          <!-- Period Selection Bar (Yearly default, Quarterly, Monthly) -->
-          <div class="space-y-2 bg-slate-50 p-3.5 rounded-xl border border-slate-200 relative">
-            <div v-if="isLoadingExisting" class="absolute inset-0 bg-white/80 backdrop-blur-2xs rounded-xl flex items-center justify-center gap-2 z-10 text-xs font-bold text-blue-700">
-              <span class="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></span>
-              <span>Đang tải dữ liệu kỳ báo cáo...</span>
-            </div>
-            <label class="text-xs font-bold text-slate-700 uppercase block">Tần Suất & Kỳ Báo Cáo <span class="text-rose-500">*</span></label>
-            
-            <div class="flex items-center gap-1.5 bg-slate-200/80 p-1 rounded-xl">
-              <button 
-                type="button"
-                @click="setPeriodType('yearly')" 
-                :class="['flex-1 py-1.5 rounded-lg text-xs font-bold transition text-center', periodType === 'yearly' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600 hover:text-slate-900']"
-              >
-                🗓 Theo Năm (Mặc định)
-              </button>
-
-              <button 
-                v-if="showQuarterOption"
-                type="button"
-                @click="setPeriodType('quarterly')" 
-                :class="['flex-1 py-1.5 rounded-lg text-xs font-bold transition text-center', periodType === 'quarterly' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600 hover:text-slate-900']"
-              >
-                📅 Theo Quý (4 Quý)
-              </button>
-
-              <button 
-                v-if="showMonthOption"
-                type="button"
-                @click="setPeriodType('monthly')" 
-                :class="['flex-1 py-1.5 rounded-lg text-xs font-bold transition text-center', periodType === 'monthly' ? 'bg-white text-blue-700 shadow-xs' : 'text-slate-600 hover:text-slate-900']"
-              >
-                📆 Theo Tháng (12 Tháng)
-              </button>
-            </div>
-
-            <div :class="['grid gap-3 pt-1', periodType === 'yearly' ? 'grid-cols-1' : 'grid-cols-2']">
-              <div class="space-y-1">
-                <label class="text-[11px] font-bold text-slate-600">Năm Báo Cáo <span class="text-rose-500">*</span></label>
-                <SearchableSelect 
-                  v-model="form.periodYear" 
-                  :options="yearOptions" 
-                  :isMulti="false" 
-                  :clearable="false"
-                  placeholder="Chọn năm"
-                />
-              </div>
-
-              <!-- Dynamic Sub-Period Selection -->
-              <div v-if="periodType === 'quarterly'" class="space-y-1">
-                <label class="text-[11px] font-bold text-slate-600">Chọn Quý Báo Cáo <span class="text-rose-500">*</span></label>
-                <SearchableSelect 
-                  v-model="form.periodQuarter" 
-                  :options="quarterOptions" 
-                  :isMulti="false" 
-                  :clearable="false"
-                  placeholder="Chọn quý"
-                />
-              </div>
-
-              <div v-else-if="periodType === 'monthly'" class="space-y-1">
-                <label class="text-[11px] font-bold text-slate-600">Chọn Tháng Báo Cáo <span class="text-rose-500">*</span></label>
-                <SearchableSelect 
-                  v-model="form.periodMonth" 
-                  :options="monthOptions" 
-                  :isMulti="false" 
-                  :clearable="false"
-                  placeholder="Chọn tháng"
-                />
-              </div>
-            </div>
+          <div class="space-y-1 rounded-xl bg-slate-50 border border-slate-200 p-3">
+            <label class="text-xs font-bold text-slate-700">Năm báo cáo <span class="text-rose-500">*</span></label>
+            <SearchableSelect v-model="form.periodYear" :options="yearOptions" :isMulti="false" :clearable="false" placeholder="Chọn năm" />
+            <p class="text-xs text-slate-500">Báo cáo theo năm. Bản sửa thay thế số liệu của cùng năm khi được phê duyệt.</p>
           </div>
 
           <!-- Quantitative vs Qualitative Progress Inputs -->
           <div v-if="evaluationType === 'Quantitative'" class="space-y-1">
-            <label class="text-xs font-bold text-slate-700 uppercase">GIÁ TRỊ ĐẠT ĐƯỢC <span class="text-rose-500">*</span></label>
+            <label class="text-xs font-bold text-slate-700 uppercase">TỔNG KẾT QUẢ ĐÃ ĐẠT ĐẾN NĂM BÁO CÁO <span class="text-rose-500">*</span></label>
+            <p class="text-xs text-slate-500">Nhập tổng đã đạt đến năm {{ form.periodYear }}. Ví dụ năm trước đạt 15, đến năm báo cáo đạt 35: nhập 35, không nhập phần tăng thêm 20.</p>
             <div class="relative">
               <input 
                 type="number" 
@@ -394,18 +328,6 @@ const yearOptions = [
   { value: 2030, label: 'Năm 2030' }
 ];
 
-const quarterOptions = [
-  { value: 1, label: 'Quý I (Q1)' },
-  { value: 2, label: 'Quý II (Q2)' },
-  { value: 3, label: 'Quý III (Q3)' },
-  { value: 4, label: 'Quý IV (Q4)' }
-];
-
-const monthOptions = Array.from({ length: 12 }, (_, i) => ({
-  value: i + 1,
-  label: `Tháng ${i + 1} (T${i + 1})`
-}));
-
 const qualitativeStatusOptions = [
   { value: 'NotStarted', label: 'Chưa thực hiện' },
   { value: 'Drafting', label: 'Đang thực hiện' },
@@ -420,23 +342,9 @@ function getQualitativeStatusLabel(val) {
   return found ? found.label : (val || 'Chưa thực hiện');
 }
 
-const showQuarterOption = computed(() => {
-  const cb = props.customBaseline || {};
-  return cb.hasQuarter === 'true' || cb.hasQuarter === true || Object.keys(cb).some(k => k.startsWith('Q'));
-});
-
-const showMonthOption = computed(() => {
-  const cb = props.customBaseline || {};
-  return cb.hasMonth === 'true' || cb.hasMonth === true || Object.keys(cb).some(k => k.startsWith('M'));
-});
-
-const periodType = ref('yearly'); // 'yearly' | 'quarterly' | 'monthly'
-
 const form = ref({
   selectedAgencyId: '',
   periodYear: 2026,
-  periodQuarter: 0,
-  periodMonth: 1,
   value: null,
   status: 'Drafting',
   notes: ''
@@ -457,20 +365,6 @@ function initSelectedAgencyId() {
   }
 }
 
-function setPeriodType(type) {
-  periodType.value = type;
-  if (type === 'yearly') {
-    form.value.periodQuarter = 0;
-    form.value.periodMonth = 0;
-  } else if (type === 'quarterly') {
-    if (form.value.periodQuarter === 0) form.value.periodQuarter = 1;
-    form.value.periodMonth = 0;
-  } else if (type === 'monthly') {
-    form.value.periodQuarter = 0;
-    if (!form.value.periodMonth) form.value.periodMonth = 1;
-  }
-}
-
 const fileInput = ref(null);
 const selectedFiles = ref([]);
 const existingFiles = ref([]);
@@ -488,10 +382,7 @@ function captureSnapshot() {
   }));
   return JSON.stringify({
     selectedAgencyId: form.value.selectedAgencyId,
-    periodType: periodType.value,
     periodYear: form.value.periodYear,
-    periodQuarter: form.value.periodQuarter,
-    periodMonth: form.value.periodMonth,
     value: form.value.value,
     status: form.value.status,
     notes: (form.value.notes || '').trim(),
@@ -546,10 +437,9 @@ async function fetchExistingProgress() {
   if (!props.taskId || !props.isOpen) return;
   isLoadingExisting.value = true;
   try {
-    const qParam = periodType.value === 'quarterly' ? form.value.periodQuarter : (periodType.value === 'monthly' ? form.value.periodMonth : 0);
     const targetAgencyId = form.value.selectedAgencyId || authState.user.value?.agencyId || props.leadAgencyId || '';
     const agencyQuery = targetAgencyId ? `&agencyId=${targetAgencyId}` : '';
-    const res = await fetchWithAuth(getApiUrl(`/api/execution/tasks/${props.taskId}/progress?year=${form.value.periodYear}&period=${qParam}${agencyQuery}`));
+    const res = await fetchWithAuth(getApiUrl(`/api/execution/tasks/${props.taskId}/progress?year=${form.value.periodYear}${agencyQuery}`));
     if (res.ok && res.status !== 204) {
       const text = await res.text();
       if (text && text.trim().length > 0) {
@@ -603,18 +493,11 @@ watch(() => [props.isOpen, props.customBaseline, props.deliverables], async ([ne
     } else {
       localDeliverables.value = [];
     }
-    if (showQuarterOption.value) {
-      setPeriodType('quarterly');
-    } else if (showMonthOption.value) {
-      setPeriodType('monthly');
-    } else {
-      setPeriodType('yearly');
-    }
     initialSnapshot.value = captureSnapshot();
   }
 }, { immediate: true });
 
-watch(() => [form.value.periodYear, form.value.periodQuarter, form.value.periodMonth, periodType.value, props.isOpen, props.taskId, form.value.selectedAgencyId], async () => {
+watch(() => [form.value.periodYear, props.isOpen, props.taskId, form.value.selectedAgencyId], async () => {
   if (props.isOpen && props.taskId) {
     await fetchExistingProgress();
   }
@@ -650,14 +533,6 @@ async function submitProgress() {
     toast.error("Vui lòng chọn Năm Báo Cáo!");
     return;
   }
-  if (periodType.value === 'quarterly' && !form.value.periodQuarter) {
-    toast.error("Vui lòng chọn Quý Báo Cáo!");
-    return;
-  }
-  if (periodType.value === 'monthly' && !form.value.periodMonth) {
-    toast.error("Vui lòng chọn Tháng Báo Cáo!");
-    return;
-  }
   if (showAgencySelector.value && !form.value.selectedAgencyId) {
     toast.error("Vui lòng chọn cơ quan/đơn vị báo cáo!");
     return;
@@ -687,9 +562,6 @@ async function submitProgress() {
   try {
     const formData = new FormData();
     formData.append('PeriodYear', form.value.periodYear);
-    formData.append('PeriodType', periodType.value === 'monthly' ? 'Monthly' : (periodType.value === 'quarterly' ? 'Quarterly' : 'Yearly'));
-    formData.append('PeriodQuarter', periodType.value === 'quarterly' ? form.value.periodQuarter : 0);
-    formData.append('PeriodMonth', periodType.value === 'monthly' ? form.value.periodMonth : 0);
     
     if (props.evaluationType === 'Quantitative') {
       formData.append('Value', form.value.value);

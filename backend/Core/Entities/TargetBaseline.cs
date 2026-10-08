@@ -14,7 +14,6 @@ namespace Cdsqg.Core.Entities
         public GoalTaskItem? GoalTaskItem { get; set; }
 
         public int Year { get; set; }
-        public int Quarter { get; set; } // 1..4, or 0 for annual
 
         public decimal? TargetQuantity { get; set; }
         public TextStatusEnum? TargetQualitativeStatus { get; set; }

@@ -15,6 +15,9 @@ axios.interceptors.request.use(config => {
 });
 axios.interceptors.response.use(response => response, error => {
   if (error.response?.status === 401) logout();
+  else if (error.response?.status === 403) window.dispatchEvent(new CustomEvent('api-feedback', {detail:'Bạn không có quyền thực hiện thao tác này. Vui lòng liên hệ quản trị viên nếu cần được cấp quyền.'}));
+  else if (!error.response || error.response.status >= 500) window.dispatchEvent(new CustomEvent('api-feedback', {detail:'Không thể kết nối hoặc xử lý yêu cầu. Vui lòng thử lại; chưa thể xác nhận thao tác thành công.'}));
+  else if (error.response.status === 429) window.dispatchEvent(new CustomEvent('api-feedback', {detail:'Bạn thao tác quá nhiều lần. Vui lòng chờ rồi thử lại.'}));
   return Promise.reject(error);
 });
 
@@ -22,7 +25,6 @@ export const useTrackingStore = defineStore('tracking', () => {
   // State
   const selectedDocumentId = ref(null);
   const selectedYear = ref(2026);
-  const selectedQuarter = ref(null);
   const isLoading = ref(false);
   const errorMessage = ref(null);
 
@@ -112,7 +114,6 @@ export const useTrackingStore = defineStore('tracking', () => {
     try {
       const params = { year: selectedYear.value };
       if (documentId) params.documentId = documentId;
-      if (selectedQuarter.value) params.quarter = selectedQuarter.value;
 
       const response = await axios.get(`${API_BASE_URL}/dashboard/metrics`, { params });
       if (response.data) {
@@ -149,7 +150,6 @@ export const useTrackingStore = defineStore('tracking', () => {
   return {
     selectedDocumentId,
     selectedYear,
-    selectedQuarter,
     isLoading,
     errorMessage,
     planningGrid,

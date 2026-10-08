@@ -7,6 +7,7 @@
         @click.self="handleConfirmResponse(false)"
       >
         <div 
+          ref="dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" tabindex="-1"
           class="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md p-5 sm:p-6 transition-all transform animate-in fade-in zoom-in-95 duration-150"
         >
           <div class="flex items-start gap-4">
@@ -38,7 +39,7 @@
 
             <!-- Modal Body Text -->
             <div class="flex-1 min-w-0">
-              <h3 class="text-base sm:text-lg font-bold text-slate-800 leading-snug">
+              <h3 id="confirm-title" class="text-base sm:text-lg font-bold text-slate-800 leading-snug">
                 {{ confirmState.title.value }}
               </h3>
               <p class="text-xs sm:text-sm text-slate-600 mt-1.5 leading-relaxed break-words">
@@ -73,10 +74,27 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted } from 'vue';
+import { onMounted, onUnmounted, ref, watch, nextTick } from 'vue';
 import { confirmState, handleConfirmResponse } from '../services/confirm';
+const dialog = ref(null);
+let previousFocus;
+watch(confirmState.isVisible, async visible => {
+  if (visible) {
+    previousFocus = document.activeElement;
+    await nextTick();
+    dialog.value?.querySelector('button')?.focus();
+  } else previousFocus?.focus?.();
+});
 
 function handleKeydown(e) {
+  if (confirmState.isVisible.value && e.key === 'Tab') {
+    const buttons = dialog.value?.querySelectorAll('button');
+    if (buttons?.length) {
+      const first = buttons[0], last = buttons[buttons.length - 1];
+      if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+      else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+    }
+  }
   if (confirmState.isVisible.value && e.key === 'Escape') {
     handleConfirmResponse(false);
   }

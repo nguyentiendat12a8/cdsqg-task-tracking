@@ -18,5 +18,8 @@ namespace Cdsqg.Core.Entities
         public bool IsActive { get; set; } = true;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
         public DateTime? LastLoginAt { get; set; }
+        public string SecurityStamp { get; set; } = Guid.NewGuid().ToString("N");
+        public string? PasswordResetTokenHash { get; set; }
+        public DateTime? PasswordResetExpiresAt { get; set; }
     }
 }

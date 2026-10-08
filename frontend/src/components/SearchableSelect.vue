@@ -7,6 +7,8 @@
     <!-- Select Box Trigger -->
     <div 
       ref="triggerRef"
+      role="combobox" :tabindex="disabled ? -1 : 0" :aria-disabled="disabled" :aria-expanded="isOpen" :aria-controls="listId" aria-haspopup="listbox" :aria-label="label || placeholder || 'Chọn giá trị'"
+      @keydown.enter.prevent="toggleDropdown" @keydown.space.prevent="toggleDropdown" @keydown.down.prevent="toggleDropdown"
       @click="toggleDropdown"
       :class="[
         'w-full border rounded-xl px-2.5 py-1 text-xs font-semibold flex items-center justify-between transition shadow-2xs h-[38px] min-h-[38px] max-h-[38px]',
@@ -83,6 +85,7 @@
       <div 
         v-if="isOpen" 
         ref="dropdownPanelRef"
+        @keydown="handleDropdownKey"
         :style="dropdownStyle"
         class="fixed bg-white border border-slate-200 rounded-2xl shadow-2xl z-[9999999] p-2 space-y-2 max-w-full animate-in fade-in zoom-in-95 duration-100 font-sans text-left"
       >
@@ -90,6 +93,7 @@
         <div class="relative">
           <input 
             ref="searchInputRef"
+            aria-label="Tìm trong các lựa chọn"
             :value="searchQuery"
             @input="searchQuery = $event.target.value"
             type="text" 
@@ -118,10 +122,11 @@
         </div>
 
         <!-- Options List with Checkboxes -->
-        <div class="max-h-52 overflow-y-auto space-y-0.5 custom-scrollbar pr-0.5">
+        <div :id="listId" role="listbox" :aria-label="label || placeholder || 'Các lựa chọn'" :aria-multiselectable="isMulti" class="max-h-52 overflow-y-auto space-y-0.5 custom-scrollbar pr-0.5">
           <div 
             v-for="opt in filteredOptions" 
             :key="opt.value"
+            role="option" tabindex="0" :aria-selected="isSelected(opt)" @keydown.enter.prevent="toggleOption(opt)" @keydown.space.prevent="toggleOption(opt)"
             @click.stop="toggleOption(opt)"
             :class="[
               'px-2.5 py-1.5 rounded-xl text-xs font-medium cursor-pointer transition flex items-center gap-2 select-none',
@@ -159,7 +164,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue';
+import { ref, computed, watch, nextTick, onMounted, onUnmounted, useId } from 'vue';
 
 const props = defineProps({
   modelValue: { type: [Array, String, Number], default: () => [] },
@@ -175,6 +180,7 @@ const props = defineProps({
 });
 
 const emit = defineEmits(['update:modelValue', 'change']);
+const listId = useId();
 
 const container = ref(null);
 const triggerRef = ref(null);
@@ -211,7 +217,7 @@ const displaySelectedItems = computed(() => {
 function updateDropdownPosition() {
   if (!triggerRef.value || !isOpen.value) return;
   const rect = triggerRef.value.getBoundingClientRect();
-  const minWidth = Math.max(rect.width, 320);
+  const minWidth = Math.min(Math.max(rect.width, 320), window.innerWidth - 24);
   
   let top = rect.bottom + 4;
   let left = rect.left;
@@ -258,12 +264,25 @@ function toggleDropdown() {
     removeScrollListeners();
   }
 }
+function handleDropdownKey(event) {
+  if (event.key === 'Escape') {
+    event.stopPropagation(); isOpen.value = false; triggerRef.value?.focus();
+  }
+  if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+    event.preventDefault();
+    const options = [...dropdownPanelRef.value.querySelectorAll('[role="option"]')];
+    const index = options.indexOf(document.activeElement);
+    options[(index + (event.key === 'ArrowDown' ? 1 : -1) + options.length) % options.length]?.focus();
+  }
+  if (event.key === 'Tab') { isOpen.value = false; triggerRef.value?.focus(); }
+}
 
 function isSelected(opt) {
   return selectedList.value.includes(opt.value);
 }
 
 function toggleOption(opt) {
+  if (props.disabled) return;
   if (props.isMulti) {
     const current = [...selectedList.value];
     const idx = current.indexOf(opt.value);
@@ -276,10 +295,12 @@ function toggleOption(opt) {
     emit('change', opt.value);
     isOpen.value = false;
     removeScrollListeners();
+    nextTick(() => triggerRef.value?.focus());
   }
 }
 
 function removeItem(item) {
+  if (props.disabled) return;
   if (props.isMulti) {
     const current = selectedList.value.filter(v => v !== item.value);
     emit('update:modelValue', current);
@@ -291,12 +312,14 @@ function removeItem(item) {
 }
 
 function selectAll() {
+  if (props.disabled) return;
   const allValues = props.options.map(o => o.value);
   emit('update:modelValue', allValues);
   emit('change', allValues);
 }
 
 function clearAll() {
+  if (props.disabled) return;
   emit('update:modelValue', props.isMulti ? [] : null);
   emit('change', props.isMulti ? [] : null);
 }

@@ -358,7 +358,7 @@ namespace Cdsqg.Api.Controllers
                     {
                         AgencyId = agency.Id,
                         Code = agency.Code,
-                        Name = agency.Name,
+                        Name = agency.Name ?? string.Empty,
                         Type = agency.Type.ToString(),
                         HasChildAgencies = agencyChildren[agency.Id].Any(),
                         ContactPersons = agency.ContactPersons ?? new List<AgencyContactPerson>(),
@@ -495,10 +495,8 @@ namespace Cdsqg.Api.Controllers
                 {
                     if (IsGeneralItem(item)) continue;
 
-                    var latestLog = item.ProgressLogs != null && item.ProgressLogs.Count > 0 
-                        ? item.ProgressLogs.OrderByDescending(p => p.LogDate).FirstOrDefault() 
-                        : null;
-                    var status = PlanningService.CalculateExecutionStatus(item, latestLog, item.Deliverables);
+                    var latestLog = ProgressCalculator.LatestApproved(item);
+                    var status = PlanningService.CalculateExecutionStatus(item, latestLog, latestLog?.Deliverables);
                     bool isGoal = item.ItemType == ItemTypeEnum.Goal;
 
                     switch (status)
@@ -794,15 +792,12 @@ namespace Cdsqg.Api.Controllers
                 {
                     var latestLog = PlanningService.GetLatestProgressLogForAgency(item, agencyId);
                     var agencyDeliverables = PlanningService.GetDeliverablesForAgency(item, agencyId);
-                    var execStatus = PlanningService.CalculateExecutionStatus(item, latestLog, agencyDeliverables);
-
-                    double? latestPercent = null;
-                    double? latestValue = null;
-                    if (latestLog != null)
-                    {
-                        latestPercent = (double?)latestLog.CalculatedProgressPercentage;
-                        latestValue = (double?)latestLog.QuantitativeValue;
-                    }
+                    var progress = item.IsGeneralTask && agencyId == Guid.Empty
+                        ? ProgressCalculator.EvaluateOverall(item, allAgencies)
+                        : ProgressCalculator.Evaluate(item, latestLog, agencyDeliverables, agencyId);
+                    var execStatus = progress.Status;
+                    double? latestPercent = (double?)progress.Percentage;
+                    double? latestValue = (double?)progress.ActualValue;
 
                     var coordAgencies = item.CoordinatingAgencyIds != null && item.CoordinatingAgencyIds.Count > 0
                         ? allAgencies.Where(a => item.CoordinatingAgencyIds.Contains(a.Id)).ToList()

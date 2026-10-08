@@ -50,5 +50,8 @@ backend/wwwroot/uploads/*
 Thumbs.db
 desktop.ini
 *.log
+scratch/*.env
+scratch/*.dump
+scratch/neon-restore*.json
 tài liệu phát triển/
 

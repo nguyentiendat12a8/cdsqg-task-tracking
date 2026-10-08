@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isOpen" @click.self="close" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+  <div v-if="isOpen" @click.self="close" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4" v-accessible-dialog="close">
     <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-6xl sm:max-w-7xl w-full p-6 space-y-4 font-sans max-h-[92vh] flex flex-col">
       
       <!-- Modal Header -->
@@ -412,7 +412,7 @@
                         <div>{{ row.agencyName }}</div>
                       </td>
                       <td class="px-3 py-2.5 border-r border-slate-200 text-center">
-                        <div class="font-bold text-blue-700 text-sm">{{ row.completionPercentage || 0 }}%</div>
+                        <div class="font-bold text-blue-700 text-sm">{{ row.completionPercentage == null ? 'Chưa có chỉ tiêu / báo cáo' : row.completionPercentage + '%' }}</div>
                         <div class="w-full bg-slate-200 rounded-full h-1.5 mt-1 overflow-hidden">
                           <div class="bg-blue-600 h-1.5 rounded-full" :style="{ width: Math.min(100, Math.max(0, row.completionPercentage || 0)) + '%' }"></div>
                         </div>
@@ -470,7 +470,7 @@
     </div>
 
     <!-- Modal Giao Nhiệm Vụ cho Đơn Vị Trực Thuộc -->
-    <div v-if="isAssignModalOpen" @click.self="isAssignModalOpen = false" class="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div v-if="isAssignModalOpen" @click.self="isAssignModalOpen = false" class="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4" v-accessible-dialog="() => isAssignModalOpen = false">
       <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-5 space-y-4">
         <div class="flex justify-between items-center border-b border-slate-100 pb-2">
           <h4 class="font-bold text-slate-800 text-sm">⚡ Giao Đơn Vị Trực Thuộc</h4>
@@ -505,7 +505,7 @@
     </div>
 
     <!-- Modal Từ Chối Báo Cáo Tiến Độ -->
-    <div v-if="isRejectModalOpen" @click.self="isRejectModalOpen = false" class="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div v-if="isRejectModalOpen" @click.self="isRejectModalOpen = false" class="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4" v-accessible-dialog="() => isRejectModalOpen = false">
       <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-5 space-y-4">
         <div class="flex justify-between items-center border-b border-slate-100 pb-2">
           <h4 class="font-bold text-rose-700 text-sm">❌ Từ Chối Báo Cáo Tiến Độ</h4>
@@ -596,14 +596,12 @@ const coordinatingNamesDisplay = computed(() => {
 
 function formatPeriodLabel(rep) {
   if (!rep) return 'Toàn thời gian';
-  if (rep.periodQuarter && rep.periodQuarter > 0) {
-    return `Quý ${rep.periodQuarter}/${rep.periodYear || rep.year || 2026}`;
-  }
   return `Năm ${rep.periodYear || rep.year || 2026}`;
 }
 
 function formatReportProgressValue(rep) {
   if (!rep) return '—';
+  if (rep.completionPercentage != null) return `${Number(rep.completionPercentage).toLocaleString('vi-VN', { maximumFractionDigits: 2 })}%`;
   const unitName = props.item?.unitName || props.item?.unit?.name || '%';
   const val = (rep.actualValue !== null && rep.actualValue !== undefined)
     ? rep.actualValue

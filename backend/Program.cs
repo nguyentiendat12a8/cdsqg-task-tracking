@@ -15,6 +15,8 @@ using System.Text;
 using Microsoft.AspNetCore.Authorization;
 using System.Security.Claims;
 using Cdsqg.Api.Security;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 // Enable Npgsql Legacy Timestamp Behavior for seamless DateTime support in PostgreSQL
 AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
@@ -94,6 +96,15 @@ builder.Services.AddScoped<IJwtService, JwtService>();
 builder.Services.AddScoped<IFileStorageService, FileStorageService>();
 builder.Services.AddScoped<IPlanningService, PlanningService>();
 builder.Services.AddScoped<IExecutionService, ExecutionService>();
+builder.Services.AddScoped<IRecoveryEmailSender, SmtpRecoveryEmailSender>();
+builder.Services.AddScoped<PasswordRecoveryService>();
+builder.Services.AddRateLimiter(options => {
+    options.RejectionStatusCode = 429;
+    options.AddPolicy("password-recovery", http => RateLimitPartition.GetFixedWindowLimiter(
+        http.Connection.RemoteIpAddress?.ToString() ?? "unknown", _ => new FixedWindowRateLimiterOptions {
+            PermitLimit = 5, Window = TimeSpan.FromMinutes(10), QueueLimit = 0
+        }));
+});
 
 // JWT Authentication Configuration
 string? jwtSecret = builder.Configuration["Jwt:SecretKey"];
@@ -122,7 +133,7 @@ builder.Services.AddAuthentication(options =>
             if (!Guid.TryParse(principal?.FindFirstValue(ClaimTypes.NameIdentifier), out var userId))
             { context.Fail("Invalid user."); return; }
             var user = await db.Users.AsNoTracking().FirstOrDefaultAsync(u => u.Id == userId);
-            if (user == null || !user.IsActive || principal?.FindFirstValue(ClaimTypes.Role) != user.Role.ToString()
+            if (user == null || !user.IsActive || principal?.FindFirstValue("SecurityStamp") != user.SecurityStamp || principal?.FindFirstValue(ClaimTypes.Role) != user.Role.ToString()
                 || principal?.FindFirstValue("AgencyId") != (user.AgencyId?.ToString() ?? ""))
                 context.Fail("Account is inactive or permissions have changed.");
         }
@@ -168,15 +179,7 @@ using (var scope = app.Services.CreateScope())
         var hasher = scope.ServiceProvider.GetRequiredService<IPasswordHasher>();
         if (usePostgreSql && !string.IsNullOrWhiteSpace(connectionString))
         {
-            try
-            {
-                context.Database.EnsureCreated();
-                EnsureDatabaseSchemaUpdated(context);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"[WARN] PostgreSQL EnsureCreated notice: {ex.Message}");
-            }
+            EnsurePostgresSchemaUpToDate(context);
         }
         SeedInitialData(context, hasher);
         NormalizeGoalTaskItemCodes(context);
@@ -184,8 +187,14 @@ using (var scope = app.Services.CreateScope())
     }
     catch (Exception ex)
     {
-        Console.WriteLine($"[WARN] Database Initialization notice: {ex.Message}");
+        throw new InvalidOperationException("Database initialization failed.", ex);
     }
+}
+
+void EnsurePostgresSchemaUpToDate(AppDbContext context)
+{
+    // Never serve requests against a partially migrated schema.
+    context.Database.Migrate();
 }
 
 void EnsureSampleFilesExist(IWebHostEnvironment env)
@@ -250,157 +259,6 @@ startxref
     }
 }
 
-void EnsureDatabaseSchemaUpdated(AppDbContext db)
-{
-    try
-    {
-        // 1. Ensure Users table
-        string sqlUsers = @"
-            CREATE TABLE IF NOT EXISTS ""Users"" (
-                ""Id"" uuid NOT NULL CONSTRAINT ""PK_Users"" PRIMARY KEY,
-                ""Username"" text NOT NULL,
-                ""PasswordHash"" text NOT NULL,
-                ""FullName"" text NOT NULL,
-                ""Email"" text NOT NULL,
-                ""Role"" text NOT NULL,
-                ""AgencyId"" uuid NULL CONSTRAINT ""FK_Users_Agencies_AgencyId"" REFERENCES ""Agencies"" (""Id"") ON DELETE SET NULL,
-                ""IsActive"" boolean NOT NULL DEFAULT TRUE,
-                ""CreatedAt"" timestamp without time zone NOT NULL,
-                ""LastLoginAt"" timestamp without time zone NULL
-            );
-            CREATE UNIQUE INDEX IF NOT EXISTS ""IX_Users_Username"" ON ""Users"" (""Username"");
-        ";
-        db.Database.ExecuteSqlRaw(sqlUsers);
-
-        // 2. Ensure Agencies columns
-        string sqlAgencies = @"
-            ALTER TABLE ""Agencies"" ADD COLUMN IF NOT EXISTS ""ParentId"" uuid NULL;
-            ALTER TABLE ""Agencies"" ADD COLUMN IF NOT EXISTS ""ContactPersons"" text NULL;
-            ALTER TABLE ""Agencies"" ADD COLUMN IF NOT EXISTS ""PlanFiles"" text NULL;
-            UPDATE ""Agencies"" SET ""ContactPersons"" = '[]' WHERE ""ContactPersons"" IS NULL OR ""ContactPersons"" = '';
-            UPDATE ""Agencies"" SET ""PlanFiles"" = '[]' WHERE ""PlanFiles"" IS NULL OR ""PlanFiles"" = '';
-        ";
-        db.Database.ExecuteSqlRaw(sqlAgencies);
-
-        // 3. Ensure GoalTaskItems columns
-        string sqlGoalTaskItems = @"
-            ALTER TABLE ""GoalTaskItems"" ADD COLUMN IF NOT EXISTS ""ParentId"" uuid NULL;
-            ALTER TABLE ""GoalTaskItems"" ADD COLUMN IF NOT EXISTS ""StartDate"" timestamp without time zone NULL;
-            ALTER TABLE ""GoalTaskItems"" ADD COLUMN IF NOT EXISTS ""DueDate"" timestamp without time zone NULL;
-            ALTER TABLE ""GoalTaskItems"" ADD COLUMN IF NOT EXISTS ""IsGeneralTask"" boolean NOT NULL DEFAULT FALSE;
-            ALTER TABLE ""GoalTaskItems"" ADD COLUMN IF NOT EXISTS ""Section"" text NULL;
-            ALTER TABLE ""GoalTaskItems"" ADD COLUMN IF NOT EXISTS ""Group"" text NULL;
-            ALTER TABLE ""GoalTaskItems"" ADD COLUMN IF NOT EXISTS ""IsOngoing"" boolean NOT NULL DEFAULT FALSE;
-            ALTER TABLE ""GoalTaskItems"" ADD COLUMN IF NOT EXISTS ""Deliverables"" jsonb NOT NULL DEFAULT '[]'::jsonb;
-            ALTER TABLE ""GoalTaskItems"" ADD COLUMN IF NOT EXISTS ""AgencyDeliverables"" jsonb NOT NULL DEFAULT '{{}}'::jsonb;
-            ALTER TABLE ""GoalTaskItems"" ADD COLUMN IF NOT EXISTS ""AssignedAgencyId"" uuid NULL;
-
-            ALTER TABLE ""ProgressLogs"" ADD COLUMN IF NOT EXISTS ""AgencyId"" uuid NULL;
-            ALTER TABLE ""ProgressLogs"" ADD COLUMN IF NOT EXISTS ""Deliverables"" jsonb NOT NULL DEFAULT '[]'::jsonb;
-            ALTER TABLE ""ProgressLogs"" ADD COLUMN IF NOT EXISTS ""ApprovalStatus"" integer NOT NULL DEFAULT 1;
-            ALTER TABLE ""ProgressLogs"" ADD COLUMN IF NOT EXISTS ""RejectionReason"" text NULL;
-            ALTER TABLE ""ProgressLogs"" ADD COLUMN IF NOT EXISTS ""ApprovedBy"" text NULL;
-            ALTER TABLE ""ProgressLogs"" ADD COLUMN IF NOT EXISTS ""ApprovedAt"" timestamp without time zone NULL;
-
-            UPDATE ""GoalTaskItems"" SET ""Section"" = '' WHERE ""Section"" IS NULL;
-            UPDATE ""GoalTaskItems"" SET ""Group"" = '' WHERE ""Group"" IS NULL;
-        ";
-        db.Database.ExecuteSqlRaw(sqlGoalTaskItems);
-
-        // 4. Ensure Notifications table
-        string sqlNotifications = @"
-            CREATE TABLE IF NOT EXISTS ""Notifications"" (
-                ""Id"" uuid NOT NULL CONSTRAINT ""PK_Notifications"" PRIMARY KEY,
-                ""UserId"" uuid NULL CONSTRAINT ""FK_Notifications_Users_UserId"" REFERENCES ""Users"" (""Id"") ON DELETE CASCADE,
-                ""AgencyId"" uuid NULL CONSTRAINT ""FK_Notifications_Agencies_AgencyId"" REFERENCES ""Agencies"" (""Id"") ON DELETE CASCADE,
-                ""Title"" text NOT NULL,
-                ""Message"" text NOT NULL,
-                ""Type"" text NOT NULL,
-                ""IsRead"" boolean NOT NULL DEFAULT FALSE,
-                ""LinkUrl"" text NULL,
-                ""CreatedAt"" timestamp without time zone NOT NULL
-            );
-        ";
-        db.Database.ExecuteSqlRaw(sqlNotifications);
-
-        // 5. Ensure TaskUrgeLogs columns
-        string sqlTaskUrgeLogs = @"
-            ALTER TABLE ""TaskUrgeLogs"" ADD COLUMN IF NOT EXISTS ""RecipientsSummary"" text NULL;
-            ALTER TABLE ""TaskUrgeLogs"" ADD COLUMN IF NOT EXISTS ""LeadAgencyId"" uuid NULL;
-            ALTER TABLE ""TaskUrgeLogs"" ADD COLUMN IF NOT EXISTS ""Title"" text NULL;
-            UPDATE ""TaskUrgeLogs"" SET ""RecipientsSummary"" = '' WHERE ""RecipientsSummary"" IS NULL;
-        ";
-        db.Database.ExecuteSqlRaw(sqlTaskUrgeLogs);
-
-        // 6. Ensure DataImportLogs columns
-        string sqlDataImportLogs = @"
-            ALTER TABLE ""DataImportLogs"" ADD COLUMN IF NOT EXISTS ""AgencyId"" uuid NULL;
-        ";
-        db.Database.ExecuteSqlRaw(sqlDataImportLogs);
-
-        // 7. Ensure AgencyTaskExecutions table
-        string sqlAgencyTaskExecutions = @"
-            CREATE TABLE IF NOT EXISTS ""AgencyTaskExecutions"" (
-                ""Id"" uuid NOT NULL CONSTRAINT ""PK_AgencyTaskExecutions"" PRIMARY KEY,
-                ""GoalTaskId"" uuid NOT NULL CONSTRAINT ""FK_AgencyTaskExecutions_GoalTaskItems_GoalTaskId"" REFERENCES ""GoalTaskItems"" (""Id"") ON DELETE CASCADE,
-                ""AgencyId"" uuid NOT NULL CONSTRAINT ""FK_AgencyTaskExecutions_Agencies_AgencyId"" REFERENCES ""Agencies"" (""Id"") ON DELETE CASCADE,
-                ""CalculatedStatus"" text NOT NULL,
-                ""LatestProgressValue"" numeric NULL,
-                ""LatestQualitativeStatus"" text NULL,
-                ""CompletionPercentage"" numeric NOT NULL DEFAULT 0,
-                ""Deliverables"" jsonb NOT NULL DEFAULT '[]'::jsonb,
-                ""SummaryNotes"" text NULL,
-                ""AttachmentFileUrls"" jsonb NOT NULL DEFAULT '[]'::jsonb,
-                ""LastReportedAt"" timestamp without time zone NULL,
-                ""LastReportedBy"" text NULL,
-                ""CreatedAt"" timestamp without time zone NOT NULL,
-                ""UpdatedAt"" timestamp without time zone NOT NULL
-            );
-            ALTER TABLE ""AgencyTaskExecutions"" ADD COLUMN IF NOT EXISTS ""SummaryNotes"" text NULL;
-            ALTER TABLE ""AgencyTaskExecutions"" ADD COLUMN IF NOT EXISTS ""AttachmentFileUrls"" jsonb NOT NULL DEFAULT '[]'::jsonb;
-            ALTER TABLE ""AgencyTaskExecutions"" ADD COLUMN IF NOT EXISTS ""AssignedAgencyId"" uuid NULL;
-            ALTER TABLE ""AgencyTaskExecutions"" ADD COLUMN IF NOT EXISTS ""ApprovalStatus"" integer NOT NULL DEFAULT 1;
-            ALTER TABLE ""AgencyTaskExecutions"" ADD COLUMN IF NOT EXISTS ""RejectionReason"" text NULL;
-            CREATE UNIQUE INDEX IF NOT EXISTS ""IX_AgencyTaskExecutions_GoalTaskId_AgencyId"" ON ""AgencyTaskExecutions"" (""GoalTaskId"", ""AgencyId"");
-        ";
-        db.Database.ExecuteSqlRaw(sqlAgencyTaskExecutions);
-
-        // 8. Ensure LegalDocuments table
-        string sqlLegalDocuments = @"
-            CREATE TABLE IF NOT EXISTS ""LegalDocuments"" (
-                ""Id"" uuid NOT NULL CONSTRAINT ""PK_LegalDocuments"" PRIMARY KEY,
-                ""Code"" text NOT NULL,
-                ""Title"" text NOT NULL,
-                ""DocumentType"" text NOT NULL,
-                ""IssuingAgencyId"" uuid NULL,
-                ""IssuingAgencyName"" text NULL,
-                ""DraftingAgencyId"" uuid NULL,
-                ""DraftingAgencyName"" text NULL,
-                ""SignerName"" text NULL,
-                ""SignerTitle"" text NULL,
-                ""IssuedDate"" timestamp without time zone NULL,
-                ""EffectiveDate"" timestamp without time zone NULL,
-                ""EffectStatus"" text NOT NULL,
-                ""Field"" text NULL,
-                ""Scope"" text NULL,
-                ""AttachmentsJson"" text NULL,
-                ""Notes"" text NULL,
-                ""CreatedByAgencyId"" uuid NULL,
-                ""CreatedByUserId"" uuid NULL,
-                ""CreatedAt"" timestamp without time zone NOT NULL,
-                ""UpdatedAt"" timestamp without time zone NOT NULL
-            );
-            ALTER TABLE ""LegalDocuments"" ADD COLUMN IF NOT EXISTS ""CreatedByAgencyId"" uuid NULL;
-            ALTER TABLE ""LegalDocuments"" ADD COLUMN IF NOT EXISTS ""CreatedByUserId"" uuid NULL;
-        ";
-        db.Database.ExecuteSqlRaw(sqlLegalDocuments);
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"[WARN] EnsureDatabaseSchemaUpdated error: {ex.Message}");
-    }
-}
-
 var contentTypeProvider = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider();
 contentTypeProvider.Mappings[".pdf"] = "application/pdf";
 contentTypeProvider.Mappings[".docx"] = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
@@ -425,6 +283,7 @@ app.UseSwaggerUI(c =>
 
 app.UseCors("AllowFrontend");
 app.UseAuthentication();
+app.UseRateLimiter();
 app.UseAuthorization();
 app.MapControllers();
 
@@ -444,7 +303,10 @@ void SeedInitialData(AppDbContext db, IPasswordHasher hasher)
 
     foreach (var spec in specialItems)
     {
-        var existing = db.Agencies.FirstOrDefault(a => a.Code == spec.Code || a.Name == spec.Name);
+        // Legacy data can have multiple agencies sharing a display name. Prefer the
+        // unique code so seeding never renames another record to an existing code.
+        var existing = db.Agencies.FirstOrDefault(a => a.Code == spec.Code)
+            ?? db.Agencies.FirstOrDefault(a => a.Name == spec.Name);
         if (existing == null)
         {
             db.Agencies.Add(new Agency
@@ -578,20 +440,7 @@ void SeedInitialData(AppDbContext db, IPasswordHasher hasher)
         }
     }
 
-    // Fix existing Level 3 progress logs that were incorrectly marked as Approved
-    var subAgencyIds = db.Agencies.Where(a => a.ParentId.HasValue).Select(a => a.Id).ToList();
-    var assignedTaskIds = db.GoalTaskItems.Where(i => i.AssignedAgencyId.HasValue).Select(i => i.Id).ToList();
-    var misMarkedLogs = db.ProgressLogs
-        .Where(p => p.ApprovalStatus == ApprovalStatusEnum.Approved &&
-                    ((p.AgencyId.HasValue && subAgencyIds.Contains(p.AgencyId.Value)) || assignedTaskIds.Contains(p.GoalTaskId)))
-        .ToList();
-
-    foreach (var log in misMarkedLogs)
-    {
-        log.ApprovalStatus = ApprovalStatusEnum.Pending;
-        log.ApprovedBy = null;
-        log.ApprovedAt = null;
-    }
+    // Approval decisions belong to the approval endpoints; startup must preserve them.
 
     db.SaveChanges();
 }
@@ -606,8 +455,8 @@ void NormalizeGoalTaskItemCodes(AppDbContext db)
 
     foreach (var group in groupedByDoc)
     {
-        var primaryGoals = group.Where(i => i.ItemType == ItemTypeEnum.Goal && !i.ParentId.HasValue).OrderBy(i => i.CreatedAt).ToList();
-        var primaryTasks = group.Where(i => i.ItemType == ItemTypeEnum.Task && !i.ParentId.HasValue).OrderBy(i => i.CreatedAt).ToList();
+        var primaryGoals = group.Where(i => i.ItemType == ItemTypeEnum.Goal).OrderBy(i => i.CreatedAt).ToList();
+        var primaryTasks = group.Where(i => i.ItemType == ItemTypeEnum.Task).OrderBy(i => i.CreatedAt).ToList();
 
         // Check for duplicates or invalid codes
         var goalCodes = primaryGoals.Select(g => g.Code).ToList();

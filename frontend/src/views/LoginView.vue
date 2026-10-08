@@ -93,7 +93,7 @@
     </div>
 
     <!-- FORGOT PASSWORD MODAL -->
-    <div v-if="isForgotPasswordOpen" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div v-if="isForgotPasswordOpen" v-accessible-dialog="() => isForgotPasswordOpen = false" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
       <div class="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-md w-full p-6 space-y-4 font-sans relative animate-in fade-in">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
           <div class="flex items-center gap-2 text-slate-900">
@@ -103,52 +103,10 @@
           <button @click="isForgotPasswordOpen = false" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
         </div>
 
-        <p class="text-xs text-slate-500 font-semibold leading-relaxed">
-          Hệ thống chưa hỗ trợ khôi phục qua email. Vui lòng liên hệ quản trị viên để xác minh chủ tài khoản và đặt lại mật khẩu.
-        </p>
-
-        <!-- Forgot Password Messages -->
-        <div v-if="forgotErrorMessage" class="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs font-bold text-rose-700 flex items-center gap-2">
-          <span>{{ forgotErrorMessage }}</span>
+        <p role="status" class="text-sm text-slate-700 leading-relaxed">Tính năng đang phát triển</p>
+        <div class="flex justify-end">
+          <button type="button" @click="isForgotPasswordOpen = false" class="px-4 py-2.5 bg-blue-700 text-white rounded-xl font-semibold">Đóng</button>
         </div>
-
-        <div v-if="forgotSuccessMessage" class="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs font-semibold text-emerald-800 space-y-1">
-          <div class="font-bold text-emerald-900">✓ {{ forgotSuccessMessage }}</div>
-        </div>
-
-        <form @submit.prevent="handleForgotPassword" class="space-y-4">
-          <div>
-            <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Email hoặc Username <span class="text-rose-500">*</span></label>
-            <div class="relative">
-              <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg>
-              <input 
-                v-model="forgotInput"
-                type="text" 
-                required
-                placeholder="Nhập email hoặc username..."
-                class="w-full text-xs font-bold pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
-              />
-            </div>
-          </div>
-
-          <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-            <button 
-              type="button" 
-              @click="isForgotPasswordOpen = false" 
-              class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl transition"
-            >
-              Hủy
-            </button>
-            <button 
-              type="submit" 
-              :disabled="isForgotSubmitting"
-              class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-1.5"
-            >
-              <svg v-if="isForgotSubmitting" class="w-4 h-4 animate-spin text-white" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-              <span>Xem Hướng Dẫn</span>
-            </button>
-          </div>
-        </form>
       </div>
     </div>
 
@@ -156,31 +114,24 @@
 </template>
 
 <script setup>
-import { fetchWithAuth } from '../services/auth';
+
 
 import { ref } from 'vue';
 import { login } from '../services/auth';
-import { getApiUrl } from '../config/api';
+
 
 const emit = defineEmits(['loggedIn']);
 
-const username = ref('admin');
-const password = ref('adminpassword');
+const username = ref('');
+const password = ref('');
 const showLoginPassword = ref(false);
 const rememberMe = ref(true);
 const errorMessage = ref('');
 const isSubmitting = ref(false);
 
 const isForgotPasswordOpen = ref(false);
-const forgotInput = ref('');
-const forgotErrorMessage = ref('');
-const forgotSuccessMessage = ref('');
-const isForgotSubmitting = ref(false);
 
 function openForgotPasswordModal() {
-  forgotInput.value = username.value || '';
-  forgotErrorMessage.value = '';
-  forgotSuccessMessage.value = '';
   isForgotPasswordOpen.value = true;
 }
 
@@ -197,34 +148,4 @@ async function handleLogin() {
   }
 }
 
-async function handleForgotPassword() {
-  forgotErrorMessage.value = '';
-  forgotSuccessMessage.value = '';
-
-  if (!forgotInput.value.trim()) {
-    forgotErrorMessage.value = 'Vui lòng nhập Email hoặc Username.';
-    return;
-  }
-
-  isForgotSubmitting.value = true;
-  try {
-    const res = await fetchWithAuth(getApiUrl('/api/auth/forgot-password'), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ emailOrUsername: forgotInput.value.trim() })
-    });
-
-    if (res.ok) {
-      const data = await res.json();
-      forgotSuccessMessage.value = data.message || 'Vui lòng liên hệ quản trị viên để đặt lại mật khẩu.';
-    } else {
-      const errData = await res.json().catch(() => ({}));
-      forgotErrorMessage.value = errData.message || 'Không tìm thấy tài khoản tương ứng.';
-    }
-  } catch (e) {
-    forgotErrorMessage.value = 'Không thể kết nối máy chủ.';
-  } finally {
-    isForgotSubmitting.value = false;
-  }
-}
 </script>

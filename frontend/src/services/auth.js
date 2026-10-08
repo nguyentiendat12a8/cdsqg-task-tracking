@@ -5,7 +5,10 @@ const TOKEN_KEY = 'cdsqg_auth_token';
 const USER_KEY = 'cdsqg_auth_user';
 
 const token = ref(localStorage.getItem(TOKEN_KEY) || '');
-const user = ref(JSON.parse(localStorage.getItem(USER_KEY) || 'null'));
+let storedUser = null;
+try { storedUser = JSON.parse(localStorage.getItem(USER_KEY) || 'null'); }
+catch { localStorage.removeItem(USER_KEY); localStorage.removeItem(TOKEN_KEY); token.value = ''; }
+const user = ref(storedUser);
 
 export const authState = {
   token,
@@ -60,10 +63,18 @@ export async function fetchWithAuth(url, options = {}) {
   const headers = new Headers(options.headers || (url instanceof Request ? url.headers : undefined));
   if (isApi && token.value) headers.set('Authorization', `Bearer ${token.value}`);
 
-  const response = await fetch(url, {
-    ...options,
-    headers
-  });
+  let response;
+  try { response = await fetch(url, { ...options, headers }); }
+  catch (error) {
+    if (isApi && error.name !== 'AbortError') window.dispatchEvent(new CustomEvent('api-feedback', {detail:'Không thể kết nối máy chủ. Kiểm tra kết nối rồi thử lại; chưa thể xác nhận thao tác thành công.'}));
+    throw error;
+  }
+  if (isApi && !target.pathname.startsWith('/api/auth/') && [403,429,500,502,503,504].includes(response.status)) {
+    const message = response.status === 403 ? 'Bạn không có quyền thực hiện thao tác này. Vui lòng liên hệ quản trị viên nếu cần được cấp quyền.'
+      : response.status === 429 ? 'Bạn thao tác quá nhiều lần. Vui lòng chờ rồi thử lại.'
+      : 'Máy chủ đang gặp lỗi. Vui lòng thử lại sau; chưa thể xác nhận thao tác thành công.';
+    window.dispatchEvent(new CustomEvent('api-feedback', {detail:message}));
+  }
 
   if (isApi && response.status === 401) {
     logout();

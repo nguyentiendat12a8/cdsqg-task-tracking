@@ -69,15 +69,11 @@ namespace Cdsqg.Api.Controllers
         public async Task<IActionResult> GetProgress(
             Guid taskId, 
             [FromQuery] int year = 2026, 
-            [FromQuery] int? period = null, 
-            [FromQuery] int? periodQuarter = null, 
-            [FromQuery] int? quarter = null,
             [FromQuery] Guid? agencyId = null)
         {
             try
             {
-                int q = periodQuarter ?? quarter ?? period ?? 1;
-                var log = await _executionService.GetProgressLogAsync(taskId, year, q, agencyId);
+                var log = await _executionService.GetProgressLogAsync(taskId, year, agencyId);
                 if (log == null)
                 {
                     return Ok(null);
@@ -267,8 +263,10 @@ namespace Cdsqg.Api.Controllers
             try
             {
                 var query = _context.ProgressLogs
-                    .Include(p => p.GoalTaskItem)
-                        .ThenInclude(t => t!.LeadAgency)
+                    .Include(p => p.GoalTaskItem).ThenInclude(t => t!.Baselines)
+                    .Include(p => p.GoalTaskItem).ThenInclude(t => t!.ProgressLogs)
+                    .Include(p => p.GoalTaskItem).ThenInclude(t => t!.Unit)
+                    .Include(p => p.GoalTaskItem).ThenInclude(t => t!.LeadAgency)
                     .Include(p => p.Agency)
                         .ThenInclude(a => a!.ParentAgency)
                     .Where(p => p.ApprovalStatus == Cdsqg.Core.Enums.ApprovalStatusEnum.Pending);
@@ -284,9 +282,8 @@ namespace Cdsqg.Api.Controllers
                                              (p.GoalTaskItem != null && p.GoalTaskItem.LeadAgencyId == parentAgencyId.Value));
                 }
 
-                var pendingLogs = await query
-                    .OrderByDescending(p => p.LogDate)
-                    .Select(p => new GetProgressLogResponseDto
+                var pendingEntities = await query.OrderByDescending(p => p.LogDate).ToListAsync();
+                var pendingLogs = pendingEntities.Select(p => new GetProgressLogResponseDto
                     {
                         Id = p.Id,
                         TaskId = p.GoalTaskId,
@@ -295,10 +292,9 @@ namespace Cdsqg.Api.Controllers
                         ItemType = p.GoalTaskItem != null ? p.GoalTaskItem.ItemType.ToString() : "Task",
                         IsGeneralTask = p.GoalTaskItem != null && (p.GoalTaskItem.IsGeneralTask || (p.GoalTaskItem.LeadAgency != null && (p.GoalTaskItem.LeadAgency.Code == "ALL_AGENCIES" || p.GoalTaskItem.LeadAgency.Code == "ALL_MINISTRIES" || p.GoalTaskItem.LeadAgency.Code == "ALL_PROVINCES" || p.GoalTaskItem.LeadAgency.Code == "ALL_PROVINCES_UBND" || p.GoalTaskItem.LeadAgency.Code == "ALL_MINISTRIES_DIRECT"))),
                         PeriodYear = p.PeriodYear,
-                        PeriodQuarter = p.PeriodQuarter,
                         ActualValue = p.QuantitativeValue,
                         Status = p.QualitativeStatus != null ? p.QualitativeStatus.ToString() : null,
-                        CompletionPercentage = p.CalculatedProgressPercentage,
+                        CompletionPercentage = p.GoalTaskItem == null ? null : ProgressCalculator.Evaluate(p.GoalTaskItem, p, p.Deliverables, p.AgencyId).Percentage,
                         SummaryNotes = p.SummaryNotes,
                         AttachmentFileUrls = p.AttachmentFileUrls ?? new List<string>(),
                         Deliverables = p.Deliverables,
@@ -315,7 +311,7 @@ namespace Cdsqg.Api.Controllers
                         ApprovedBy = p.ApprovedBy,
                         ApprovedAt = p.ApprovedAt
                     })
-                    .ToListAsync();
+                    .ToList();
 
                 return Ok(pendingLogs);
             }
@@ -336,6 +332,7 @@ namespace Cdsqg.Api.Controllers
             {
                 var task = await _context.GoalTaskItems
                     .Include(t => t.LeadAgency)
+                    .Include(t => t.Baselines).Include(t => t.Unit).Include(t => t.ProgressLogs)
                     .FirstOrDefaultAsync(t => t.Id == taskId);
 
                 if (task == null) return NotFound(new { message = "Không tìm thấy nhiệm vụ." });
@@ -410,6 +407,8 @@ namespace Cdsqg.Api.Controllers
                     var exec = executions.FirstOrDefault(e => e.AgencyId == ag.Id);
                     var pendingLog = pendingLogs.FirstOrDefault(p => p.AgencyId == ag.Id);
 
+                    var approved = ProgressCalculator.LatestApproved(task, ag.Id);
+                    var progress = ProgressCalculator.Evaluate(task, approved, approved?.Deliverables, ag.Id);
                     var itemDto = new AgencyExecutionItemDto
                     {
                         AgencyId = ag.Id,
@@ -418,15 +417,15 @@ namespace Cdsqg.Api.Controllers
                         AgencyType = ag.Type.ToString(),
                         ParentAgencyId = ag.ParentId,
                         ParentAgencyName = ag.ParentAgency?.Name,
-                        CalculatedStatus = exec != null ? exec.CalculatedStatus.ToString() : "NotStarted",
+                        CalculatedStatus = progress.Status.ToString(),
                         ApprovalStatus = pendingLog != null ? "Pending" : (exec != null ? exec.ApprovalStatus.ToString() : "NotReported"),
                         RejectionReason = exec?.RejectionReason ?? pendingLog?.RejectionReason,
-                        LatestProgressValue = pendingLog?.QuantitativeValue ?? exec?.LatestProgressValue,
-                        LatestQualitativeStatus = pendingLog?.QualitativeStatus?.ToString() ?? exec?.LatestQualitativeStatus?.ToString(),
-                        CompletionPercentage = pendingLog?.CalculatedProgressPercentage ?? exec?.CompletionPercentage ?? 0m,
-                        SummaryNotes = pendingLog?.SummaryNotes ?? exec?.SummaryNotes,
-                        AttachmentFileUrls = (pendingLog?.AttachmentFileUrls?.Count > 0 ? pendingLog.AttachmentFileUrls : exec?.AttachmentFileUrls) ?? new List<string>(),
-                        Deliverables = (pendingLog?.Deliverables?.Count > 0 ? pendingLog.Deliverables : exec?.Deliverables),
+                        LatestProgressValue = progress.ActualValue,
+                        LatestQualitativeStatus = approved?.QualitativeStatus?.ToString(),
+                        CompletionPercentage = progress.Percentage,
+                        SummaryNotes = pendingLog?.SummaryNotes ?? approved?.SummaryNotes ?? exec?.SummaryNotes,
+                        AttachmentFileUrls = (pendingLog?.AttachmentFileUrls?.Count > 0 ? pendingLog.AttachmentFileUrls : approved?.AttachmentFileUrls ?? exec?.AttachmentFileUrls) ?? new List<string>(),
+                        Deliverables = (pendingLog?.Deliverables?.Count > 0 ? pendingLog.Deliverables : approved?.Deliverables ?? exec?.Deliverables),
                         LastReportedAt = pendingLog?.LogDate ?? exec?.LastReportedAt,
                         LastReportedBy = pendingLog?.CreatedBy ?? exec?.LastReportedBy,
                         PendingProgressLogId = pendingLog?.Id
@@ -460,7 +459,9 @@ namespace Cdsqg.Api.Controllers
             try
             {
                 var log = await _context.ProgressLogs
-                    .Include(p => p.GoalTaskItem)
+                    .Include(p => p.GoalTaskItem).ThenInclude(t => t!.Baselines)
+                    .Include(p => p.GoalTaskItem).ThenInclude(t => t!.ProgressLogs)
+                    .Include(p => p.GoalTaskItem).ThenInclude(t => t!.Unit)
                     .FirstOrDefaultAsync(p => p.Id == logId);
 
                 if (log == null)
@@ -513,7 +514,7 @@ namespace Cdsqg.Api.Controllers
                         }
                         if (log.GoalTaskItem != null)
                         {
-                            execution.CalculatedStatus = Cdsqg.Application.Services.PlanningService.CalculateExecutionStatus(log.GoalTaskItem, log, execution.Deliverables);
+                            ProgressCalculator.RefreshExecution(log.GoalTaskItem, execution);
                         }
                     }
                 }
@@ -540,6 +541,7 @@ namespace Cdsqg.Api.Controllers
                     _context.Notifications.Add(notif);
                 }
 
+                if (log.GoalTaskItem != null) await ProgressCalculator.RefreshCachesAsync(_context, log.GoalTaskItem);
                 await _context.SaveChangesAsync();
                 return Ok(new { success = true, message = "Đã phê duyệt báo cáo tiến độ thành công." });
             }
@@ -586,7 +588,7 @@ namespace Cdsqg.Api.Controllers
                             .OrderByDescending(p => p.LogDate)
                             .FirstOrDefaultAsync();
 
-                        var taskItemForRevert = await _context.GoalTaskItems.FirstOrDefaultAsync(t => t.Id == log.GoalTaskId);
+                        var taskItemForRevert = await _context.GoalTaskItems.Include(t => t.Baselines).Include(t => t.ProgressLogs).Include(t => t.Unit).FirstOrDefaultAsync(t => t.Id == log.GoalTaskId);
 
                         if (lastApprovedLog != null)
                         {
@@ -601,7 +603,7 @@ namespace Cdsqg.Api.Controllers
                             }
                             if (taskItemForRevert != null)
                             {
-                                execution.CalculatedStatus = Cdsqg.Application.Services.PlanningService.CalculateExecutionStatus(taskItemForRevert, lastApprovedLog, execution.Deliverables);
+                                ProgressCalculator.RefreshExecution(taskItemForRevert, execution);
                             }
                         }
                         else
@@ -656,6 +658,8 @@ namespace Cdsqg.Api.Controllers
                     _context.Notifications.Add(notif);
                 }
 
+                var rejectedTask = await _context.GoalTaskItems.FindAsync(log.GoalTaskId);
+                if (rejectedTask != null) await ProgressCalculator.RefreshCachesAsync(_context, rejectedTask);
                 await _context.SaveChangesAsync();
                 return Ok(new { success = true, message = "Đã từ chối báo cáo tiến độ." });
             }

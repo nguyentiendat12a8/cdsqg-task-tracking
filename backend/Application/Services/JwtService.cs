@@ -35,7 +35,8 @@ namespace Cdsqg.Application.Services
                 new Claim(ClaimTypes.Name, user.Username),
                 new Claim("FullName", user.FullName ?? string.Empty),
                 new Claim(ClaimTypes.Role, user.Role.ToString()),
-                new Claim("AgencyId", user.AgencyId?.ToString() ?? string.Empty)
+                new Claim("AgencyId", user.AgencyId?.ToString() ?? string.Empty),
+                new Claim("SecurityStamp", user.SecurityStamp)
             };
 
             var token = new JwtSecurityToken(

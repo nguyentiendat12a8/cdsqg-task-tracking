@@ -29,3 +29,6 @@ Dashboard dùng `AsNoTracking` và split query để tránh nhân số hàng khi
 collection. Kiểm thử dashboard xác nhận hành vi; chưa đo tốc độ trên PostgreSQL thật.
 
 Các lỗi baseline và cộng dồn chưa thay đổi trong đợt này.
+
+
+Cập nhật 08/10/2026: đã triển khai khôi phục qua link email, migration và accessibility. Xem PASSWORD-RECOVERY.md, DATABASE-MIGRATIONS.md và FIVE-ISSUES-IMPLEMENTED.md; các mô tả chưa hỗ trợ email ở trên là trạng thái trước nâng cấp.

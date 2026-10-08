@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:refactor": "node tests/refactor.browser.mjs",
+    "test:annual": "node tests/annual.browser.mjs",
+    "test:excel-production": "node tests/excel.production.mjs"
   },
   "dependencies": {
     "@primevue/core": "^5.0.1",

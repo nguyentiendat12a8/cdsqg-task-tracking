@@ -683,15 +683,8 @@ function filterGridItem(item) {
     const isLead = scopedAgencyIds.includes(itemLeadId);
     const isAssigned = itemAssignedId && scopedAgencyIds.includes(itemAssignedId);
     const isCoord = itemCoordIds.some(id => scopedAgencyIds.includes(id));
-    const isSubMatch = item.subItems?.some(s => {
-      const sLeadId = s.leadAgencyId ? String(s.leadAgencyId).toLowerCase() : '';
-      const sAssignedId = s.assignedAgencyId ? String(s.assignedAgencyId).toLowerCase() : '';
-      const sCoordIds = (s.coordinatingAgencyIds || []).map(id => String(id).toLowerCase());
-      const sIsGeneral = isParentAgency && (s.isGeneralTask || isSpecialAgencyCode(s.leadAgencyCode) || ['00000000-0000-0000-0000-000000009999', '00000000-0000-0000-0000-000000009998', '00000000-0000-0000-0000-000000009997', '00000000-0000-0000-0000-000000009996', '00000000-0000-0000-0000-000000009995'].includes(sLeadId));
-      return sIsGeneral || scopedAgencyIds.includes(sLeadId) || (sAssignedId && scopedAgencyIds.includes(sAssignedId)) || sCoordIds.some(id => scopedAgencyIds.includes(id));
-    });
 
-    if (!isGeneral && !isLead && !isAssigned && !isCoord && !isSubMatch) return false;
+    if (!isGeneral && !isLead && !isAssigned && !isCoord) return false;
   }
 
   // 1. Search Query Filter - Real-time debounced matching
@@ -792,21 +785,21 @@ function filterGridItem(item) {
   // 7. Progress / Alert Status Filter (Multi-select)
   if (appliedFilters.value.selectedStatuses && appliedFilters.value.selectedStatuses.length > 0) {
     const selectedStatuses = appliedFilters.value.selectedStatuses;
-    const latestVal = item.latestProgressValue;
+    const latestVal = item.completionPercentage;
     const latestStatus = item.latestProgressStatus;
     
     let matchStatus = false;
     for (const statusFilter of selectedStatuses) {
       if (statusFilter === 'Completed') {
-        if ((latestVal !== null && latestVal !== undefined && latestVal >= 100) || latestStatus === 'Completed') {
+        if (['CompletedOnTime', 'CompletedOverdue'].includes(item.calculatedStatus)) {
           matchStatus = true; break;
         }
       } else if (statusFilter === 'OnTrack') {
-        if ((latestVal !== null && latestVal !== undefined && latestVal >= 80 && latestVal < 100) || latestStatus === 'OnTrack' || latestStatus === 'Reviewing') {
+        if (item.calculatedAlert === 'Green' && !['CompletedOnTime', 'CompletedOverdue'].includes(item.calculatedStatus)) {
           matchStatus = true; break;
         }
       } else if (statusFilter === 'Lagging') {
-        if ((latestVal !== null && latestVal !== undefined && latestVal < 80) || latestStatus === 'Lagging' || latestStatus === 'NotStarted') {
+        if (['Yellow', 'Red'].includes(item.calculatedAlert)) {
           matchStatus = true; break;
         }
       } else if (statusFilter === 'NoReport') {
@@ -890,11 +883,12 @@ function openBaselineModal(item) {
   isBaselineModalOpen.value = true;
 }
 
-function onBaselineSaved(newMilestones) {
+async function onBaselineSaved(newMilestones) {
   if (selectedTaskForOverride.value) {
     selectedTaskForOverride.value.customBaseline = { ...newMilestones };
   }
-  showToast(`Đã lưu mốc chỉ tiêu Custom Baseline thành công!`);
+  await loadGridData();
+  showToast(`Đã lưu chỉ tiêu năm thành công!`);
 }
 
 async function saveYearlyTarget(item, year, val) {
@@ -913,6 +907,7 @@ async function saveYearlyTarget(item, year, val) {
     });
 
     if (res.ok) {
+      await loadGridData();
       showToast(`Đã tự động lưu chỉ tiêu ${item.code} năm ${year}: ${val}`);
     } else {
       showToast(`Lỗi khi tự động lưu chỉ tiêu năm ${year}`);

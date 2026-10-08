@@ -1,19 +1,21 @@
 <template>
-  <div class="h-screen w-screen bg-slate-100 text-slate-900 font-sans flex flex-col antialiased overflow-hidden">
+  <div class="h-dvh w-full bg-slate-100 text-slate-900 font-sans flex flex-col antialiased overflow-hidden">
     <!-- Global Confirmation Modal -->
     <ConfirmModal />
 
     <!-- LOGIN VIEW (UNAUTHENTICATED SCREEN) -->
-    <LoginView v-if="!authState.isLoggedIn.value" @loggedIn="onLoggedIn" />
+    <ResetPasswordView v-if="isResetRoute" />
+    <LoginView v-else-if="!authState.isLoggedIn.value" @loggedIn="onLoggedIn" />
 
     <!-- MAIN SYSTEM INTERFACE (AUTHENTICATED SCREEN WITH LEFT SIDEBAR) -->
     <div v-else class="flex flex-1 h-full w-full overflow-hidden">
+      <button v-if="mobileMenuOpen" class="fixed inset-0 top-16 z-40 bg-slate-900/40 md:hidden" aria-label="Đóng menu" @click="mobileMenuOpen = false"></button>
       
       <!-- Collapsible Left Navigation Sidebar -->
       <AppSidebar 
         :activeTab="currentTab" 
         @navigate="switchTab" 
-        class="shrink-0 h-full sticky top-0 z-50"
+        :mobile-open="mobileMenuOpen" @close="mobileMenuOpen = false" class="shrink-0 h-full z-50"
       />
 
       <!-- Main Content Area -->
@@ -22,12 +24,13 @@
         <!-- Fixed Top Header -->
         <AppHeader 
           :user="authState.user.value" 
-          @logout="handleLogout" 
+          @logout="handleLogout" @toggle-menu="mobileMenuOpen = !mobileMenuOpen" :menu-open="mobileMenuOpen"
           class="shrink-0 sticky top-0 z-40"
         />
 
         <!-- Scrollable Dynamic View Content -->
-        <main class="flex-1 overflow-y-auto px-4 sm:px-6 pb-6 custom-scrollbar" style="padding-top: 16px;">
+        <ApiFeedback />
+        <main v-accessible-data id="main-content" tabindex="-1" class="flex-1 overflow-y-auto px-4 sm:px-6 pb-6 custom-scrollbar" style="padding-top: 16px;">
           
           <!-- Trang chủ (Executive / Agency User Dashboard) -->
           <ExecutiveDashboard 
@@ -75,24 +78,28 @@
 <script setup>
 import { fetchWithAuth } from './services/auth';
 
-import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { ref, onMounted, onUnmounted, watch, defineAsyncComponent } from 'vue';
 import LoginView from './views/LoginView.vue';
+import ResetPasswordView from './views/ResetPasswordView.vue';
+import ApiFeedback from './components/ApiFeedback.vue';
 import AppSidebar from './components/AppSidebar.vue';
 import AppHeader from './components/AppHeader.vue';
-import ExecutiveDashboard from './views/ExecutiveDashboard.vue';
-import DocumentDetailView from './views/DocumentDetailView.vue';
-import ExecutiveReportsView from './views/ExecutiveReportsView.vue';
-import LegalDocumentsView from './views/LegalDocumentsView.vue';
-import AgencyPlansView from './views/AgencyPlansView.vue';
-import MasterDataView from './views/MasterDataView.vue';
-import AgencyManagement from './components/AgencyManagement.vue';
-import UnitManagement from './components/UnitManagement.vue';
-import UserManagementView from './views/UserManagementView.vue';
-import ImportHistoryAudit from './components/ImportHistoryAudit.vue';
+const ExecutiveDashboard = defineAsyncComponent(() => import('./views/ExecutiveDashboard.vue'));
+const DocumentDetailView = defineAsyncComponent(() => import('./views/DocumentDetailView.vue'));
+const ExecutiveReportsView = defineAsyncComponent(() => import('./views/ExecutiveReportsView.vue'));
+const LegalDocumentsView = defineAsyncComponent(() => import('./views/LegalDocumentsView.vue'));
+const AgencyPlansView = defineAsyncComponent(() => import('./views/AgencyPlansView.vue'));
+const MasterDataView = defineAsyncComponent(() => import('./views/MasterDataView.vue'));
+const AgencyManagement = defineAsyncComponent(() => import('./components/AgencyManagement.vue'));
+const UnitManagement = defineAsyncComponent(() => import('./components/UnitManagement.vue'));
+const UserManagementView = defineAsyncComponent(() => import('./views/UserManagementView.vue'));
+const ImportHistoryAudit = defineAsyncComponent(() => import('./components/ImportHistoryAudit.vue'));
 import ConfirmModal from './components/ConfirmModal.vue';
 import { authState, logout } from './services/auth';
 import { getApiUrl } from './config/api';
 
+const mobileMenuOpen = ref(false);
+const isResetRoute = ref(window.location.hash.startsWith('#reset-password'));
 const currentTab = ref('dashboard');
 
 function handleLogout() {
@@ -105,6 +112,8 @@ function onLoggedIn() {
 }
 
 function parseHashRoute() {
+  isResetRoute.value = window.location.hash.startsWith('#reset-password');
+  if (isResetRoute.value) return;
   const hash = window.location.hash || '#dashboard';
   const rawPath = hash.replace(/^#\/?/, '');
   const [route] = rawPath.split('?');
@@ -133,6 +142,7 @@ function syncHashRoute() {
 }
 
 function switchTab(tabName) {
+  mobileMenuOpen.value = false;
   const adminOnlyTabs = ['reports', 'agencies', 'units', 'users', 'goals-grid', 'master-data', 'settings'];
   if (!authState.isAdmin.value && adminOnlyTabs.includes(tabName)) {
     if (tabName === 'goals-grid') currentTab.value = 'goals-list';
@@ -206,13 +216,6 @@ async function handleOpenNotificationDetail(event) {
           targetItem = item;
           break;
         }
-        if (item.subItems) {
-          const sub = item.subItems.find(s => s.id === targetId || s.taskId === targetId);
-          if (sub) {
-            targetItem = sub;
-            break;
-          }
-        }
       }
     }
 
@@ -222,18 +225,7 @@ async function handleOpenNotificationDetail(event) {
           targetItem = item;
           break;
         }
-        if (item.subItems) {
-          const sub = item.subItems.find(s => s.code && s.code.toUpperCase() === targetCode);
-          if (sub) {
-            targetItem = sub;
-            break;
-          }
-        }
       }
-    }
-
-    if (!targetItem && allItems.length > 0) {
-      targetItem = allItems[0];
     }
 
     if (targetItem) {

@@ -40,6 +40,9 @@ namespace Cdsqg.Api.Controllers
             var query = _context.Documents
                 .Include(d => d.Items)
                     .ThenInclude(i => i.ProgressLogs)
+                .Include(d => d.Items).ThenInclude(i => i.Baselines)
+                .Include(d => d.Items).ThenInclude(i => i.Unit)
+                .Include(d => d.Items).ThenInclude(i => i.LeadAgency)
                 .AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(search))
@@ -60,6 +63,7 @@ namespace Cdsqg.Api.Controllers
                 .Take(pageSize)
                 .ToListAsync();
 
+            var reportingAgencies = await _context.Agencies.ToListAsync();
             var items = docs.Select(d =>
             {
                 int totalGoals = d.Items.Count(i => i.ItemType == ItemTypeEnum.Goal);
@@ -72,25 +76,7 @@ namespace Cdsqg.Api.Controllers
                     decimal totalPct = 0;
                     foreach (var task in tasks)
                     {
-                        var latestLog = task.ProgressLogs.OrderByDescending(l => l.LogDate).FirstOrDefault();
-                        if (latestLog != null)
-                        {
-                            if (task.EvaluationType == EvaluationTypeEnum.Qualitative)
-                            {
-                                totalPct += latestLog.QualitativeStatus == TextStatusEnum.Completed ? 100 :
-                                             latestLog.QualitativeStatus == TextStatusEnum.Reviewing ? 75 :
-                                             latestLog.QualitativeStatus == TextStatusEnum.Drafting ? 40 : 0;
-                            }
-                                decimal target = 100m;
-                                var lastStr = task.CustomBaseline?.Values.LastOrDefault();
-                                if (!string.IsNullOrEmpty(lastStr) && decimal.TryParse(lastStr, out decimal parsedTarget))
-                                {
-                                    target = parsedTarget;
-                                }
-                                if (target <= 0) target = 100m;
-                                decimal pct = Math.Min(100, Math.Max(0, (latestLog.QuantitativeValue ?? 0) / target * 100));
-                                totalPct += pct;
-                        }
+                        totalPct += Math.Clamp(ProgressCalculator.EvaluateOverall(task, reportingAgencies).Percentage ?? 0m, 0m, 100m);
                     }
                     completionRate = Math.Round(totalPct / tasks.Count, 1);
                 }
@@ -183,7 +169,7 @@ namespace Cdsqg.Api.Controllers
                 if (item.ItemType == ItemTypeEnum.Goal) goalCounter++;
                 else taskCounter++;
 
-                var latestLog = item.ProgressLogs.OrderByDescending(l => l.LogDate).FirstOrDefault();
+                var latestLog = PlanningService.GetLatestProgressLogForAgency(item, null);
                 if (latestLog != null)
                 {
                     item.LatestProgressValue = latestLog.QuantitativeValue;
@@ -197,13 +183,14 @@ namespace Cdsqg.Api.Controllers
                 await _context.SaveChangesAsync();
             }
 
+            var reportingAgencies = await _context.Agencies.ToListAsync();
             var mappedItems = doc.Items.OrderBy(i => i.CreatedAt).Select(item =>
             {
-                var latestLog = item.ProgressLogs.OrderByDescending(l => l.LogDate).FirstOrDefault();
+                var latestLog = PlanningService.GetLatestProgressLogForAgency(item, null);
+                var progress = ProgressCalculator.EvaluateOverall(item, reportingAgencies);
                 var baselinesList = item.Baselines.Select(b => new
                 {
                     year = b.Year,
-                    quarter = b.Quarter,
                     targetQuantity = b.TargetQuantity,
                     targetQualitativeStatus = b.TargetQualitativeStatus?.ToString()
                 }).ToList();
@@ -240,7 +227,9 @@ namespace Cdsqg.Api.Controllers
                     customBaseline = item.CustomBaseline ?? new Dictionary<string, string>(),
                     baselines = baselinesList,
                     createdAt = item.CreatedAt,
-                    latestProgressValue = latestLog?.QuantitativeValue,
+                    latestProgressValue = progress.ActualValue,
+                    completionPercentage = progress.Percentage,
+                    calculatedStatus = progress.Status.ToString(),
                     latestProgressStatus = latestLog?.QualitativeStatus?.ToString(),
                     lastUpdated = latestLog?.LogDate
                 };

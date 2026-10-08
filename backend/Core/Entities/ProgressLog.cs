@@ -16,7 +16,6 @@ namespace Cdsqg.Core.Entities
         public GoalTaskItem? GoalTaskItem { get; set; }
 
         public int PeriodYear { get; set; }
-        public int PeriodQuarter { get; set; }
 
         public DateTime LogDate { get; set; } = DateTime.UtcNow;
 

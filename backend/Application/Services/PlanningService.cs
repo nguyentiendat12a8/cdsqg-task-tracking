@@ -64,7 +64,6 @@ namespace Cdsqg.Application.Services
                 .Include(i => i.Baselines)
                 .Include(i => i.ProgressLogs)
                 .Include(i => i.AgencyExecutions)
-                .Include(i => i.SubItems)
                 .AsQueryable();
 
             var items = await query.Where(i => i.DocumentId == doc.Id).ToListAsync();
@@ -77,7 +76,7 @@ namespace Cdsqg.Application.Services
             int tCount = 1;
 
             var itemsMap = items.ToDictionary(i => i.Id);
-            var rootItems = items.Where(i => !i.ParentId.HasValue || !itemsMap.ContainsKey(i.ParentId.Value))
+            var rootItems = items
                 .OrderByDescending(i => i.LastUpdated ?? i.CreatedAt)
                 .ThenByDescending(i => i.CreatedAt)
                 .ToList();
@@ -100,10 +99,10 @@ namespace Cdsqg.Application.Services
                 var yearlyTargets = new Dictionary<int, object?>();
                 foreach (var year in dynamicYears)
                 {
-                    var baseline = item.Baselines.FirstOrDefault(b => b.Year == year && b.Quarter == 0);
+                    var baseline = item.Baselines.FirstOrDefault(b => b.Year == year);
                     if (item.EvaluationType == EvaluationTypeEnum.Quantitative)
                     {
-                        yearlyTargets[year] = baseline?.TargetQuantity;
+                        yearlyTargets[year] = ProgressCalculator.ResolveBaseline(item, year).Target;
                     }
                     else
                     {
@@ -113,26 +112,14 @@ namespace Cdsqg.Application.Services
 
                 var latestLog = GetLatestProgressLogForAgency(item, agencyId);
                 var agencyDeliverables = GetDeliverablesForAgency(item, agencyId);
-                var status = CalculateExecutionStatus(item, latestLog, agencyDeliverables);
 
-                var childDtos = item.SubItems != null && item.SubItems.Any()
-                    ? item.SubItems.OrderBy(s => s.CreatedAt).Select(s => MapItemDto(s)).ToList()
-                    : new List<PlanningGridItemDto>();
-
-                decimal? latestValue = latestLog?.QuantitativeValue;
-                if (latestValue == null && agencyDeliverables != null && agencyDeliverables.Count > 0)
-                {
-                    decimal delivPct = ExecutionService.CalculateDeliverablesCompletionPercentage(agencyDeliverables);
-                    if (delivPct > 0)
-                    {
-                        latestValue = delivPct;
-                    }
-                }
+                var progress = item.IsGeneralTask && !agencyId.HasValue
+                    ? ProgressCalculator.EvaluateOverall(item, agenciesMap.Values)
+                    : ProgressCalculator.Evaluate(item, latestLog, agencyDeliverables, agencyId);
 
                 return new PlanningGridItemDto
                 {
                     TaskId = item.Id,
-                    ParentId = item.ParentId,
                     ItemType = item.ItemType.ToString(),
                     Code = safeCode,
                     Title = item.Title,
@@ -160,16 +147,18 @@ namespace Cdsqg.Application.Services
                     EvaluationType = item.EvaluationType.ToString(),
                     UnitName = item.Unit?.Name ?? "%",
                     CalculationMethod = item.CalculationMethod.ToString(),
-                    LatestProgressValue = latestValue,
+                    LatestProgressValue = progress.ActualValue,
+                    CompletionPercentage = progress.Percentage,
+                    ExpectedBaselineTarget = progress.Target,
                     LatestProgressStatus = latestLog?.QualitativeStatus?.ToString(),
                     LastUpdated = latestLog?.LogDate ?? item.LastUpdated ?? item.CreatedAt,
                     CreatedAt = item.CreatedAt,
                     HasPendingApproval = item.ProgressLogs != null && item.ProgressLogs.Any(l => l.ApprovalStatus == ApprovalStatusEnum.Pending),
-                    CalculatedStatus = status.ToString(),
+                    CalculatedStatus = progress.Status.ToString(),
+                    CalculatedAlert = progress.Alert.ToString(),
                     CustomBaseline = item.CustomBaseline ?? new Dictionary<string, string>(),
-                    Deliverables = agencyDeliverables,
-                    YearlyTargets = yearlyTargets,
-                    SubItems = childDtos
+                    Deliverables = agencyDeliverables ?? new List<TaskDeliverable>(),
+                    YearlyTargets = yearlyTargets
                 };
             }
 
@@ -216,13 +205,7 @@ namespace Cdsqg.Application.Services
                     bool isLead = scopedAgencyIds.Contains(i.LeadAgencyId);
                     bool isAssigned = i.AssignedAgencyId.HasValue && scopedAgencyIds.Contains(i.AssignedAgencyId.Value);
                     bool isCoord = i.CoordinatingAgencyIds != null && i.CoordinatingAgencyIds.Any(id => scopedAgencyIds.Contains(id));
-                    bool isSubMatch = i.SubItems != null && i.SubItems.Any(s =>
-                        (isParentAgency && (s.IsGeneralTask || (s.LeadAgencyCode != null && s.LeadAgencyCode.ToUpper().StartsWith("ALL_"))) && (s.LeadAgencyCode == null || s.LeadAgencyCode.ToUpper().StartsWith("ALL_"))) ||
-                        scopedAgencyIds.Contains(s.LeadAgencyId) ||
-                        (s.AssignedAgencyId.HasValue && scopedAgencyIds.Contains(s.AssignedAgencyId.Value)) ||
-                        (s.CoordinatingAgencyIds != null && s.CoordinatingAgencyIds.Any(id => scopedAgencyIds.Contains(id)))
-                    );
-                    return isGeneral || isLead || isAssigned || isCoord || isSubMatch;
+                    return isGeneral || isLead || isAssigned || isCoord;
                 }).ToList();
             }
 
@@ -249,8 +232,7 @@ namespace Cdsqg.Application.Services
                     (i.Title != null && i.Title.ToLower().Contains(s)) ||
                     (i.LeadAgencyName != null && i.LeadAgencyName.ToLower().Contains(s)) ||
                     (i.AssignedAgencyName != null && i.AssignedAgencyName.ToLower().Contains(s)) ||
-                    (i.CoordinatingAgencyNames != null && i.CoordinatingAgencyNames.Any(c => c.ToLower().Contains(s))) ||
-                    (i.SubItems != null && i.SubItems.Any(sub => (sub.Code != null && sub.Code.ToLower().Contains(s)) || (sub.Title != null && sub.Title.ToLower().Contains(s))))
+                    (i.CoordinatingAgencyNames != null && i.CoordinatingAgencyNames.Any(c => c.ToLower().Contains(s)))
                 ).ToList();
             }
 
@@ -426,26 +408,6 @@ namespace Cdsqg.Application.Services
 
         public async Task<GoalTaskItem> CreateGoalTaskItemAsync(CreateGoalTaskItemRequestDto dto)
         {
-            // Sub-task date range validation
-            if (dto.ParentId.HasValue && dto.ParentId.Value != Guid.Empty)
-            {
-                var parent = await _context.GoalTaskItems.FirstOrDefaultAsync(p => p.Id == dto.ParentId.Value);
-                if (parent == null)
-                {
-                    throw new KeyNotFoundException("Không tìm thấy Mục tiêu / Nhiệm vụ cha.");
-                }
-
-                if (dto.StartDate.HasValue && parent.StartDate.HasValue && dto.StartDate.Value < parent.StartDate.Value)
-                {
-                    throw new InvalidOperationException($"Ngày bắt đầu của nhiệm vụ con ({dto.StartDate.Value:dd/MM/yyyy}) không được trước ngày bắt đầu của nhiệm vụ cha ({parent.StartDate.Value:dd/MM/yyyy}).");
-                }
-
-                if (dto.DueDate.HasValue && parent.DueDate.HasValue && dto.DueDate.Value > parent.DueDate.Value)
-                {
-                    throw new InvalidOperationException($"Ngày hoàn thành của nhiệm vụ con ({dto.DueDate.Value:dd/MM/yyyy}) không được sau ngày hạn chót của nhiệm vụ cha ({parent.DueDate.Value:dd/MM/yyyy}).");
-                }
-            }
-
             Enum.TryParse<ItemTypeEnum>(dto.ItemType, true, out var itemType);
             Enum.TryParse<EvaluationTypeEnum>(dto.EvaluationType, true, out var evalType);
             Enum.TryParse<CalculationMethodEnum>(dto.CalculationMethod, true, out var calcMethod);
@@ -454,19 +416,10 @@ namespace Cdsqg.Application.Services
             string code = dto.Code?.Trim() ?? string.Empty;
             if (string.IsNullOrWhiteSpace(code) || code.StartsWith("MT-") || code.StartsWith("NV-") || code.Length <= 4)
             {
-                if (dto.ParentId.HasValue && dto.ParentId.Value != Guid.Empty)
-                {
-                    var parent = await _context.GoalTaskItems.FirstOrDefaultAsync(p => p.Id == dto.ParentId.Value);
-                    if (parent != null)
-                    {
-                        int subCount = await _context.GoalTaskItems.CountAsync(i => i.ParentId == parent.Id) + 1;
-                        code = $"{parent.Code}.{subCount:D2}";
-                    }
-                }
-                else if (itemType == ItemTypeEnum.Goal)
+                if (itemType == ItemTypeEnum.Goal)
                 {
                     var existingCodes = await _context.GoalTaskItems
-                        .Where(i => i.DocumentId == dto.DocumentId && i.ItemType == ItemTypeEnum.Goal && !i.ParentId.HasValue)
+                        .Where(i => i.DocumentId == dto.DocumentId && i.ItemType == ItemTypeEnum.Goal)
                         .Select(i => i.Code)
                         .ToListAsync();
 
@@ -483,7 +436,7 @@ namespace Cdsqg.Application.Services
                 else
                 {
                     var existingCodes = await _context.GoalTaskItems
-                        .Where(i => i.DocumentId == dto.DocumentId && i.ItemType == ItemTypeEnum.Task && !i.ParentId.HasValue)
+                        .Where(i => i.DocumentId == dto.DocumentId && i.ItemType == ItemTypeEnum.Task)
                         .Select(i => i.Code)
                         .ToListAsync();
 
@@ -507,7 +460,7 @@ namespace Cdsqg.Application.Services
                     if (itemType == ItemTypeEnum.Goal)
                     {
                         var existingCodes = await _context.GoalTaskItems
-                            .Where(i => i.DocumentId == dto.DocumentId && i.ItemType == ItemTypeEnum.Goal && !i.ParentId.HasValue)
+                            .Where(i => i.DocumentId == dto.DocumentId && i.ItemType == ItemTypeEnum.Goal)
                             .Select(i => i.Code)
                             .ToListAsync();
                         int maxNum = 0;
@@ -523,7 +476,7 @@ namespace Cdsqg.Application.Services
                     else
                     {
                         var existingCodes = await _context.GoalTaskItems
-                            .Where(i => i.DocumentId == dto.DocumentId && i.ItemType == ItemTypeEnum.Task && !i.ParentId.HasValue)
+                            .Where(i => i.DocumentId == dto.DocumentId && i.ItemType == ItemTypeEnum.Task)
                             .Select(i => i.Code)
                             .ToListAsync();
                         int maxNum = 0;
@@ -550,7 +503,6 @@ namespace Cdsqg.Application.Services
             {
                 Id = Guid.NewGuid(),
                 DocumentId = dto.DocumentId,
-                ParentId = (dto.ParentId.HasValue && dto.ParentId.Value != Guid.Empty) ? dto.ParentId : null,
                 ItemType = itemType,
                 Code = code,
                 Title = dto.Title,
@@ -584,13 +536,17 @@ namespace Cdsqg.Application.Services
                 throw new KeyNotFoundException($"Không tìm thấy Nhiệm vụ/Mục tiêu với ID: {taskId}");
             }
 
+            ProgressCalculator.ValidateAnnualBaselines(dto.Milestones);
             task.CustomBaseline = dto.Milestones ?? new Dictionary<string, string>();
+            await ProgressCalculator.RefreshCachesAsync(_context, task);
             await _context.SaveChangesAsync();
             return true;
         }
 
         public async Task<bool> UpdateYearlyTargetAsync(Guid taskId, UpdateYearlyTargetDto dto)
         {
+            if (dto.Year is < 1900 or > 9999 || dto.TargetQuantity <= 0)
+                throw new InvalidOperationException("Năm không hợp lệ hoặc chỉ tiêu không lớn hơn 0.");
             var task = await _context.GoalTaskItems
                 .Include(t => t.Baselines)
                 .FirstOrDefaultAsync(t => t.Id == taskId);
@@ -600,23 +556,23 @@ namespace Cdsqg.Application.Services
                 throw new KeyNotFoundException($"Không tìm thấy Nhiệm vụ/Mục tiêu với ID: {taskId}");
             }
 
-            var baseline = task.Baselines.FirstOrDefault(b => b.Year == dto.Year && b.Quarter == 0);
+            var baseline = task.Baselines.FirstOrDefault(b => b.Year == dto.Year);
             if (baseline == null)
             {
                 baseline = new TargetBaseline
                 {
                     Id = Guid.NewGuid(),
                     GoalTaskId = taskId,
-                    Year = dto.Year,
-                    Quarter = 0
+                    Year = dto.Year
                 };
                 _context.TargetBaselines.Add(baseline);
             }
 
-            if (dto.TargetQuantity.HasValue)
-            {
-                baseline.TargetQuantity = dto.TargetQuantity.Value;
-            }
+            baseline.TargetQuantity = dto.TargetQuantity;
+            // Editing the annual grid explicitly replaces that year's custom override.
+            var overrides = new Dictionary<string, string>(task.CustomBaseline);
+            overrides.Remove(dto.Year.ToString(System.Globalization.CultureInfo.InvariantCulture));
+            task.CustomBaseline = overrides;
 
             if (!string.IsNullOrEmpty(dto.TargetQualitativeStatus))
             {
@@ -626,6 +582,7 @@ namespace Cdsqg.Application.Services
                 }
             }
 
+            await ProgressCalculator.RefreshCachesAsync(_context, task);
             await _context.SaveChangesAsync();
             return true;
         }
@@ -635,25 +592,9 @@ namespace Cdsqg.Application.Services
             if (item == null) return new List<TaskDeliverable>();
             var masterList = item.Deliverables ?? new List<TaskDeliverable>();
 
-            if (agencyId.HasValue && agencyId.Value != Guid.Empty && item.AgencyExecutions != null && item.AgencyExecutions.Any())
-            {
-                var exec = item.AgencyExecutions.FirstOrDefault(e => e.AgencyId == agencyId.Value);
-                if (exec != null && exec.Deliverables != null && exec.Deliverables.Count > 0)
-                {
-                    return exec.Deliverables;
-                }
-            }
-
-            if (!item.IsGeneralTask || !agencyId.HasValue || agencyId.Value == Guid.Empty)
-            {
-                return masterList;
-            }
-
-            string key = agencyId.Value.ToString().ToLower();
-            if (item.AgencyDeliverables != null && item.AgencyDeliverables.TryGetValue(key, out var agencyList) && agencyList != null && agencyList.Count > 0)
-            {
-                return agencyList;
-            }
+            var approved = ProgressCalculator.LatestApproved(item, agencyId);
+            if (approved?.Deliverables is { Count: > 0 }) return approved.Deliverables;
+            if (!item.IsGeneralTask) return masterList;
 
             return masterList.Select(d => new TaskDeliverable
             {
@@ -669,156 +610,9 @@ namespace Cdsqg.Application.Services
         }
 
         public static ProgressLog? GetLatestProgressLogForAgency(GoalTaskItem item, Guid? agencyId)
-        {
-            if (item?.ProgressLogs == null || !item.ProgressLogs.Any()) return null;
-
-            var approvedLogs = item.ProgressLogs.Where(l => l.ApprovalStatus == ApprovalStatusEnum.Approved);
-
-            if (item.IsGeneralTask && agencyId.HasValue && agencyId.Value != Guid.Empty)
-            {
-                var agencyLog = approvedLogs
-                    .Where(l => l.AgencyId == agencyId.Value)
-                    .OrderByDescending(l => l.LogDate)
-                    .FirstOrDefault();
-
-                return agencyLog;
-            }
-
-            return approvedLogs.OrderByDescending(l => l.LogDate).FirstOrDefault();
-        }
+            => ProgressCalculator.LatestApproved(item, agencyId);
 
         public static ExecutionStatusEnum CalculateExecutionStatus(GoalTaskItem item, ProgressLog? latestLog, List<TaskDeliverable>? customDeliverables = null)
-        {
-            var now = DateTime.UtcNow;
-            var deliverables = customDeliverables ?? item.Deliverables;
-
-            if (item.IsOngoing)
-            {
-                bool isDeliverableCompleted = deliverables != null && deliverables.Any() &&
-                    deliverables.All(d => 
-                        string.Equals(d.CurrentStatus, "Completed", StringComparison.OrdinalIgnoreCase) || 
-                        string.Equals(d.CurrentStatus, "4", StringComparison.OrdinalIgnoreCase));
-
-                if (isDeliverableCompleted || latestLog?.QualitativeStatus == TextStatusEnum.Completed)
-                {
-                    return ExecutionStatusEnum.CompletedOnTime;
-                }
-                if (latestLog != null)
-                {
-                    return ExecutionStatusEnum.InProgressOnTime;
-                }
-                return ExecutionStatusEnum.NotStarted;
-            }
-
-            bool isCompleted = false;
-            if (deliverables != null && deliverables.Any())
-            {
-                isCompleted = deliverables.All(d => 
-                    string.Equals(d.CurrentStatus, "Completed", StringComparison.OrdinalIgnoreCase) || 
-                    string.Equals(d.CurrentStatus, "4", StringComparison.OrdinalIgnoreCase));
-            }
-            else if (item.EvaluationType == EvaluationTypeEnum.Quantitative)
-            {
-                decimal targetVal = 100m;
-                if (item.Baselines != null && item.Baselines.Any())
-                {
-                    var b = item.Baselines.OrderByDescending(x => x.Year).FirstOrDefault();
-                    if (b?.TargetQuantity > 0) targetVal = b.TargetQuantity.Value;
-                }
-                if (latestLog?.QuantitativeValue >= targetVal) isCompleted = true;
-            }
-            else
-            {
-                if (latestLog?.QualitativeStatus == TextStatusEnum.Completed)
-                {
-                    isCompleted = true;
-                }
-            }
-
-            if (isCompleted)
-            {
-                if (item.DueDate.HasValue && latestLog != null && latestLog.LogDate.Date > item.DueDate.Value.Date)
-                {
-                    return ExecutionStatusEnum.CompletedOverdue;
-                }
-                return ExecutionStatusEnum.CompletedOnTime;
-            }
-
-            bool hasStarted = false;
-
-            if (item.StartDate.HasValue && now.Date < item.StartDate.Value.Date)
-            {
-                hasStarted = false;
-            }
-            else
-            {
-                if (deliverables != null && deliverables.Any())
-                {
-                    hasStarted = deliverables.Any(d => 
-                        !string.Equals(d.CurrentStatus, "NotStarted", StringComparison.OrdinalIgnoreCase) && 
-                        !string.Equals(d.CurrentStatus, "1", StringComparison.OrdinalIgnoreCase) &&
-                        !string.IsNullOrEmpty(d.CurrentStatus));
-                }
-
-                if (!hasStarted && latestLog != null)
-                {
-                    if (latestLog.QualitativeStatus != null && latestLog.QualitativeStatus != TextStatusEnum.NotStarted)
-                    {
-                        hasStarted = true;
-                    }
-                    else if (latestLog.QuantitativeValue > 0 || (latestLog.CalculatedProgressPercentage.HasValue && latestLog.CalculatedProgressPercentage.Value > 0))
-                    {
-                        hasStarted = true;
-                    }
-                }
-            }
-
-            if (!hasStarted)
-            {
-                return ExecutionStatusEnum.NotStarted;
-            }
-
-            bool isOverdue = false;
-            if (deliverables != null && deliverables.Any())
-            {
-                isOverdue = deliverables.Any(d => 
-                    d.DueDate.HasValue && 
-                    now.Date > d.DueDate.Value.Date && 
-                    !string.Equals(d.CurrentStatus, "Completed", StringComparison.OrdinalIgnoreCase) &&
-                    !string.Equals(d.CurrentStatus, "4", StringComparison.OrdinalIgnoreCase));
-            }
-
-            if (!isOverdue && item.DueDate.HasValue && now.Date > item.DueDate.Value.Date)
-            {
-                isOverdue = true;
-            }
-
-            if (isOverdue)
-            {
-                return ExecutionStatusEnum.InProgressOverdue;
-            }
-
-            if (item.DueDate.HasValue && now.Date <= item.DueDate.Value.Date)
-            {
-                var remainingDays = (item.DueDate.Value.Date - now.Date).TotalDays;
-                if (item.ParentId.HasValue && item.StartDate.HasValue)
-                {
-                    var totalDuration = (item.DueDate.Value.Date - item.StartDate.Value.Date).TotalDays;
-                    if (totalDuration > 0 && (remainingDays / totalDuration) <= 0.10)
-                    {
-                        return ExecutionStatusEnum.ExpiringSoon;
-                    }
-                }
-                else
-                {
-                    if (remainingDays <= 30)
-                    {
-                        return ExecutionStatusEnum.ExpiringSoon;
-                    }
-                }
-            }
-
-            return ExecutionStatusEnum.InProgressOnTime;
-        }
+            => ProgressCalculator.Evaluate(item, latestLog, customDeliverables, latestLog?.AgencyId).Status;
     }
 }

@@ -469,7 +469,7 @@ namespace Cdsqg.Api.Controllers
         }
 
         [HttpPost("upload-plan-file")]
-        public async Task<IActionResult> UploadPlanFileLegacy([FromForm] IFormFile file, [FromForm] Guid agencyId)
+        public async Task<IActionResult> UploadPlanFileLegacy(IFormFile file, [FromForm] Guid agencyId)
         {
             if (agencyId == Guid.Empty)
             {

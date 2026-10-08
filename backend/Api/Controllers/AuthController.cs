@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.RateLimiting;
 using Cdsqg.Application.DTOs;
 using Cdsqg.Application.Services;
 using Cdsqg.Infrastructure.Data;
@@ -18,12 +19,14 @@ namespace Cdsqg.Api.Controllers
         private readonly AppDbContext _db;
         private readonly IPasswordHasher _passwordHasher;
         private readonly IJwtService _jwtService;
+        private readonly PasswordRecoveryService? _recovery;
 
-        public AuthController(AppDbContext db, IPasswordHasher passwordHasher, IJwtService jwtService)
+        public AuthController(AppDbContext db, IPasswordHasher passwordHasher, IJwtService jwtService, PasswordRecoveryService? recovery = null)
         {
             _db = db;
             _passwordHasher = passwordHasher;
             _jwtService = jwtService;
+            _recovery = recovery;
         }
 
         [AllowAnonymous]
@@ -107,20 +110,18 @@ namespace Cdsqg.Api.Controllers
         }
 
         [AllowAnonymous]
+        [EnableRateLimiting("password-recovery")]
         [HttpPost("forgot-password")]
-        public IActionResult ForgotPassword([FromBody] ForgotPasswordDto dto)
+        public Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.EmailOrUsername))
-            {
-                return BadRequest(new { message = "Vui lòng nhập Email hoặc Tên đăng nhập của tài khoản." });
-            }
-
-            // Self-service resets require a verified delivery channel. Until configured,
-            // do not change passwords, disclose account existence, or return credentials.
-            return Ok(new
-            {
-                message = "Vui lòng liên hệ quản trị viên để xác minh và đặt lại mật khẩu. Hệ thống chưa hỗ trợ khôi phục mật khẩu qua email."
-            });
+            return Task.FromResult<IActionResult>(Ok(new { message = "Tính năng đang phát triển" }));
+        }
+        [AllowAnonymous]
+        [EnableRateLimiting("password-recovery")]
+        [HttpPost("reset-password")]
+        public Task<IActionResult> RecoverPassword([FromBody] RecoverPasswordDto dto)
+        {
+            return Task.FromResult<IActionResult>(StatusCode(501, new { message = "Tính năng đang phát triển" }));
         }
     }
 }

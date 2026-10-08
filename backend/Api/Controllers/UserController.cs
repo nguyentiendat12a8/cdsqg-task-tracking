@@ -32,6 +32,8 @@ namespace Cdsqg.Api.Controllers
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 10)
         {
+            pageNumber = Math.Max(1, pageNumber);
+            pageSize = Math.Clamp(pageSize, 1, 100);
             var query = _db.Users.Include(u => u.Agency).AsQueryable();
 
             if (!string.IsNullOrWhiteSpace(search))
@@ -248,6 +250,9 @@ namespace Cdsqg.Api.Controllers
             }
 
             user.PasswordHash = _passwordHasher.HashPassword(dto.NewPassword.Trim());
+            user.SecurityStamp = Guid.NewGuid().ToString("N");
+            user.PasswordResetTokenHash = null;
+            user.PasswordResetExpiresAt = null;
             await _db.SaveChangesAsync();
 
             return Ok(new { message = $"Đã đặt lại mật khẩu cho tài khoản '{user.Username}' thành công." });

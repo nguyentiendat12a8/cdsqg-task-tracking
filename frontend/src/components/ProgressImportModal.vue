@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isOpen" @click.self="close" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 font-sans">
+  <div v-if="isOpen" @click.self="close" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 font-sans" v-accessible-dialog="close">
     <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-4xl sm:max-w-5xl w-full p-5 sm:p-6 space-y-4 max-h-[92vh] flex flex-col animate-in fade-in duration-150">
       
       <!-- Modal Header -->
@@ -13,7 +13,7 @@
               Import Báo Cáo Tiến Độ Từ File Excel
             </h3>
             <p class="text-xs text-slate-500 font-semibold mt-0.5">
-              Hệ thống sẽ tự động đối soát mã mục tiêu / nhiệm vụ, kiểm tra quyền và xác thực dữ liệu trước khi nhập.
+              Số liệu định lượng là tổng đã đạt đến năm báo cáo, không phải phần tăng thêm trong năm. Hệ thống đối soát mã, quyền và dữ liệu trước khi nhập.
             </p>
           </div>
         </div>
@@ -215,7 +215,7 @@
 import { fetchWithAuth } from '../services/auth';
 
 import { ref, computed } from 'vue';
-import XLSX from 'xlsx-js-style';
+import { loadExcelReader } from '../utils/excelRuntime';
 import { toast } from 'vue3-toastify';
 import { getApiUrl } from '../config/api';
 
@@ -329,6 +329,7 @@ async function handleFileUpload(e) {
   parsedItems.value = [];
 
   try {
+    const XLSX = await loadExcelReader(file.name);
     const data = await file.arrayBuffer();
     const workbook = XLSX.read(data, { type: 'array' });
     const sheetName = workbook.SheetNames[0];
@@ -506,8 +507,7 @@ async function submitImport() {
         value: r.value,
         status: r.status,
         summaryNotes: r.summaryNotes,
-        periodYear: 2026,
-        periodQuarter: 0
+        periodYear: 2026
       }))
     };
 

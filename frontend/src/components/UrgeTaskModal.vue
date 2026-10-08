@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isOpen" @click.self="close" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+  <div v-if="isOpen" @click.self="close" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4" v-accessible-dialog="close">
     <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-5xl sm:max-w-6xl w-full p-6 space-y-5 animate-in fade-in duration-150 font-sans max-h-[92vh] flex flex-col">
       
       <!-- Modal Header -->

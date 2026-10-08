@@ -689,7 +689,7 @@ namespace Cdsqg.Api.Controllers
                 {
                     entitiesToInsert.Add(new LegalDocument
                     {
-                        Code = item.Code.Trim(),
+                        Code = item.Code?.Trim() ?? string.Empty,
                         Title = item.Title.Trim(),
                         DocumentType = docType,
                         IssuingAgencyId = issuingId,

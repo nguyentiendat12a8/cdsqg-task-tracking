@@ -6,27 +6,11 @@ using Cdsqg.Core.Enums;
 
 namespace Cdsqg.Application.DTOs
 {
+    [System.Text.Json.Serialization.JsonUnmappedMemberHandling(System.Text.Json.Serialization.JsonUnmappedMemberHandling.Disallow)]
     public class SubmitProgressRequestDto
     {
         public int PeriodYear { get; set; } = 2026;
-        public int PeriodQuarter { get; set; } = 0;
-        public int PeriodMonth { get; set; } = 0;
-        public string PeriodType { get; set; } = "Yearly"; // "Yearly", "Quarterly", "Monthly"
-
-        /// <summary>
-        /// Period string formatted key (e.g., "M1_2026", "Q1_2026", "2026")
-        /// </summary>
-        public string PeriodKey
-        {
-            get
-            {
-                if (PeriodType == "Monthly" || PeriodMonth > 0)
-                    return $"M{PeriodMonth}_{PeriodYear}";
-                if (PeriodType == "Quarterly" || PeriodQuarter > 0)
-                    return $"Q{PeriodQuarter}_{PeriodYear}";
-                return $"{PeriodYear}";
-            }
-        }
+        public string PeriodKey => PeriodYear.ToString(System.Globalization.CultureInfo.InvariantCulture);
 
         public decimal? Value { get; set; } // Quantitative
         public decimal? ActualValue { get => Value; set => Value = value; }
@@ -53,10 +37,10 @@ namespace Cdsqg.Application.DTOs
         
         public string PeriodKey { get; set; } = string.Empty;
         public decimal? ActualValue { get; set; }
-        public decimal ExpectedBaselineTarget { get; set; }
+        public decimal? ExpectedBaselineTarget { get; set; }
         public bool IsCustomBaselineUsed { get; set; }
 
-        public decimal CompletionPercentage { get; set; }
+        public decimal? CompletionPercentage { get; set; }
         public AlertStatusEnum CalculatedAlert { get; set; } // Green, Yellow, Red
         
         public string EvidenceFileUrl { get; set; } = string.Empty;
@@ -77,7 +61,6 @@ namespace Cdsqg.Application.DTOs
         public string ItemType { get; set; } = "Task";
         public bool IsGeneralTask { get; set; }
         public int PeriodYear { get; set; }
-        public int PeriodQuarter { get; set; }
         public decimal? ActualValue { get; set; }
         public string? Status { get; set; }
         public decimal? CompletionPercentage { get; set; }
@@ -129,7 +112,7 @@ namespace Cdsqg.Application.DTOs
         public string? RejectionReason { get; set; }
         public decimal? LatestProgressValue { get; set; }
         public string? LatestQualitativeStatus { get; set; }
-        public decimal CompletionPercentage { get; set; } = 0m;
+        public decimal? CompletionPercentage { get; set; }
         public string? SummaryNotes { get; set; }
         public List<string> AttachmentFileUrls { get; set; } = new List<string>();
         public List<TaskDeliverable>? Deliverables { get; set; }
@@ -144,6 +127,7 @@ namespace Cdsqg.Application.DTOs
         public string? Reason { get; set; }
     }
 
+    [System.Text.Json.Serialization.JsonUnmappedMemberHandling(System.Text.Json.Serialization.JsonUnmappedMemberHandling.Disallow)]
     public class ImportProgressBulkItemDto
     {
         public string Code { get; set; } = string.Empty;
@@ -151,7 +135,6 @@ namespace Cdsqg.Application.DTOs
         public TextStatusEnum? Status { get; set; }
         public string? SummaryNotes { get; set; }
         public int PeriodYear { get; set; } = 2026;
-        public int PeriodQuarter { get; set; } = 0;
     }
 
     public class ImportProgressBulkRequestDto
