@@ -21,7 +21,7 @@
         :placeholder="placeholder"
         :disabled="disabled"
         :required="required"
-        class="w-full text-xs font-semibold bg-slate-50 group-hover:bg-white border border-slate-200 rounded-xl pl-3 pr-8 py-2 text-slate-800 transition shadow-2xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/80 focus:border-blue-500 cursor-pointer h-[38px]"
+        class="ui-single-line ui-control w-full text-base sm:text-sm font-medium bg-slate-50 group-hover:bg-white border border-slate-200 rounded-xl pl-3 pr-8 py-2 text-slate-800 transition shadow-2xs focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500/80 focus:border-blue-500 cursor-pointer  "
         :class="inputClass"
       />
       
@@ -32,7 +32,7 @@
           type="button" 
           @click.stop="clearDate" 
           class="w-4 h-4 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 flex items-center justify-center text-[10px] font-bold transition cursor-pointer"
-          title="Xóa ngày"
+          title="Xóa ngày" aria-label="Xóa ngày"
         >
           ✕
         </button>
@@ -62,7 +62,7 @@
             <select 
               v-model="selectedMonth" 
               aria-label="Tháng"
-              class="text-xs font-bold text-slate-800 bg-slate-100 hover:bg-slate-200 border-none rounded-lg px-2 py-1 cursor-pointer focus:ring-2 focus:ring-blue-500 outline-none"
+              class="ui-single-line text-sm font-semibold text-slate-800 bg-slate-100 hover:bg-slate-200 border-none rounded-lg px-2 py-1 cursor-pointer focus:ring-2 focus:ring-blue-500 outline-none"
             >
               <option v-for="(mName, idx) in monthNames" :key="idx" :value="idx">
                 {{ mName }}
@@ -73,7 +73,7 @@
             <select 
               v-model="selectedYear" 
               aria-label="Năm"
-              class="text-xs font-bold text-slate-800 bg-slate-100 hover:bg-slate-200 border-none rounded-lg px-2 py-1 cursor-pointer focus:ring-2 focus:ring-blue-500 outline-none"
+              class="ui-single-line text-sm font-semibold text-slate-800 bg-slate-100 hover:bg-slate-200 border-none rounded-lg px-2 py-1 cursor-pointer focus:ring-2 focus:ring-blue-500 outline-none"
             >
               <option v-for="y in yearOptions" :key="y" :value="y">
                 {{ y }}
@@ -130,7 +130,7 @@
           <button 
             type="button" 
             @click="clearDate" 
-            class="text-rose-500 hover:text-rose-700 font-bold px-2 py-1 rounded-md hover:bg-rose-50 transition cursor-pointer"
+            class="ui-single-line text-rose-500 hover:text-rose-700 font-bold px-2 py-1 rounded-md hover:bg-rose-50 transition cursor-pointer"
           >
             Xóa
           </button>
@@ -138,7 +138,7 @@
           <button 
             type="button" 
             @click="selectToday" 
-            class="text-blue-600 hover:text-blue-800 font-bold px-2.5 py-1 rounded-md hover:bg-blue-50 transition cursor-pointer flex items-center gap-1"
+            class="ui-single-line text-blue-600 hover:text-blue-800 font-bold px-2.5 py-1 rounded-md hover:bg-blue-50 transition cursor-pointer flex items-center gap-1"
           >
             <span>Hôm nay</span>
           </button>
@@ -337,3 +337,7 @@ function isSameDayStr(val1, val2) {
   return val1.split('T')[0] === val2.split('T')[0];
 }
 </script>
+
+
+
+

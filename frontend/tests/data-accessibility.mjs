@@ -8,11 +8,10 @@ try {
   await page.route('**/api/**',r=>r.fulfill({contentType:'application/json',body:'{"items":[],"totalCount":0}'}));
   await page.goto('http://127.0.0.1:5201');
   await page.evaluate(async () => {
-    const {createApp,h,ref,withDirectives}=await import('/node_modules/.vite/deps/vue.js');
+    const {createApp,h,ref,withDirectives,FloatingVue}=await import('/tests/refactor-fixture.js');
     const Select=(await import('/src/components/SearchableSelect.vue')).default;
     const DatePicker=(await import('/src/components/DatePicker.vue')).default;
     const Progress=(await import('/src/components/ProgressUpdateModal.vue')).default;
-    const FloatingVue=(await import('/node_modules/.vite/deps/floating-vue.js')).default;
     const {accessibleDialog}=await import('/src/directives/accessibleDialog.js');
     const {accessibleData}=await import('/src/directives/accessibleData.js');
     const {authState}=await import('/src/services/auth.js');

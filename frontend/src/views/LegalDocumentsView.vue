@@ -19,7 +19,7 @@
         <div class="flex items-center gap-2 flex-wrap">
           <button 
             @click="exportExcel"
-            class="px-3.5 py-2 text-slate-700 hover:text-slate-900 font-bold text-xs rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200/80 transition shadow-2xs flex items-center gap-1.5 cursor-pointer"
+            class="ui-single-line px-3.5 py-2 text-slate-700 hover:text-slate-900 font-bold text-xs rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200/80 transition shadow-2xs flex items-center gap-1.5 cursor-pointer"
             title="Xuất danh sách văn bản QPPL ra Excel"
           >
             <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
@@ -30,7 +30,7 @@
             v-if="authState.isAdmin.value"
             @click="triggerImportExcel"
             :disabled="isImporting"
-            class="px-3.5 py-2 text-slate-700 hover:text-slate-900 font-bold text-xs rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200/80 transition shadow-2xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
+            class="ui-single-line px-3.5 py-2 text-slate-700 hover:text-slate-900 font-bold text-xs rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200/80 transition shadow-2xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
             title="Nhập danh sách văn bản QPPL từ file Excel"
           >
             <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
@@ -47,7 +47,7 @@
           <button 
             v-if="authState.isAdmin.value"
             @click="openCreateModal"
-            class="px-3.5 py-2 text-white font-bold text-xs rounded-xl bg-blue-600 hover:bg-blue-700 transition shadow-sm flex items-center gap-1.5 cursor-pointer"
+            class="ui-single-line px-3.5 py-2 text-white font-bold text-xs rounded-xl bg-blue-600 hover:bg-blue-700 transition shadow-sm flex items-center gap-1.5 cursor-pointer"
           >
             + Thêm Văn Bản QPPL Mới
           </button>
@@ -68,7 +68,7 @@
               v-model="filterDraft.searchQuery" 
               @keyup.enter="execSearch"
               placeholder="Tìm theo số ký hiệu, trích yếu, người ký, cơ quan..." 
-              class="w-full text-xs font-semibold pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none h-[34px]"
+              class="ui-single-line w-full text-xs font-semibold pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none "
             />
           </div>
 
@@ -137,9 +137,9 @@
               <div>
                 <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Thời Gian Ban Hành (Từ ngày ➔ Đến ngày)</label>
                 <div class="flex items-center gap-2">
-                  <input type="date" v-model="filterDraft.fromDate" class="w-full text-xs font-semibold p-2 bg-white border border-slate-200 rounded-xl" />
+                  <input type="date" v-model="filterDraft.fromDate" class="ui-single-line w-full text-xs font-semibold p-2 bg-white border border-slate-200 rounded-xl" />
                   <span class="text-xs font-bold text-slate-400 shrink-0">➔</span>
-                  <input type="date" v-model="filterDraft.toDate" class="w-full text-xs font-semibold p-2 bg-white border border-slate-200 rounded-xl" />
+                  <input type="date" v-model="filterDraft.toDate" class="ui-single-line w-full text-xs font-semibold p-2 bg-white border border-slate-200 rounded-xl" />
                 </div>
               </div>
             </div>
@@ -300,7 +300,7 @@
           <button 
             @click="changePage(pageNumber - 1)" 
             :disabled="pageNumber <= 1"
-            class="px-3.5 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg disabled:opacity-40 font-bold transition shadow-2xs cursor-pointer"
+            class="ui-single-line px-3.5 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg disabled:opacity-40 font-bold transition shadow-2xs cursor-pointer"
           >
             ‹ Trang trước
           </button>
@@ -341,6 +341,7 @@
 </template>
 
 <script setup>
+import { formatDate } from '../shared/formatters';
 import { fetchWithAuth } from '../services/auth';
 
 import { ref, computed, reactive, onMounted } from 'vue';
@@ -877,17 +878,6 @@ async function handleDelete(doc) {
   }
 }
 
-function formatDate(dStr) {
-  if (!dStr) return '—';
-  try {
-    const d = new Date(dStr);
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    return `${day}/${month}/${d.getFullYear()}`;
-  } catch {
-    return '—';
-  }
-}
 
 function getStatusBadgeClass(status) {
   switch (status) {
@@ -965,3 +955,6 @@ onMounted(async () => {
   await fetchDocuments();
 });
 </script>
+
+
+

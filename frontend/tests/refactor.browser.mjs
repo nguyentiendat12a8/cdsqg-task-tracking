@@ -18,6 +18,7 @@ try {
   page.on('console', m => { if (m.type() === 'warning' && m.text().includes('[Vue warn]')) warnings.push(m.text()); });
   page.on('request', r => requests.push(r.url()));
   let failItems = false, lastEdit, lastCreate;
+  let exportMultiplePages = false;
   await page.route('**/api/**', async route => {
     const url = new URL(route.request().url());
     let data = [];
@@ -35,6 +36,10 @@ try {
     else if (url.pathname.match(/\/api\/documents\/.*\/items/)) {
       if (failItems) return route.fulfill({ status: 500, contentType: 'application/json', body: '{}' });
       data = { items: url.searchParams.get('itemType') === 'Goal' ? [goal] : [task], totalCount: 1, totalPages: 1 };
+      if (exportMultiplePages && url.searchParams.get('pageSize') === '100') {
+        const page = Number(url.searchParams.get('pageNumber'));
+        data = { items: page === 1 ? Array.from({ length: 100 }, (_, i) => ({ ...goal, id: `export-${i}`, title: `Dòng xuất ${i}` })) : [{ ...goal, title: 'Dòng xuất cuối trang hai' }], totalCount: 101, totalPages: 2 };
+      }
       const search = url.searchParams.get('search');
       if (search === 'old' || search === 'new') {
         data.items = [{ ...goal, title: search + ' response' }];
@@ -108,10 +113,12 @@ try {
   assert.equal(new URL((await pageSizeRequest).url()).searchParams.get('pageNumber'), '1');
   await page.locator('#review-root table').getByText(goal.title, { exact: true }).waitFor();
   const docDownloadPromise = page.waitForEvent('download');
+  exportMultiplePages = true;
   await page.locator('#review-root').getByRole('button', { name: /Xuất Excel/ }).click();
   const docDownload = await docDownloadPromise;
   const docWb = XLSX.read(await fs.readFile(await docDownload.path()), { type: 'buffer' });
-  assert.ok(XLSX.utils.sheet_to_json(docWb.Sheets[docWb.SheetNames[0]], { header: 1 }).flat().includes(goal.title));
+  assert.ok(XLSX.utils.sheet_to_json(docWb.Sheets[docWb.SheetNames[0]], { header: 1 }).flat().includes('Dòng xuất cuối trang hai'), 'Export must include the second server page');
+  exportMultiplePages = false;
   await page.evaluate(() => { window.reviewType.value = 'Task'; });
   await page.locator('#review-root table').getByText(task.title, { exact: true }).waitFor();
   failItems = true;

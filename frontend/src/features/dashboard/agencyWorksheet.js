@@ -1,23 +1,7 @@
+import { getStatusLabel as getStatusLabelClean } from '../../shared/statusPresentation';
 import { styleWorksheet } from '../../utils/worksheetStyle';
 import { loadAgencyReportData } from './reportData';
 
-function getStatusLabelClean(status) {
-  switch (status) {
-    case 'InProgressOverdue':
-      return 'Đang t/h quá hạn';
-    case 'InProgressOnTime':
-      return 'Đang t/h trong hạn';
-    case 'ExpiringSoon':
-      return 'Sắp tới hạn';
-    case 'CompletedOverdue':
-      return 'Đã h/t quá hạn';
-    case 'CompletedOnTime':
-      return 'Đã h/t trong hạn';
-    case 'NotStarted':
-    default:
-      return 'Chưa thực hiện';
-  }
-}
 
 export async function appendAgencyWorksheet({ XLSX, wb, ag, usedSheetNames, filters, filterOutSpecialAgencies, isGoalsOnly, isTasksOnly, filterNameLabel, timeStr, agencies, formatDate, formatItemProgressDisplay }) {
   let rawSheetName = (ag.name || ag.code || 'Don_Vi').replace(/[\/\\?*:[\]]/g, '').trim();
@@ -273,3 +257,4 @@ export async function appendAgencyWorksheet({ XLSX, wb, ag, usedSheetNames, filt
   styleWorksheet(ws, { numCols: maxColsAgency, headerRowIndex: 9, titleRowIndex: 0 }, XLSX);
   XLSX.utils.book_append_sheet(wb, ws, sheetName);
 }
+

@@ -1,3 +1,4 @@
+import { REPORTING_DOCUMENT_ID } from '../../config/reporting';
 import { fetchWithAuth } from '../../services/auth';
 import { ref, watch, onUnmounted } from 'vue';
 import { authState } from '../../services/auth';
@@ -13,16 +14,10 @@ export function useDocumentData({ props, getQueryState }) {
   let requestVersion = 0;
   let agenciesLoaded = false;
   onUnmounted(() => { requestVersion++; });
-  async function loadData() {
-    const version = ++requestVersion;
-    const { userRoleStr, appliedFilters, currentPage, pageSize, sortBy, sortOrder } = getQueryState();
-    isLoading.value = true;
-    loadError.value = '';
-    try {
-      const docId = '12660000-0000-0000-0000-000000001266';
-      const currentAgencyId = authState.user.value?.agencyId || '';
-      const userRole = userRoleStr.value;
-
+  function buildQuery() {
+    const { appliedFilters, currentPage, pageSize, sortBy, sortOrder, userRoleStr } = getQueryState();
+    const currentAgencyId = authState.user.value?.agencyId || '';
+    const userRole = userRoleStr.value;
       const params = new URLSearchParams();
       params.append('itemType', props.filterItemType || 'Task');
       params.append('pageNumber', String(currentPage.value));
@@ -64,6 +59,33 @@ export function useDocumentData({ props, getQueryState }) {
         params.append('onlyOngoing', 'true');
       }
 
+    return params;
+  }
+  async function loadExportItems() {
+    const params = buildQuery();
+    params.set('pageSize', '100');
+    const items = [];
+    for (let page = 1; ; page++) {
+      params.set('pageNumber', String(page));
+      const response = await fetchWithAuth(getApiUrl('/api/documents/' + REPORTING_DOCUMENT_ID + '/items?' + params.toString()));
+      if (!response.ok) throw new Error('Không tải được dữ liệu xuất Excel.');
+      const data = await response.json();
+      if (!Number.isInteger(data.totalCount) || data.totalCount < 0 || !Array.isArray(data.items)) throw new Error('Dữ liệu phân trang xuất Excel không hợp lệ.');
+      items.push(...(data.items || []));
+      if (items.length >= data.totalCount) break;
+      if (!data.items.length) throw new Error('Danh sách đã thay đổi khi xuất Excel. Vui lòng thử lại.');
+    }
+    return items;
+  }
+  async function loadData() {
+    const version = ++requestVersion;
+    isLoading.value = true;
+    loadError.value = '';
+    try {
+      const docId = REPORTING_DOCUMENT_ID;
+
+      const params = buildQuery();
+
       const [itemsRes, agRes] = await Promise.all([
         fetchWithAuth(getApiUrl(`/api/documents/${docId}/items?${params.toString()}`)),
         agenciesLoaded ? Promise.resolve(null) : fetchWithAuth(getApiUrl('/api/agencies'))
@@ -92,5 +114,6 @@ export function useDocumentData({ props, getQueryState }) {
     loadData();
   });
 
-  return { isLoading, loadError, agencies, rawItemsList, serverTotalCount, serverTotalPages, loadData };
+  return { isLoading, loadError, agencies, rawItemsList, serverTotalCount, serverTotalPages, loadData, loadExportItems };
 }
+

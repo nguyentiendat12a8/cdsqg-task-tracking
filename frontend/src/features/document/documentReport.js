@@ -1,10 +1,10 @@
 import { authState } from '../../services/auth';
 import { exportToExcel, exportProgressReportTemplate } from '../../utils/excelExport';
 
-export function createDocumentReportActions({ props, userRoleStr, currentUserAgencyObj, formatDateRange, getStatusLabel, formatProgressDisplay, isGeneralTaskOrAllAgencies, filteredList }) {
+export function createDocumentReportActions({ props, userRoleStr, currentUserAgencyObj, formatDateRange, getStatusLabel, formatProgressDisplay, isGeneralTaskOrAllAgencies, loadExportItems }) {
   async function handleExportProgressReport() {
     await exportProgressReportTemplate({
-      items: filteredList.value || [],
+      items: await loadExportItems(),
       currentAgency: currentUserAgencyObj.value,
       userRole: userRoleStr.value,
       fileName: `Bao_Cao_Tien_Do_${props.filterItemType === 'Goal' ? 'Muc_Tieu' : 'Nhiem_Vu'}`
@@ -36,7 +36,7 @@ export function createDocumentReportActions({ props, userRoleStr, currentUserAge
       0: 8, 1: 15, 2: 50, 3: 30, 4: 28, 5: 25, 6: 22, 7: 22
     };
 
-    const rows = filteredList.value.map((item, idx) => {
+    const rows = (await loadExportItems()).map((item, idx) => {
       let dateStr = 'Thường xuyên';
       if (!item.isOngoing) {
         dateStr = formatDateRange(item.startDate, item.dueDate);
@@ -73,3 +73,4 @@ export function createDocumentReportActions({ props, userRoleStr, currentUserAge
 
   return { handleExportProgressReport, exportDocumentItemsToExcel };
 }
+

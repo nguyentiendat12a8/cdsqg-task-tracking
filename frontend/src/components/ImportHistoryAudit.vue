@@ -14,7 +14,7 @@
         <button 
           v-if="authState.isAdmin.value"
           @click="handleClearDemoData" 
-          class="px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+          class="ui-single-line px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs"
           title="Xóa toàn bộ dữ liệu mẫu / demo để sẵn sàng nạp dữ liệu thật"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
@@ -23,7 +23,7 @@
 
         <button 
           @click="exportExcel" 
-          class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+          class="ui-single-line px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs"
           title="Xuất bảng này ra file Excel"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
@@ -32,7 +32,7 @@
 
         <button 
           @click="loadImportHistory" 
-          class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition flex items-center gap-1.5 shrink-0 cursor-pointer"
+          class="ui-single-line px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition flex items-center gap-1.5 shrink-0 cursor-pointer"
         >
           <svg class="w-4 h-4 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
           Làm Mới
@@ -53,7 +53,7 @@
               :value="searchQueryDraft" 
               @input="searchQueryDraft = $event.target.value"
               placeholder="Tìm tên file, loại nạp, người thực hiện, ghi chú..." 
-              class="w-full text-xs font-semibold pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none h-[34px]"
+              class="ui-single-line w-full text-xs font-semibold pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none "
             />
           </div>
 
@@ -181,7 +181,7 @@
           <button 
             @click="changePage(currentPage - 1)" 
             :disabled="currentPage <= 1"
-            class="px-3.5 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg disabled:opacity-40 font-bold transition shadow-xs"
+            class="ui-single-line px-3.5 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg disabled:opacity-40 font-bold transition shadow-xs"
           >
             ‹ Trang trước
           </button>
@@ -206,6 +206,7 @@
 </template>
 
 <script setup>
+import { formatDateTime as formatDate } from '../shared/formatters';
 import { fetchWithAuth } from '../services/auth';
 
 import { ref, computed, watch, onMounted } from 'vue';
@@ -429,15 +430,6 @@ function changePage(newPage) {
   loadImportHistory();
 }
 
-function formatDate(dateStr) {
-  if (!dateStr) return '—';
-  try {
-    const d = new Date(dateStr);
-    return `${d.toLocaleDateString('vi-VN')} ${d.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
-  } catch {
-    return dateStr;
-  }
-}
 
 async function loadImportHistory() {
   const currentRequestId = ++importFetchRequestId;
@@ -528,3 +520,6 @@ async function handleClearDemoData() {
   }
 }
 </script>
+
+
+

@@ -11,7 +11,7 @@
         <p class="text-xs text-slate-500 mt-1">Cấu hình tên đơn vị (%, Lượt, Văn bản...) và Kiểu dữ liệu hỗ trợ</p>
       </div>
 
-      <button @click="openCreateModal" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm transition flex items-center gap-1.5 shrink-0">
+      <button @click="openCreateModal" class="ui-single-line bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm transition flex items-center gap-1.5 shrink-0">
         + Thêm Đơn Vị Tính Mới
       </button>
     </div>
@@ -28,10 +28,10 @@
               :value="searchDraft" 
               @input="searchDraft = $event.target.value"
               placeholder="Tìm kiếm theo mã, tên đơn vị tính, kiểu dữ liệu..." 
-              class="w-full text-xs font-semibold pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              class="ui-single-line w-full text-xs font-semibold pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
             />
           </div>
-          <button @click="resetSearch" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer">↺</button>
+          <button @click="resetSearch" class="ui-single-line px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer">↺</button>
         </div>
         <span class="text-xs text-slate-500 font-semibold shrink-0">
           Hiển thị {{ units.length }} / {{ totalCount }} đơn vị
@@ -101,7 +101,7 @@
           <button 
             @click="changePage(pageNumber - 1)" 
             :disabled="pageNumber <= 1"
-            class="px-3.5 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg disabled:opacity-40 font-bold transition shadow-xs cursor-pointer"
+            class="ui-single-line px-3.5 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg disabled:opacity-40 font-bold transition shadow-xs cursor-pointer"
           >
             ‹ Trang trước
           </button>
@@ -133,12 +133,12 @@
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="text-xs font-bold text-slate-700 uppercase">Mã Đơn Vị (e.g. PERCENT) <span class="text-rose-500">*</span></label>
-              <input v-model="form.code" required class="w-full text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 mt-1" />
+              <input v-model="form.code" required class="ui-single-line w-full text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 mt-1" />
             </div>
 
             <div>
               <label class="text-xs font-bold text-slate-700 uppercase">Tên Hiển Thị (e.g. %) <span class="text-rose-500">*</span></label>
-              <input v-model="form.name" required class="w-full text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 mt-1" />
+              <input v-model="form.name" required class="ui-single-line w-full text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 mt-1" />
             </div>
           </div>
 
@@ -156,8 +156,8 @@
           </div>
 
           <div class="flex justify-end gap-2 border-t border-slate-100 pt-3">
-            <button type="button" @click="isModalOpen = false" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition">Hủy</button>
-            <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition shadow-sm">Lưu</button>
+            <button type="button" @click="isModalOpen = false" class="ui-single-line px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition">Hủy</button>
+            <button type="submit" class="ui-single-line px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition shadow-sm">Lưu</button>
           </div>
         </form>
       </div>
@@ -373,3 +373,4 @@ onMounted(() => {
   fetchUnits();
 });
 </script>
+

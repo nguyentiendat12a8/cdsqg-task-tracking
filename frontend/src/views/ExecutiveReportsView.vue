@@ -18,7 +18,7 @@
 
       <button 
         @click="exportCurrentReportToExcel" 
-        class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-2 shrink-0"
+        class="ui-single-line px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-2 shrink-0"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
         Xuất File Excel
@@ -80,22 +80,15 @@
             :value="filterDraft.searchQuery" 
             @input="filterDraft.searchQuery = $event.target.value"
             placeholder="Tìm theo mã, tên mục tiêu / nhiệm vụ..." 
-            class="w-full text-xs font-semibold pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none min-h-[36px]" 
+            class="ui-single-line ui-toolbar-control w-full font-medium pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" 
           />
-          <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+          <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
         </div>
 
         <!-- Quick Item Type Select Dropdown -->
-        <select 
-          v-model="quickItemType" 
-          @change="onQuickItemTypeChange"
-          class="py-2 px-3 text-xs bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-xl font-bold text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 cursor-pointer min-h-[36px] shadow-2xs shrink-0"
-          title="Lọc loại đối tượng (Tất cả / Mục tiêu / Nhiệm vụ)"
-        >
-          <option value="all">Tất cả (Mục tiêu & Nhiệm vụ)</option>
-          <option value="Goal">🎯 Chỉ Mục tiêu</option>
-          <option value="Task">📋 Chỉ Nhiệm vụ</option>
-        </select>
+        <div class="w-full sm:w-64 shrink-0">
+          <SearchableSelect v-model="quickItemType" :options="[{ value: 'all', label: 'Tất cả (Mục tiêu & Nhiệm vụ)' }, { value: 'Goal', label: 'Chỉ Mục tiêu' }, { value: 'Task', label: 'Chỉ Nhiệm vụ' }]" :isMulti="false" :clearable="false" label="Loại đối tượng" label-class="sr-only" @change="onQuickItemTypeChange" />
+        </div>
 
         <!-- OverlayPanel Advanced Filter Popover -->
         <OverlayPanel 
@@ -389,12 +382,9 @@
           <span>Hiển thị <strong class="text-slate-900">{{ currentActiveTotalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0 }} - {{ Math.min(currentPage * pageSize, currentActiveTotalCount) }}</strong> trên tổng số <strong class="text-slate-900">{{ currentActiveTotalCount }}</strong> bản ghi</span>
           <div class="flex items-center gap-1.5 ml-2">
             <span class="text-slate-500 font-normal">Kích thước trang:</span>
-            <select v-model="pageSize" @change="currentPage = 1" class="py-1 px-2 text-xs bg-white border border-slate-200 rounded-lg font-bold text-slate-700 cursor-pointer shadow-2xs">
-              <option :value="10">10 dòng/trang</option>
-              <option :value="25">25 dòng/trang</option>
-              <option :value="50">50 dòng/trang</option>
-              <option :value="100">100 dòng/trang</option>
-            </select>
+            <div class="w-40">
+              <SearchableSelect v-model="pageSize" :options="[10, 25, 50, 100].map(value => ({ value, label: `${value} dòng/trang` }))" :isMulti="false" :clearable="false" label="Kích thước trang" label-class="sr-only" @change="currentPage = 1" />
+            </div>
           </div>
         </div>
 
@@ -402,7 +392,7 @@
           <button 
             @click="changePage(currentPage - 1)" 
             :disabled="currentPage <= 1"
-            class="px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl disabled:opacity-40 font-bold transition shadow-2xs cursor-pointer disabled:cursor-not-allowed"
+            class="ui-single-line px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl disabled:opacity-40 font-bold transition shadow-2xs cursor-pointer disabled:cursor-not-allowed"
           >
             ‹ Trang trước
           </button>
@@ -428,6 +418,8 @@
 </template>
 
 <script setup>
+import { formatDate, formatDateRange, formatFileName as getFileName } from '../shared/formatters';
+import { getStatusLabel } from '../shared/statusPresentation';
 import { fetchWithAuth } from '../services/auth';
 
 import { ref, computed, onMounted, watch } from 'vue';
@@ -536,49 +528,9 @@ function getPct(val, total) {
   return Math.round(((val || 0) / total) * 100);
 }
 
-function formatDate(d) {
-  if (!d) return '—';
-  try {
-    let str = String(d).trim();
-    if (!str) return '—';
-    if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
-      const [y, m, day] = str.slice(0, 10).split('-');
-      return `${day}/${m}/${y}`;
-    }
-    const dateObj = new Date(str);
-    if (isNaN(dateObj.getTime())) return '—';
-    const day = String(dateObj.getUTCDate()).padStart(2, '0');
-    const month = String(dateObj.getUTCMonth() + 1).padStart(2, '0');
-    const year = dateObj.getUTCFullYear();
-    return `${day}/${month}/${year}`;
-  } catch {
-    return '—';
-  }
-}
 
-function formatDateRange(sDate, dDate) {
-  if (!sDate && !dDate) return '—';
-  const s = sDate ? formatDate(sDate) : '...';
-  const d = dDate ? formatDate(dDate) : '...';
-  return `${s} ➔ ${d}`;
-}
 
-function getFileName(path) {
-  if (!path) return 'File đính kèm';
-  return path.split('/').pop() || path;
-}
 
-function getStatusLabel(st) {
-  const map = {
-    'NotStarted': 'Chưa thực hiện',
-    'InProgressOnTime': 'Đang thực hiện (trong hạn)',
-    'InProgressOverdue': 'Đang thực hiện (quá hạn)',
-    'CompletedOnTime': 'Hoàn thành (đúng hạn)',
-    'CompletedOverdue': 'Hoàn thành (quá hạn)',
-    'ExpiringSoon': 'Sắp hết hạn'
-  };
-  return map[st] || st || 'Chưa thực hiện';
-}
 
 const quickItemType = ref('all');
 
@@ -1046,3 +998,7 @@ onMounted(() => {
   loadReportData();
 });
 </script>
+
+
+
+

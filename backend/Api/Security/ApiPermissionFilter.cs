@@ -87,11 +87,7 @@ public sealed class ApiPermissionFilter(AppDbContext db) : IAsyncActionFilter
         await next();
     }
 
-    private async Task<bool> CanReportAsync(Guid taskId, Guid agencyId)
-    {
-        return await db.GoalTaskItems.AnyAsync(t => t.Id == taskId &&
-            (t.LeadAgencyId == agencyId || t.AssignedAgencyId == agencyId
-             || (t.IsGeneralTask && db.Agencies.Any(a => a.Id == agencyId && a.ParentId == null))
-             || db.Agencies.Any(a => a.ParentId == agencyId && (a.Id == t.LeadAgencyId || a.Id == t.AssignedAgencyId))));
-    }
+    private Task<bool> CanReportAsync(Guid taskId, Guid agencyId)
+        => Cdsqg.Application.Services.AgencyScopePolicy.CanReportAsync(db, taskId, agencyId);
 }
+

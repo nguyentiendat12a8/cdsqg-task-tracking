@@ -182,7 +182,6 @@ using (var scope = app.Services.CreateScope())
             EnsurePostgresSchemaUpToDate(context);
         }
         SeedInitialData(context, hasher);
-        NormalizeGoalTaskItemCodes(context);
         EnsureSampleFilesExist(app.Environment);
     }
     catch (Exception ex)
@@ -428,78 +427,13 @@ void SeedInitialData(AppDbContext db, IPasswordHasher hasher)
         db.Documents.Add(doc1266);
     }
 
-    var targetDocId = doc1266.Id;
 
-    // 5. Ensure existing GoalTaskItems are assigned to Decision 1266 Document
-    var orphanItems = db.GoalTaskItems.Where(i => i.DocumentId != targetDocId).ToList();
-    if (orphanItems.Any())
-    {
-        foreach (var item in orphanItems)
-        {
-            item.DocumentId = targetDocId;
-        }
-    }
+
+    // Existing items retain their document and business identifiers on startup.
 
     // Approval decisions belong to the approval endpoints; startup must preserve them.
 
     db.SaveChanges();
-}
-
-void NormalizeGoalTaskItemCodes(AppDbContext db)
-{
-    var allItems = db.GoalTaskItems.ToList();
-    if (!allItems.Any()) return;
-
-    var groupedByDoc = allItems.GroupBy(i => i.DocumentId);
-    bool updated = false;
-
-    foreach (var group in groupedByDoc)
-    {
-        var primaryGoals = group.Where(i => i.ItemType == ItemTypeEnum.Goal).OrderBy(i => i.CreatedAt).ToList();
-        var primaryTasks = group.Where(i => i.ItemType == ItemTypeEnum.Task).OrderBy(i => i.CreatedAt).ToList();
-
-        // Check for duplicates or invalid codes
-        var goalCodes = primaryGoals.Select(g => g.Code).ToList();
-        var taskCodes = primaryTasks.Select(t => t.Code).ToList();
-
-        bool renumberGoals = goalCodes.Count != goalCodes.Distinct().Count() || primaryGoals.Any(g => string.IsNullOrWhiteSpace(g.Code) || !g.Code.StartsWith("MT-"));
-        bool renumberTasks = taskCodes.Count != taskCodes.Distinct().Count() || primaryTasks.Any(t => string.IsNullOrWhiteSpace(t.Code) || !t.Code.StartsWith("NV-"));
-
-        if (renumberGoals)
-        {
-            int goalIdx = 1;
-            foreach (var item in primaryGoals)
-            {
-                var newCode = $"MT-{goalIdx:D2}";
-                if (item.Code != newCode)
-                {
-                    item.Code = newCode;
-                    updated = true;
-                }
-                goalIdx++;
-            }
-        }
-
-        if (renumberTasks)
-        {
-            int taskIdx = 1;
-            foreach (var item in primaryTasks)
-            {
-                var newCode = $"NV-{taskIdx:D2}";
-                if (item.Code != newCode)
-                {
-                    item.Code = newCode;
-                    updated = true;
-                }
-                taskIdx++;
-            }
-        }
-    }
-
-    if (updated)
-    {
-        db.SaveChanges();
-    }
 }
 
 public class DateTimeUtcJsonConverter : System.Text.Json.Serialization.JsonConverter<DateTime>
@@ -546,3 +480,4 @@ public class NullableDateTimeUtcJsonConverter : System.Text.Json.Serialization.J
         writer.WriteStringValue(utcValue.ToString("yyyy-MM-ddTHH:mm:ss.fffZ"));
     }
 }
+

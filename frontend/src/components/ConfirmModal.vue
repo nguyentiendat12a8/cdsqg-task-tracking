@@ -39,10 +39,10 @@
 
             <!-- Modal Body Text -->
             <div class="flex-1 min-w-0">
-              <h3 id="confirm-title" class="text-base sm:text-lg font-bold text-slate-800 leading-snug">
+              <h3 id="confirm-title" class="ui-title text-slate-900">
                 {{ confirmState.title.value }}
               </h3>
-              <p class="text-xs sm:text-sm text-slate-600 mt-1.5 leading-relaxed break-words">
+              <p class="text-sm text-slate-600 mt-1.5 leading-relaxed break-words">
                 {{ confirmState.message.value }}
               </p>
             </div>
@@ -52,14 +52,14 @@
           <div class="mt-6 flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
             <button
               @click="handleConfirmResponse(false)"
-              class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs sm:text-sm rounded-xl transition cursor-pointer"
+              class="ui-button bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm rounded-lg transition cursor-pointer"
             >
               {{ confirmState.cancelText.value }}
             </button>
             <button
               @click="handleConfirmResponse(true)"
               :class="[
-                'px-4 py-2 text-white font-bold text-xs sm:text-sm rounded-xl shadow-xs transition cursor-pointer',
+                'ui-button text-white font-semibold text-sm rounded-lg shadow-xs transition cursor-pointer',
                 confirmState.type.value === 'danger' ? 'bg-rose-600 hover:bg-rose-700' : 
                 confirmState.type.value === 'warning' ? 'bg-amber-600 hover:bg-amber-700' : 'bg-blue-600 hover:bg-blue-700'
               ]"
@@ -119,3 +119,4 @@ onUnmounted(() => {
   opacity: 0;
 }
 </style>
+

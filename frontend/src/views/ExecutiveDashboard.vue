@@ -68,7 +68,7 @@
 
           <button
             @click="drilldownAgency(singleSubAgencyPerformance)"
-            class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-2xs transition flex items-center gap-1.5 cursor-pointer shrink-0"
+            class="ui-single-line px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-2xs transition flex items-center gap-1.5 cursor-pointer shrink-0"
           >
             <span>📋 Xem Danh Sách Chi Tiết {{ dashboardItemNounCap }}</span>
             <span>→</span>
@@ -161,7 +161,7 @@
           <div v-if="(userSubAgenciesPerformance?.length || 0) > 8" class="pt-2 text-center border-t border-slate-100">
             <button
               @click="isSubAgenciesExpanded = !isSubAgenciesExpanded"
-              class="px-5 py-2 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
+              class="ui-single-line px-5 py-2 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
             >
               <span>{{ isSubAgenciesExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${userSubAgenciesPerformance.length - 8} Đơn vị trực thuộc khác)` }}</span>
             </button>
@@ -216,7 +216,7 @@
             <div v-if="(filteredMinistriesPerformance?.length || 0) > 8" class="pt-2 text-center border-t border-slate-100">
               <button
                 @click="isMinistriesExpanded = !isMinistriesExpanded"
-                class="px-5 py-2 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
+                class="ui-single-line px-5 py-2 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
               >
                 <span>{{ isMinistriesExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${filteredMinistriesPerformance.length - 8} Bộ/Ngành khác)` }}</span>
               </button>
@@ -259,7 +259,7 @@
             <div v-if="(filteredProvincesPerformance?.length || 0) > 8" class="pt-2 text-center border-t border-slate-100">
               <button
                 @click="isProvincesExpanded = !isProvincesExpanded"
-                class="px-5 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
+                class="ui-single-line px-5 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
               >
                 <span>{{ isProvincesExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${filteredProvincesPerformance.length - 8} Địa phương khác)` }}</span>
               </button>
@@ -302,7 +302,7 @@
             <div v-if="(filteredOthersPerformance?.length || 0) > 8" class="pt-2 text-center border-t border-slate-100">
               <button
                 @click="isOthersExpanded = !isOthersExpanded"
-                class="px-5 py-2 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-xl transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
+                class="ui-single-line px-5 py-2 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-xl transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
               >
                 <span>{{ isOthersExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${filteredOthersPerformance.length - 8} Đơn vị khác)` }}</span>
               </button>
@@ -341,7 +341,7 @@
             <div v-if="(filteredMostSubAgenciesPerformance?.length || 0) > 8" class="pt-2 text-center border-t border-slate-100">
               <button
                 @click="isMostExpanded = !isMostExpanded"
-                class="px-5 py-2 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-xl transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
+                class="ui-single-line px-5 py-2 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-xl transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
               >
                 <span>{{ isMostExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${filteredMostSubAgenciesPerformance.length - 8} Đơn vị khác)` }}</span>
               </button>
@@ -566,3 +566,4 @@ onMounted(async () => {
   await Promise.all([loadDashboardMetrics(), loadLegalDashboardStats()]);
 });
 </script>
+

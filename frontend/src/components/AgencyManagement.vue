@@ -12,13 +12,13 @@
       </div>
 
       <div class="flex items-center gap-2">
-        <button @click="expandAll" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition">
+        <button @click="expandAll" class="ui-single-line px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition">
           ▼ Mở tất cả
         </button>
-        <button @click="collapseAll" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition">
+        <button @click="collapseAll" class="ui-single-line px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition">
           ► Thu gọn
         </button>
-        <button @click="openCreateModal()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl shadow-sm transition flex items-center gap-1.5 shrink-0">
+        <button @click="openCreateModal()" class="ui-single-line bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl shadow-sm transition flex items-center gap-1.5 shrink-0">
           + Thêm Cơ Quan / Đơn Vị Mới
         </button>
       </div>
@@ -36,10 +36,10 @@
               :value="searchDraft" 
               @input="searchDraft = $event.target.value"
               placeholder="Tìm kiếm theo tên cơ quan..." 
-              class="w-full text-xs font-semibold pl-9 pr-4 py-1.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              class="ui-single-line w-full text-xs font-semibold pl-9 pr-4 py-1.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
             />
           </div>
-          <button @click="resetSearch" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition shrink-0 cursor-pointer">↺</button>
+          <button @click="resetSearch" class="ui-single-line px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition shrink-0 cursor-pointer">↺</button>
         </div>
         <span class="text-xs text-slate-500 font-bold shrink-0">
           Tổng số {{ totalCount }} cơ quan / đơn vị
@@ -163,7 +163,7 @@
           <button 
             @click="changePage(pageNumber - 1)" 
             :disabled="pageNumber <= 1"
-            class="px-3.5 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg disabled:opacity-40 font-bold transition shadow-2xs cursor-pointer"
+            class="ui-single-line px-3.5 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg disabled:opacity-40 font-bold transition shadow-2xs cursor-pointer"
           >
             ‹ Trang trước
           </button>
@@ -195,11 +195,11 @@
           <div class="grid grid-cols-3 gap-3">
             <div class="col-span-2">
               <label class="text-xs font-bold text-slate-700 uppercase">Tên Đầy Đủ Cơ Quan / Đơn Vị <span class="text-rose-500">*</span></label>
-              <input v-model="form.name" @input="onNameInput" required placeholder="Nhập tên cơ quan / đơn vị..." class="w-full text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 mt-1 focus:bg-white focus:ring-2 focus:ring-blue-500" />
+              <input v-model="form.name" @input="onNameInput" required placeholder="Nhập tên cơ quan / đơn vị..." class="ui-single-line w-full text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 mt-1 focus:bg-white focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
               <label class="text-xs font-bold text-slate-700 uppercase">Mã Cơ Quan / Viết Tắt <span class="text-rose-500">*</span></label>
-              <input v-model="form.code" required placeholder="VD: TTCDS (Tự động)..." class="w-full text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 mt-1 focus:bg-white focus:ring-2 focus:ring-blue-500" />
+              <input v-model="form.code" required placeholder="VD: TTCDS (Tự động)..." class="ui-single-line w-full text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 mt-1 focus:bg-white focus:ring-2 focus:ring-blue-500" />
             </div>
           </div>
 
@@ -243,7 +243,7 @@
               <button 
                 type="button" 
                 @click="addContactPerson" 
-                class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs rounded-lg transition border border-blue-200 flex items-center gap-1"
+                class="ui-single-line px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs rounded-lg transition border border-blue-200 flex items-center gap-1"
               >
                 + Thêm cán bộ đầu mối
               </button>
@@ -276,7 +276,7 @@
                     <input 
                       v-model="person.name" 
                       placeholder="Phạm Quang Cường" 
-                      class="w-full text-xs font-semibold bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500" 
+                      class="ui-single-line w-full text-xs font-semibold bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500" 
                     />
                   </div>
                   <div>
@@ -284,7 +284,7 @@
                     <input 
                       v-model="person.position" 
                       placeholder="Phó giám đốc" 
-                      class="w-full text-xs font-semibold bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500" 
+                      class="ui-single-line w-full text-xs font-semibold bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500" 
                     />
                   </div>
                   <div>
@@ -292,7 +292,7 @@
                     <input 
                       v-model="person.department" 
                       placeholder="Sở KHCN" 
-                      class="w-full text-xs font-semibold bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500" 
+                      class="ui-single-line w-full text-xs font-semibold bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500" 
                     />
                   </div>
                 </div>
@@ -303,7 +303,7 @@
                     <input 
                       v-model="person.phone" 
                       placeholder="0976 819 323" 
-                      class="w-full text-xs font-semibold bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500" 
+                      class="ui-single-line w-full text-xs font-semibold bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500" 
                     />
                   </div>
                   <div>
@@ -311,7 +311,7 @@
                     <input 
                       v-model="person.email" 
                       placeholder="cuongpq.sokhcn@laichau.gov.vn" 
-                      class="w-full text-xs font-semibold bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500" 
+                      class="ui-single-line w-full text-xs font-semibold bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500" 
                     />
                   </div>
                 </div>
@@ -320,8 +320,8 @@
           </div>
 
           <div class="flex justify-end gap-2 border-t border-slate-100 pt-3">
-            <button type="button" @click="isModalOpen = false" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition">Hủy</button>
-            <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition shadow-sm">Lưu</button>
+            <button type="button" @click="isModalOpen = false" class="ui-single-line px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl transition">Hủy</button>
+            <button type="submit" class="ui-single-line px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl transition shadow-sm">Lưu</button>
           </div>
         </form>
       </div>
@@ -379,10 +379,10 @@
         </div>
 
         <div class="flex items-center justify-between border-t border-slate-100 pt-3 shrink-0">
-          <button @click="openEditModal(selectedAgencyForContacts); isContactModalOpen = false;" class="px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs rounded-xl transition border border-blue-200 cursor-pointer">
+          <button @click="openEditModal(selectedAgencyForContacts); isContactModalOpen = false;" class="ui-single-line px-3.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs rounded-xl transition border border-blue-200 cursor-pointer">
             ✏️ Chỉnh sửa cán bộ đầu mối
           </button>
-          <button @click="isContactModalOpen = false" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl cursor-pointer">
+          <button @click="isContactModalOpen = false" class="ui-single-line px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl cursor-pointer">
             Đóng
           </button>
         </div>
@@ -836,3 +836,4 @@ onMounted(() => {
   fetchAllParentOptions();
 });
 </script>
+

@@ -113,7 +113,7 @@
               type="text" 
               required 
               placeholder="Nhập tiêu đề thông báo..." 
-              class="w-full text-xs font-bold bg-white border border-slate-300 rounded-xl px-3 py-2 min-h-[38px] focus:ring-2 focus:ring-blue-500" 
+              class="ui-single-line w-full text-xs font-bold bg-white border border-slate-300 rounded-xl px-3 py-2  focus:ring-2 focus:ring-blue-500" 
             />
           </div>
 
@@ -135,7 +135,7 @@
         <button 
           type="button" 
           @click="close" 
-          class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition cursor-pointer"
+          class="ui-single-line px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition cursor-pointer"
         >
           Hủy
         </button>
@@ -143,7 +143,7 @@
           type="button" 
           @click="submitNotification" 
           :disabled="isSubmitting" 
-          class="px-5 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-xl shadow-sm transition flex items-center gap-1.5 cursor-pointer"
+          class="ui-single-line px-5 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50 rounded-xl shadow-sm transition flex items-center gap-1.5 cursor-pointer"
         >
           <span v-if="isSubmitting" class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
           <span>{{ isSubmitting ? 'Đang gửi...' : '🚀 Gửi Thông Báo' }}</span>
@@ -414,3 +414,5 @@ async function submitNotification() {
   }
 }
 </script>
+
+

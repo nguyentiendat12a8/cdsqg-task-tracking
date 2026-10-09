@@ -8,7 +8,7 @@
                 :value="filterDraft.searchQuery"
                 @input="filterDraft.searchQuery = $event.target.value"
                 :placeholder="filterItemType === 'Goal' ? 'Tìm theo mã, tên mục tiêu...' : 'Tìm theo mã, tên nhiệm vụ...'"
-                class="w-full text-xs font-semibold pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none h-[34px]"
+                class="ui-single-line w-full text-xs font-semibold pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none "
               />
             </div>
 
@@ -136,3 +136,5 @@ defineProps([
 ]);
 const filterDraft = defineModel('filterDraft', { required: true });
 </script>
+
+

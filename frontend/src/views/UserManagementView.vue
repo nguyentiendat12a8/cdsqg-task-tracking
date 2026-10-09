@@ -15,7 +15,7 @@
 
       <button 
         @click="openAddModal" 
-        class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-2 shrink-0 cursor-pointer"
+        class="ui-single-line px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-2 shrink-0 cursor-pointer"
       >
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
         Thêm Tài Khoản Mới
@@ -35,7 +35,7 @@
               :value="searchInput" 
               @input="searchInput = $event.target.value"
               placeholder="Tìm theo Username, họ tên, email..." 
-              class="w-full text-xs font-semibold pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none h-[34px]"
+              class="ui-single-line w-full text-xs font-semibold pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none "
             />
           </div>
 
@@ -142,7 +142,7 @@
 
               <td class="px-4 py-3 text-center whitespace-nowrap">
                 <div class="inline-flex items-center justify-center gap-1.5 whitespace-nowrap">
-                  <button @click="openResetModal(u)" class="px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold text-xs rounded-lg transition border border-amber-200 cursor-pointer" title="Đặt lại mật khẩu">
+                  <button @click="openResetModal(u)" class="ui-single-line px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold text-xs rounded-lg transition border border-amber-200 cursor-pointer" title="Đặt lại mật khẩu">
                     🔑 Mật khẩu
                   </button>
                   <button @click="openEditModal(u)" class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition inline-flex items-center cursor-pointer" title="Sửa thông tin">
@@ -186,7 +186,7 @@
           <button 
             @click="changePage(pageNumber - 1)" 
             :disabled="pageNumber <= 1"
-            class="px-3.5 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg disabled:opacity-40 font-bold transition shadow-2xs cursor-pointer"
+            class="ui-single-line px-3.5 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg disabled:opacity-40 font-bold transition shadow-2xs cursor-pointer"
           >
             ‹ Trang trước
           </button>
@@ -219,7 +219,7 @@
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-bold text-slate-700 mb-1">Tên Đăng Nhập <span class="text-rose-500">*</span></label>
-              <input v-model="newUserForm.username" type="text" required class="w-full text-xs font-semibold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+              <input v-model="newUserForm.username" type="text" required class="ui-single-line w-full text-xs font-semibold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
             </div>
 
             <div>
@@ -229,7 +229,7 @@
                   v-model="newUserForm.password" 
                   :type="showAddPassword ? 'text' : 'password'" 
                   required 
-                  class="w-full text-xs font-semibold p-2.5 pr-9 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" 
+                  class="ui-single-line w-full text-xs font-semibold p-2.5 pr-9 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" 
                 />
                 <button 
                   type="button" 
@@ -252,12 +252,12 @@
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-bold text-slate-700 mb-1">Họ và Tên <span class="text-rose-500">*</span></label>
-              <input v-model="newUserForm.fullName" type="text" required class="w-full text-xs font-semibold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+              <input v-model="newUserForm.fullName" type="text" required class="ui-single-line w-full text-xs font-semibold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
             </div>
 
             <div>
               <label class="block text-xs font-bold text-slate-700 mb-1">Email</label>
-              <input v-model="newUserForm.email" type="email" class="w-full text-xs font-semibold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+              <input v-model="newUserForm.email" type="email" class="ui-single-line w-full text-xs font-semibold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
             </div>
           </div>
 
@@ -285,8 +285,8 @@
           </div>
 
           <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
-            <button type="button" @click="isAddModalOpen = false" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl cursor-pointer">Hủy</button>
-            <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm cursor-pointer">Tạo Tài Khoản</button>
+            <button type="button" @click="isAddModalOpen = false" class="ui-single-line px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl cursor-pointer">Hủy</button>
+            <button type="submit" class="ui-single-line px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm cursor-pointer">Tạo Tài Khoản</button>
           </div>
         </form>
       </div>
@@ -309,12 +309,12 @@
           <div class="grid grid-cols-2 gap-3">
             <div>
               <label class="block text-xs font-bold text-slate-700 mb-1">Họ và Tên <span class="text-rose-500">*</span></label>
-              <input v-model="editUserForm.fullName" type="text" required class="w-full text-xs font-semibold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+              <input v-model="editUserForm.fullName" type="text" required class="ui-single-line w-full text-xs font-semibold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
             </div>
 
             <div>
               <label class="block text-xs font-bold text-slate-700 mb-1">Email</label>
-              <input v-model="editUserForm.email" type="email" class="w-full text-xs font-semibold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
+              <input v-model="editUserForm.email" type="email" class="ui-single-line w-full text-xs font-semibold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
             </div>
           </div>
 
@@ -348,8 +348,8 @@
           </div>
 
           <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
-            <button type="button" @click="isEditModalOpen = false" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl cursor-pointer">Hủy</button>
-            <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm cursor-pointer">Lưu Thay Đổi</button>
+            <button type="button" @click="isEditModalOpen = false" class="ui-single-line px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl cursor-pointer">Hủy</button>
+            <button type="submit" class="ui-single-line px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm cursor-pointer">Lưu Thay Đổi</button>
           </div>
         </form>
       </div>
@@ -373,7 +373,7 @@
                 v-model="newPasswordInput" 
                 :type="showResetPassword ? 'text' : 'password'" 
                 required 
-                class="w-full text-xs font-semibold p-2.5 pr-9 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" 
+                class="ui-single-line w-full text-xs font-semibold p-2.5 pr-9 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" 
               />
               <button 
                 type="button" 
@@ -393,8 +393,8 @@
           </div>
 
           <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
-            <button type="button" @click="isResetModalOpen = false" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl cursor-pointer">Hủy</button>
-            <button type="submit" class="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-sm cursor-pointer">Cập Nhật Mật Khẩu</button>
+            <button type="button" @click="isResetModalOpen = false" class="ui-single-line px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl cursor-pointer">Hủy</button>
+            <button type="submit" class="ui-single-line px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-sm cursor-pointer">Cập Nhật Mật Khẩu</button>
           </div>
         </form>
       </div>
@@ -404,6 +404,8 @@
 </template>
 
 <script setup>
+import { formatDateTime } from '../shared/formatters';
+import { isAdminRole } from '../shared/roles';
 import { fetchWithAuth } from '../services/auth';
 
 import { ref, computed, watch, onMounted } from 'vue';
@@ -519,14 +521,7 @@ watch(() => editUserForm.value.role, (newRole) => {
 const selectedUserForReset = ref(null);
 const newPasswordInput = ref('');
 
-function formatDate(dateStr) {
-  if (!dateStr) return 'Chưa đăng nhập';
-  try {
-    return new Date(dateStr).toLocaleString('vi-VN');
-  } catch {
-    return dateStr;
-  }
-}
+function formatLastLogin(value) { return value ? formatDateTime(value) : 'Chưa đăng nhập'; }
 
 async function loadAgencies() {
   try {
@@ -656,7 +651,7 @@ async function saveNewUser() {
 
 function openEditModal(user) {
   let mappedRole = 'AgencyUser';
-  if (user.role === 'Admin' || user.roleName === 'Admin' || user.role === 1 || user.role === '1' || user.role === 0 || user.role === '0') {
+  if (isAdminRole(user.role) || isAdminRole(user.roleName)) {
     mappedRole = 'Admin';
   }
 
@@ -754,13 +749,13 @@ async function deleteAccount(user) {
 }
 
 function getRoleLabel(role) {
-  if (role === 'Admin' || role === 1 || role === '1' || role === 0 || role === '0') return 'Quản trị viên (Admin)';
+  if (isAdminRole(role)) return 'Quản trị viên (Admin)';
   if (role === 'AgencyUser' || role === 2 || role === '2') return 'Cán bộ Cơ quan/Bộ ngành';
   return 'Cán bộ Cơ quan/Bộ ngành';
 }
 
 function getRoleBadgeClass(role) {
-  if (role === 'Admin' || role === 1 || role === '1' || role === 0 || role === '0') return 'bg-purple-100 text-purple-800 border border-purple-200';
+  if (isAdminRole(role)) return 'bg-purple-100 text-purple-800 border border-purple-200';
   return 'bg-blue-100 text-blue-800 border border-blue-200';
 }
 
@@ -772,3 +767,7 @@ onMounted(() => {
   fetchUsers();
 });
 </script>
+
+
+
+

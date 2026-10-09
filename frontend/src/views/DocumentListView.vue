@@ -18,7 +18,7 @@
       <div class="flex items-center gap-3">
         <button 
           @click="$emit('openLlmImport')"
-          class="px-4 py-2.5 bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs rounded-xl border border-purple-200/80 transition flex items-center gap-2 shadow-2xs"
+          class="ui-single-line px-4 py-2.5 bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs rounded-xl border border-purple-200/80 transition flex items-center gap-2 shadow-2xs"
         >
           <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
           AI LLM Import JSON
@@ -26,7 +26,7 @@
 
         <button 
           @click="isDecisionModalOpen = true" 
-          class="px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition flex items-center gap-2 shadow-sm"
+          class="ui-single-line px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition flex items-center gap-2 shadow-sm"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
           Thêm Quyết Định
@@ -72,13 +72,13 @@
               :value="searchInput" 
               @input="searchInput = $event.target.value"
               placeholder="Tìm kiếm theo số hiệu văn bản, trích yếu quyết định..." 
-              class="w-full text-xs font-semibold pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-2xs"
+              class="ui-single-line w-full text-xs font-semibold pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-2xs"
             />
           </div>
 
           <button 
             @click="resetSearch" 
-            class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl transition shrink-0"
+            class="ui-single-line px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl transition shrink-0"
             title="Đặt lại từ khóa"
           >
             ↺
@@ -201,7 +201,7 @@
           <button 
             @click="changePage(pageNumber - 1)" 
             :disabled="pageNumber <= 1"
-            class="px-3.5 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-700 hover:bg-slate-100 disabled:opacity-40 transition border border-slate-200 shadow-2xs"
+            class="ui-single-line px-3.5 py-1.5 rounded-lg text-xs font-bold bg-white text-slate-700 hover:bg-slate-100 disabled:opacity-40 transition border border-slate-200 shadow-2xs"
           >
             ← Trang Trước
           </button>
@@ -234,6 +234,7 @@
 </template>
 
 <script setup>
+import { formatDate } from '../shared/formatters';
 import { fetchWithAuth } from '../services/auth';
 
 import { ref, computed, watch, onMounted } from 'vue';
@@ -340,14 +341,6 @@ const avgCompletionRate = computed(() => {
   return Math.round(sum / documents.value.length);
 });
 
-function formatDate(dateStr) {
-  if (!dateStr) return '—';
-  try {
-    return new Date(dateStr).toLocaleDateString('vi-VN');
-  } catch {
-    return dateStr;
-  }
-}
 
 async function fetchDocuments() {
   const currentRequestId = ++docFetchRequestId;
@@ -419,3 +412,5 @@ onMounted(() => {
   fetchDocuments();
 });
 </script>
+
+

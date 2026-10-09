@@ -16,7 +16,7 @@
       <div class="flex items-center gap-2">
         <button 
           @click="exportExcel"
-          class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+          class="ui-single-line px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs"
           title="Xuất lịch sử thông báo ra file Excel"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
@@ -25,7 +25,7 @@
 
         <button 
           @click="loadLogs"
-          class="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition flex items-center gap-1.5 cursor-pointer"
+          class="ui-single-line px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition flex items-center gap-1.5 cursor-pointer"
         >
           🔄 Làm Mới
         </button>
@@ -78,7 +78,7 @@
               :value="searchQueryDraft" 
               @input="searchQueryDraft = $event.target.value"
               placeholder="Tìm theo mã, tên nhiệm vụ, nội dung..." 
-              class="w-full text-xs font-semibold pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-500 focus:outline-none h-[34px]"
+              class="ui-single-line w-full text-xs font-semibold pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-500 focus:outline-none "
             />
           </div>
 
@@ -138,7 +138,7 @@
 
         <div v-else-if="logs.length === 0" class="p-12 text-center text-xs font-semibold text-slate-400 italic space-y-2">
           <div>Chưa phát sinh nhật ký thông báo nào phù hợp từ khóa và bộ lọc tìm kiếm.</div>
-          <button @click="resetSearch" class="px-3 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded-lg text-xs font-bold border border-rose-200 transition not-italic">
+          <button @click="resetSearch" class="ui-single-line px-3 py-1.5 bg-rose-50 text-rose-700 hover:bg-rose-100 rounded-lg text-xs font-bold border border-rose-200 transition not-italic">
             🔄 Đặt lại tất cả bộ lọc
           </button>
         </div>
@@ -171,7 +171,7 @@
 
               <button 
                 @click="openDetail(log)"
-                class="px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-xs transition shrink-0 flex items-center gap-1 cursor-pointer"
+                class="ui-single-line px-3.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-xs transition shrink-0 flex items-center gap-1 cursor-pointer"
               >
                 👁️ Xem chi tiết
               </button>
@@ -204,7 +204,7 @@
           <button 
             @click="changePage(currentPage - 1)" 
             :disabled="currentPage <= 1"
-            class="px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl disabled:opacity-40 font-bold transition shadow-2xs cursor-pointer disabled:cursor-not-allowed"
+            class="ui-single-line px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl disabled:opacity-40 font-bold transition shadow-2xs cursor-pointer disabled:cursor-not-allowed"
           >
             ‹ Trang trước
           </button>
@@ -236,6 +236,7 @@
 </template>
 
 <script setup>
+import { formatDateTime as formatDate } from '../shared/formatters';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
 import { fetchWithAuth } from '../services/auth';
 
@@ -447,20 +448,6 @@ const latestLogDate = computed(() => {
   return formatDate(latest.createdAt);
 });
 
-function formatDate(dateStr) {
-  if (!dateStr) return '—';
-  try {
-    let str = String(dateStr).trim();
-    if (str.includes('T') && !str.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(str)) {
-      str += 'Z';
-    }
-    const d = new Date(str);
-    if (isNaN(d.getTime())) return dateStr;
-    return d.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
-  } catch {
-    return dateStr;
-  }
-}
 
 async function checkAndOpenLogFromHash() {
   const hash = window.location.hash || '';
@@ -544,3 +531,6 @@ onMounted(() => {
   loadLogs();
 });
 </script>
+
+
+

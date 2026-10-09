@@ -21,7 +21,7 @@
         <div class="flex items-center gap-2 flex-wrap shrink-0">
           <button 
             @click="exportAgencyPlansToExcel"
-            class="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition shadow-2xs flex items-center gap-1.5 cursor-pointer"
+            class="ui-single-line px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition shadow-2xs flex items-center gap-1.5 cursor-pointer"
             title="Xuất Báo cáo Excel danh sách kế hoạch & đầu mối"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -48,7 +48,7 @@
               v-model="searchQuery" 
               @keyup.enter="execSearch"
               placeholder="Tìm theo tên cơ quan, tên cán bộ đầu mối, email, số điện thoại..." 
-              class="w-full text-xs font-semibold pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none h-[34px]"
+              class="ui-single-line w-full text-xs font-semibold pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none "
             />
           </div>
 
@@ -287,7 +287,7 @@
           <button 
             @click="changePage(pageNumber - 1)" 
             :disabled="pageNumber <= 1"
-            class="px-3.5 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg disabled:opacity-40 font-bold transition shadow-2xs cursor-pointer"
+            class="ui-single-line px-3.5 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg disabled:opacity-40 font-bold transition shadow-2xs cursor-pointer"
           >
             ‹ Trang trước
           </button>
@@ -353,7 +353,7 @@
 
               <button 
                 @click="addContactPerson" 
-                class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded-xl transition border border-blue-200 flex items-center gap-1 cursor-pointer shadow-2xs"
+                class="ui-single-line px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-bold rounded-xl transition border border-blue-200 flex items-center gap-1 cursor-pointer shadow-2xs"
               >
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -380,7 +380,7 @@
                   </span>
                   <button 
                     @click="removeContactPerson(idx)" 
-                    class="text-rose-600 hover:text-rose-800 text-xs font-bold flex items-center gap-1 cursor-pointer px-2 py-1 hover:bg-rose-50 rounded-lg transition"
+                    class="ui-single-line text-rose-600 hover:text-rose-800 text-xs font-bold flex items-center gap-1 cursor-pointer px-2 py-1 hover:bg-rose-50 rounded-lg transition"
                   >
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -396,7 +396,7 @@
                       v-model="cp.name" 
                       type="text" 
                       placeholder="Ví dụ: Nguyễn Tiến Đạt"
-                      class="w-full text-xs font-medium px-3 py-2 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+                      class="ui-single-line w-full text-xs font-medium px-3 py-2 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
                     />
                   </div>
 
@@ -406,7 +406,7 @@
                       v-model="cp.position" 
                       type="text" 
                       placeholder="Ví dụ: Chuyên viên"
-                      class="w-full text-xs font-medium px-3 py-2 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+                      class="ui-single-line w-full text-xs font-medium px-3 py-2 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
                     />
                   </div>
 
@@ -416,7 +416,7 @@
                       v-model="cp.department" 
                       type="text" 
                       placeholder="Ví dụ: Cục CĐSQG"
-                      class="w-full text-xs font-medium px-3 py-2 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+                      class="ui-single-line w-full text-xs font-medium px-3 py-2 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
                     />
                   </div>
 
@@ -426,7 +426,7 @@
                       v-model="cp.phone" 
                       type="text" 
                       placeholder="Ví dụ: 0379836255"
-                      class="w-full text-xs font-medium px-3 py-2 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+                      class="ui-single-line w-full text-xs font-medium px-3 py-2 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
                     />
                   </div>
 
@@ -436,7 +436,7 @@
                       v-model="cp.email" 
                       type="email" 
                       placeholder="Ví dụ: dat@gmail.com"
-                      class="w-full text-xs font-medium px-3 py-2 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+                      class="ui-single-line w-full text-xs font-medium px-3 py-2 bg-white border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
                     />
                   </div>
                 </div>
@@ -487,7 +487,7 @@
                   </a>
                   <button 
                     @click="deletePlanFile(file.id)"
-                    class="px-2.5 py-1 bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-600 text-xs font-bold rounded-lg border border-rose-200 transition cursor-pointer"
+                    class="ui-single-line px-2.5 py-1 bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-600 text-xs font-bold rounded-lg border border-rose-200 transition cursor-pointer"
                   >
                     Xóa
                   </button>
@@ -533,7 +533,7 @@
         <div class="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3 shrink-0">
           <button 
             @click="closeModal" 
-            class="px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-xl border border-slate-300 transition shadow-2xs cursor-pointer"
+            class="ui-single-line px-4 py-2 bg-white hover:bg-slate-100 text-slate-700 text-xs font-bold rounded-xl border border-slate-300 transition shadow-2xs cursor-pointer"
             :disabled="saving"
           >
             Hủy bỏ
@@ -541,7 +541,7 @@
           
           <button 
             @click="saveAgencyDetails" 
-            class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md transition flex items-center gap-1.5 cursor-pointer"
+            class="ui-single-line px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-md transition flex items-center gap-1.5 cursor-pointer"
             :disabled="saving"
           >
             <svg v-if="saving" class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1125,3 +1125,5 @@ async function exportAgencyPlansToExcel() {
   }
 }
 </script>
+
+

@@ -1,3 +1,5 @@
+import { executionStatusOptions } from '../../shared/statusPresentation';
+import { REPORTING_YEARS } from '../../config/reporting';
 import { ref, computed, watch, onUnmounted } from 'vue';
 import { authState } from '../../services/auth';
 import { GOAL_SECTIONS, GOAL_GROUPS, TASK_SECTIONS, TASK_GROUPS } from '../../config/planningStructureConfig';
@@ -161,7 +163,7 @@ export function useDocumentFilters({ props, userAgencyId, agencies, rawItemsList
       });
   });
 
-  const yearOptions = computed(() => [2026, 2027, 2028, 2029, 2030].map(y => ({ value: y, label: String(y) })));
+  const yearOptions = computed(() => REPORTING_YEARS.map(y => ({ value: y, label: String(y) })));
   const pageSizeOptions = ref([10, 25, 50, 100].map(n => ({ value: n, label: String(n) })));
 
   const scopeOptions = computed(() => [
@@ -169,129 +171,10 @@ export function useDocumentFilters({ props, userAgencyId, agencies, rawItemsList
     { value: 'specific', label: props.filterItemType === 'Goal' ? 'Mục tiêu riêng (Đơn vị cụ thể)' : 'Nhiệm vụ riêng (Đơn vị cụ thể)' }
   ]);
 
-  const statusOptions = ref([
-    { value: 'NotStarted', label: 'Chưa thực hiện' },
-    { value: 'InProgressOnTime', label: 'Đang thực hiện (trong hạn)' },
-    { value: 'InProgressOverdue', label: 'Đang thực hiện (quá hạn)' },
-    { value: 'CompletedOnTime', label: 'Hoàn thành (đúng hạn)' },
-    { value: 'CompletedOverdue', label: 'Hoàn thành (quá hạn)' },
-    { value: 'ExpiringSoon', label: 'Sắp hết hạn' }
-  ]);
+  const statusOptions = ref(executionStatusOptions);
 
-  const filteredList = computed(() => {
-    let list = rawItemsList.value;
-
-    // Filter for Non-Admin Focal Point Accounts:
-    // - Sub-Agency (ParentId != null): ONLY show items assigned to this Sub-Agency (cannot view parent agency data)
-    // - Parent Agency (ParentId == null): Show items assigned to Parent Agency AND all of its Sub-Agencies (views all)
-    if (!authState.isAdmin.value && authState.user.value?.agencyId) {
-      const userAgencyId = String(authState.user.value.agencyId).toLowerCase();
-      const userAgency = agencies.value.find(a => String(a.id).toLowerCase() === userAgencyId);
-      const isParentAgency = !userAgency || !userAgency.parentId;
-
-      const scopedAgencyIds = [userAgencyId];
-      if (userAgency && !userAgency.parentId) {
-        const childIds = agencies.value
-          .filter(a => a.parentId && String(a.parentId).toLowerCase() === userAgencyId)
-          .map(a => String(a.id).toLowerCase());
-        scopedAgencyIds.push(...childIds);
-      }
-
-      list = list.filter(i => {
-        const itemLeadId = i.leadAgencyId ? String(i.leadAgencyId).toLowerCase() : '';
-        const itemAssignedId = i.assignedAgencyId ? String(i.assignedAgencyId).toLowerCase() : '';
-        const itemCoordIds = (i.coordinatingAgencyIds || []).map(id => String(id).toLowerCase());
-
-        const isGeneral = isParentAgency && isGeneralTaskOrAllAgencies(i);
-        const isLead = scopedAgencyIds.includes(itemLeadId);
-        const isAssigned = itemAssignedId && scopedAgencyIds.includes(itemAssignedId);
-        const isCoord = itemCoordIds.some(id => scopedAgencyIds.includes(id));
-        return isGeneral || isLead || isAssigned || isCoord;
-      });
-    }
-
-    // Search Query
-    const searchQ = (appliedFilters.value.searchQuery || '').trim().toLowerCase();
-    if (searchQ) {
-      list = list.filter(i => {
-        const matchCode = i.code?.toLowerCase().includes(searchQ);
-        const matchTitle = i.title?.toLowerCase().includes(searchQ);
-        const matchLeadAgency = i.leadAgencyName?.toLowerCase().includes(searchQ);
-        const matchCoopAgencies = i.coordinatingAgencyNames?.some(c => c.toLowerCase().includes(searchQ)) || (typeof i.coordinatingAgencies === 'string' && i.coordinatingAgencies.toLowerCase().includes(searchQ));
-        return matchCode || matchTitle || matchLeadAgency || matchCoopAgencies;
-      });
-    }
-
-    // Agency Filter (Multi-select)
-    if (appliedFilters.value.selectedAgencyIds && appliedFilters.value.selectedAgencyIds.length > 0) {
-      list = list.filter(i => appliedFilters.value.selectedAgencyIds.includes(i.leadAgencyId));
-    }
-
-    // Subordinate Agency Filter (Multi-select)
-    if (appliedFilters.value.selectedSubAgencyIds && appliedFilters.value.selectedSubAgencyIds.length > 0) {
-      list = list.filter(i => appliedFilters.value.selectedSubAgencyIds.includes(i.assignedAgencyId));
-    }
-
-    // Section Filter (Multi-select)
-    if (appliedFilters.value.selectedSections && appliedFilters.value.selectedSections.length > 0) {
-      list = list.filter(i => appliedFilters.value.selectedSections.includes(i.section));
-    }
-
-    // Group Filter (Multi-select)
-    if (appliedFilters.value.selectedGroups && appliedFilters.value.selectedGroups.length > 0) {
-      list = list.filter(i => appliedFilters.value.selectedGroups.includes(i.group));
-    }
-
-    // Ongoing Tasks Filter (Thường xuyên)
-    if (appliedFilters.value.onlyOngoing) {
-      list = list.filter(i => i.isOngoing);
-    }
-
-    // Year Range Filter (From Year -> To Year)
-    if (appliedFilters.value.fromYear || appliedFilters.value.toYear) {
-      const fYr = appliedFilters.value.fromYear ? Number(appliedFilters.value.fromYear) : 2026;
-      const tYr = appliedFilters.value.toYear ? Number(appliedFilters.value.toYear) : 2030;
-      list = list.filter(i => {
-        if (i.isOngoing) return true;
-        const startY = i.startDate ? new Date(i.startDate).getFullYear() : 2026;
-        const dueY = i.dueDate ? new Date(i.dueDate).getFullYear() : startY;
-        return (startY <= tYr && dueY >= fYr);
-      });
-    }
-
-    // Scope Filter (Multi-select)
-    if (appliedFilters.value.selectedScopes && appliedFilters.value.selectedScopes.length > 0) {
-      list = list.filter(i => {
-        if (appliedFilters.value.selectedScopes.includes('general') && i.isGeneralTask) return true;
-        if (appliedFilters.value.selectedScopes.includes('specific') && !i.isGeneralTask) return true;
-        return false;
-      });
-    }
-
-    // Status Filter (Multi-select)
-    if (appliedFilters.value.selectedStatuses && appliedFilters.value.selectedStatuses.length > 0) {
-      list = list.filter(i => appliedFilters.value.selectedStatuses.includes(i.calculatedStatus));
-    }
-
-    // Sort by Most Recently Updated / Newly Created First
-    return list.slice().sort((a, b) => {
-      const getItemTime = (item) => {
-        let t1 = item.lastUpdated ? new Date(item.lastUpdated).getTime() : 0;
-        let t2 = item.createdAt ? new Date(item.createdAt).getTime() : 0;
-        let maxT = Math.max(t1, t2);
-        return maxT;
-      };
-
-      const timeA = getItemTime(a);
-      const timeB = getItemTime(b);
-
-      if (timeA !== timeB) {
-        return timeB - timeA; // Descending (latest first)
-      }
-
-      return (a.code || '').localeCompare(b.code || '', undefined, { numeric: true, sensitivity: 'base' });
-    });
-  });
+  // Filtering and sorting happen before pagination on the server.
+  const filteredList = computed(() => rawItemsList.value);
 
   const totalCount = computed(() => serverTotalCount.value);
   const totalPages = computed(() => serverTotalPages.value);
@@ -328,3 +211,5 @@ export function useDocumentFilters({ props, userAgencyId, agencies, rawItemsList
   paginatedPrimaryList
 };
 }
+
+

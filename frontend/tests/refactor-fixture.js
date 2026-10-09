@@ -1,4 +1,4 @@
-export { createApp, h, ref, nextTick } from 'vue';
+export { createApp, h, ref, nextTick, withDirectives } from 'vue';
 export { default as FloatingVue } from 'floating-vue';
 export { default as Dashboard } from '../src/views/ExecutiveDashboard.vue';
 export { default as Document } from '../src/views/DocumentDetailView.vue';
@@ -8,3 +8,4 @@ export { accessibleData } from '../src/directives/accessibleData';
 export { loadExcelReader, loadExcelWriter } from '../src/utils/excelRuntime';
 export { default as AnnualBaseline } from '../src/components/BaselineOverrideModal.vue';
 export { default as AnnualProgress } from '../src/components/ProgressUpdateModal.vue';
+export { default as Reports } from '../src/views/ExecutiveReportsView.vue';

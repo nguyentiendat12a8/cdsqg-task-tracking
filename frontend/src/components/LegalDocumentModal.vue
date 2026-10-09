@@ -19,7 +19,7 @@
         <!-- Row 1: Số ký hiệu & Loại văn bản -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
-            <label class="block font-bold text-slate-700 mb-1">
+            <label class="block font-semibold text-slate-700 mb-1">
               Số Ký Hiệu Văn Bản <span v-if="!isReadOnly" class="text-rose-500">*</span>
             </label>
             <input 
@@ -27,7 +27,7 @@
               :disabled="isReadOnly"
               required 
               placeholder="e.g. 1266/QĐ-TTg, 15/2026/NĐ-CP" 
-              class="w-full font-normal p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-600"
+              class="ui-single-line ui-control w-full font-normal p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-600"
             />
           </div>
 
@@ -56,7 +56,7 @@
 
         <!-- Row 2: Tên / Trích yếu văn bản -->
         <div>
-          <label class="block font-bold text-slate-700 mb-1">
+          <label class="block font-semibold text-slate-700 mb-1">
             Tên / Trích Yếu Nội Dung Văn Bản <span v-if="!isReadOnly" class="text-rose-500">*</span>
           </label>
           <textarea 
@@ -65,7 +65,7 @@
             required 
             rows="2" 
             placeholder="Nhập trích yếu hoặc tên đầy đủ của văn bản quy phạm pháp luật..." 
-            class="w-full font-normal p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-600"
+            class="ui-control w-full font-normal p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-600"
           ></textarea>
         </div>
 
@@ -103,42 +103,42 @@
         <!-- Row 4: Người ký, Chức danh, Ngày ban hành & Có hiệu lực -->
         <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
           <div>
-            <label class="block font-bold text-slate-700 mb-1">Người Ký</label>
+            <label class="block font-semibold text-slate-700 mb-1">Người Ký</label>
             <input 
               v-model="form.signerName" 
               :disabled="isReadOnly"
               placeholder="e.g. Trần Lưu Quang" 
-              class="w-full font-normal p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-600"
+              class="ui-single-line ui-control w-full font-normal p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-600"
             />
           </div>
 
           <div>
-            <label class="block font-bold text-slate-700 mb-1">Chức Danh Người Ký</label>
+            <label class="block font-semibold text-slate-700 mb-1">Chức Danh Người Ký</label>
             <input 
               v-model="form.signerTitle" 
               :disabled="isReadOnly"
               placeholder="e.g. Phó Thủ tướng, Bộ trưởng" 
-              class="w-full font-normal p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-600"
+              class="ui-single-line ui-control w-full font-normal p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-600"
             />
           </div>
 
           <div>
-            <label class="block font-bold text-slate-700 mb-1">Ngày Ban Hành</label>
+            <label class="block font-semibold text-slate-700 mb-1">Ngày Ban Hành</label>
             <input 
               type="date" 
               v-model="form.issuedDate" 
               :disabled="isReadOnly"
-              class="w-full font-normal p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-600"
+              class="ui-single-line ui-control w-full font-normal p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-600"
             />
           </div>
 
           <div>
-            <label class="block font-bold text-slate-700 mb-1">Ngày Có Hiệu Lực</label>
+            <label class="block font-semibold text-slate-700 mb-1">Ngày Có Hiệu Lực</label>
             <input 
               type="date" 
               v-model="form.effectiveDate" 
               :disabled="isReadOnly"
-              class="w-full font-normal p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-600"
+              class="ui-single-line ui-control w-full font-normal p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-600"
             />
           </div>
         </div>
@@ -170,7 +170,7 @@
         <!-- Row 6: Multi-File Attachments Section -->
         <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/60 space-y-3">
           <div class="flex items-center justify-between">
-            <label class="font-bold text-slate-800 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
+            <label class="font-semibold text-slate-800 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
               📎 Danh Sách Tệp Văn Bản Đính Kèm (Hỗ trợ nhiều file)
             </label>
           </div>
@@ -196,7 +196,7 @@
               type="button" 
               @click="uploadAttachment" 
               :disabled="!selectedFileToUpload || isUploading" 
-              class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white font-bold text-xs rounded-xl shadow-2xs transition flex items-center justify-center gap-1 cursor-pointer shrink-0"
+              class="ui-single-line px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 disabled:opacity-40 text-white font-bold text-xs rounded-xl shadow-2xs transition flex items-center justify-center gap-1 cursor-pointer shrink-0"
             >
               <span>{{ isUploading ? 'Đang tải...' : '+ Tải tệp lên' }}</span>
             </button>
@@ -231,7 +231,7 @@
                 v-if="!isReadOnly"
                 type="button" 
                 @click="removeAttachment(idx)" 
-                class="text-rose-500 hover:text-rose-700 font-bold px-2 py-1 hover:bg-rose-50 rounded transition text-xs shrink-0 cursor-pointer"
+                class="ui-single-line text-rose-500 hover:text-rose-700 font-bold px-2 py-1 hover:bg-rose-50 rounded transition text-xs shrink-0 cursor-pointer"
               >
                 ✕ Xóa
               </button>
@@ -245,13 +245,13 @@
 
         <!-- Row 7: Ghi chú -->
         <div>
-          <label class="block font-bold text-slate-700 mb-1">Ghi Chú Chi Tiết</label>
+          <label class="block font-semibold text-slate-700 mb-1">Ghi Chú Chi Tiết</label>
           <textarea 
             v-model="form.notes" 
             :disabled="isReadOnly"
             rows="2" 
             placeholder="Ghi chú thêm thông tin văn bản..." 
-            class="w-full font-normal p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-600"
+            class="ui-control w-full font-normal p-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none disabled:bg-slate-100 disabled:text-slate-600"
           ></textarea>
         </div>
 
@@ -261,7 +261,7 @@
             v-if="isReadOnly"
             type="button" 
             @click="close" 
-            class="px-5 py-2 bg-slate-700 hover:bg-slate-800 text-white font-bold rounded-xl shadow-xs transition cursor-pointer"
+            class="ui-single-line px-5 py-2 bg-slate-700 hover:bg-slate-800 text-white font-bold rounded-xl shadow-xs transition cursor-pointer"
           >
             Đóng
           </button>
@@ -269,14 +269,14 @@
             <button 
               type="button" 
               @click="close" 
-              class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition cursor-pointer"
+              class="ui-single-line px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition cursor-pointer"
             >
               Hủy
             </button>
             <button 
               type="submit" 
               :disabled="isSubmitting"
-              class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-sm transition disabled:opacity-50 cursor-pointer"
+              class="ui-single-line px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-sm transition disabled:opacity-50 cursor-pointer"
             >
               {{ isSubmitting ? 'Đang lưu...' : (isEditing ? 'Cập Nhật Văn Bản' : 'Tạo Mới Văn Bản') }}
             </button>
@@ -588,3 +588,5 @@ async function save() {
   }
 }
 </script>
+
+

@@ -68,7 +68,7 @@
               <button 
                 type="button"
                 @click="openUrgeDetailInNewWindow(log.id)"
-                class="px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-bold transition shrink-0 flex items-center gap-1 shadow-2xs"
+                class="ui-single-line px-3 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-lg text-xs font-bold transition shrink-0 flex items-center gap-1 shadow-2xs"
               >
                 👁️ Xem chi tiết
               </button>
@@ -93,14 +93,14 @@
 
       <!-- Footer Actions -->
       <div class="flex justify-end gap-3 border-t border-slate-100 pt-3 shrink-0">
-        <button type="button" @click="close" class="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition">
+        <button type="button" @click="close" class="ui-single-line px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition">
           Hủy
         </button>
         <button 
           type="button" 
           @click="submitUrge"
           :disabled="isSubmitting"
-          class="px-5 py-2.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 rounded-xl shadow-sm transition flex items-center gap-1.5"
+          class="ui-single-line px-5 py-2.5 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 disabled:opacity-50 rounded-xl shadow-sm transition flex items-center gap-1.5"
         >
           <span v-if="isSubmitting" class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
           {{ isSubmitting ? 'Đang lưu...' : 'Lưu Văn Bản Thông Báo Vào Lịch Sử' }}
@@ -112,6 +112,7 @@
 </template>
 
 <script setup>
+import { formatDateTime as formatDate } from '../shared/formatters';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
 import { fetchWithAuth } from '../services/auth';
 
@@ -179,20 +180,6 @@ function formatSnippet(content) {
   return stripHtml(content);
 }
 
-function formatDate(dateStr) {
-  if (!dateStr) return '—';
-  try {
-    let str = String(dateStr).trim();
-    if (str.includes('T') && !str.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(str)) {
-      str += 'Z';
-    }
-    const d = new Date(str);
-    if (isNaN(d.getTime())) return dateStr;
-    return d.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
-  } catch {
-    return dateStr;
-  }
-}
 
 function openUrgeDetailInNewWindow(logId) {
   const url = `${window.location.origin}${window.location.pathname}#urge-history?logId=${logId}`;
@@ -251,3 +238,5 @@ async function submitUrge() {
   }
 }
 </script>
+
+

@@ -1,25 +1,7 @@
+import { REPORTING_YEARS } from '../config/reporting';
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
-import axiosLibrary from 'axios';
-import { getApiUrl } from '../config/api';
-import { getAuthHeaders, logout } from '../services/auth';
-
-const API_BASE_URL = getApiUrl('/api');
-const axios = axiosLibrary.create();
-axios.interceptors.request.use(config => {
-  const url = new URL(config.url, window.location.href);
-  if (url.origin === new URL(API_BASE_URL).origin && url.pathname.startsWith('/api/')) {
-    Object.assign(config.headers, getAuthHeaders());
-  }
-  return config;
-});
-axios.interceptors.response.use(response => response, error => {
-  if (error.response?.status === 401) logout();
-  else if (error.response?.status === 403) window.dispatchEvent(new CustomEvent('api-feedback', {detail:'Bạn không có quyền thực hiện thao tác này. Vui lòng liên hệ quản trị viên nếu cần được cấp quyền.'}));
-  else if (!error.response || error.response.status >= 500) window.dispatchEvent(new CustomEvent('api-feedback', {detail:'Không thể kết nối hoặc xử lý yêu cầu. Vui lòng thử lại; chưa thể xác nhận thao tác thành công.'}));
-  else if (error.response.status === 429) window.dispatchEvent(new CustomEvent('api-feedback', {detail:'Bạn thao tác quá nhiều lần. Vui lòng chờ rồi thử lại.'}));
-  return Promise.reject(error);
-});
+import { requestJson } from '../services/apiClient';
 
 export const useTrackingStore = defineStore('tracking', () => {
   // State
@@ -35,7 +17,7 @@ export const useTrackingStore = defineStore('tracking', () => {
     documentName: '',
     startYear: 2026,
     endYear: 2030,
-    dynamicYears: [2026, 2027, 2028, 2029, 2030],
+    dynamicYears: [...REPORTING_YEARS],
     items: []
   });
 
@@ -70,12 +52,12 @@ export const useTrackingStore = defineStore('tracking', () => {
     isLoading.value = true;
     errorMessage.value = null;
     try {
-      const response = await axios.get(`${API_BASE_URL}/planning/documents/${documentId}/grid`);
-      if (response.data) {
-        planningGrid.value = response.data;
+      const response = await requestJson(`/api/planning/documents/${documentId}/grid`);
+      if (response) {
+        planningGrid.value = response;
       }
     } catch (err) {
-      console.warn('Backend connection failed when fetching planning grid:', err);
+      errorMessage.value = err.message;
     } finally {
       isLoading.value = false;
     }
@@ -84,10 +66,10 @@ export const useTrackingStore = defineStore('tracking', () => {
   async function updateCustomBaseline(taskId, milestones) {
     isLoading.value = true;
     try {
-      const response = await axios.post(`${API_BASE_URL}/planning/tasks/${taskId}/custom-baseline`, { milestones });
-      return response.data;
+      const response = await requestJson(`/api/planning/tasks/${taskId}/custom-baseline`, { method: 'POST', body: { milestones } });
+      return response;
     } catch (err) {
-      throw new Error(err.response?.data?.error || 'Lỗi cập nhật Custom Baseline.');
+      throw new Error(err.message || 'Lỗi cập nhật Custom Baseline.');
     } finally {
       isLoading.value = false;
     }
@@ -96,14 +78,10 @@ export const useTrackingStore = defineStore('tracking', () => {
   async function submitProgressUpdate(taskId, formData) {
     isLoading.value = true;
     try {
-      const response = await axios.post(`${API_BASE_URL}/execution/tasks/${taskId}/progress`, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
-      return response.data;
+      const response = await requestJson(`/api/execution/tasks/${taskId}/progress`, { method: 'POST', body: formData });
+      return response;
     } catch (err) {
-      throw new Error(err.response?.data?.error || 'Lỗi khi gửi báo cáo tiến độ.');
+      throw new Error(err.message || 'Lỗi khi gửi báo cáo tiến độ.');
     } finally {
       isLoading.value = false;
     }
@@ -115,21 +93,21 @@ export const useTrackingStore = defineStore('tracking', () => {
       const params = { year: selectedYear.value };
       if (documentId) params.documentId = documentId;
 
-      const response = await axios.get(`${API_BASE_URL}/dashboard/metrics`, { params });
-      if (response.data) {
-        dashboardMetrics.value.totalGoals = response.data.totalGoals;
-        dashboardMetrics.value.totalTasks = response.data.totalTasks;
-        dashboardMetrics.value.completionPercentage = response.data.overallQuantitativeCompletionPct;
-        dashboardMetrics.value.remainingPercentage = response.data.overallRemainingPct;
-        dashboardMetrics.value.trafficLights.greenCount = response.data.trafficLights.greenCount;
-        dashboardMetrics.value.trafficLights.yellowCount = response.data.trafficLights.yellowCount;
-        dashboardMetrics.value.trafficLights.redCount = response.data.trafficLights.redCount;
-        dashboardMetrics.value.staleTasks = response.data.staleTasks || [];
-        dashboardMetrics.value.agencyPerformance = response.data.agencyPerformance || [];
-        dashboardMetrics.value.qualitativeDistribution = response.data.qualitativeDistribution || { NotStarted: 0, Drafting: 0, Reviewing: 0, Completed: 0 };
+      const response = await requestJson('/api/dashboard/metrics', { params });
+      if (response) {
+        dashboardMetrics.value.totalGoals = response.totalGoals;
+        dashboardMetrics.value.totalTasks = response.totalTasks;
+        dashboardMetrics.value.completionPercentage = response.overallQuantitativeCompletionPct;
+        dashboardMetrics.value.remainingPercentage = response.overallRemainingPct;
+        dashboardMetrics.value.trafficLights.greenCount = response.trafficLights.greenCount;
+        dashboardMetrics.value.trafficLights.yellowCount = response.trafficLights.yellowCount;
+        dashboardMetrics.value.trafficLights.redCount = response.trafficLights.redCount;
+        dashboardMetrics.value.staleTasks = response.staleTasks || [];
+        dashboardMetrics.value.agencyPerformance = response.agencyPerformance || [];
+        dashboardMetrics.value.qualitativeDistribution = response.qualitativeDistribution || { NotStarted: 0, Drafting: 0, Reviewing: 0, Completed: 0 };
       }
     } catch (err) {
-      console.warn('Failed fetching dashboard metrics from API:', err);
+      errorMessage.value = err.message;
     } finally {
       isLoading.value = false;
     }
@@ -138,10 +116,10 @@ export const useTrackingStore = defineStore('tracking', () => {
   async function importLlmBootstrapPayload(payload) {
     isLoading.value = true;
     try {
-      const response = await axios.post(`${API_BASE_URL}/import/llm-bootstrap`, payload);
-      return response.data;
+      const response = await requestJson('/api/import/llm-bootstrap', { method: 'POST', body: payload });
+      return response;
     } catch (err) {
-      throw new Error(err.response?.data?.error || 'Lỗi khi đồng bộ dữ liệu LLM JSON vào PostgreSQL.');
+      throw new Error(err.message || 'Lỗi khi đồng bộ dữ liệu LLM JSON vào PostgreSQL.');
     } finally {
       isLoading.value = false;
     }
@@ -163,3 +141,5 @@ export const useTrackingStore = defineStore('tracking', () => {
     importLlmBootstrapPayload
   };
 });
+
+

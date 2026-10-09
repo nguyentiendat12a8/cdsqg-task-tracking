@@ -21,12 +21,12 @@
         <div class="grid grid-cols-2 gap-3">
           <div>
             <label class="text-xs font-bold text-slate-700 uppercase">Mã <span class="text-rose-500">*</span></label>
-            <input v-model="form.code" required placeholder="e.g. MT-01, NV-05" class="w-full text-xs font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 h-[38px]" />
+            <input v-model="form.code" required placeholder="e.g. MT-01, NV-05" class="ui-single-line w-full text-xs font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 " />
           </div>
 
           <div>
             <label class="text-xs font-bold text-slate-700 uppercase">Phân Nhóm</label>
-            <input v-model="form.category" placeholder="Chính phủ số, Kinh tế số..." class="w-full text-xs font-semibold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 h-[38px]" />
+            <input v-model="form.category" placeholder="Chính phủ số, Kinh tế số..." class="ui-single-line w-full text-xs font-semibold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 " />
           </div>
         </div>
 
@@ -110,7 +110,7 @@
             <button 
               type="button" 
               @click="addDeliverable" 
-              class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs rounded-lg transition border border-blue-200 flex items-center gap-1 cursor-pointer"
+              class="ui-single-line px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs rounded-lg transition border border-blue-200 flex items-center gap-1 cursor-pointer"
             >
               + Thêm sản phẩm đầu ra
             </button>
@@ -142,7 +142,7 @@
                     v-model="del.title" 
                     required 
                     placeholder="Ví dụ: Nghị định quy định về Dữ liệu số / Nền tảng chia sẻ..." 
-                    class="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500" 
+                    class="ui-single-line w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500" 
                   />
                 </div>
                 <div>
@@ -155,8 +155,8 @@
         </div>
 
         <div class="flex justify-end gap-3 border-t border-slate-100 pt-3 shrink-0">
-          <button type="button" @click="close" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer">Hủy</button>
-          <button type="submit" :disabled="isSubmitting" class="px-5 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm transition disabled:opacity-50 flex items-center gap-1.5 cursor-pointer">
+          <button type="button" @click="close" class="ui-single-line px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer">Hủy</button>
+          <button type="submit" :disabled="isSubmitting" class="ui-single-line px-5 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm transition disabled:opacity-50 flex items-center gap-1.5 cursor-pointer">
             <span v-if="isSubmitting" class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
             <span>{{ isSubmitting ? 'Đang lưu...' : (itemType === 'Goal' ? 'Thêm Mục Tiêu' : 'Thêm Nhiệm Vụ') }}</span>
           </button>
@@ -427,3 +427,5 @@ onMounted(() => {
   loadCatalogs();
 });
 </script>
+
+

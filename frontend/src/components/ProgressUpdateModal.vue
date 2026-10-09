@@ -25,7 +25,7 @@
 
           <!-- Select Reporting Agency for General Task / Admin -->
           <div v-if="showAgencySelector" class="space-y-1.5 bg-purple-50/80 p-3.5 rounded-xl border border-purple-200/90 shadow-2xs">
-            <label class="text-xs font-bold text-purple-950 uppercase flex items-center gap-1.5 flex-wrap">
+            <label class="text-sm font-semibold text-purple-950 uppercase flex items-center gap-1.5 flex-wrap">
               <span>🏛️ Cơ Quan / Đơn Vị Báo Cáo Tiến Độ</span>
               <span class="text-rose-500">*</span>
             </label>
@@ -39,14 +39,14 @@
           </div>
 
           <div class="space-y-1 rounded-xl bg-slate-50 border border-slate-200 p-3">
-            <label class="text-xs font-bold text-slate-700">Năm báo cáo <span class="text-rose-500">*</span></label>
+            <label class="text-sm font-semibold text-slate-700">Năm báo cáo <span class="text-rose-500">*</span></label>
             <SearchableSelect v-model="form.periodYear" :options="yearOptions" :isMulti="false" :clearable="false" placeholder="Chọn năm" />
             <p class="text-xs text-slate-500">Báo cáo theo năm. Bản sửa thay thế số liệu của cùng năm khi được phê duyệt.</p>
           </div>
 
           <!-- Quantitative vs Qualitative Progress Inputs -->
           <div v-if="evaluationType === 'Quantitative'" class="space-y-1">
-            <label class="text-xs font-bold text-slate-700 uppercase">TỔNG KẾT QUẢ ĐÃ ĐẠT ĐẾN NĂM BÁO CÁO <span class="text-rose-500">*</span></label>
+            <label class="text-sm font-semibold text-slate-700 uppercase">TỔNG KẾT QUẢ ĐÃ ĐẠT ĐẾN NĂM BÁO CÁO <span class="text-rose-500">*</span></label>
             <p class="text-xs text-slate-500">Nhập tổng đã đạt đến năm {{ form.periodYear }}. Ví dụ năm trước đạt 15, đến năm báo cáo đạt 35: nhập 35, không nhập phần tăng thêm 20.</p>
             <div class="relative">
               <input 
@@ -55,7 +55,7 @@
                 v-model.number="form.value" 
                 required 
                 placeholder="Nhập con số thực tế..." 
-                class="w-full text-base font-bold text-slate-800 bg-slate-50 border border-slate-300 rounded-xl pl-3.5 pr-10 py-2.5 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                class="ui-single-line ui-control w-full text-base font-bold text-slate-800 bg-slate-50 border border-slate-300 rounded-xl pl-3.5 pr-10 py-2.5 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
               <span v-if="!unitName || unitName === '%'" class="absolute right-3.5 top-3 text-sm font-bold text-slate-400 pointer-events-none">%</span>
             </div>
@@ -63,7 +63,7 @@
 
           <!-- Status Input (Only shown when task has NO deliverables and is Qualitative) -->
           <div v-if="(!localDeliverables || localDeliverables.length === 0) && evaluationType !== 'Quantitative'" class="space-y-1">
-            <label class="text-xs font-bold text-slate-700 uppercase block">TRẠNG THÁI THỰC HIỆN NHIỆM VỤ <span class="text-rose-500">*</span></label>
+            <label class="text-sm font-semibold text-slate-700 uppercase block">TRẠNG THÁI THỰC HIỆN NHIỆM VỤ <span class="text-rose-500">*</span></label>
             <SearchableSelect 
               v-model="form.status" 
               :options="qualitativeStatusOptions" 
@@ -95,7 +95,7 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div>
-                    <label class="text-[10px] font-bold text-slate-600">Trạng Thái Mốc Sản Phẩm</label>
+                    <label class="text-[10px] font-semibold text-slate-600">Trạng Thái Mốc Sản Phẩm</label>
                     <SearchableSelect 
                       v-model="del.currentStatus" 
                       :options="qualitativeStatusOptions" 
@@ -105,11 +105,11 @@
                   </div>
 
                   <div>
-                    <label class="text-[10px] font-bold text-slate-600">Số / Ký Hiệu Văn Bản</label>
+                    <label class="text-[10px] font-semibold text-slate-600">Số / Ký Hiệu Văn Bản</label>
                     <input 
                       v-model="del.documentNumber" 
                       placeholder="VD: 45/2026/NĐ-CP" 
-                      class="w-full text-xs font-semibold bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 h-[38px]" 
+                      class="ui-single-line ui-control w-full text-base sm:text-sm font-semibold bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500  " 
                     />
                   </div>
                 </div>
@@ -119,7 +119,7 @@
 
           <!-- Evidence Multi-File Picker (IFormFile Array) -->
           <div class="space-y-2">
-            <label class="text-xs font-bold text-slate-700 uppercase flex items-center justify-between">
+            <label class="text-sm font-semibold text-slate-700 uppercase flex items-center justify-between">
               <span>Văn Bản Minh Chứng (File PDF/Word/Excel)</span>
               <span v-if="selectedFiles.length > 0" class="text-[11px] text-blue-600 font-semibold">Đã chọn {{ selectedFiles.length }} file</span>
             </label>
@@ -130,7 +130,7 @@
               multiple
               @change="handleFilesChange" 
               accept=".pdf,.doc,.docx,.xls,.xlsx"
-              class="w-full text-xs text-slate-600 bg-slate-50 border border-slate-300 rounded-xl p-2.5 focus:bg-white file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-xs file:font-bold file:bg-blue-100 file:text-blue-800 hover:file:bg-blue-200 cursor-pointer"
+              class="ui-control w-full text-base sm:text-sm text-slate-600 bg-slate-50 border border-slate-300 rounded-xl p-2.5 focus:bg-white file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-base sm:text-sm file:font-bold file:bg-blue-100 file:text-blue-800 hover:file:bg-blue-200 cursor-pointer"
             />
 
             <!-- Selected Files List with Removal Buttons -->
@@ -159,7 +159,7 @@
 
           <!-- Existing Attached Files Section -->
           <div v-if="existingFiles.length > 0" class="space-y-1.5 p-3 bg-purple-50/80 rounded-xl border border-purple-200">
-            <label class="text-[11px] font-bold text-purple-900 uppercase block">
+            <label class="text-[11px] font-semibold text-purple-900 uppercase block">
               📄 File Minh Chứng Đã Đính Kèm ({{ existingFiles.length }} file)
             </label>
             <div class="space-y-1.5">
@@ -190,7 +190,7 @@
                   <button 
                     type="button" 
                     @click="removeExistingFile(idx)" 
-                    class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-rose-600 hover:text-white bg-rose-50 hover:bg-rose-600 rounded-lg transition-all border border-rose-200 cursor-pointer"
+                    class="ui-single-line inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-rose-600 hover:text-white bg-rose-50 hover:bg-rose-600 rounded-lg transition-all border border-rose-200 cursor-pointer"
                     title="Xóa file đính kèm này"
                   >
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -205,19 +205,19 @@
 
           <!-- Notes Area -->
           <div class="space-y-1">
-            <label class="text-xs font-bold text-slate-700 uppercase">Nội dung giải trình / Ghi chú</label>
+            <label class="text-sm font-semibold text-slate-700 uppercase">Nội dung giải trình / Ghi chú</label>
             <textarea 
               v-model="form.notes" 
               rows="3" 
               placeholder="Tóm tắt kết quả triển khai hoặc khó khăn vướng mắc..."
-              class="w-full text-xs text-slate-800 bg-slate-50 border border-slate-300 rounded-xl p-3 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+              class="ui-control w-full text-base sm:text-sm text-slate-800 bg-slate-50 border border-slate-300 rounded-xl p-3 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
             ></textarea>
           </div>
         </div>
 
         <!-- Fixed Footer Actions -->
         <div class="flex justify-end gap-3 border-t border-slate-100 pt-3 shrink-0 mt-3">
-          <button type="button" @click="close" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Hủy</button>
+          <button type="button" @click="close" class="ui-single-line px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Hủy</button>
           <button 
             type="submit" 
             :disabled="isSubmitting || (hasPendingApproval && !authState.isAdmin.value)"
@@ -235,6 +235,8 @@
 </template>
 
 <script setup>
+import { formatDate, formatFileName } from '../shared/formatters';
+import { REPORTING_YEARS } from '../config/reporting';
 import { fetchWithAuth } from '../services/auth';
 
 import { ref, computed, watch } from 'vue';
@@ -311,22 +313,10 @@ const reportingAgencyOptions = computed(() => {
   });
 });
 
-function formatDate(dStr) {
-  if (!dStr) return '';
-  const d = new Date(dStr);
-  if (isNaN(d.getTime())) return dStr;
-  return d.toLocaleDateString('vi-VN');
-}
 
 const emit = defineEmits(['close', 'submitted']);
 
-const yearOptions = [
-  { value: 2026, label: 'Năm 2026' },
-  { value: 2027, label: 'Năm 2027' },
-  { value: 2028, label: 'Năm 2028' },
-  { value: 2029, label: 'Năm 2029' },
-  { value: 2030, label: 'Năm 2030' }
-];
+const yearOptions = REPORTING_YEARS.map(year => ({ value: year, label: 'Năm ' + year }));
 
 const qualitativeStatusOptions = [
   { value: 'NotStarted', label: 'Chưa thực hiện' },
@@ -421,12 +411,6 @@ function resetFormFields() {
   if (fileInput.value) fileInput.value.value = '';
 }
 
-function formatFileName(fullPath) {
-  if (!fullPath) return 'File minh chứng';
-  const rawFileName = fullPath.split(/[/\\]/).pop() || fullPath;
-  const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}_/i;
-  return rawFileName.replace(guidRegex, '');
-}
 
 function getFileUrl(path) {
   if (!path) return '#';
@@ -640,3 +624,8 @@ async function submitProgress() {
   }
 }
 </script>
+
+
+
+
+

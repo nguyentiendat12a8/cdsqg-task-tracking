@@ -19,7 +19,7 @@
             :value="filterDraft.searchQuery" 
             @input="filterDraft.searchQuery = $event.target.value"
             placeholder="Tìm theo mã, tên chỉ tiêu kế hoạch..." 
-            class="w-full text-xs font-semibold pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none h-[34px]"
+            class="ui-single-line w-full text-xs font-semibold pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none "
           />
         </div>
 
@@ -211,7 +211,7 @@
                         :disabled="!isYearEnabledForItem(item, year)"
                         @change="saveYearlyTarget(item, year, $event.target.value)"
                         placeholder="—"
-                        class="w-full text-center font-normal text-slate-800 bg-white border border-slate-300 rounded-lg py-1 pl-2 pr-6 focus:ring-2 focus:ring-blue-500 focus:outline-none transition hover:border-blue-400 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed disabled:border-slate-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        class="ui-single-line w-full text-center font-normal text-slate-800 bg-white border border-slate-300 rounded-lg py-1 pl-2 pr-6 focus:ring-2 focus:ring-blue-500 focus:outline-none transition hover:border-blue-400 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed disabled:border-slate-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                       <span v-if="isYearEnabledForItem(item, year) && (!item.unitName || item.unitName === '%' || item.unit?.name === '%')" class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-normal text-slate-400 pointer-events-none">%</span>
                     </div>
@@ -307,7 +307,7 @@
                         :disabled="!isYearEnabledForItem(item, year)"
                         @change="saveYearlyTarget(item, year, $event.target.value)"
                         placeholder="—"
-                        class="w-full text-center font-normal text-slate-800 bg-white border border-slate-300 rounded-lg py-1 pl-2 pr-6 focus:ring-2 focus:ring-blue-500 focus:outline-none transition hover:border-blue-400 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed disabled:border-slate-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                        class="ui-single-line w-full text-center font-normal text-slate-800 bg-white border border-slate-300 rounded-lg py-1 pl-2 pr-6 focus:ring-2 focus:ring-blue-500 focus:outline-none transition hover:border-blue-400 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed disabled:border-slate-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
                       <span v-if="isYearEnabledForItem(item, year) && (!item.unitName || item.unitName === '%' || item.unit?.name === '%')" class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 pointer-events-none">%</span>
                     </div>
@@ -369,7 +369,7 @@
           <button 
             @click="gridCurrentPage--" 
             :disabled="gridCurrentPage <= 1"
-            class="px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg disabled:opacity-40 disabled:hover:bg-white font-bold transition shadow-2xs"
+            class="ui-single-line px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg disabled:opacity-40 disabled:hover:bg-white font-bold transition shadow-2xs"
           >
             ‹ Trang trước
           </button>
@@ -966,3 +966,5 @@ defineExpose({
   loadGridData
 });
 </script>
+
+

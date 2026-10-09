@@ -42,7 +42,7 @@
           <button 
             type="button" 
             @click="$refs.fileInputRef.click()" 
-            class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-2 cursor-pointer"
+            class="ui-single-line px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-2 cursor-pointer"
           >
             <span>📁 Chọn File Báo Cáo Excel</span>
           </button>
@@ -131,7 +131,7 @@
           <button 
             type="button" 
             @click="step = 1" 
-            class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer"
+            class="ui-single-line px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer"
           >
             ← Chọn lại File
           </button>
@@ -140,7 +140,7 @@
             type="button" 
             @click="submitImport" 
             :disabled="isSubmitting || validTotalCount === 0"
-            class="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-2 cursor-pointer"
+            class="ui-single-line px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-2 cursor-pointer"
           >
             <span v-if="isSubmitting" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
             <span>{{ isSubmitting ? 'Đang cập nhật tiến độ...' : `Xác Nhận Import (${validTotalCount} Hạng Mục Hợp Lệ)` }}</span>
@@ -200,7 +200,7 @@
           <button 
             type="button" 
             @click="finishImport" 
-            class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md transition cursor-pointer"
+            class="ui-single-line px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md transition cursor-pointer"
           >
             Hoàn Tất & Đóng
           </button>
@@ -212,6 +212,7 @@
 </template>
 
 <script setup>
+import { isAdminRole } from '../shared/roles';
 import { fetchWithAuth } from '../services/auth';
 
 import { ref, computed } from 'vue';
@@ -280,7 +281,7 @@ function mapQualitativeStatusDisplay(statusKey) {
 function checkUserPermission(task) {
   if (!task) return false;
   const role = props.userRole !== null && props.userRole !== undefined ? String(props.userRole).toLowerCase() : '';
-  const isAdmin = role === 'admin' || role === '1';
+  const isAdmin = isAdminRole(role);
   const currAgId = props.agencyId ? String(props.agencyId).toLowerCase() : null;
 
   if (isAdmin) return true;
@@ -534,3 +535,5 @@ async function submitImport() {
   }
 }
 </script>
+
+

@@ -16,7 +16,7 @@
           <!-- General List Export (All Users including Admin) -->
           <button
             @click="exportDocumentItemsToExcel" :disabled="isExportingDocument" :aria-busy="isExportingDocument"
-            class="px-3.5 py-2 text-slate-700 hover:text-slate-900 font-bold text-xs rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200/80 transition shadow-2xs flex items-center gap-1.5 cursor-pointer"
+            class="ui-single-line px-3.5 py-2 text-slate-700 hover:text-slate-900 font-bold text-xs rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200/80 transition shadow-2xs flex items-center gap-1.5 cursor-pointer"
             title="Xuất danh sách mục tiêu/nhiệm vụ ra file Excel"
           >
             <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
@@ -26,7 +26,7 @@
           <button
             v-if="authState.isAdmin.value"
             @click="openPendingApprovalsModal"
-            class="px-3.5 py-2 text-amber-950 font-bold text-xs rounded-xl bg-amber-100 hover:bg-amber-200 border border-amber-300 transition shadow-2xs flex items-center gap-1.5 cursor-pointer relative"
+            class="ui-single-line px-3.5 py-2 text-amber-950 font-bold text-xs rounded-xl bg-amber-100 hover:bg-amber-200 border border-amber-300 transition shadow-2xs flex items-center gap-1.5 cursor-pointer relative"
             title="Xem danh sách báo cáo tiến độ chờ phê duyệt"
           >
             <span class="text-amber-700">⏳</span>
@@ -39,7 +39,7 @@
           <button
             v-if="authState.isAdmin.value"
             @click="openCreateModal(filterItemType || 'Task')"
-            class="px-3.5 py-2 text-white font-bold text-xs rounded-xl bg-blue-600 hover:bg-blue-700 transition shadow-sm flex items-center gap-1.5 cursor-pointer"
+            class="ui-single-line px-3.5 py-2 text-white font-bold text-xs rounded-xl bg-blue-600 hover:bg-blue-700 transition shadow-sm flex items-center gap-1.5 cursor-pointer"
           >
             + Thêm {{ filterItemType === 'Goal' ? 'Mục Tiêu' : 'Nhiệm Vụ' }} Mới
           </button>
@@ -51,7 +51,7 @@
 
       <!-- DYNAMIC PLANNING GRID SUB-TAB -->
       <div v-show="activeSubTab === 'grid'" class="w-full">
-        <DynamicPlanningGrid ref="planningGridRef" documentId="12660000-0000-0000-0000-000000001266" :filterItemType="filterItemType || 'Task'" />
+        <DynamicPlanningGrid ref="planningGridRef" :documentId="REPORTING_DOCUMENT_ID" :filterItemType="filterItemType || 'Task'" />
       </div>
 
       <!-- LIST TABLE SUB-TAB WITH STICKY HEADERS & EVIDENCE FILES AUDIT LOG -->
@@ -229,8 +229,8 @@
           </div>
         </div>
         <div class="flex justify-end gap-2 border-t border-slate-100 pt-3">
-          <button @click="isAssignModalOpen = false" class="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-xl font-bold cursor-pointer">Hủy</button>
-          <button @click="submitAssignTaskFromList" class="px-4 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-2xs cursor-pointer">Lưu Giao Đơn Vị Trực Thuộc</button>
+          <button @click="isAssignModalOpen = false" class="ui-single-line px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-xl font-bold cursor-pointer">Hủy</button>
+          <button @click="submitAssignTaskFromList" class="ui-single-line px-4 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-2xs cursor-pointer">Lưu Giao Đơn Vị Trực Thuộc</button>
         </div>
       </div>
     </div>
@@ -327,13 +327,13 @@
               <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
                 <button
                   @click="handleApproveFromGlobalList(log.id)"
-                  class="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-2xs transition cursor-pointer flex items-center gap-1"
+                  class="ui-single-line px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-2xs transition cursor-pointer flex items-center gap-1"
                 >
                   ✓ Phê Duyệt
                 </button>
                 <button
                   @click="openRejectModalFromGlobalList(log.id)"
-                  class="px-4 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-2xs transition cursor-pointer flex items-center gap-1"
+                  class="ui-single-line px-4 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-2xs transition cursor-pointer flex items-center gap-1"
                 >
                   ✕ Từ Chối Phê Duyệt
                 </button>
@@ -382,13 +382,13 @@
         <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
           <button
             @click="isRejectModalOpen = false"
-            class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer"
+            class="ui-single-line px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer"
           >
             Hủy bỏ
           </button>
           <button
             @click="confirmRejectFromGlobalList"
-            class="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-2xs transition cursor-pointer flex items-center gap-1"
+            class="ui-single-line px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-2xs transition cursor-pointer flex items-center gap-1"
           >
             ✕ Xác Nhận Từ Chối
           </button>
@@ -400,6 +400,7 @@
 </template>
 
 <script setup>
+import { REPORTING_DOCUMENT_ID } from '../config/reporting';
 import { useCreateItem } from '../features/document/useCreateItem';
 import { useEditItem } from '../features/document/useEditItem';
 import { usePendingApprovals } from '../features/document/usePendingApprovals';
@@ -452,7 +453,7 @@ watch(() => [props.subTab, props.filterItemType], ([newSubTab, itemType]) => {
 const userAgencyId = computed(() => authState.user.value?.agencyId || authState.user.value?.agency?.id || null);
 const userRoleStr = computed(() => {
   const r = authState.user.value?.role;
-  if (r === 'Admin' || r === 1 || r === '1' || authState.isAdmin.value) return 'Admin';
+  if (authState.isAdmin.value) return 'Admin';
   if (r === 'Level2' || r === 2 || r === '2') return 'Level2';
   if (r === 'Level3' || r === 3 || r === '3') return 'Level3';
   return String(r || 'Level2');
@@ -474,7 +475,7 @@ const isItemDetailModalOpen = ref(false);
 const selectedItemForDetail = ref(null);
 const itemDetailModalInitialTab = ref('info');
 
-const { isLoading, loadError, agencies, rawItemsList, serverTotalCount, serverTotalPages, loadData } = useDocumentData({ props, getQueryState: () => ({ userRoleStr, appliedFilters, currentPage, pageSize, sortBy, sortOrder }) });
+const { isLoading, loadError, agencies, rawItemsList, serverTotalCount, serverTotalPages, loadData, loadExportItems } = useDocumentData({ props, getQueryState: () => ({ userRoleStr, appliedFilters, currentPage, pageSize, sortBy, sortOrder }) });
 const {
   filterDraft,
   activeFilterCount,
@@ -846,7 +847,7 @@ async function runDocumentExport(action) {
   isExportingDocument.value = true;
   try {
     const { createDocumentReportActions } = await import('../features/document/documentReport');
-    const actions = createDocumentReportActions({ props, userRoleStr, currentUserAgencyObj, formatDateRange, getStatusLabel, formatProgressDisplay, isGeneralTaskOrAllAgencies, filteredList });
+    const actions = createDocumentReportActions({ props, userRoleStr, currentUserAgencyObj, formatDateRange, getStatusLabel, formatProgressDisplay, isGeneralTaskOrAllAgencies, filteredList, loadExportItems });
     await actions[action]();
   } catch (error) {
     toast.error('Không thể xuất Excel. Vui lòng thử lại.');
@@ -856,3 +857,7 @@ async function runDocumentExport(action) {
 function exportDocumentItemsToExcel() { return runDocumentExport('exportDocumentItemsToExcel'); }
 function handleExportProgressReport() { return runDocumentExport('handleExportProgressReport'); }
 </script>
+
+
+
+

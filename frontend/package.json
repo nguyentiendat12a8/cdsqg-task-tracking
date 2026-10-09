@@ -4,6 +4,8 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "check:rules": "node tests/rules.check.mjs",
+    "test:shared": "node tests/shared.test.mjs",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",

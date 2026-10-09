@@ -8,7 +8,7 @@
   .app-sidebar { display: none; }
   .app-sidebar.mobile-open { display: block; position: fixed; inset: 64px auto 0 0; width: 256px !important; box-shadow: 0 0 0 100vmax rgb(15 23 42 / 45%); }
   .app-sidebar.mobile-open aside { width: 256px !important; }
-  header h1 { font-size: 12px !important; line-height: 1.4; }
+  header h1 { font-size: 1rem; line-height: 1.5; }
 }
 
 @theme {
@@ -17,11 +17,27 @@
 }
 
 :root {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+  --ui-font-body: 0.875rem;
+  --ui-font-caption: 0.75rem;
+  --ui-font-title: 1.25rem;
+  --ui-control-height: 2.25rem;
+  --ui-control-radius: 0.5rem;
+  font-family: var(--font-sans);
 }
+body { font-size: var(--ui-font-body); line-height: 1.5; }
+button, input, select, textarea { font-family: inherit; }
 
-*, html, body, button, input, select, textarea, .font-sans, .font-serif {
-  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif !important;
+@layer components {
+  .ui-button { min-height: var(--ui-control-height); border-radius: var(--ui-control-radius); font-size: var(--ui-font-body); font-weight: 600; padding: 0.5rem 1rem; }
+  .ui-control { min-height: var(--ui-control-height); border-radius: var(--ui-control-radius); font-size: var(--ui-font-body); }
+  .ui-toolbar-control { height: var(--ui-control-height); min-height: var(--ui-control-height); border-radius: var(--ui-control-radius); font-size: var(--ui-font-body); line-height: 1.25rem; }
+  .ui-title { font-size: var(--ui-font-title); line-height: 1.4; font-weight: 700; }
+  .ui-label { font-size: var(--ui-font-body); line-height: 1.5; font-weight: 600; }
+  .ui-caption { font-size: var(--ui-font-caption); line-height: 1.5; }
+}
+@media (max-width: 767px) {
+
+  input.ui-control, textarea.ui-control { font-size: 1rem; }
 }
 
 html, body, #app {
@@ -132,11 +148,9 @@ input[type="radio"]:focus {
   border-color: #2563eb !important;
 }
 
-/* Ensure scrollable form containers have adequate padding so focus glow is not clipped */
-.overflow-y-auto,
-.overflow-x-auto,
-.custom-scrollbar {
-  padding-top: 2px;
-  padding-bottom: 2px;
-}
+/* Scroll padding belongs to each container; global overrides break sticky headers. */
+
+
+/* Single-line controls share one height, including legacy utility overrides. */
+.ui-single-line, input.ui-control, .ui-toolbar-control, .ui-button { height: var(--ui-control-height) !important; min-height: var(--ui-control-height) !important; max-height: var(--ui-control-height); box-sizing: border-box; padding-top: 0.375rem !important; padding-bottom: 0.375rem !important; }
 

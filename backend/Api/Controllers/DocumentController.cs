@@ -146,43 +146,6 @@ namespace Cdsqg.Api.Controllers
                 return NotFound(new { error = $"Không tìm thấy Văn bản / Quyết định với ID: {id}" });
             }
 
-            int goalCounter = 1;
-            int taskCounter = 1;
-            bool dbChanged = false;
-
-            foreach (var item in doc.Items.OrderBy(i => i.CreatedAt))
-            {
-                if (string.IsNullOrWhiteSpace(item.Code) || !item.Code.Any(char.IsDigit))
-                {
-                    if (item.ItemType == ItemTypeEnum.Goal)
-                    {
-                        item.Code = $"MT-{goalCounter:D2}";
-                    }
-                    else
-                    {
-                        item.Code = $"NV-{taskCounter:D2}";
-                    }
-                    _context.Entry(item).State = EntityState.Modified;
-                    dbChanged = true;
-                }
-
-                if (item.ItemType == ItemTypeEnum.Goal) goalCounter++;
-                else taskCounter++;
-
-                var latestLog = PlanningService.GetLatestProgressLogForAgency(item, null);
-                if (latestLog != null)
-                {
-                    item.LatestProgressValue = latestLog.QuantitativeValue;
-                    item.LatestProgressStatus = latestLog.QualitativeStatus?.ToString();
-                    item.LastUpdated = latestLog.LogDate;
-                }
-            }
-
-            if (dbChanged)
-            {
-                await _context.SaveChangesAsync();
-            }
-
             var reportingAgencies = await _context.Agencies.ToListAsync();
             var mappedItems = doc.Items.OrderBy(i => i.CreatedAt).Select(item =>
             {
@@ -643,3 +606,4 @@ namespace Cdsqg.Api.Controllers
         }
     }
 }
+

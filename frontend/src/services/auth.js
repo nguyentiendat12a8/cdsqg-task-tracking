@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue';
 import { getApiUrl } from '../config/api';
+import { isAdminRole } from '../shared/roles';
 
 const TOKEN_KEY = 'cdsqg_auth_token';
 const USER_KEY = 'cdsqg_auth_user';
@@ -14,7 +15,7 @@ export const authState = {
   token,
   user,
   isLoggedIn: computed(() => !!token.value && !!user.value),
-  isAdmin: computed(() => user.value?.role === 'Admin' || user.value?.role === 1)
+  isAdmin: computed(() => isAdminRole(user.value?.role))
 };
 
 export async function login(username, password) {

@@ -161,16 +161,9 @@
             <div class="flex items-center gap-2 font-bold text-slate-700">
               <span>🏛️ Lọc theo đơn vị báo cáo:</span>
             </div>
-            <select 
-              v-model="selectedAgencyFilter" 
-              @change="loadHistories" 
-              class="text-xs font-bold text-slate-800 bg-white border border-slate-300 rounded-lg px-3 py-1.5 focus:ring-2 focus:ring-blue-500 focus:outline-none cursor-pointer"
-            >
-              <option value="">Tất cả các đơn vị ({{ rawReportHistory.length }} lượt báo cáo)</option>
-              <option v-for="ag in availableAgenciesInHistory" :key="ag.id" :value="ag.id">
-                {{ ag.name }} ({{ ag.count }} lượt)
-              </option>
-            </select>
+            <div class="w-full sm:w-80">
+              <SearchableSelect v-model="selectedAgencyFilter" :options="[{ value: '', label: `Tất cả các đơn vị (${rawReportHistory.length} lượt báo cáo)` }, ...availableAgenciesInHistory.map(ag => ({ value: ag.id, label: `${ag.name} (${ag.count} lượt)` }))]" :isMulti="false" :clearable="false" label="Đơn vị báo cáo" label-class="sr-only" @change="loadHistories" />
+            </div>
           </div>
 
           <LoadingSpinner v-if="isLoadingReports" text="Đang tải lịch sử báo cáo..." padding="py-6" />
@@ -218,13 +211,13 @@
                   <div v-if="(rep.approvalStatus === 'Pending' || rep.approvalStatus === '2') && canApproveProgress" class="flex items-center gap-1.5 ml-2">
                     <button 
                       @click="approveProgressLog(rep.id || rep.progressLogId)" 
-                      class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] rounded-lg shadow-2xs transition cursor-pointer"
+                      class="ui-single-line px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] rounded-lg shadow-2xs transition cursor-pointer"
                     >
                       ✓ Duyệt
                     </button>
                     <button 
                       @click="openRejectModal(rep.id || rep.progressLogId)" 
-                      class="px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] rounded-lg shadow-2xs transition cursor-pointer"
+                      class="ui-single-line px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] rounded-lg shadow-2xs transition cursor-pointer"
                     >
                       ✕ Từ chối
                     </button>
@@ -375,7 +368,7 @@
                   v-model="agencyMatrixSearchKeyword"
                   type="text" 
                   placeholder="Tìm kiếm theo tên cơ quan / địa phương..." 
-                  class="w-full text-xs font-semibold pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition shadow-2xs"
+                  class="ui-single-line w-full text-xs font-semibold pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition shadow-2xs"
                 />
                 <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -453,7 +446,7 @@
           v-if="canEditItem(item)"
           type="button" 
           @click="onEditClick" 
-          class="px-4 py-2 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition cursor-pointer flex items-center gap-1.5 shadow-2xs"
+          class="ui-single-line px-4 py-2 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition cursor-pointer flex items-center gap-1.5 shadow-2xs"
         >
           ✏️ Chỉnh Sửa {{ item?.itemType === 'Goal' ? 'Mục Tiêu' : 'Nhiệm Vụ' }}
         </button>
@@ -461,7 +454,7 @@
         <button 
           type="button" 
           @click="close" 
-          class="px-5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition cursor-pointer"
+          class="ui-single-line px-5 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl transition cursor-pointer"
         >
           Đóng
         </button>
@@ -498,8 +491,8 @@
           </div>
         </div>
         <div class="flex justify-end gap-2 border-t border-slate-100 pt-3">
-          <button @click="isAssignModalOpen = false" class="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-xl font-bold">Hủy</button>
-          <button @click="submitAssignTask" class="px-4 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-2xs">Lưu Giao Đơn Vị Trực Thuộc</button>
+          <button @click="isAssignModalOpen = false" class="ui-single-line px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-xl font-bold">Hủy</button>
+          <button @click="submitAssignTask" class="ui-single-line px-4 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-2xs">Lưu Giao Đơn Vị Trực Thuộc</button>
         </div>
       </div>
     </div>
@@ -521,8 +514,8 @@
           ></textarea>
         </div>
         <div class="flex justify-end gap-2 border-t border-slate-100 pt-3">
-          <button @click="isRejectModalOpen = false" class="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-xl font-bold">Hủy</button>
-          <button @click="submitRejectProgressLog" class="px-4 py-1.5 text-xs bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-2xs">Xác Nhận Từ Chối</button>
+          <button @click="isRejectModalOpen = false" class="ui-single-line px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-xl font-bold">Hủy</button>
+          <button @click="submitRejectProgressLog" class="ui-single-line px-4 py-1.5 text-xs bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-2xs">Xác Nhận Từ Chối</button>
         </div>
       </div>
     </div>
@@ -531,6 +524,8 @@
 </template>
 
 <script setup>
+import { formatFileName, formatDateRange, formatDate, formatDate as formatDateOnly } from '../shared/formatters';
+import { getStatusLabel, getStatusBadgeClass } from '../shared/statusPresentation';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
 import { fetchWithAuth } from '../services/auth';
 
@@ -621,75 +616,11 @@ function formatReportProgressValue(rep) {
   return '—';
 }
 
-function formatFileName(fullPath) {
-  if (!fullPath) return 'File minh chứng';
-  const rawFileName = fullPath.split(/[/\\]/).pop() || fullPath;
-  const guidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}_/i;
-  return rawFileName.replace(guidRegex, '');
-}
 
-function formatDateRange(sDate, dDate) {
-  if (!sDate && !dDate) return '—';
-  const s = sDate ? formatDateOnly(sDate) : '...';
-  const d = dDate ? formatDateOnly(dDate) : '...';
-  return `${s} ➔ ${d}`;
-}
 
-function formatDateOnly(dateStr) {
-  if (!dateStr) return '—';
-  try {
-    let str = String(dateStr).trim();
-    if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
-      const [y, m, d] = str.slice(0, 10).split('-');
-      return `${d}/${m}/${y}`;
-    }
-    const d = new Date(str);
-    if (isNaN(d.getTime())) return dateStr;
-    const day = String(d.getUTCDate()).padStart(2, '0');
-    const month = String(d.getUTCMonth() + 1).padStart(2, '0');
-    const year = d.getUTCFullYear();
-    return `${day}/${month}/${year}`;
-  } catch {
-    return dateStr;
-  }
-}
 
-function formatDate(dateStr) {
-  if (!dateStr) return '—';
-  return formatDateOnly(dateStr);
-}
 
-function getStatusLabel(st) {
-  if (!st) return 'Chưa thực hiện';
-  const map = {
-    'NotStarted': 'Chưa thực hiện',
-    'InProgress': 'Đang thực hiện',
-    'InProgressOnTime': 'Đang thực hiện (trong hạn)',
-    'InProgressOverdue': 'Đang thực hiện (quá hạn)',
-    'Completed': 'Hoàn thành',
-    'CompletedOnTime': 'Hoàn thành (đúng hạn)',
-    'CompletedOverdue': 'Hoàn thành (quá hạn)',
-    'ExpiringSoon': 'Sắp hết hạn',
-    'Drafting': 'Đang xây dựng / soạn thảo',
-    'Reviewing': 'Đang thẩm định / xin ý kiến',
-    'PendingApproval': 'Chờ phê duyệt',
-    'Approved': 'Đã phê duyệt',
-    'Rejected': 'Bị từ chối'
-  };
-  return map[st] || st;
-}
 
-function getStatusBadgeClass(st) {
-  const map = {
-    'NotStarted': 'bg-slate-100 text-slate-700 border border-slate-200',
-    'InProgressOnTime': 'bg-blue-50 text-blue-800 border border-blue-200',
-    'InProgressOverdue': 'bg-rose-50 text-rose-800 border border-rose-200',
-    'CompletedOnTime': 'bg-emerald-50 text-emerald-800 border border-emerald-200',
-    'CompletedOverdue': 'bg-teal-50 text-teal-800 border border-teal-200',
-    'ExpiringSoon': 'bg-amber-50 text-amber-800 border border-amber-200'
-  };
-  return map[st] || 'bg-slate-100 text-slate-700';
-}
 
 function getDeliverableStatusLabel(st) {
   const map = {
@@ -1002,3 +933,7 @@ function close() {
   emit('close');
 }
 </script>
+
+
+
+

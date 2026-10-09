@@ -32,7 +32,7 @@
               type="text" 
               required
               placeholder="Nhập tên đăng nhập..."
-              class="w-full text-xs font-bold pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+              class="ui-single-line w-full text-xs font-bold pl-10 pr-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
             />
           </div>
         </div>
@@ -46,7 +46,7 @@
               :type="showLoginPassword ? 'text' : 'password'" 
               required
               placeholder="Nhập mật khẩu..."
-              class="w-full text-xs font-bold pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
+              class="ui-single-line w-full text-xs font-bold pl-10 pr-10 py-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none transition"
             />
             <button 
               type="button" 
@@ -105,7 +105,7 @@
 
         <p role="status" class="text-sm text-slate-700 leading-relaxed">Tính năng đang phát triển</p>
         <div class="flex justify-end">
-          <button type="button" @click="isForgotPasswordOpen = false" class="px-4 py-2.5 bg-blue-700 text-white rounded-xl font-semibold">Đóng</button>
+          <button type="button" @click="isForgotPasswordOpen = false" class="ui-single-line px-4 py-2.5 bg-blue-700 text-white rounded-xl font-semibold">Đóng</button>
         </div>
       </div>
     </div>
@@ -149,3 +149,4 @@ async function handleLogin() {
 }
 
 </script>
+

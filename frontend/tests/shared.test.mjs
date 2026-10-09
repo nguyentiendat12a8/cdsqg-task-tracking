@@ -1,0 +1,26 @@
+import assert from 'node:assert/strict';
+import { formatDate, formatDateTime, formatPercent, formatFileName } from '../src/shared/formatters.js';
+import { getStatusLabel, getStatusBadgeClass } from '../src/shared/statusPresentation.js';
+import { isAdminRole } from '../src/shared/roles.js';
+import { isGeneralTaskItem } from '../src/shared/agencyPresentation.js';
+
+assert.equal(formatDate('2026-10-09'), '09/10/2026');
+assert.equal(formatDate('2026-10-09T23:00:00Z'), '09/10/2026');
+assert.equal(formatDate('2026-02-30'), '2026-02-30');
+assert.equal(formatDateTime('2026-10-08T18:05:00Z'), '01:05 09/10/2026');
+assert.equal(formatDateTime('2026-10-08T18:05:00'), '01:05 09/10/2026');
+assert.equal(formatDateTime('2026-10-09T01:05:00+07:00'), '01:05 09/10/2026');
+assert.equal(formatPercent(0), '0%');
+assert.equal(formatPercent(null), '—');
+assert.equal(formatPercent(70.125), '70,13%');
+assert.equal(getStatusLabel('ExpiringSoon'), 'Sắp hết hạn');
+assert.match(getStatusBadgeClass('ExpiringSoon'), /amber/);
+assert.match(getStatusBadgeClass('CompletedOverdue'), /orange/);
+assert.equal(getStatusLabel('UnknownFutureStatus'), 'UnknownFutureStatus');
+assert.equal(getStatusLabel('Approved'), 'Đã phê duyệt');
+assert.ok([1, '1', 'Admin'].every(isAdminRole));
+assert.ok([2, '2', undefined, 'AgencyUser'].every(r => !isAdminRole(r)));
+assert.ok(isGeneralTaskItem({ leadAgencyCode: 'ALL_PROVINCES' }));
+assert.ok(!isGeneralTaskItem({ leadAgencyCode: 'SPECIFIC' }));
+assert.equal(formatFileName('/files/12345678-1234-1234-1234-123456789abc_Báo cáo.xlsx'), 'Báo cáo.xlsx');
+console.log('Passed: shared formatting, UTC/Vietnam date boundary, null/zero, canonical status and role adapters.');

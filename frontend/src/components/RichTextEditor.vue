@@ -122,7 +122,7 @@
       <button 
         type="button" 
         @click="exec('removeFormat')" 
-        class="px-2 py-1 rounded hover:bg-slate-200 transition text-[11px] text-slate-600"
+        class="ui-single-line px-2 py-1 rounded hover:bg-slate-200 transition text-[11px] text-slate-600"
         title="Xóa định dạng"
       >
         🧹 Xóa định dạng
@@ -133,7 +133,7 @@
         v-if="showRestoreBtn"
         type="button" 
         @click="$emit('restoreTemplate')" 
-        class="ml-auto px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 transition text-[11px] font-bold flex items-center gap-1 shadow-2xs"
+        class="ui-single-line ml-auto px-2.5 py-1 rounded-lg bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 transition text-[11px] font-bold flex items-center gap-1 shadow-2xs"
       >
         ⚡ Khôi phục văn bản mẫu
       </button>
@@ -205,3 +205,4 @@ onMounted(() => {
   margin-bottom: 0.25rem;
 }
 </style>
+

@@ -20,7 +20,7 @@
             <button
               @click="changePage(currentPage - 1)"
               :disabled="currentPage <= 1"
-              class="px-3.5 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg disabled:opacity-40 font-bold transition shadow-2xs cursor-pointer"
+              class="ui-single-line px-3.5 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg disabled:opacity-40 font-bold transition shadow-2xs cursor-pointer"
             >
               ‹ Trang trước
             </button>
@@ -53,3 +53,4 @@ defineProps([
 const pageSize = defineModel('pageSize', { required: true });
 const currentPage = defineModel('currentPage', { required: true });
 </script>
+

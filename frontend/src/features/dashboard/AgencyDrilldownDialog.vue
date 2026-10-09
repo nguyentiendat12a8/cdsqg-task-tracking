@@ -169,25 +169,16 @@
                   v-model="modalSearchKeyword"
                   type="text"
                   :placeholder="drilldownTab === 'goals' ? 'Tìm mã, tên mục tiêu, lĩnh vực...' : 'Tìm mã, tên nhiệm vụ, lĩnh vực...'"
-                  class="w-full pl-8 pr-3 py-1.5 bg-white text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 text-slate-800"
+                  class="ui-single-line w-full pl-8 pr-3 py-1.5 bg-white text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 text-slate-800"
                 />
               </div>
             </div>
 
             <div class="flex items-center gap-2 shrink-0">
               <!-- Status Filter -->
-              <select
-                v-model="modalStatusFilter"
-                class="py-1.5 px-2.5 text-xs bg-white border border-slate-200 rounded-lg font-medium text-slate-700 focus:outline-none focus:border-blue-500 cursor-pointer"
-              >
-                <option value="all">Tất cả trạng thái</option>
-                <option value="InProgressOverdue">Đang t/h quá hạn</option>
-                <option value="InProgressOnTime">Đang t/h trong hạn</option>
-                <option value="ExpiringSoon">Sắp tới hạn</option>
-                <option value="CompletedOverdue">Đã h/t quá hạn</option>
-                <option value="CompletedOnTime">Đã h/t trong hạn</option>
-                <option value="NotStarted">Chưa thực hiện</option>
-              </select>
+              <div class="w-60 max-w-full">
+                <SearchableSelect v-model="modalStatusFilter" :options="[{ value: 'all', label: 'Tất cả trạng thái' }, ...executionStatusOptions]" :isMulti="false" :clearable="false" label="Trạng thái thực hiện" label-class="sr-only" />
+              </div>
             </div>
           </div>
 
@@ -280,7 +271,7 @@
                     <td class="px-3 py-2.5 text-center whitespace-nowrap" @click.stop>
                       <button
                         @click.stop="selectedDetailItem = item"
-                        class="px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-[11px] rounded-lg border border-blue-200 transition shadow-2xs inline-flex items-center gap-1 cursor-pointer"
+                        class="ui-single-line px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-[11px] rounded-lg border border-blue-200 transition shadow-2xs inline-flex items-center gap-1 cursor-pointer"
                         title="Xem chi tiết"
                       >
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
@@ -357,6 +348,8 @@
 </template>
 
 <script setup>
+import SearchableSelect from '../../components/SearchableSelect.vue';
+import { executionStatusOptions } from '../../shared/statusPresentation';
 import LoadingSpinner from '../../components/LoadingSpinner.vue';
 import MiniStatusDonut from '../../components/MiniStatusDonut.vue';
 
@@ -383,3 +376,6 @@ const modalStatusFilter = defineModel('modalStatusFilter', { required: true });
 const selectedDrilldownAgency = defineModel('selectedDrilldownAgency', { required: true });
 const selectedDetailItem = defineModel('selectedDetailItem', { required: true });
 </script>
+
+
+

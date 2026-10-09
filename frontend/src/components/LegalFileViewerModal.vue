@@ -20,7 +20,7 @@
           <button 
             v-if="fileItem?.fileUrl" 
             @click="openInNewWindow"
-            class="px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-sm"
+            class="ui-single-line px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-sm"
             title="Mở trong cửa sổ mới (Full screen)"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
@@ -78,7 +78,7 @@
           <div class="flex items-center justify-center gap-3 pt-2">
             <button 
               @click="openInNewWindow" 
-              class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition shadow-sm inline-flex items-center gap-2 cursor-pointer"
+              class="ui-single-line px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition shadow-sm inline-flex items-center gap-2 cursor-pointer"
             >
               🚀 Mở cửa sổ mới (Full screen)
             </button>
@@ -165,3 +165,4 @@ function openInNewWindow() {
   }
 }
 </script>
+

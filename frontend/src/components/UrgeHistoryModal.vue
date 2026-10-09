@@ -50,7 +50,7 @@
 
       <!-- Footer Actions -->
       <div class="flex justify-end border-t border-slate-100 pt-3 shrink-0">
-        <button type="button" @click="close" class="px-5 py-2 text-xs font-bold text-white bg-slate-800 hover:bg-slate-900 rounded-xl">Đóng</button>
+        <button type="button" @click="close" class="ui-single-line px-5 py-2 text-xs font-bold text-white bg-slate-800 hover:bg-slate-900 rounded-xl">Đóng</button>
       </div>
 
     </div>
@@ -58,6 +58,7 @@
 </template>
 
 <script setup>
+import { formatDateTime as formatDate } from '../shared/formatters';
 import { fetchWithAuth } from '../services/auth';
 
 import { ref, watch } from 'vue';
@@ -74,20 +75,6 @@ const emit = defineEmits(['close']);
 const logs = ref([]);
 const isLoading = ref(true);
 
-function formatDate(dateStr) {
-  if (!dateStr) return '—';
-  try {
-    let str = String(dateStr).trim();
-    if (str.includes('T') && !str.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(str)) {
-      str += 'Z';
-    }
-    const d = new Date(str);
-    if (isNaN(d.getTime())) return dateStr;
-    return d.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
-  } catch {
-    return dateStr;
-  }
-}
 
 async function loadLogs() {
   isLoading.value = true;
@@ -117,3 +104,5 @@ function close() {
   emit('close');
 }
 </script>
+
+

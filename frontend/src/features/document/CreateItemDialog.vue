@@ -17,14 +17,14 @@
           <!-- Row 1: Code, Section & Group -->
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label class="text-xs font-bold text-slate-700 uppercase block mb-1">
+              <label class="text-sm font-semibold text-slate-700 uppercase block mb-1">
                 Mã {{ createItemType === 'Goal' ? 'Mục Tiêu' : 'Nhiệm Vụ' }}
               </label>
               <input
                 v-model="createForm.code"
                 type="text"
                 :placeholder="createItemType === 'Goal' ? 'e.g. MT-01' : 'e.g. NV-01'"
-                class="w-full text-xs font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 focus:bg-white focus:ring-2 focus:ring-blue-500 uppercase h-[38px]"
+                class="ui-single-line ui-control w-full text-base sm:text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 focus:bg-white focus:ring-2 focus:ring-blue-500 uppercase  "
               />
             </div>
 
@@ -52,7 +52,7 @@
 
           <!-- Row 2: Title (Full Width) -->
           <div>
-            <label class="text-xs font-bold text-slate-700 uppercase block mb-1">
+            <label class="text-sm font-semibold text-slate-700 uppercase block mb-1">
               {{ createItemType === 'Goal' ? 'Tên Mục Tiêu' : 'Tên Nhiệm Vụ' }} <span class="text-rose-500">*</span>
             </label>
             <textarea
@@ -60,7 +60,7 @@
               required
               rows="2"
               :placeholder="createItemType === 'Goal' ? 'Nhập tên chi tiết mục tiêu...' : 'Nhập tên chi tiết nhiệm vụ...'"
-              class="w-full text-xs font-semibold bg-slate-50 border border-slate-300 rounded-xl p-3 focus:bg-white focus:ring-2 focus:ring-blue-500"
+              class="ui-control w-full text-base sm:text-sm font-semibold bg-slate-50 border border-slate-300 rounded-xl p-3 focus:bg-white focus:ring-2 focus:ring-blue-500"
             ></textarea>
           </div>
 
@@ -84,7 +84,7 @@
               v-model="createForm.isOngoing"
               class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
             />
-            <label for="docIsOngoingToggle" class="text-xs font-bold text-blue-950 cursor-pointer select-none flex items-center gap-1.5">
+            <label for="docIsOngoingToggle" class="text-sm font-semibold text-blue-950 cursor-pointer select-none flex items-center gap-1.5">
               <span>Thời hạn thực hiện: Thường xuyên</span>
               <span class="text-[11px] font-normal text-slate-500">(Tự động áp dụng từ 01/01/2026 đến 31/12/2030)</span>
             </label>
@@ -113,11 +113,11 @@
           </div>
           <div v-else class="grid grid-cols-2 gap-3 bg-blue-50/50 p-3 rounded-xl border border-blue-200/60">
             <div>
-              <label class="text-xs font-bold text-slate-700 uppercase block mb-1">Ngày Bắt Đầu</label>
+              <label class="text-sm font-semibold text-slate-700 uppercase block mb-1">Ngày Bắt Đầu</label>
               <DatePicker v-model="createForm.startDate" placeholder="dd/mm/yyyy" />
             </div>
             <div>
-              <label class="text-xs font-bold text-slate-700 uppercase block mb-1">Ngày Hoàn Thành</label>
+              <label class="text-sm font-semibold text-slate-700 uppercase block mb-1">Ngày Hoàn Thành</label>
               <DatePicker v-model="createForm.dueDate" placeholder="dd/mm/yyyy" />
             </div>
           </div>
@@ -158,13 +158,13 @@
           <!-- Multi-Deliverables Section for Tasks (Phương án 1: Phụ lục II) -->
           <div v-if="createItemType === 'Task'" class="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 space-y-3">
             <div class="flex items-center justify-between">
-              <label class="text-xs font-bold text-slate-800 uppercase flex items-center gap-1.5">
+              <label class="text-sm font-semibold text-slate-800 uppercase flex items-center gap-1.5">
                 <span>📋 DANH MỤC SẢN PHẨM ĐẦU RA DỰ KIẾN</span>
               </label>
               <button
                 type="button"
                 @click="addDeliverable"
-                class="px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs rounded-lg transition border border-blue-200 flex items-center gap-1 cursor-pointer"
+                class="ui-single-line px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs rounded-lg transition border border-blue-200 flex items-center gap-1 cursor-pointer"
               >
                 + Thêm sản phẩm đầu ra
               </button>
@@ -193,16 +193,16 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <div class="sm:col-span-2">
-                    <label class="text-[10px] font-bold text-slate-600">Tên sản phẩm / Tên văn bản <span class="text-rose-500">*</span></label>
+                    <label class="text-[10px] font-semibold text-slate-600">Tên sản phẩm / Tên văn bản <span class="text-rose-500">*</span></label>
                     <input
                       v-model="del.title"
                       required
                       placeholder="Ví dụ: Nghị định quy định về Dữ liệu số / Nền tảng chia sẻ..."
-                      class="w-full text-xs font-semibold bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 h-[38px]"
+                      class="ui-single-line ui-control w-full text-base sm:text-sm font-semibold bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500  "
                     />
                   </div>
                   <div>
-                    <label class="text-[10px] font-bold text-slate-600">Hạn chót sản phẩm</label>
+                    <label class="text-[10px] font-semibold text-slate-600">Hạn chót sản phẩm</label>
                     <DatePicker v-model="del.dueDate" placeholder="dd/mm/yyyy" />
                   </div>
                 </div>
@@ -212,8 +212,8 @@
           </div>
 
           <div class="flex justify-end gap-2 border-t border-slate-100 pt-3 shrink-0">
-            <button type="button" @click="isCreateModalOpen = false" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer">Hủy</button>
-            <button type="submit" class="px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm cursor-pointer">Lưu</button>
+            <button type="button" @click="isCreateModalOpen = false" class="ui-single-line px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer">Hủy</button>
+            <button type="submit" class="ui-single-line px-5 py-2 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm cursor-pointer">Lưu</button>
           </div>
         </form>
       </div>
@@ -242,3 +242,6 @@ const createForm = defineModel('createForm', { required: true });
 const isCreateModalOpen = defineModel('isCreateModalOpen', { required: true });
 const createErrorMessage = defineModel('createErrorMessage', { required: true });
 </script>
+
+
+

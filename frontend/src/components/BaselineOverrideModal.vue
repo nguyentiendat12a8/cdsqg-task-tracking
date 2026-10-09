@@ -23,7 +23,7 @@
               <label :for="`annual-target-${year}`" class="text-sm font-semibold text-slate-800">Năm {{ year }} <span class="sr-only">({{ unitName }})</span></label>
               <div class="text-right sm:text-left text-sm text-slate-500">{{ yearlyTargets[year] == null ? 'Chưa thiết lập' : yearlyTargets[year] }} <span v-if="yearlyTargets[year] != null" class="text-xs">{{ unitName }}</span></div>
               <div class="relative col-span-2 sm:col-span-1">
-                <input :id="`annual-target-${year}`" v-model="milestones[year]" type="number" min="0.000001" step="any" placeholder="Dùng mặc định" class="w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-3 pr-14 text-sm font-medium text-slate-900 placeholder:font-normal placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 transition" />
+                <input :id="`annual-target-${year}`" v-model="milestones[year]" type="number" min="0.000001" step="any" placeholder="Dùng mặc định" class="ui-single-line ui-control w-full rounded-lg border border-slate-200 bg-white py-2.5 pl-3 pr-14 text-sm font-medium text-slate-900 placeholder:font-normal placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 transition" />
                 <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 max-w-10 truncate text-xs text-slate-400" :title="unitName">{{ unitName }}</span>
               </div>
             </div>
@@ -32,14 +32,15 @@
           <p v-if="error" role="alert" class="rounded-lg bg-rose-50 px-3 py-2 text-sm text-rose-700">{{ error }}</p>
         </div>
         <footer class="flex shrink-0 justify-end gap-3 border-t border-slate-100 bg-slate-50/70 px-5 py-4 sm:px-7">
-          <button type="button" :disabled="isSaving" @click="close" class="rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50">Đóng</button>
-          <button v-if="isQuant" type="submit" :disabled="isSaving" class="rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-50">{{ isSaving ? 'Đang lưu…' : 'Lưu chỉ tiêu năm' }}</button>
+          <button type="button" :disabled="isSaving" @click="close" class="ui-single-line ui-button rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 transition hover:bg-slate-50 focus-visible:ring-2 focus-visible:ring-blue-500 disabled:opacity-50">Đóng</button>
+          <button v-if="isQuant" type="submit" :disabled="isSaving" class="ui-single-line ui-button rounded-lg bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-blue-700 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2 disabled:opacity-50">{{ isSaving ? 'Đang lưu…' : 'Lưu chỉ tiêu năm' }}</button>
         </footer>
       </form>
     </section>
   </div>
 </template>
 <script setup>
+import { REPORTING_YEARS } from '../config/reporting';
 import { computed, ref, watch } from 'vue';
 import { toast } from 'vue3-toastify';
 import { fetchWithAuth } from '../services/auth';
@@ -47,7 +48,7 @@ import { getApiUrl } from '../config/api';
 const props = defineProps({
   isOpen: Boolean, taskId: { type: String, required: true }, taskCode: { type: String, default: '' },
   taskTitle: { type: String, default: '' }, evaluationType: { type: String, default: 'Quantitative' },
-  unitName: { type: String, default: '%' }, dynamicYears: { type: Array, default: () => [2026, 2027, 2028, 2029, 2030] },
+  unitName: { type: String, default: '%' }, dynamicYears: { type: Array, default: () => [...REPORTING_YEARS] },
   existingCustomBaseline: { type: Object, default: () => ({}) }, yearlyTargets: { type: Object, default: () => ({}) }
 });
 const emit = defineEmits(['close', 'saved']);
@@ -77,4 +78,8 @@ async function saveCustomBaseline() {
   finally { isSaving.value = false; }
 }
 </script>
+
+
+
+
 

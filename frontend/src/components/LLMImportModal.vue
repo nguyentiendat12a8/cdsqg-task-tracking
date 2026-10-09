@@ -31,7 +31,7 @@
           <button @click="loadSamplePayload" class="text-xs font-bold text-blue-600 hover:underline">
             + Tải Dữ Liệu JSON Mẫu Quyết Định 749/QĐ-TTg
           </button>
-          <button @click="parseJson" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm">
+          <button @click="parseJson" class="ui-single-line px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm">
             Xem Trước & Kiểm Tra (Preview)
           </button>
         </div>
@@ -44,7 +44,7 @@
         <div class="grid grid-cols-3 gap-4 bg-purple-50/70 p-4 rounded-xl border border-purple-100">
           <div>
             <span class="text-[11px] font-bold text-purple-700 uppercase block">Số Hiệu Quyết Định</span>
-            <input v-model="payload.document.documentNumber" class="w-full text-sm font-bold bg-white border border-purple-200 rounded-lg px-2.5 py-1 text-slate-800" />
+            <input v-model="payload.document.documentNumber" class="ui-single-line w-full text-sm font-bold bg-white border border-purple-200 rounded-lg px-2.5 py-1 text-slate-800" />
           </div>
           <div>
             <span class="text-[11px] font-bold text-purple-700 uppercase block">Khung Thời Gian</span>
@@ -75,13 +75,13 @@
                   <span :class="['px-1.5 py-0.5 rounded font-bold text-[10px]', item.itemType === 'Goal' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800']">
                     {{ item.itemType }}
                   </span>
-                  <input v-model="item.code" class="w-16 font-bold bg-white border border-slate-300 rounded px-1.5 py-0.5 mt-1 block" />
+                  <input v-model="item.code" class="ui-single-line w-16 font-bold bg-white border border-slate-300 rounded px-1.5 py-0.5 mt-1 block" />
                 </td>
                 <td class="px-3 py-2 border-r border-slate-100">
-                  <input v-model="item.title" class="w-full font-semibold bg-white border border-slate-300 rounded px-2 py-1 text-slate-800" />
+                  <input v-model="item.title" class="ui-single-line w-full font-semibold bg-white border border-slate-300 rounded px-2 py-1 text-slate-800" />
                 </td>
                 <td class="px-3 py-2 border-r border-slate-100">
-                  <input v-model="item.leadAgencyCode" class="w-16 font-bold uppercase bg-white border border-slate-300 rounded px-1.5 py-0.5" />
+                  <input v-model="item.leadAgencyCode" class="ui-single-line w-16 font-bold uppercase bg-white border border-slate-300 rounded px-1.5 py-0.5" />
                 </td>
                 <td class="px-3 py-2 border-r border-slate-100">
                   <SearchableSelect 
@@ -116,11 +116,11 @@
           </button>
 
           <div class="flex gap-3">
-            <button @click="close" class="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Hủy</button>
+            <button @click="close" class="ui-single-line px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Hủy</button>
             <button 
               @click="syncToDatabase" 
               :disabled="isSyncing"
-              class="px-6 py-2.5 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 rounded-xl shadow-sm transition flex items-center gap-2"
+              class="ui-single-line px-6 py-2.5 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 rounded-xl shadow-sm transition flex items-center gap-2"
             >
               <span v-if="isSyncing" class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
               {{ isSyncing ? 'Đang Đồng Bộ...' : 'Đồng Bộ Vào PostgreSQL' }}
@@ -235,3 +235,4 @@ async function syncToDatabase() {
   }
 }
 </script>
+

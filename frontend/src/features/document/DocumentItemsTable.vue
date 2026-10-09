@@ -196,7 +196,7 @@
                             <button
                               v-if="canAssignTask(item)"
                               @click="openAssignModalFromList(item); hide()"
-                              class="w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer"
+                              class="ui-single-line w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer"
                               title="Giao cho đơn vị trực thuộc"
                             >
                               <span>Giao đơn vị trực thuộc</span>
@@ -205,7 +205,7 @@
                             <button
                               v-if="authState.isAdmin.value && !hasProgress(item)"
                               @click="openEditModal(item); hide()"
-                              class="w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer"
+                              class="ui-single-line w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer"
                               title="Chỉnh Sửa"
                             >
                               <span>Chỉnh sửa</span>
@@ -213,7 +213,7 @@
 
                             <button
                               @click="openNotificationModal(item); hide()"
-                              class="w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer"
+                              class="ui-single-line w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer"
                               title="Gửi thông báo đến đơn vị chủ trì & phối hợp"
                             >
                               <span>Gửi thông báo</span>
@@ -224,7 +224,7 @@
                             <button
                               v-if="authState.isAdmin.value && !hasProgress(item)"
                               @click="handleDeleteItem(item); hide()"
-                              class="w-full text-left px-3 py-2 text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                              class="ui-single-line w-full text-left px-3 py-2 text-rose-600 hover:bg-rose-50 transition cursor-pointer"
                               title="Xóa"
                             >
                               <span>Xóa</span>
@@ -277,3 +277,4 @@ defineProps([
 ]);
 
 </script>
+

@@ -67,6 +67,7 @@
 </template>
 
 <script setup>
+import { formatDateTime as formatDate } from '../shared/formatters';
 import { fetchWithAuth } from '../services/auth';
 
 import { ref, onMounted, onUnmounted, watch } from 'vue';
@@ -84,20 +85,6 @@ function handleClickOutside(e) {
   }
 }
 
-function formatDate(dStr) {
-  if (!dStr) return '';
-  try {
-    let str = String(dStr).trim();
-    if (str.includes('T') && !str.endsWith('Z') && !/[+-]\d{2}:\d{2}$/.test(str)) {
-      str += 'Z';
-    }
-    const d = new Date(str);
-    if (isNaN(d.getTime())) return dStr;
-    return d.toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
-  } catch {
-    return dStr;
-  }
-}
 
 async function fetchNotifications() {
   try {
@@ -213,3 +200,4 @@ onUnmounted(() => {
   }
 });
 </script>
+
