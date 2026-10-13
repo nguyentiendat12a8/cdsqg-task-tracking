@@ -302,7 +302,7 @@
                 <div class="md:col-span-4 bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
                   <span class="text-xs font-semibold text-slate-500 block">Tiến độ báo cáo</span>
                   <div v-if="isGoalItem(log)" class="text-sm font-bold text-blue-700">{{ log.completionPercentage || 0 }}% hoàn thành</div>
-                  <div v-else class="text-xs font-bold text-blue-700">{{ getStatusLabel(log.status || 'NotStarted') }}</div>
+                  <div v-else class="text-xs font-bold text-blue-700">{{ taskReportStatusLabel(log) }}</div>
                   <div v-if="isGoalItem(log) && log.status" class="text-slate-600 text-xs">Trạng thái: <strong>{{ getStatusLabel(log.status) }}</strong></div>
                 </div>
 
@@ -432,6 +432,7 @@ const props = defineProps({
 import { useDocumentFilters } from '../features/document/useDocumentFilters';
 import { useDocumentData } from '../features/document/useDocumentData';
 import { formatDateTime, formatDateRange, formatFileName, getStatusLabel, getStatusBadgeClass, formatProgressDisplay, isGeneralTaskOrAllAgencies } from '../features/document/presentation';
+import { taskReportStatusLabel } from '../shared/reportStatuses';
 
 const planningGridRef = ref(null);
 

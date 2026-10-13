@@ -48,6 +48,12 @@ public class ProgressImportPostgresTests
                 Assert.Equal("Admin demo", recorded.CreatedBy);
                 Assert.Equal(state == "Completed" ? ExecutionStatusEnum.CompletedOnTime : ExecutionStatusEnum.InProgressOnTime,
                     ProgressCalculator.Evaluate(demoTask, year: ReportingPeriod.CurrentYear).Status);
+                var adminList = await new PlanningService(db).GetDocumentItemsPagedAsync(document.Id,
+                    new() { UserRole = "Admin", AgencyId = adminAgency.Id });
+                Assert.Equal(state == "Completed" ? "CompletedOnTime" : "InProgressOnTime",
+                    adminList.Items.Single(i => i.Code == demoTask.Code).CalculatedStatus);
+                var adminHistory = await service.GetTaskProgressHistoryAsync(demoTask.Id);
+                Assert.Equal(state == "Completed" ? "CompletedOnTime" : "InProgressOnTime", adminHistory[0].CalculatedStatus);
             }
             db.ProgressLogs.RemoveRange(db.ProgressLogs.Where(p => p.GoalTaskId == demoTask.Id));
             await db.SaveChangesAsync();

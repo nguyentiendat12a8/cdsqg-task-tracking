@@ -527,6 +527,7 @@
 import { formatNumber } from "../shared/formatters";
 import { formatFileName, formatDateRange, formatDate, formatDate as formatDateOnly, formatMeasuredValue } from '../shared/formatters';
 import { getStatusLabel, getStatusBadgeClass } from '../shared/statusPresentation';
+import { taskReportStatusLabel } from '../shared/reportStatuses';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
 import { fetchWithAuth } from '../services/auth';
 
@@ -597,7 +598,7 @@ function formatPeriodLabel(rep) {
 
 function formatReportProgressValue(rep) {
   if (!rep) return '—';
-  if (props.item?.itemType === 'Task') return getStatusLabel(rep.status || 'NotStarted');
+  if (props.item?.itemType === 'Task') return taskReportStatusLabel(rep);
   const unitName = props.item?.unitName || props.item?.unit?.name || '%';
   if (rep.actualValue !== null && rep.actualValue !== undefined) return formatMeasuredValue(rep.actualValue, unitName);
 

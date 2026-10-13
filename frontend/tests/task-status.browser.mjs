@@ -6,13 +6,24 @@ try {
   const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
   await page.route('**/api/**', route => route.fulfill({ json: route.request().url().includes('agencies-execution') ? {
     agencyExecutions: [{ agencyId: 'a', agencyName: 'Bộ kiểm thử', completionPercentage: 25, calculatedStatus: 'InProgressOnTime' }]
-  } : [] }));
+  } : route.request().url().includes('progress-history') ? [{ id: 'r1', periodYear: 2026, status: null,
+    approvalStatus: 'Approved', deliverables: [{ id: 'p1', title: 'Sản phẩm đã hoàn thành', currentStatus: 'Completed' }] }] : [] }));
   await page.goto(process.env.FRONTEND_TEST_URL || 'http://127.0.0.1:5173');
   const displays = await page.evaluate(async () => {
     const f = await import('/tests/refactor-fixture.js');
     const { default: Modal } = await import('/src/components/ItemDetailModal.vue');
     const { formatProgressDisplay } = await import('/src/features/document/presentation.js');
     const { formatItemProgressDisplay } = await import('/src/features/dashboard/presentation.js');
+    const { taskReportStatusLabel } = await import('/src/shared/reportStatuses.js');
+    const cases = [
+      [{ deliverables: [{ currentStatus: 'Completed' }] }, 'Đã hoàn thành'],
+      [{ deliverables: [{ currentStatus: 'Completed' }, { currentStatus: 'NotStarted' }] }, 'Đang thực hiện'],
+      [{ deliverables: [{ currentStatus: 'Drafting' }] }, 'Đang thực hiện'],
+      [{ deliverables: [{ currentStatus: 'NotStarted' }] }, 'Chưa thực hiện'],
+      [{ status: 'Completed' }, 'Hoàn thành'],
+      [{ calculatedStatus: 'CompletedOverdue', deliverables: [{ currentStatus: 'Completed' }] }, 'Hoàn thành (quá hạn)']
+    ];
+    for (const [report, expected] of cases) if (taskReportStatusLabel(report) !== expected) throw new Error(`Status mismatch: ${expected}`);
     f.authState.user.value = { role: 1 }; f.authState.token.value = 'fixture';
     document.querySelector('#app').style.display = 'none';
     const root = document.createElement('div'); root.id = 'task-status-test'; document.body.append(root);
@@ -27,6 +38,11 @@ try {
   assert.equal(await root.getByRole('columnheader', { name: 'Tiến độ (%)', exact: true }).count(), 0);
   assert.equal(await root.getByText('25%', { exact: true }).count(), 0);
   await root.getByText('Đang thực hiện (trong hạn)', { exact: true }).waitFor();
+  await root.getByRole('button', { name: /Lịch sử báo cáo tiến độ/ }).click();
+  await root.getByText('Đã hoàn thành', { exact: true }).first().waitFor();
+  assert.equal(await root.getByText('Chưa có trạng thái', { exact: true }).count(), 0);
+  assert.equal(await root.getByText('Chưa thực hiện', { exact: true }).count(), 0);
+  await root.getByRole('button', { name: /Tiến độ các đơn vị/ }).click();
   await page.setViewportSize({ width: 390, height: 844 });
   assert.equal(await root.getByText('25%', { exact: true }).count(), 0);
   await page.evaluate(() => { window.statusItem.value = { ...window.statusItem.value, itemType: 'Goal' }; });

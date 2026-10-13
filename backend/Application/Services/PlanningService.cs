@@ -179,7 +179,12 @@ namespace Cdsqg.Application.Services
 
         public async Task<PagedResultDto<PlanningGridItemDto>> GetDocumentItemsPagedAsync(Guid documentId, DocumentItemsQueryDto queryDto)
         {
-            var gridResponse = await GetDocumentPlanningGridAsync(documentId, queryDto.AgencyId);
+            // Admin's account agency must not scope the official progress of
+            // assignments performed by other agencies. Agency filters below
+            // select rows; they do not change the reporting owner.
+            var progressAgencyId = string.Equals(queryDto.UserRole, "Admin", StringComparison.OrdinalIgnoreCase)
+                ? (Guid?)null : queryDto.AgencyId;
+            var gridResponse = await GetDocumentPlanningGridAsync(documentId, progressAgencyId);
             var list = gridResponse.Items ?? new List<PlanningGridItemDto>();
 
             // 1. Scoping for non-admin user accounts

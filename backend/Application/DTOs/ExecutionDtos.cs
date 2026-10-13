@@ -63,6 +63,7 @@ namespace Cdsqg.Application.DTOs
         public int PeriodYear { get; set; }
         public decimal? ActualValue { get; set; }
         public string? Status { get; set; }
+        public string? CalculatedStatus { get; set; }
         public decimal? CompletionPercentage { get; set; }
         public string? SummaryNotes { get; set; }
         public List<string> AttachmentFileUrls { get; set; } = new List<string>();
