@@ -31,6 +31,26 @@ public class ProgressImportPostgresTests
             db.AddRange(agency, document, goal, task);
             await db.SaveChangesAsync();
             var service = new ExecutionService(db, null!);
+            var adminAgency = new Agency { Code = "ADMIN_ACTOR", Name = "Cơ quan của người quản trị" };
+            var demoTask = new GoalTaskItem { Code = "NV_ADMIN_IMPORT", DocumentId = document.Id, LeadAgencyId = agency.Id,
+                ItemType = ItemTypeEnum.Task, EvaluationType = EvaluationTypeEnum.Qualitative,
+                Deliverables = new() { new() { Id = "demo_product", Title = "Sản phẩm demo" } } };
+            db.AddRange(adminAgency, demoTask); await db.SaveChangesAsync();
+            foreach (var state in new[] { "Drafting", "Completed" })
+            {
+                var adminImported = await service.ImportProgressBulkAsync(new() { UserRole = "Admin", CreatedBy = "Admin demo", UserAgencyId = adminAgency.Id,
+                    Items = new() { new() { Code = demoTask.Code, PeriodYear = ReportingPeriod.CurrentYear,
+                        Deliverables = new() { new() { Id = "demo_product", CurrentStatus = state } } } } });
+                Assert.Equal(1, adminImported.SuccessCount);
+                var recorded = ProgressCalculator.AnnualReport(demoTask, null, ReportingPeriod.CurrentYear);
+                Assert.NotNull(recorded);
+                Assert.Equal(agency.Id, recorded!.AgencyId);
+                Assert.Equal("Admin demo", recorded.CreatedBy);
+                Assert.Equal(state == "Completed" ? ExecutionStatusEnum.CompletedOnTime : ExecutionStatusEnum.InProgressOnTime,
+                    ProgressCalculator.Evaluate(demoTask, year: ReportingPeriod.CurrentYear).Status);
+            }
+            db.ProgressLogs.RemoveRange(db.ProgressLogs.Where(p => p.GoalTaskId == demoTask.Id));
+            await db.SaveChangesAsync();
             var futureError = await Assert.ThrowsAsync<InvalidOperationException>(() => service.SubmitProgressAsync(goal.Id, new() { PeriodYear = ReportingPeriod.CurrentYear + 1, Value = 10, CreatedBy = "Admin", AgencyId = agency.Id }));
             Assert.Contains("không được lớn hơn", futureError.Message);
             var futureImport = await service.ImportProgressBulkAsync(new() { UserRole = "Admin", UserAgencyId = agency.Id, CreatedBy = "Admin", Items = new() { new() { Code = goal.Code, Value = 10, PeriodYear = ReportingPeriod.CurrentYear + 1 } } });

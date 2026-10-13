@@ -4,12 +4,14 @@ param(
     [string]$DbHost = 'localhost',
     [int]$Port = 5433,
     [string]$Username = 'postgres',
+    [string]$MaintenanceDatabase = 'postgres',
     [string]$PostgresBin = 'C:\Program Files\PostgreSQL\18\bin',
     [Parameter(Mandatory = $true)][switch]$ReplaceDatabase
 )
 $ErrorActionPreference = 'Stop'
 if (!$ReplaceDatabase) { throw 'Explicit -ReplaceDatabase is required.' }
 if ($Database -in @('postgres', 'template0', 'template1')) { throw 'System databases cannot be replaced.' }
+if ($MaintenanceDatabase -eq $Database) { throw 'Maintenance database must differ from the database being restored.' }
 $restoreTool = Join-Path $PostgresBin 'pg_restore.exe'
 $psqlTool = Join-Path $PostgresBin 'psql.exe'
 if (!(Test-Path -LiteralPath $restoreTool) -or !(Test-Path -LiteralPath $psqlTool)) {
@@ -29,7 +31,7 @@ $sql = @'
 SELECT format('DROP DATABASE %I', :'target_db') \gexec
 SELECT format('CREATE DATABASE %I TEMPLATE template0', :'target_db') \gexec
 '@
-$sql | & $psqlTool --host=$DbHost --port=$Port --username=$Username --dbname=postgres --set=ON_ERROR_STOP=1 --set="target_db=$Database"
+$sql | & $psqlTool -X --host=$DbHost --port=$Port --username=$Username --dbname=$MaintenanceDatabase --set=ON_ERROR_STOP=1 --set="target_db=$Database"
 if ($LASTEXITCODE -ne 0) { throw 'Database recreation failed. Check active connections and permissions.' }
 & $restoreTool --host=$DbHost --port=$Port --username=$Username --dbname=$Database --single-transaction --exit-on-error $archiveName
 if ($LASTEXITCODE -ne 0) { throw 'Restore failed. Keep the archive and retry after resolving the error; do not start backend.' }

@@ -743,8 +743,12 @@ namespace Cdsqg.Application.Services
                     continue;
                 }
 
-                var reportingAgency = isAdmin && task.IsGeneralTask && dto.ReportingAgencyId.HasValue
-                    ? await _context.Agencies.FindAsync(dto.ReportingAgencyId.Value)
+                // The admin's account agency is the actor's affiliation, not the
+                // executing agency of a specific assignment.
+                var reportingAgency = isAdmin
+                    ? task.IsGeneralTask
+                        ? dto.ReportingAgencyId.HasValue ? await _context.Agencies.FindAsync(dto.ReportingAgencyId.Value) : null
+                        : task.AssignedAgencyId.HasValue ? await _context.Agencies.FindAsync(task.AssignedAgencyId.Value) : task.LeadAgency
                     : userAgency ?? task.LeadAgency;
                 if (task.IsGeneralTask && (reportingAgency == null || reportingAgency.Code.StartsWith("ALL_")))
                 {
