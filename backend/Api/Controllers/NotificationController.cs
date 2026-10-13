@@ -42,7 +42,7 @@ namespace Cdsqg.Api.Controllers
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 15)
         {
-            var query = _db.Notifications.AsQueryable();
+            var query = _db.Notifications.AsNoTracking();
 
             if (isAdmin)
             {

@@ -197,4 +197,53 @@ public class ProgressCalculatorTests
     [InlineData("2026", "1,5")]
     public void BaselineRejectsRetiredPeriodsAndInvalidTargets(string key, string value)
         => Assert.Throws<InvalidOperationException>(() => ProgressCalculator.ValidateAnnualBaselines(new() { [key] = value }));
+
+    [Fact]
+    public void GeneralSnapshotUsesSameSelectedYearForEveryAgencyWithoutCarryingPriorValues()
+    {
+        var first = new Agency { Type = AgencyTypeEnum.Ministry, IsActive = true, Code = "FIRST" };
+        var second = new Agency { Type = AgencyTypeEnum.Province, IsActive = true, Code = "SECOND" };
+        var excluded = new Agency { Type = AgencyTypeEnum.Other, IsActive = true, Code = "OTHER" };
+        var item = Item(); item.IsGeneralTask = true;
+        var firstLog = Log(item, 2026, 100); firstLog.AgencyId = first.Id;
+        var secondLog = Log(item, 2027, 100); secondLog.AgencyId = second.Id;
+        item.ProgressLogs.Add(firstLog); item.ProgressLogs.Add(secondLog);
+        var agencies = new[] { first, second, excluded };
+        Assert.Equal(50m, ProgressCalculator.EvaluateOverall(item, agencies, Now, 2026).Percentage);
+        Assert.Equal(100m, ProgressCalculator.EvaluateOverall(item, agencies, Now, 2027).Percentage);
+        Assert.Equal(100m, ProgressCalculator.EvaluateOverall(item, agencies, Now, 2028).Percentage);
+    }
+
+    [Fact]
+    public void AnnualTargetAchievementDoesNotCarryButFinalAchievementDoes()
+    {
+        var item = Item(); item.ItemType = ItemTypeEnum.Goal; item.DueDate = new(2030,12,31);
+        item.CustomBaseline["2026"] = "50"; item.CustomBaseline["2030"] = "100";
+        item.ProgressLogs.Add(Log(item,2026,50));
+        Assert.Null(ProgressCalculator.Evaluate(item, year:2027, evaluatedAt:Now).ActualValue);
+        item.ProgressLogs.Add(Log(item,2027,100));
+        Assert.Equal(100m,ProgressCalculator.Evaluate(item, year:2028, evaluatedAt:Now).Percentage);
+        Assert.Equal(50m,ProgressCalculator.Evaluate(item, year:2026, evaluatedAt:Now).ActualValue);
+        item.IsOngoing=true;
+        Assert.Null(ProgressCalculator.Evaluate(item, year:2028, evaluatedAt:Now).ActualValue);
+    }
+
+    [Fact]
+    public void ProductAndDirectTaskCompletionCarryOnlyApprovedLatestRevisions()
+    {
+        var item=Item(); item.ItemType=ItemTypeEnum.Task; item.EvaluationType=EvaluationTypeEnum.Qualitative;
+        item.Deliverables.Add(new() {Id="p",Title="Product"});
+        var completed=Log(item,2026,0);completed.Deliverables=new() {new() {Id="p",CurrentStatus="Completed"}};
+        item.ProgressLogs.Add(completed);
+        Assert.Equal(100m,ProgressCalculator.Evaluate(item,year:2027,evaluatedAt:Now).Percentage);
+        var correction=Log(item,2026,0,2);correction.Deliverables=new() {new() {Id="p",CurrentStatus="Drafting"}};
+        item.ProgressLogs.Add(correction);
+        Assert.Equal(0m,ProgressCalculator.Evaluate(item,year:2027,evaluatedAt:Now).Percentage);
+        item.Deliverables.Clear(); item.ProgressLogs.Clear();
+        completed.Deliverables.Clear();completed.QualitativeStatus=TextStatusEnum.Completed;
+        item.ProgressLogs.Add(completed);
+        Assert.Equal(ExecutionStatusEnum.CompletedOnTime,ProgressCalculator.Evaluate(item,year:2027,evaluatedAt:Now).Status);
+        completed.ApprovalStatus=ApprovalStatusEnum.Pending;
+        Assert.Equal(0m,ProgressCalculator.Evaluate(item,year:2027,evaluatedAt:Now).Percentage);
+    }
 }

@@ -9,12 +9,14 @@
       class="bg-white rounded-full flex flex-col items-center justify-center font-bold text-slate-800 shadow-inner"
       :style="{ width: `${innerSize}px`, height: `${innerSize}px` }"
     >
-      <span class="font-bold text-slate-900 leading-none" :style="{ fontSize: `${fontSize}px` }">{{ total }}</span>
+      <span class="font-bold text-slate-900 leading-none" :style="{ fontSize: `${fontSize}px` }">{{ formatNumber(total) }}</span>
     </div>
   </div>
 </template>
 
 <script setup>
+import { themeColor } from "../shared/themeColors";
+import { formatNumber } from "../shared/formatters";
 import { computed } from 'vue';
 
 const props = defineProps({
@@ -52,12 +54,12 @@ const conicGradient = computed(() => {
   // 5. Đã h/t trong hạn (Emerald Green: #10b981)
   // 6. Chưa thực hiện (Slate Gray: #94a3b8)
   const segments = [
-    { count: props.stats.inProgressOverdue || 0, color: '#ef4444' }, 
-    { count: props.stats.inProgressOnTime || 0, color: '#3b82f6' },  
-    { count: props.stats.expiringSoon || 0, color: '#f59e0b' },      
-    { count: props.stats.completedOverdue || 0, color: '#14b8a6' },  
-    { count: props.stats.completedOnTime || 0, color: '#10b981' },   
-    { count: props.stats.notStarted || 0, color: '#94a3b8' }         
+    { count: props.stats.inProgressOverdue || 0, color: themeColor('rose-500') }, 
+    { count: props.stats.inProgressOnTime || 0, color: themeColor('blue-500') },  
+    { count: props.stats.expiringSoon || 0, color: themeColor('amber-500') },      
+    { count: props.stats.completedOverdue || 0, color: themeColor('teal-500') },  
+    { count: props.stats.completedOnTime || 0, color: themeColor('emerald-500') },   
+    { count: props.stats.notStarted || 0, color: themeColor('slate-400') }         
   ];
 
   let accumulatedPct = 0;

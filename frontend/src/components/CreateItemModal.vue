@@ -4,10 +4,10 @@
       
       <div class="flex justify-between items-start border-b border-slate-100 pb-3 shrink-0">
         <div>
-          <span class="text-xs font-bold uppercase tracking-wider block" :class="itemType === 'Goal' ? 'text-purple-600' : 'text-blue-600'">
-            Thêm {{ itemType === 'Goal' ? 'Mục Tiêu' : 'Nhiệm Vụ' }}
+          <span class="text-xs font-semibold block" :class="itemType === 'Goal' ? 'text-purple-600' : 'text-blue-600'">
+            Thêm {{ itemType === 'Goal' ? 'mục tiêu' : 'nhiệm vụ' }}
           </span>
-          <h3 class="text-lg font-bold text-slate-800">Thành Phần Mới Trong Quyết Định</h3>
+          <h3 class="text-lg font-bold text-slate-800">Thành phần mới trong quyết định</h3>
         </div>
         <button @click="close" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1 cursor-pointer">✕</button>
       </div>
@@ -20,19 +20,19 @@
 
         <div class="grid grid-cols-2 gap-3">
           <div>
-            <label class="text-xs font-bold text-slate-700 uppercase">Mã <span class="text-rose-500">*</span></label>
-            <input v-model="form.code" required placeholder="e.g. MT-01, NV-05" class="ui-single-line w-full text-xs font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 " />
+            <label class="text-xs font-semibold text-slate-700">Mã <span class="text-rose-500">*</span></label>
+            <input v-model="form.code" required placeholder="Ví dụ: MT-01, NV-05" class="ui-single-line w-full text-xs font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 " />
           </div>
 
           <div>
-            <label class="text-xs font-bold text-slate-700 uppercase">Phân Nhóm</label>
-            <input v-model="form.category" placeholder="Chính phủ số, Kinh tế số..." class="ui-single-line w-full text-xs font-semibold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 " />
+            <label class="text-xs font-semibold text-slate-700">Phân nhóm</label>
+            <input v-model="form.category" placeholder="Chính phủ số, kinh tế số..." class="ui-single-line w-full text-xs font-semibold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 " />
           </div>
         </div>
 
         <div>
-          <label class="text-xs font-bold text-slate-700 uppercase">
-            {{ itemType === 'Goal' ? 'Tên Mục Tiêu' : 'Tên Nhiệm Vụ' }} <span class="text-rose-500">*</span>
+          <label class="text-xs font-semibold text-slate-700">
+            {{ itemType === 'Goal' ? 'Tên mục tiêu' : 'Tên nhiệm vụ' }} <span class="text-rose-500">*</span>
           </label>
           <textarea 
             v-model="form.title" 
@@ -49,8 +49,8 @@
               v-model="form.leadAgencyId" 
               :options="leadAgencyOptions" 
               :isMulti="false" 
-              label="Đơn Vị Chủ Trì (Bộ/Ngành/Địa phương)" 
-              placeholder="-- Chọn Đơn vị Chủ trì --"
+              label="Đơn vị chủ trì (bộ/ngành/địa phương)" 
+              placeholder="-- Chọn đơn vị chủ trì --"
             />
           </div>
 
@@ -59,8 +59,8 @@
               v-model="form.assignedAgencyId" 
               :options="assignedAgencyOptions" 
               :isMulti="false" 
-              label="Giao Đơn Vị Trực Thuộc" 
-              placeholder="-- Chọn Đơn vị trực thuộc --"
+              label="Giao đơn vị trực thuộc" 
+              placeholder="-- Chọn đơn vị trực thuộc --"
               :disabled="!form.leadAgencyId || assignedAgencyOptions.length === 0"
             />
           </div>
@@ -72,8 +72,8 @@
               v-model="form.unitId" 
               :options="unitOptions" 
               :isMulti="false" 
-              label="Đơn Vị Tính" 
-              placeholder="-- Chọn Đơn vị tính --"
+              label="Đơn vị tính" 
+              placeholder="-- Chọn đơn vị tính --"
               @change="onUnitChanged"
             />
           </div>
@@ -83,7 +83,7 @@
               v-model="form.coordinatingAgencyIds" 
               :options="coordinatingAgencyOptions" 
               :isMulti="true" 
-              label="Cơ Quan Phối Hợp" 
+              label="Cơ quan phối hợp" 
               placeholder="-- Chọn các cơ quan phối hợp --"
             />
           </div>
@@ -97,23 +97,19 @@
             class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
           />
           <label for="isOngoingToggle" class="text-xs font-bold text-blue-950 cursor-pointer select-none">
-            Thời hạn thực hiện: Thường xuyên (Tự động áp dụng từ 01/01/2026 đến 31/12/2030)
+            Thời hạn thực hiện: Thường xuyên (tự động áp dụng từ 01/01/2026 đến 31/12/2030)
           </label>
         </div>
 
         <!-- Multi-Deliverables Section for Tasks -->
         <div v-if="form.itemType === 'Task'" class="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 space-y-3">
           <div class="flex items-center justify-between">
-            <label class="text-xs font-bold text-slate-800 uppercase flex items-center gap-1.5">
-              <span>📋 DANH MỤC SẢN PHẨM ĐẦU RA DỰ KIẾN</span>
+            <label class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+              <span>📋 Danh mục sản phẩm đầu ra dự kiến</span>
             </label>
-            <button 
-              type="button" 
-              @click="addDeliverable" 
-              class="ui-single-line px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs rounded-lg transition border border-blue-200 flex items-center gap-1 cursor-pointer"
-            >
-              + Thêm sản phẩm đầu ra
-            </button>
+            <ActionButton kind="create" 
+              @click="addDeliverable"
+            >Thêm sản phẩm đầu ra</ActionButton>
           </div>
 
 
@@ -125,7 +121,7 @@
               class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs space-y-2 relative"
             >
               <div class="flex items-center justify-between border-b border-slate-100 pb-1">
-                <span class="text-[11px] font-bold text-blue-800">Sản phẩm đầu ra #{{ idx + 1 }}</span>
+                <span class="text-xs font-bold text-blue-800">Sản phẩm đầu ra #{{ idx + 1 }}</span>
                 <button 
                   type="button" 
                   @click="removeDeliverable(idx)" 
@@ -137,7 +133,7 @@
 
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <div class="sm:col-span-2">
-                  <label class="text-[10px] font-bold text-slate-600">Tên sản phẩm đầu ra / Tên văn bản <span class="text-rose-500">*</span></label>
+                  <label class="text-xs font-bold text-slate-600">Tên sản phẩm đầu ra / Tên văn bản <span class="text-rose-500">*</span></label>
                   <input 
                     v-model="del.title" 
                     required 
@@ -146,7 +142,7 @@
                   />
                 </div>
                 <div>
-                  <label class="text-[10px] font-bold text-slate-600">Hạn chót sản phẩm</label>
+                  <label class="text-xs font-bold text-slate-600">Hạn chót sản phẩm</label>
                   <DatePicker v-model="del.dueDate" placeholder="dd/mm/yyyy" />
                 </div>
               </div>
@@ -158,7 +154,7 @@
           <button type="button" @click="close" class="ui-single-line px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer">Hủy</button>
           <button type="submit" :disabled="isSubmitting" class="ui-single-line px-5 py-2.5 text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-xl shadow-sm transition disabled:opacity-50 flex items-center gap-1.5 cursor-pointer">
             <span v-if="isSubmitting" class="w-3.5 h-3.5 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-            <span>{{ isSubmitting ? 'Đang lưu...' : (itemType === 'Goal' ? 'Thêm Mục Tiêu' : 'Thêm Nhiệm Vụ') }}</span>
+            <span>{{ isSubmitting ? 'Đang lưu...' : (itemType === 'Goal' ? 'Thêm mục tiêu' : 'Thêm nhiệm vụ') }}</span>
           </button>
         </div>
       </form>
@@ -168,6 +164,7 @@
 </template>
 
 <script setup>
+import ActionButton from "./ActionButton.vue";
 import { fetchWithAuth } from '../services/auth';
 
 import { ref, computed, watch, onMounted } from 'vue';

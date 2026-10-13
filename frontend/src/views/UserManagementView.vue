@@ -8,18 +8,14 @@
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
         </span>
         <div>
-          <h1 class="text-xl font-bold text-slate-800">Quản Trị Tài Khoản Người Dùng</h1>
+          <h1 class="text-xl font-bold text-slate-800">Quản trị tài khoản người dùng</h1>
           <p class="text-xs text-slate-500 mt-0.5">Quản lý danh sách tài khoản, phân quyền truy cập và gán cơ quan chủ trì</p>
         </div>
       </div>
 
-      <button 
-        @click="openAddModal" 
-        class="ui-single-line px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center gap-2 shrink-0 cursor-pointer"
-      >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg>
-        Thêm Tài Khoản Mới
-      </button>
+      <ActionButton kind="create" 
+        @click="openAddModal"
+      >Thêm tài khoản mới</ActionButton>
     </div>
 
     <!-- Unified Card Container: Search + Users Table + Attached Pagination -->
@@ -41,8 +37,8 @@
 
           <!-- OverlayPanel Advanced Filter -->
           <OverlayPanel
-            title="Lọc Tài Khoản Nâng Cao"
-            buttonText="Lọc Nâng Cao"
+            title="Lọc tài khoản nâng cao"
+            buttonText="Lọc nâng cao"
             :activeCount="activeFilterCount"
             widthClass="w-[320px] sm:w-[420px]"
             @apply="execSearch"
@@ -54,7 +50,7 @@
                   v-model="selectedRoleFilters" 
                   :options="roleOptions" 
                   :isMulti="true" 
-                  label="Phân Loại Vai Trò" 
+                  label="Phân loại vai trò" 
                   placeholder="Tất cả vai trò" 
                 />
               </div>
@@ -64,7 +60,7 @@
                   v-model="selectedAgencyFilters" 
                   :options="leadAgencyOptions" 
                   :isMulti="true" 
-                  label="Cơ Quan Chủ Trì" 
+                  label="Cơ quan chủ trì" 
                   placeholder="Tất cả cơ quan chủ trì" 
                 />
               </div>
@@ -74,7 +70,7 @@
                   v-model="selectedSubAgencyFilters" 
                   :options="subAgencyOptions" 
                   :isMulti="true" 
-                  label="Đơn Vị Trực Thuộc" 
+                  label="Đơn vị trực thuộc" 
                   placeholder="Tất cả đơn vị trực thuộc" 
                 />
               </div>
@@ -83,7 +79,7 @@
         </div>
 
         <span class="text-xs text-slate-500 font-bold shrink-0">
-          Tổng số {{ totalCount }} tài khoản
+          Tổng số {{ formatNumber(totalCount) }} tài khoản
         </span>
       </div>
 
@@ -92,15 +88,15 @@
         <LoadingSpinner v-if="isLoading" text="Đang tải danh sách tài khoản..." />
 
         <table v-else class="w-full text-left text-sm text-slate-700 border-collapse">
-          <thead class="bg-slate-100 text-xs text-slate-600 uppercase font-bold border-b border-slate-200 sticky top-0 z-10">
+          <thead class="bg-slate-100 text-xs text-slate-700 font-semibold border-b border-slate-200 sticky top-0 z-10">
             <tr>
-              <th class="px-4 py-3 border-r border-slate-200 bg-slate-100 min-w-[120px]">Tên Đăng Nhập</th>
-              <th class="px-4 py-3 border-r border-slate-200 bg-slate-100 min-w-[180px]">Họ và Tên</th>
+              <th class="px-4 py-3 border-r border-slate-200 bg-slate-100 min-w-[120px]">Tên đăng nhập</th>
+              <th class="px-4 py-3 border-r border-slate-200 bg-slate-100 min-w-[180px]">Họ và tên</th>
               <th class="px-4 py-3 border-r border-slate-200 bg-slate-100 min-w-[160px]">Email</th>
-              <th class="px-4 py-3 border-r border-slate-200 bg-slate-100 text-center min-w-[120px]">Vai Trò</th>
-              <th class="px-4 py-3 border-r border-slate-200 bg-slate-100 min-w-[180px]">Cơ Quan Chủ Trì Gán</th>
-              <th class="px-4 py-3 border-r border-slate-200 bg-slate-100 text-center min-w-[110px]">Trạng Thái</th>
-              <th class="px-4 py-3 text-center bg-slate-100 whitespace-nowrap min-w-[130px]">Thao Tác</th>
+              <th class="px-4 py-3 border-r border-slate-200 bg-slate-100 text-center min-w-[120px]">Vai trò</th>
+              <th class="px-4 py-3 border-r border-slate-200 bg-slate-100 min-w-[180px]">Cơ quan chủ trì gán</th>
+              <th class="px-4 py-3 border-r border-slate-200 bg-slate-100 text-center min-w-[110px]">Trạng thái</th>
+              <th class="px-4 py-3 text-center bg-slate-100 whitespace-nowrap min-w-[130px]">Thao tác</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
@@ -135,7 +131,7 @@
               </td>
 
               <td class="px-4 py-3 border-r border-slate-200 text-center whitespace-nowrap">
-                <span :class="['px-2.5 py-0.5 rounded-full text-[11px] font-medium', u.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800']">
+                <span :class="['px-2.5 py-0.5 rounded-full text-xs font-medium', u.isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800']">
                   {{ u.isActive ? 'Hoạt động' : 'Đã khóa' }}
                 </span>
               </td>
@@ -167,7 +163,7 @@
       <!-- Attached Pagination Bar -->
       <div class="flex flex-col md:flex-row items-center justify-between gap-3 bg-slate-50/70 p-3.5 border-t border-slate-200/80 text-xs text-slate-600 font-semibold w-full">
         <div class="flex items-center gap-3 whitespace-nowrap flex-wrap justify-center sm:justify-start">
-          <span class="whitespace-nowrap">Hiển thị <span class="font-bold text-slate-900">{{ totalCount > 0 ? (pageNumber - 1) * pageSize + 1 : 0 }} - {{ Math.min(pageNumber * pageSize, totalCount) }}</span> trên tổng số <span class="font-bold text-slate-900">{{ totalCount }}</span> tài khoản</span>
+          <span class="whitespace-nowrap">Hiển thị <span class="font-bold text-slate-900">{{ formatNumber(totalCount > 0 ? (pageNumber - 1) * pageSize + 1 : 0) }} - {{ formatNumber(Math.min(pageNumber * pageSize, totalCount)) }}</span> trên tổng số <span class="font-bold text-slate-900">{{ formatNumber(totalCount) }}</span> tài khoản</span>
           
           <div class="flex items-center gap-1.5 border-l border-slate-200 pl-3 whitespace-nowrap">
             <span class="whitespace-nowrap">Số bản ghi/trang:</span>
@@ -211,19 +207,19 @@
     <div v-if="isAddModalOpen" @click.self="isAddModalOpen = false" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
       <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-xl w-full p-6 space-y-4 font-sans">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-          <h3 class="text-base font-bold text-slate-800">Thêm Tài Khoản Mới</h3>
+          <h3 class="text-base font-bold text-slate-800">Thêm tài khoản mới</h3>
           <button @click="isAddModalOpen = false" class="text-slate-400 hover:text-slate-600 font-bold text-lg cursor-pointer">✕</button>
         </div>
 
         <form @submit.prevent="saveNewUser" class="space-y-3">
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Tên Đăng Nhập <span class="text-rose-500">*</span></label>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Tên đăng nhập <span class="text-rose-500">*</span></label>
               <input v-model="newUserForm.username" type="text" required class="ui-single-line w-full text-xs font-semibold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
             </div>
 
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Mật Khẩu <span class="text-rose-500">*</span></label>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Mật khẩu <span class="text-rose-500">*</span></label>
               <div class="relative">
                 <input 
                   v-model="newUserForm.password" 
@@ -251,12 +247,12 @@
 
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Họ và Tên <span class="text-rose-500">*</span></label>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Họ và tên <span class="text-rose-500">*</span></label>
               <input v-model="newUserForm.fullName" type="text" required class="ui-single-line w-full text-xs font-semibold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
             </div>
 
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Email</label>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Email</label>
               <input v-model="newUserForm.email" type="email" class="ui-single-line w-full text-xs font-semibold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
             </div>
           </div>
@@ -267,7 +263,7 @@
                 v-model="newUserForm.role" 
                 :options="roleModalOptions" 
                 :isMulti="false" 
-                label="Vai Trò" 
+                label="Vai trò" 
                 placeholder="Chọn vai trò"
               />
             </div>
@@ -278,7 +274,7 @@
                 :options="agencyOptions" 
                 :isMulti="false" 
                 :disabled="newUserForm.role === 'Admin'"
-                label="Cơ Quan Gán" 
+                label="Cơ quan gán" 
                 :placeholder="newUserForm.role === 'Admin' ? 'Không gán (Toàn quyền Admin)' : '-- Chọn cơ quan gán --'"
               />
             </div>
@@ -286,7 +282,7 @@
 
           <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
             <button type="button" @click="isAddModalOpen = false" class="ui-single-line px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl cursor-pointer">Hủy</button>
-            <button type="submit" class="ui-single-line px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm cursor-pointer">Tạo Tài Khoản</button>
+            <button type="submit" class="ui-single-line px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm cursor-pointer">Tạo tài khoản</button>
           </div>
         </form>
       </div>
@@ -296,24 +292,24 @@
     <div v-if="isEditModalOpen" @click.self="isEditModalOpen = false" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
       <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-xl w-full p-6 space-y-4 font-sans">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-          <h3 class="text-base font-bold text-slate-800">Chỉnh Sửa Tài Khoản: {{ editUserForm.username }}</h3>
+          <h3 class="text-base font-bold text-slate-800">Chỉnh sửa tài khoản: {{ editUserForm.username }}</h3>
           <button @click="isEditModalOpen = false" class="text-slate-400 hover:text-slate-600 font-bold text-lg cursor-pointer">✕</button>
         </div>
 
         <form @submit.prevent="saveEditUser" class="space-y-3">
           <div v-if="editUserForm.hasDataOperations" class="p-3 bg-amber-50 border border-amber-200 text-amber-800 rounded-xl text-xs font-semibold flex items-start gap-2">
             <svg class="w-4 h-4 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
-            <span>Tài khoản này đã phát sinh thao tác dữ liệu trong hệ thống, không được phép thay đổi <strong>Vai trò</strong> và <strong>Cơ quan gắn</strong>.</span>
+            <span>Tài khoản này đã phát sinh thao tác dữ liệu trong hệ thống, không được phép thay đổi <strong>Vai trò</strong> và <strong>Cơ quan gán</strong>.</span>
           </div>
 
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Họ và Tên <span class="text-rose-500">*</span></label>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Họ và tên <span class="text-rose-500">*</span></label>
               <input v-model="editUserForm.fullName" type="text" required class="ui-single-line w-full text-xs font-semibold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
             </div>
 
             <div>
-              <label class="block text-xs font-bold text-slate-700 mb-1">Email</label>
+              <label class="block text-xs font-semibold text-slate-700 mb-1">Email</label>
               <input v-model="editUserForm.email" type="email" class="ui-single-line w-full text-xs font-semibold p-2.5 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" />
             </div>
           </div>
@@ -325,7 +321,7 @@
                 :options="roleModalOptions" 
                 :isMulti="false" 
                 :disabled="editUserForm.hasDataOperations"
-                label="Vai Trò" 
+                label="Vai trò" 
                 placeholder="Chọn vai trò"
               />
             </div>
@@ -336,7 +332,7 @@
                 :options="agencyOptions" 
                 :isMulti="false" 
                 :disabled="editUserForm.role === 'Admin' || editUserForm.hasDataOperations"
-                label="Cơ Quan Gán" 
+                label="Cơ quan gán" 
                 :placeholder="editUserForm.role === 'Admin' ? 'Không gán (Toàn quyền Admin)' : '-- Chọn cơ quan gán --'"
               />
             </div>
@@ -344,12 +340,12 @@
 
           <div class="flex items-center gap-2 pt-1">
             <input type="checkbox" id="userActiveChk" v-model="editUserForm.isActive" class="rounded border-slate-300 text-blue-600 w-4 h-4 cursor-pointer" />
-            <label for="userActiveChk" class="text-xs font-bold text-slate-700 cursor-pointer">Tài khoản hoạt động (Active)</label>
+            <label for="userActiveChk" class="text-xs font-semibold text-slate-700 cursor-pointer">Tài khoản hoạt động (Active)</label>
           </div>
 
           <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
             <button type="button" @click="isEditModalOpen = false" class="ui-single-line px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl cursor-pointer">Hủy</button>
-            <button type="submit" class="ui-single-line px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm cursor-pointer">Lưu Thay Đổi</button>
+            <button type="submit" class="ui-single-line px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm cursor-pointer">Lưu thay đổi</button>
           </div>
         </form>
       </div>
@@ -359,7 +355,7 @@
     <div v-if="isResetModalOpen" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
       <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-sm w-full p-6 space-y-4 font-sans">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
-          <h3 class="text-base font-bold text-slate-800">🔑 Đặt Mật Khẩu Mới</h3>
+          <h3 class="text-base font-bold text-slate-800">🔑 Đặt mật khẩu mới</h3>
           <button @click="isResetModalOpen = false" class="text-slate-400 hover:text-slate-600 font-bold text-lg cursor-pointer">✕</button>
         </div>
 
@@ -367,7 +363,7 @@
 
         <form @submit.prevent="saveResetPassword" class="space-y-3">
           <div>
-            <label class="block text-xs font-bold text-slate-700 mb-1">Mật khẩu mới <span class="text-rose-500">*</span></label>
+            <label class="block text-xs font-semibold text-slate-700 mb-1">Mật khẩu mới <span class="text-rose-500">*</span></label>
             <div class="relative">
               <input 
                 v-model="newPasswordInput" 
@@ -394,7 +390,7 @@
 
           <div class="flex items-center justify-end gap-2 pt-3 border-t border-slate-100">
             <button type="button" @click="isResetModalOpen = false" class="ui-single-line px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl cursor-pointer">Hủy</button>
-            <button type="submit" class="ui-single-line px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-sm cursor-pointer">Cập Nhật Mật Khẩu</button>
+            <button type="submit" class="ui-single-line px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs rounded-xl shadow-sm cursor-pointer">Cập nhật mật khẩu</button>
           </div>
         </form>
       </div>
@@ -404,6 +400,8 @@
 </template>
 
 <script setup>
+import ActionButton from "../components/ActionButton.vue";
+import { formatNumber } from "../shared/formatters";
 import { formatDateTime } from '../shared/formatters';
 import { isAdminRole } from '../shared/roles';
 import { fetchWithAuth } from '../services/auth';
@@ -437,12 +435,12 @@ const activeFilterCount = computed(() => {
 
 const roleOptions = ref([
   { value: 'Admin', label: 'Quản trị viên (Admin)' },
-  { value: 'AgencyUser', label: 'Cán bộ Cơ quan/Bộ ngành' }
+  { value: 'AgencyUser', label: 'Cán bộ cơ quan / bộ ngành' }
 ]);
 
 const roleModalOptions = ref([
   { value: 'Admin', label: 'Quản trị viên (Admin)' },
-  { value: 'AgencyUser', label: 'Cán bộ Cơ quan/Bộ ngành' }
+  { value: 'AgencyUser', label: 'Cán bộ cơ quan / bộ ngành' }
 ]);
 
 const isSpecialAgencyCode = (code) => code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES' || code === 'ALL_PROVINCES_UBND' || code === 'ALL_MINISTRIES_DIRECT';

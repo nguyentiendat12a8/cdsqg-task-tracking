@@ -2,7 +2,7 @@ import { fetchWithAuth } from '../../services/auth';
 import { ref, computed } from 'vue';
 import { getApiUrl } from '../../config/api';
 
-export function useAgencyDrilldown({ dashboardFilter, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, metrics }) {
+export function useAgencyDrilldown({ reportYear, dashboardFilter, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, metrics }) {
   const selectedDrilldownAgency = ref(null);
   const subAgenciesList = ref([]);
   const isSubAgenciesLoading = ref(false);
@@ -87,6 +87,7 @@ export function useAgencyDrilldown({ dashboardFilter, selectedScopes, selectedSe
     isAgencyItemsLoading.value = true;
     try {
       const params = new URLSearchParams();
+      if (reportYear?.value) params.set('reportYear', reportYear.value);
       params.append('agencyId', agencyId);
       if (selectedScopes.value && selectedScopes.value.length === 1) {
         params.append('scope', selectedScopes.value[0]);
@@ -116,6 +117,7 @@ export function useAgencyDrilldown({ dashboardFilter, selectedScopes, selectedSe
     isSubAgenciesLoading.value = true;
     try {
       const params = new URLSearchParams();
+      if (reportYear?.value) params.set('reportYear', reportYear.value);
       params.append('parentAgencyId', parentAgencyId);
       if (dashboardFilter.value && dashboardFilter.value !== 'all') {
         const itemType = dashboardFilter.value === 'goals' ? 'Goal' : 'Task';

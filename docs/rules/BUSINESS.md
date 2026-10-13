@@ -14,6 +14,10 @@ Mục chung: đúng tập cơ quan đủ điều kiện, cùng năm, trung bình
 
 ## Phê duyệt và ghi dữ liệu
 
+Nhiệm vụ (riêng và chung) hiển thị trạng thái, không hiển thị tỷ lệ quy đổi của từng nhiệm vụ/cơ quan trong danh sách, lịch sử, duyệt, dashboard chi tiết và Excel. Mẫu Excel nhiệm vụ luôn dùng trạng thái, kể cả dữ liệu legacy có evaluationType không thống nhất. Tỷ lệ quy đổi định tính trong ProgressCalculator vẫn là dữ liệu nội bộ phục vụ quy tắc cảnh báo hiện hành; không dùng làm số kết quả người dùng nhập. Tỷ lệ số nhiệm vụ hoàn thành / tổng nhiệm vụ được giao của một đơn vị là chỉ số thống kê riêng và vẫn được hiển thị.
+
+Trang chủ và báo cáo có `reportYear`, mặc định FE là năm hiện tại, dùng chung lựa chọn khi chuyển trang. Lấy báo cáo approved mới nhất đúng cơ quan/năm, baseline đúng năm. Nếu năm chưa có báo cáo: chỉ giữ kết quả từ năm trước khi mục tiêu đã đạt chỉ tiêu cuối cùng, hoặc nhiệm vụ đã hoàn thành mọi sản phẩm/trạng thái trực tiếp; không chuyển tiến độ dở dang. Chỉ tiêu cuối cùng lấy theo năm thời hạn (hoặc năm cuối của văn bản/cấu hình chỉ tiêu nếu thiếu thời hạn), không coi đạt chỉ tiêu năm là đạt toàn bộ mục tiêu. Không áp dụng giữ hoàn thành cho mục thực hiện thường xuyên. Chỉ xét báo cáo approved trước năm được chọn và revision mới nhất mỗi năm; không lấy kết quả năm tương lai. Các mục được giao vẫn hiện trong thống kê để theo dõi phần chưa thực hiện. Sản phẩm chưa có báo cáo trong năm không lấy trạng thái từ cache năm khác. Năm đã kết thúc xét thời hạn tại 31/12 của năm đó; năm hiện tại/tương lai xét ngày hiện tại. `fromYear/toYear` vẫn là bộ lọc năm thời hạn, độc lập năm báo cáo. Truy vấn chi tiết cơ quan và xuất Excel phải truyền cùng `reportYear`; GET không sửa cache.
+
 Raw report, minh chứng, ghi chú, quyết định duyệt là dữ liệu gốc. Cache phần trăm/status/agency execution là dẫn xuất. Thay đổi baseline/report/duyệt/từ chối phải làm mới cache qua nguồn chung, không lưu công thức tại controller. Bản duyệt năm cũ không thay thế kết quả chính thức năm mới.
 
 Admin vẫn phải được xác thực; role/agency/approvedBy không lấy từ query/body để cấp quyền. FE điều khiển khả năng thấy nút, BE bắt buộc kiểm tra quyền. Không trả password/hash/token recovery qua API. Quên mật khẩu hiện thông báo tính năng đang phát triển theo yêu cầu người dùng; không tự bật quy trình gửi email.
@@ -31,3 +35,7 @@ Response phân trang `{items,totalCount,totalPages}`; query filter/sort được
 Schema đổi qua EF migration có phiên bản, PostgreSQL thật cho migration/query/transaction. InMemory chỉ test logic không phụ thuộc relational. Khởi động chỉ migrate/seed idempotent, không reset quyền/phê duyệt hoặc di chuyển toàn bộ nhiệm vụ sang văn bản khác. Seed tra unique code trước display name; tên không phải khóa. Backup trước restore/destructive migration; xác minh item/agency/report/user và config thực tế sau restore. DB dump không chứa file minh chứng vật lý; cần lưu/restore file riêng.
 
 Tham khảo chi tiết hiện hành: `ANNUAL-PROGRESS.md`, `CUMULATIVE-PROGRESS-PROPOSAL.md`, `DATABASE-MIGRATIONS.md` tại root. Nếu có mâu thuẫn, ưu tiên quyết định nghiệp vụ mới nhất của người dùng và cập nhật các tài liệu trong cùng thay đổi.
+
+## Danh tính báo cáo tiến độ
+
+Phân biệt ba đối tượng: phạm vi/cơ quan được giao (`LeadAgencyId` của mục tiêu), cơ quan thực hiện báo cáo (`AgencyId` của ProgressLog), người thao tác (`CreatedBy` từ danh tính đã xác thực). Không dùng tên cơ quan thay cho người báo cáo hoặc ghép tên cơ quan vào CreatedBy trong API lịch sử. Import của Admin cho mục tiêu chung phải chọn cơ quan cụ thể; không lưu báo cáo vào cơ quan nhóm ALL_*. Lịch sử hiển thị riêng cả ba. Bản cũ không ghi người thao tác thì không tự suy đoán để sửa audit. Form nạp báo cáo theo đúng task/cơ quan/năm và bỏ qua phản hồi tải đã cũ.

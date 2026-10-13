@@ -167,8 +167,8 @@ export function useDocumentFilters({ props, userAgencyId, agencies, rawItemsList
   const pageSizeOptions = ref([10, 25, 50, 100].map(n => ({ value: n, label: String(n) })));
 
   const scopeOptions = computed(() => [
-    { value: 'general', label: props.filterItemType === 'Goal' ? 'Mục tiêu chung (Tất cả đơn vị)' : 'Nhiệm vụ chung (Tất cả đơn vị)' },
-    { value: 'specific', label: props.filterItemType === 'Goal' ? 'Mục tiêu riêng (Đơn vị cụ thể)' : 'Nhiệm vụ riêng (Đơn vị cụ thể)' }
+    { value: 'general', label: props.filterItemType === 'Goal' ? 'Mục tiêu chung (tất cả đơn vị)' : 'Nhiệm vụ chung (tất cả đơn vị)' },
+    { value: 'specific', label: props.filterItemType === 'Goal' ? 'Mục tiêu riêng (đơn vị cụ thể)' : 'Nhiệm vụ riêng (đơn vị cụ thể)' }
   ]);
 
   const statusOptions = ref(executionStatusOptions);

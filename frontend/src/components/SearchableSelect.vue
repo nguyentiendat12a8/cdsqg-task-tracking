@@ -1,6 +1,6 @@
 <template>
   <div class="relative w-full text-left font-sans" ref="container">
-    <label v-if="label" :class="labelClass || 'text-xs font-bold text-slate-700 uppercase block mb-1'">
+    <label v-if="label" :class="labelClass || 'text-xs font-semibold text-slate-700 block mb-1'">
       {{ label }} <span v-if="required" class="text-rose-500 ml-0.5">*</span>
     </label>
     
@@ -38,7 +38,7 @@
             <span 
               v-for="item in displaySelectedItems" 
               :key="item.value"
-              class="bg-blue-50 text-blue-700 border border-blue-200/80 text-[11px] font-bold px-1.5 py-0.5 rounded-md flex items-center gap-1 shrink min-w-0 max-w-[140px] truncate"
+              class="bg-blue-50 text-blue-700 border border-blue-200/80 text-xs font-bold px-1.5 py-0.5 rounded-md flex items-center gap-1 shrink min-w-0 max-w-[140px] truncate"
               :title="item.label"
             >
               <span class="truncate">{{ item.label }}</span>
@@ -52,7 +52,7 @@
                 ×
               </button>
             </span>
-            <span v-if="selectedList.length > maxDisplayTags" class="text-[11px] font-bold text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded-md shrink-0">
+            <span v-if="selectedList.length > maxDisplayTags" class="text-xs font-bold text-slate-600 bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded-md shrink-0">
               +{{ selectedList.length - maxDisplayTags }}
             </span>
           </template>
@@ -112,7 +112,7 @@
         </div>
 
         <!-- Action helper buttons for Multi-select -->
-        <div v-if="isMulti" class="flex items-center justify-between text-[11px] px-1 font-bold border-b border-slate-100 pb-1.5">
+        <div v-if="isMulti" class="flex items-center justify-between text-xs px-1 font-bold border-b border-slate-100 pb-1.5">
           <button type="button" @click.stop="selectAll" class="text-blue-600 hover:text-blue-800 hover:underline flex items-center gap-1">
             <span>✓ Chọn tất cả</span>
           </button>

@@ -31,7 +31,7 @@
           v-if="modelValue && !disabled && !readonly" 
           type="button" 
           @click.stop="clearDate" 
-          class="w-4 h-4 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 flex items-center justify-center text-[10px] font-bold transition cursor-pointer"
+          class="w-4 h-4 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 flex items-center justify-center text-xs font-bold transition cursor-pointer"
           title="Xóa ngày" aria-label="Xóa ngày"
         >
           ✕
@@ -96,7 +96,7 @@
           <span 
             v-for="(wDay, idx) in weekDays" 
             :key="idx" 
-            class="text-[10px] font-bold uppercase tracking-wider"
+            class="text-xs font-bold uppercase tracking-wider"
             :class="idx === 6 ? 'text-rose-500' : 'text-slate-400'"
           >
             {{ wDay }}
@@ -126,7 +126,7 @@
         </div>
 
         <!-- Footer Actions -->
-        <div class="flex items-center justify-between border-t border-slate-100 pt-2.5 mt-2.5 text-[11px]">
+        <div class="flex items-center justify-between border-t border-slate-100 pt-2.5 mt-2.5 text-xs">
           <button 
             type="button" 
             @click="clearDate" 

@@ -1,7 +1,7 @@
 <template>
 <div class="flex flex-col md:flex-row items-center justify-between gap-3 bg-slate-50/70 p-3.5 border-t border-slate-200/80 text-xs text-slate-600 font-semibold w-full">
           <div class="flex items-center gap-3 whitespace-nowrap flex-wrap justify-center sm:justify-start">
-            <span class="whitespace-nowrap">Hiển thị <span class="font-bold text-slate-900">{{ totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0 }} - {{ Math.min(currentPage * pageSize, totalCount) }}</span> trên tổng số <span class="font-bold text-slate-900">{{ totalCount }}</span> {{ filterItemType === 'Goal' ? 'mục tiêu' : 'nhiệm vụ' }}</span>
+            <span class="whitespace-nowrap">Hiển thị <span class="font-bold text-slate-900">{{ formatNumber(totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0) }} - {{ formatNumber(Math.min(currentPage * pageSize, totalCount)) }}</span> trên tổng số <span class="font-bold text-slate-900">{{ formatNumber(totalCount) }}</span> {{ filterItemType === 'Goal' ? 'mục tiêu' : 'nhiệm vụ' }}</span>
 
             <div class="flex items-center gap-1.5 border-l border-slate-200 pl-3 whitespace-nowrap">
               <span class="whitespace-nowrap">Số bản ghi/trang:</span>
@@ -41,6 +41,7 @@
 </template>
 
 <script setup>
+import { formatNumber } from "../../shared/formatters";
 import SearchableSelect from '../../components/SearchableSelect.vue';
 
 defineProps([

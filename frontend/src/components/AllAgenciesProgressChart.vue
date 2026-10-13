@@ -1,63 +1,25 @@
 <template>
   <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden transition-all duration-300">
-    <!-- Header Card -->
-    <div class="p-4 flex items-center justify-between border-b border-slate-100 bg-slate-50/50">
-      <div class="flex items-center gap-3 min-w-0">
-        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-indigo-700 text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
-          📊
-        </div>
-        <div class="min-w-0">
-          <h3 class="text-base font-bold text-slate-800 leading-snug flex items-center gap-2 flex-wrap">
-            <span>Biểu đồ tổng quan {{ filterNoun }}</span>
-            <span class="text-[11px] font-semibold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-lg">
-              (Bộ, Ngành, Địa phương, Cơ quan, Doanh nghiệp)
-            </span>
-          </h3>
-        </div>
-      </div>
-
-      <div class="flex items-center gap-3 shrink-0">
-        <span class="text-xs font-bold text-indigo-700 bg-indigo-50 px-3 py-1.5 rounded-xl border border-indigo-200/60 hidden sm:inline-block">
-          {{ sortedAgencies.length }} Đơn vị được xếp hạng
-        </span>
-      </div>
-    </div>
-
-    <!-- Always Visible Body -->
+    <!-- Chart body -->
     <div class="p-4 sm:p-5 space-y-4 bg-slate-50/20">
-      <!-- Toolbar: View Mode Switch & Summary Badges -->
+      <!-- Summary badges -->
       <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200/70 shadow-2xs">
         <!-- Summary Stats -->
         <div class="flex items-center gap-3 flex-wrap text-xs font-bold">
           <span class="text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg">
-            🏢 Tổng {{ sortedAgencies.length }} đơn vị
+            🏢 Tổng {{ formatNumber(sortedAgencies.length) }} đơn vị
           </span>
           <span class="text-blue-800 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200/60">
-            📌 {{ grandTotalItems }} {{ filterNoun }}
+            📌 {{ formatNumber(grandTotalItems) }} {{ filterNoun }}
           </span>
           <span class="text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200/60">
-            ✅ {{ grandTotalCompleted }} Đã hoàn thành
+            ✅ {{ formatNumber(grandTotalCompleted) }} Đã hoàn thành
           </span>
           <span class="text-rose-800 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200/60" v-if="grandTotalOverdue > 0">
-            ⚠️ {{ grandTotalOverdue }} Quá hạn
+            ⚠️ {{ formatNumber(grandTotalOverdue) }} Quá hạn
           </span>
         </div>
 
-        <!-- Chart Type Switcher -->
-        <div class="flex items-center gap-1 bg-slate-100 p-1 rounded-xl shrink-0 text-xs font-bold">
-          <button 
-            @click.stop="chartType = 'bar'" 
-            :class="['px-3 py-1 rounded-lg transition cursor-pointer flex items-center gap-1.5', chartType === 'bar' ? 'bg-white text-indigo-700 shadow-2xs' : 'text-slate-600 hover:text-slate-900']"
-          >
-            <span>📊 Cột Chồng</span>
-          </button>
-          <button 
-            @click.stop="chartType = 'line'" 
-            :class="['px-3 py-1 rounded-lg transition cursor-pointer flex items-center gap-1.5', chartType === 'line' ? 'bg-white text-indigo-700 shadow-2xs' : 'text-slate-600 hover:text-slate-900']"
-          >
-            <span>📈 Biểu đồ Đường</span>
-          </button>
-        </div>
       </div>
 
       <!-- Chart Container -->
@@ -65,33 +27,30 @@
         <!-- Static Fixed Legend Header Bar -->
         <div class="flex flex-wrap items-center justify-end gap-2.5 bg-slate-50/90 p-3 rounded-xl border border-slate-200/70 text-xs font-semibold">
           <!-- Fixed Visible Status Legend Badges -->
-          <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-[11px] font-bold shrink-0">
-            <div v-if="chartType === 'line'" class="flex items-center gap-1.5 text-slate-700">
-              <span class="w-3 h-0.5 border-t-2 border-dashed border-indigo-600 inline-block"></span>
-              <span>Tổng {{ filterNoun }}</span>
-            </div>
+          <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs font-bold">
+
             <div class="flex items-center gap-1.5 text-slate-700">
-              <span class="w-2.5 h-2.5 rounded-full bg-[#f43f5e] inline-block"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span>
               <span>Đang t/h quá hạn</span>
             </div>
             <div class="flex items-center gap-1.5 text-slate-700">
-              <span class="w-2.5 h-2.5 rounded-full bg-[#3b82f6] inline-block"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block"></span>
               <span>Đang t/h trong hạn</span>
             </div>
             <div class="flex items-center gap-1.5 text-slate-700">
-              <span class="w-2.5 h-2.5 rounded-full bg-[#f59e0b] inline-block"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span>
               <span>Sắp tới hạn</span>
             </div>
             <div class="flex items-center gap-1.5 text-slate-700">
-              <span class="w-2.5 h-2.5 rounded-full bg-[#14b8a6] inline-block"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-teal-500 inline-block"></span>
               <span>Đã h/t quá hạn</span>
             </div>
             <div class="flex items-center gap-1.5 text-slate-700">
-              <span class="w-2.5 h-2.5 rounded-full bg-[#10b981] inline-block"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
               <span>Đã h/t trong hạn</span>
             </div>
             <div class="flex items-center gap-1.5 text-slate-700">
-              <span class="w-2.5 h-2.5 rounded-full bg-[#94a3b8] inline-block"></span>
+              <span class="w-2.5 h-2.5 rounded-full bg-slate-400 inline-block"></span>
               <span>Chưa thực hiện</span>
             </div>
           </div>
@@ -99,15 +58,15 @@
 
         <!-- Scrollable Chart Area -->
         <div class="overflow-x-auto custom-scrollbar pb-3 pt-1">
-          <div :style="{ width: dynamicChartWidth, height: '460px' }" class="relative min-w-full">
-            <Bar v-if="chartType === 'bar'" :data="chartData" :options="chartOptions" />
-            <Line v-else :data="lineChartData" :options="lineChartOptions" />
+          <div :style="{ width: dynamicChartWidth, height: '490px' }" class="relative min-w-full">
+            <Bar :data="chartData" :options="chartOptions" />
+
           </div>
         </div>
       </div>
 
       <!-- Empty State -->
-      <div v-else class="p-8 text-center text-xs text-slate-400 font-semibold italic bg-white rounded-xl border border-slate-200">
+      <div v-else class="p-8 text-center text-xs text-slate-600 font-semibold italic bg-white rounded-xl border border-slate-200">
         Không có dữ liệu đơn vị để hiển thị biểu đồ.
       </div>
     </div>
@@ -115,21 +74,21 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
-import { Bar, Line } from 'vue-chartjs';
+import { themeColor } from "../shared/themeColors";
+import { formatNumber } from "../shared/formatters";
+import { computed } from 'vue';
+import { Bar } from 'vue-chartjs';
 import {
   Chart as ChartJS,
   Title,
   Tooltip,
   Legend,
   BarElement,
-  LineElement,
-  PointElement,
   CategoryScale,
   LinearScale
 } from 'chart.js';
 
-ChartJS.register(Title, Tooltip, Legend, BarElement, LineElement, PointElement, CategoryScale, LinearScale);
+ChartJS.register(Title, Tooltip, Legend, BarElement, CategoryScale, LinearScale);
 
 const props = defineProps({
   ministriesData: { type: Array, default: () => [] },
@@ -140,8 +99,7 @@ const props = defineProps({
 
 const emit = defineEmits(['select-agency']);
 
-// Always open by default as requested
-const chartType = ref('bar'); // Default to column/bar chart as requested ('bar' or 'line')
+
 
 const filterNoun = computed(() => {
   if (props.filterType === 'goals') return 'mục tiêu';
@@ -215,9 +173,9 @@ const grandTotalOverdue = computed(() => {
 // Dynamic Chart Width based on number of agencies for horizontal scroll view
 const dynamicChartWidth = computed(() => {
   const count = sortedAgencies.value.length;
-  if (count === 0) return '100%';
-  const minWidthPerAgency = 58; // 58px per agency brings columns much closer together
-  return `${Math.max(1000, count * minWidthPerAgency)}px`;
+  if (count <= 10) return '100%';
+  const minWidthPerAgency = 84; // Compact columns; labels wrap within each category.
+  return `${Math.max(840, count * minWidthPerAgency)}px`;
 });
 
 // Helper to format short labels for X axis
@@ -238,23 +196,83 @@ function shortenName(name) {
            .replace('Thành phố Hải Phòng', 'TP. Hải Phòng')
            .replace('Thành phố Cần Thơ', 'TP. Cần Thơ')
            .replace('Thành phố Huế', 'TP. Huế')
+           .replace('Thành phố Bắc Ninh', 'TP. Bắc Ninh')
+           .replace('Thành phố Quảng Ninh', 'TP. Quảng Ninh')
+           .replace('Thành phố Đồng Nai', 'TP. Đồng Nai')
            .replace('Thành phố', 'TP.')
            .replace('Văn phòng Chính phủ', 'VP Chính phủ')
            .replace('Thanh tra Chính phủ', 'Thanh tra CP')
+           .replace('Công ty TNHH một thành viên', 'Cty TNHH MTV')
+           .replace('Công ty TNHH MTV', 'Cty TNHH MTV')
+           .replace('Công ty TNHH', 'Cty TNHH')
+           .replace('Công ty Cổ phần', 'Cty CP')
+           .replace('Tổng Công ty', 'Tổng Cty')
+           .replace('Nhà xuất bản', 'NXB')
+           .replace('Ủy ban', 'UB')
            .replace('UBND ', '');
   return str;
 }
 
-// Format X axis labels: wrap long names into 2 short lines if needed
-function formatXAxisLabel(name) {
+// Format X axis labels: wrap long names into at most 3 short lines, trailing with '...' if truncated
+function formatXAxisLabel(name, maxLines = 3, maxCharsPerLine = 10) {
   if (!name) return '';
-  let str = shortenName(name);
-  if (str.length > 8 && str.includes(' ')) {
-    const parts = str.split(' ');
-    const mid = Math.ceil(parts.length / 2);
-    return [parts.slice(0, mid).join(' '), parts.slice(mid).join(' ')];
+  const str = shortenName(name);
+  const words = str.split(/\s+/).filter(Boolean);
+  if (!words.length) return '';
+
+  const lines = [];
+  let currentLine = '';
+
+  for (let i = 0; i < words.length; i++) {
+    const word = words[i];
+
+    // If on the last allowed line, determine whether remaining words fit or require truncation
+    if (lines.length === maxLines - 1) {
+      const remainingWords = words.slice(i);
+      const fullRemaining = (currentLine ? currentLine + ' ' : '') + remainingWords.join(' ');
+      if (fullRemaining.length <= maxCharsPerLine) {
+        lines.push(fullRemaining);
+        currentLine = '';
+        break;
+      }
+
+      // Needs truncation: reserve 3 characters for '...'
+      const targetMax = Math.max(3, maxCharsPerLine - 3);
+      let lastLine = currentLine;
+      for (let j = i; j < words.length; j++) {
+        const test = lastLine ? lastLine + ' ' + words[j] : words[j];
+        if (test.length <= targetMax) {
+          lastLine = test;
+        } else {
+          if (!lastLine) {
+            lastLine = words[j].slice(0, targetMax);
+          }
+          break;
+        }
+      }
+      lines.push((lastLine ? lastLine.trim() : '') + '...');
+      currentLine = '';
+      break;
+    }
+
+    // For lines before the last line
+    if (!currentLine) {
+      currentLine = word.length <= maxCharsPerLine ? word : word.slice(0, maxCharsPerLine);
+    } else {
+      if ((currentLine + ' ' + word).length <= maxCharsPerLine) {
+        currentLine += ' ' + word;
+      } else {
+        lines.push(currentLine);
+        currentLine = word.length <= maxCharsPerLine ? word : word.slice(0, maxCharsPerLine);
+      }
+    }
   }
-  return str;
+
+  if (currentLine && lines.length < maxLines) {
+    lines.push(currentLine);
+  }
+
+  return lines;
 }
 
 // Data extraction helpers per status
@@ -271,12 +289,12 @@ const chartData = computed(() => {
   const labels = sortedAgencies.value.map(ag => formatXAxisLabel(ag.name));
 
   const datasetConfigs = [
-    { label: 'Đang t/h quá hạn', keyG: 'goalInProgressOverdue', keyT: 'taskInProgressOverdue', keyA: 'inProgressOverdue', color: '#f43f5e' },
-    { label: 'Đang t/h trong hạn', keyG: 'goalInProgressOnTime', keyT: 'taskInProgressOnTime', keyA: 'inProgressOnTime', color: '#3b82f6' },
-    { label: 'Sắp tới hạn', keyG: 'goalExpiringSoon', keyT: 'taskExpiringSoon', keyA: 'expiringSoon', color: '#f59e0b' },
-    { label: 'Đã h/t quá hạn', keyG: 'goalCompletedOverdue', keyT: 'taskCompletedOverdue', keyA: 'completedOverdue', color: '#14b8a6' },
-    { label: 'Đã h/t trong hạn', keyG: 'goalCompletedOnTime', keyT: 'taskCompletedOnTime', keyA: 'completedOnTime', color: '#10b981' },
-    { label: 'Chưa thực hiện', keyG: 'goalNotStarted', keyT: 'taskNotStarted', keyA: 'notStarted', color: '#94a3b8' }
+    { label: 'Đang t/h quá hạn', keyG: 'goalInProgressOverdue', keyT: 'taskInProgressOverdue', keyA: 'inProgressOverdue', color: themeColor('rose-500') },
+    { label: 'Đang t/h trong hạn', keyG: 'goalInProgressOnTime', keyT: 'taskInProgressOnTime', keyA: 'inProgressOnTime', color: themeColor('blue-500') },
+    { label: 'Sắp tới hạn', keyG: 'goalExpiringSoon', keyT: 'taskExpiringSoon', keyA: 'expiringSoon', color: themeColor('amber-500') },
+    { label: 'Đã h/t quá hạn', keyG: 'goalCompletedOverdue', keyT: 'taskCompletedOverdue', keyA: 'completedOverdue', color: themeColor('teal-500') },
+    { label: 'Đã h/t trong hạn', keyG: 'goalCompletedOnTime', keyT: 'taskCompletedOnTime', keyA: 'completedOnTime', color: themeColor('emerald-500') },
+    { label: 'Chưa thực hiện', keyG: 'goalNotStarted', keyT: 'taskNotStarted', keyA: 'notStarted', color: themeColor('slate-400') }
   ];
 
   const datasets = datasetConfigs.map(cfg => ({
@@ -292,53 +310,8 @@ const chartData = computed(() => {
   return { labels, datasets };
 });
 
-// 2. Line Chart Data
-const lineChartData = computed(() => {
-  const labels = sortedAgencies.value.map(ag => formatXAxisLabel(ag.name));
-
-  const datasetConfigs = [
-    { label: 'Đang t/h quá hạn', keyG: 'goalInProgressOverdue', keyT: 'taskInProgressOverdue', keyA: 'inProgressOverdue', color: '#f43f5e' },
-    { label: 'Đang t/h trong hạn', keyG: 'goalInProgressOnTime', keyT: 'taskInProgressOnTime', keyA: 'inProgressOnTime', color: '#3b82f6' },
-    { label: 'Sắp tới hạn', keyG: 'goalExpiringSoon', keyT: 'taskExpiringSoon', keyA: 'expiringSoon', color: '#f59e0b' },
-    { label: 'Đã h/t quá hạn', keyG: 'goalCompletedOverdue', keyT: 'taskCompletedOverdue', keyA: 'completedOverdue', color: '#14b8a6' },
-    { label: 'Đã h/t trong hạn', keyG: 'goalCompletedOnTime', keyT: 'taskCompletedOnTime', keyA: 'completedOnTime', color: '#10b981' },
-    { label: 'Chưa thực hiện', keyG: 'goalNotStarted', keyT: 'taskNotStarted', keyA: 'notStarted', color: '#94a3b8' }
-  ];
-
-  const datasets = datasetConfigs.map(cfg => ({
-    label: cfg.label,
-    data: getStatValues(cfg.keyG, cfg.keyT, cfg.keyA),
-    borderColor: cfg.color,
-    backgroundColor: cfg.color,
-    tension: 0.3,
-    pointRadius: 4,
-    pointHoverRadius: 7,
-    borderWidth: 2.5
-  }));
-
-  // Add Total Items Line
-  const totalValues = sortedAgencies.value.map(ag => {
-    if (props.filterType === 'goals') return ag.totalGoals ?? ag.totalItems ?? 0;
-    if (props.filterType === 'tasks') return ag.totalTasks ?? ag.totalItems ?? 0;
-    return ag.totalItems ?? 0;
-  });
-
-  datasets.unshift({
-    label: `Tổng số ${filterNoun.value}`,
-    data: totalValues,
-    borderColor: '#6366f1',
-    backgroundColor: '#6366f1',
-    borderDash: [5, 5],
-    tension: 0.3,
-    pointRadius: 5,
-    pointHoverRadius: 8,
-    borderWidth: 3
-  });
-
-  return { labels, datasets };
-});
-
 const sharedOptions = computed(() => ({
+  locale: 'vi-VN',
   responsive: true,
   maintainAspectRatio: false,
   onClick: (event, elements) => {
@@ -359,7 +332,7 @@ const sharedOptions = computed(() => ({
       titleColor: '#f8fafc',
       bodyColor: '#e2e8f0',
       titleFont: { size: 12, weight: 'bold' },
-      bodyFont: { size: 11 },
+      bodyFont: { size: 12 },
       padding: 10,
       cornerRadius: 8,
       callbacks: {
@@ -374,7 +347,7 @@ const sharedOptions = computed(() => ({
           tooltipItems.forEach(item => {
             sum += item.parsed.y || 0;
           });
-          return `Tổng số ${filterNoun.value}: ${sum}`;
+          return `Tổng số ${filterNoun.value}: ${formatNumber(sum)}`;
         }
       }
     }
@@ -388,8 +361,8 @@ const chartOptions = computed(() => ({
       stacked: true,
       grid: { display: false },
       ticks: {
-        font: { size: 11, weight: 'bold' },
-        color: '#1e293b',
+        font: { size: 12, weight: '600', lineHeight: 1.25 },
+        color: '#334155',
         maxRotation: 0,
         minRotation: 0,
         autoSkip: false,
@@ -401,7 +374,7 @@ const chartOptions = computed(() => ({
       beginAtZero: true,
       ticks: {
         precision: 0,
-        font: { size: 11, weight: '600' },
+        font: { size: 12, weight: '600' },
         color: '#64748b'
       },
       grid: { color: '#f1f5f9' }
@@ -409,29 +382,4 @@ const chartOptions = computed(() => ({
   }
 }));
 
-const lineChartOptions = computed(() => ({
-  ...sharedOptions.value,
-  scales: {
-    x: {
-      grid: { display: false },
-      ticks: {
-        font: { size: 11, weight: 'bold' },
-        color: '#1e293b',
-        maxRotation: 0,
-        minRotation: 0,
-        autoSkip: false,
-        padding: 6
-      }
-    },
-    y: {
-      beginAtZero: true,
-      ticks: {
-        precision: 0,
-        font: { size: 11, weight: '600' },
-        color: '#64748b'
-      },
-      grid: { color: '#f1f5f9' }
-    }
-  }
-}));
 </script>

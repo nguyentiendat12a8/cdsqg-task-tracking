@@ -39,8 +39,8 @@ export function useDashboardFilters({ agencies, loadDashboardMetrics }) {
   ]);
 
   const scopeOptions = ref([
-    { value: 'general', label: 'Phạm vi Chung (Tất cả đơn vị)' },
-    { value: 'specific', label: 'Phạm vi Riêng (Đơn vị cụ thể)' }
+    { value: 'general', label: 'Phạm vi chung (tất cả đơn vị)' },
+    { value: 'specific', label: 'Phạm vi riêng (đơn vị cụ thể)' }
   ]);
 
   const activeDashboardFilterCount = computed(() => {

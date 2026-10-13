@@ -14,6 +14,9 @@ for (const file of await files(root)) {
   if (file.endsWith('.vue') && !file.endsWith(`${path.sep}DatePicker.vue`)) {
     assert.ok(!/<select\b/.test(source), `Use SearchableSelect for business dropdowns: ${file}`);
   }
+  if (file.endsWith('.vue')) {
+    assert.ok(!/text-\[(?:9(?:\.5)?|10(?:\.5)?|11|13)px\]/.test(source), `Use the shared 12px text scale: ${file}`);
+  }
   if (!file.includes(`${path.sep}shared${path.sep}`)) {
     assert.ok(!/^\s*(?:export )?function (?:formatDate|formatDateTime|formatFileName|getStatusLabel)\(/m.test(source), `Use shared formatter/status module: ${file}`);
   }

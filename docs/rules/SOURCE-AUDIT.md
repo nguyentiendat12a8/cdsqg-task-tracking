@@ -49,3 +49,7 @@ ProgressCalculator xử lý baseline/tỷ lệ/hoàn thành/thời hạn/agency 
 ## Còn cần kiểm kê theo workflow riêng
 
 Không áp dụng cỡ chữ hàng loạt cho mọi text legacy: các card/dashboard và modal ít dùng còn cỡ 10–11px cần chuyển theo vai trò, có visual regression. Full metadata API, scope tổng hợp dashboard/import, tách các workflow transaction lớn và dọn package cần các thay đổi tiếp theo có test riêng. Chưa coi toàn bộ UI đạt screen reader chỉ từ test bàn phím hiện có.
+
+13/10/2026: Thêm bản đồ 34 tỉnh và KPI lãnh đạo; tỷ lệ hoàn thành số mục được cung cấp bởi BE, null khi chưa có mục. Seed ProvinceCatalog bổ sung thiếu và giữ ID cũ; danh mục tỉnh khóa tạo/sửa danh tính/xóa qua AgencyController và FE nhận IsFixedProvince. Không tự chuyển dữ liệu từ tỉnh cũ hoặc xóa cơ quan legacy.
+
+13/10/2026: Sửa QPPL, lịch sử thông báo/nạp dữ liệu xuất trang hiện tại thành xuất toàn bộ theo query danh sách. Browser test đọc lại XLSX 101 dòng/2 trang, server giới hạn pageSize, giữ bộ lọc tìm kiếm, desktop/mobile, trang sau lỗi không tạo file thiếu. Kế hoạch đơn vị dùng API agencies không phân trang; báo cáo tổng hợp dùng tập đầy đủ trước slice; dashboard dùng endpoint agency-items không phân trang. Sửa thẻ div đóng thiếu sẵn có trong UrgeHistoryView để kiểm chứng luồng này.

@@ -4,7 +4,7 @@ import { buildDashboardQuery } from './queries';
 import { getApiUrl } from '../../config/api';
 import { authState } from '../../services/auth';
 
-export function useDashboardMetrics({ dashboardFilter, selectedAgencyIds, selectedSubAgencyIds, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, isSpecialAgencyCode }) {
+export function useDashboardMetrics({ reportYear, dashboardFilter, selectedAgencyIds, selectedSubAgencyIds, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, isSpecialAgencyCode }) {
   const isLoading = ref(false);
   const metrics = ref({
     totalGoals: 0,
@@ -88,11 +88,6 @@ export function useDashboardMetrics({ dashboardFilter, selectedAgencyIds, select
   const isProvincesExpanded = ref(false);
   const isOthersExpanded = ref(false);
   const isSubAgenciesExpanded = ref(false);
-
-  const isSection1Collapsed = ref(true);
-  const isSection2Collapsed = ref(true);
-  const isSection3Collapsed = ref(true);
-  const isSection4Collapsed = ref(true);
 
   function filterOutSpecialAgencies(list) {
     return (list || []).filter(item => {
@@ -252,13 +247,17 @@ export function useDashboardMetrics({ dashboardFilter, selectedAgencyIds, select
 
   const loadError = ref('');
   let requestVersion = 0;
-  onUnmounted(() => { requestVersion++; });
+  let requestController;
+  onUnmounted(() => { requestVersion++; requestController?.abort(); });
 
   async function loadDashboardMetrics() {
     const version = ++requestVersion;
+    requestController?.abort();
+    const controller = requestController = new AbortController();
     isLoading.value = true;
     loadError.value = '';
     const filters = {
+      reportYear: reportYear?.value,
       dashboardFilter: dashboardFilter.value,
       selectedScopes: selectedScopes.value,
       selectedSections: selectedSections.value,
@@ -272,7 +271,7 @@ export function useDashboardMetrics({ dashboardFilter, selectedAgencyIds, select
     if (!authState.isAdmin.value && userId && ids.length === 0) ids.push(userId);
     async function fetchMetrics(options) {
       const query = buildDashboardQuery(filters, options);
-      const response = await fetchWithAuth(getApiUrl('/api/dashboard/metrics?' + query));
+      const response = await fetchWithAuth(getApiUrl('/api/dashboard/metrics?' + query), { signal: controller.signal });
       if (!response.ok) throw new Error('Cannot load dashboard metrics');
       return response.json();
     }
@@ -315,10 +314,6 @@ export function useDashboardMetrics({ dashboardFilter, selectedAgencyIds, select
   isProvincesExpanded,
   isOthersExpanded,
   isSubAgenciesExpanded,
-  isSection1Collapsed,
-  isSection2Collapsed,
-  isSection3Collapsed,
-  isSection4Collapsed,
   filterOutSpecialAgencies,
   getAgencySortCount,
   sortAgenciesByCount,

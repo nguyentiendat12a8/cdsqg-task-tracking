@@ -23,11 +23,12 @@ namespace Cdsqg.Api.Controllers
         /// Trả về toàn bộ Goals (1A) & Tasks (1B) thuộc Quyết định để Vue frontend render bảng chỉ tiêu động (2026-2030)
         /// </summary>
         [HttpGet("documents/{id:guid}/grid")]
-        public async Task<IActionResult> GetDocumentPlanningGrid(Guid id, [FromQuery] Guid? agencyId = null)
+        public async Task<IActionResult> GetDocumentPlanningGrid(Guid id, [FromQuery] Guid? agencyId = null, [FromQuery] int? reportYear = null)
         {
             try
             {
-                var gridData = await _planningService.GetDocumentPlanningGridAsync(id, agencyId);
+                if (reportYear.HasValue && reportYear.Value is < 1900 or > 9999) return BadRequest("Năm báo cáo không hợp lệ.");
+                var gridData = await _planningService.GetDocumentPlanningGridAsync(id, agencyId, reportYear);
                 return Ok(gridData);
             }
             catch (KeyNotFoundException ex)

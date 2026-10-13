@@ -42,3 +42,9 @@ Không chia sẻ state mutable giữa người dùng/request. Request FE dùng a
 
 So sánh semantics trước: null, 0, timezone, agency scope, năm, pending, baseline. Viết hợp đồng và fixture cho những khác biệt có ý nghĩa, đưa hàm về chủ sở hữu, chuyển caller, xóa bản sao. Mapping DTO khác nhau thì viết adapter nhỏ. Không gom hàm chỉ vì có đoạn code giống nhau nếu một bên làm việc với mục định tính, bên kia văn bản pháp lý.
 
+
+Dashboard địa phương: ProvinceCatalog (BE) là danh mục cố định 34 tỉnh/thành và seed chỉ bổ sung thiếu; AgencyStatusSummaryDto trả tỷ lệ số mục hoàn thành. ProvinceProgressMap lazy load đường biên 34 tỉnh, chỉ hiển thị tỷ lệ BE và dùng drilldown chung.
+
+13/10/2026: ProvinceCatalog chuẩn hóa tên để kiểm tra tồn tại (không dấu, hoa/thường, khoảng trắng và tiền tố UBND/tỉnh/TP/Thành phố). Seed chỉ thêm địa phương thiếu với tên ngắn, không sửa bản ghi production đã có. DisplayName cung cấp tên ngắn cho API danh mục/dashboard; giữ nguyên ID, mã và tên lưu trữ legacy.
+
+13/10/2026: services/exportData.loadAllExportPages là nguồn FE tải đầy đủ trang cho xuất danh sách mục tiêu/nhiệm vụ, QPPL, lịch sử thông báo và lịch sử nạp dữ liệu. Caller giữ query đã áp dụng; loader chỉ thay pageNumber/pageSize, kiểm tra totalCount, ID trùng và lỗi trang sau, không xuất file thiếu dòng. QPPL/hai lịch sử lưu URL từ lần tải danh sách thành công để không xuất theo draft chưa áp dụng.

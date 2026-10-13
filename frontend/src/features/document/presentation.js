@@ -1,9 +1,13 @@
-import { formatPercent } from '../../shared/formatters';
+import { formatPercent, formatNumber, formatMeasuredValue } from '../../shared/formatters';
+import { getStatusLabel } from '../../shared/statusPresentation';
 export { formatDate, formatDateTime, formatDateRange, formatFileName } from '../../shared/formatters';
 export { getStatusLabel, getStatusBadgeClass } from '../../shared/statusPresentation';
 export { isGeneralTaskItem as isGeneralTaskOrAllAgencies } from '../../shared/agencyPresentation';
 export function formatProgressDisplay(item) {
   if (!item) return '—';
+  if (item.itemType === 'Task' || item.itemType === 2 || item.itemType === '2') {
+    return getStatusLabel(item.calculatedStatus || item.latestProgressStatus || 'NotStarted');
+  }
 
   if (item.completionPercentage !== null && item.completionPercentage !== undefined) {
     return formatPercent(item.completionPercentage);
@@ -12,9 +16,9 @@ export function formatProgressDisplay(item) {
   if (item.latestProgressValue !== null && item.latestProgressValue !== undefined) {
     const unit = item.unitName || item.unit?.name || '%';
     if (unit === 'Số lượng') {
-      return `${item.latestProgressValue}`;
+      return formatNumber(item.latestProgressValue);
     }
-    return `${item.latestProgressValue} ${unit}`;
+    return formatMeasuredValue(item.latestProgressValue, unit);
   }
 
   if (item.evaluationType === 'Qualitative' || item.evaluationType === 2 || item.evaluationType === '2') {

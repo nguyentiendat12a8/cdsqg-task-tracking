@@ -63,6 +63,7 @@ public sealed class ApiPermissionFilter(AppDbContext db) : IAsyncActionFilter
         {
             bulk.UserRole = admin ? "Admin" : "AgencyUser";
             bulk.UserAgencyId = agencyId;
+            bulk.CreatedBy = user.FindFirstValue("FullName") ?? user.Identity?.Name ?? "Người dùng đã xác thực";
             if (!admin && !agencyId.HasValue) { context.Result = new ForbidResult(); return; }
         }
 

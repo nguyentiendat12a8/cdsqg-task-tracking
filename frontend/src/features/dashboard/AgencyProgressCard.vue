@@ -15,7 +15,7 @@
     </div>
     <div class="flex items-center gap-3 py-0.5 w-full">
       <MiniStatusDonut :stats="item" :size="84" :innerSize="54" :fontSize="18" />
-      <div class="flex-1 min-w-0 space-y-1 text-[10px] font-bold">
+      <div class="flex-1 min-w-0 space-y-1 text-xs font-bold">
         <div v-for="status in statuses" v-show="status.key !== 'notStarted' || item.notStarted > 0" :key="status.key" class="flex items-center justify-between gap-1.5">
           <span class="flex items-center gap-1.5 min-w-0">
             <span :class="['w-2.5 h-2.5 rounded-full shrink-0', status.color]"></span>
@@ -25,15 +25,16 @@
         </div>
       </div>
     </div>
-    <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-[10px] text-slate-500 font-bold w-full">
-      <span v-if="dashboardFilter === 'goals'" class="text-purple-800 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200/60">🎯 {{ item.totalGoals || 0 }} Mục tiêu</span>
-      <span v-else class="text-blue-800 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200/60">📋 {{ item.totalTasks || 0 }} Nhiệm vụ</span>
+    <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-bold w-full">
+      <span v-if="dashboardFilter === 'goals'" class="text-purple-800 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200/60">🎯 {{ formatNumber(item.totalGoals || 0) }} mục tiêu</span>
+      <span v-else class="text-blue-800 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-200/60">📋 {{ formatNumber(item.totalTasks || 0) }} nhiệm vụ</span>
       <span class="text-blue-600 group-hover:underline">Chi tiết →</span>
     </div>
   </button>
 </template>
 
 <script setup>
+import { formatNumber } from "../../shared/formatters";
 import { computed } from 'vue';
 import MiniStatusDonut from '../../components/MiniStatusDonut.vue';
 

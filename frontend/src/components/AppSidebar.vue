@@ -25,7 +25,7 @@
             <img src="/logo-cds.jpg" alt="Logo Cục Chuyển đổi số" class="w-10 h-10 rounded-xl object-cover shrink-0 shadow-lg border border-slate-700/50 bg-white" />
             <div class="flex flex-col whitespace-nowrap overflow-hidden">
               <span class="font-bold text-white text-xs tracking-wider">CĐS QUỐC GIA</span>
-              <span class="text-[10px] text-blue-400 font-bold">Quyết định 1266/QĐ-TTg</span>
+              <span class="text-xs text-blue-400 font-bold">Quyết định 1266/QĐ-TTg</span>
             </div>
           </div>
 
@@ -72,12 +72,12 @@
           :class="[
             'w-full flex items-center gap-3 py-3 rounded-xl font-bold text-xs transition-all duration-200 whitespace-nowrap overflow-hidden cursor-pointer',
             isCollapsed ? 'justify-center px-0 w-12 h-12 mx-auto' : 'px-3',
-            activeTab === 'dashboard' ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+            activeTab === 'dashboard' ? 'bg-blue-600 text-white ' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
           ]"
-          :title="isCollapsed ? 'Trang Chủ' : ''"
+          :title="isCollapsed ? 'Trang chủ' : ''"
         >
           <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/></svg>
-          <span v-if="!isCollapsed" class="truncate">Trang Chủ</span>
+          <span v-if="!isCollapsed" class="truncate">Trang chủ</span>
         </button>
 
         <!-- Submenu: Mục tiêu (Goals) - Dropdown for Admin, Direct Button for Level 2/3 -->
@@ -87,13 +87,13 @@
             :class="[
               'w-full flex items-center justify-between py-3 rounded-xl font-bold text-xs transition-all duration-200 whitespace-nowrap overflow-hidden cursor-pointer',
               isCollapsed ? 'justify-center px-0 w-12 h-12 mx-auto' : 'px-3',
-              activeTab.startsWith('goals') ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+              activeTab.startsWith('goals') ? 'bg-blue-600 text-white ' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
             ]"
-            :title="isCollapsed ? 'Mục Tiêu' : ''"
+            :title="isCollapsed ? 'Mục tiêu' : ''"
           >
             <div class="flex items-center gap-3 truncate">
               <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-              <span v-if="!isCollapsed" class="truncate">Mục Tiêu</span>
+              <span v-if="!isCollapsed" class="truncate">Mục tiêu</span>
             </div>
             <svg v-if="!isCollapsed" class="w-4 h-4 transition-transform shrink-0" :class="{ 'rotate-180': isGoalsOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
           </button>
@@ -120,12 +120,12 @@
           :class="[
             'w-full flex items-center gap-3 py-3 rounded-xl font-bold text-xs transition-all duration-200 whitespace-nowrap overflow-hidden cursor-pointer',
             isCollapsed ? 'justify-center px-0 w-12 h-12 mx-auto' : 'px-3',
-            ['goals', 'goals-list', 'goals-grid'].includes(activeTab) ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+            ['goals', 'goals-list', 'goals-grid'].includes(activeTab) ? 'bg-blue-600 text-white ' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
           ]"
-          :title="isCollapsed ? 'Mục Tiêu' : ''"
+          :title="isCollapsed ? 'Mục tiêu' : ''"
         >
           <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
-          <span v-if="!isCollapsed" class="truncate">Mục Tiêu</span>
+          <span v-if="!isCollapsed" class="truncate">Mục tiêu</span>
         </button>
 
         <!-- Nhiệm vụ (Tasks) -->
@@ -134,12 +134,12 @@
           :class="[
             'w-full flex items-center gap-3 py-3 rounded-xl font-bold text-xs transition-all duration-200 whitespace-nowrap overflow-hidden cursor-pointer',
             isCollapsed ? 'justify-center px-0 w-12 h-12 mx-auto' : 'px-3',
-            ['tasks', 'tasks-list', 'tasks-grid'].includes(activeTab) ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+            ['tasks', 'tasks-list', 'tasks-grid'].includes(activeTab) ? 'bg-blue-600 text-white ' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
           ]"
-          :title="isCollapsed ? 'Nhiệm Vụ' : ''"
+          :title="isCollapsed ? 'Nhiệm vụ' : ''"
         >
           <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
-          <span v-if="!isCollapsed" class="truncate">Nhiệm Vụ</span>
+          <span v-if="!isCollapsed" class="truncate">Nhiệm vụ</span>
         </button>
 
         <!-- Báo cáo (Reports) - Admin only -->
@@ -149,12 +149,12 @@
           :class="[
             'w-full flex items-center gap-3 py-3 rounded-xl font-bold text-xs transition-all duration-200 whitespace-nowrap overflow-hidden cursor-pointer',
             isCollapsed ? 'justify-center px-0 w-12 h-12 mx-auto' : 'px-3',
-            activeTab === 'reports' ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+            activeTab === 'reports' ? 'bg-blue-600 text-white ' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
           ]"
-          :title="isCollapsed ? 'Báo Cáo' : ''"
+          :title="isCollapsed ? 'Báo cáo' : ''"
         >
           <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-          <span v-if="!isCollapsed" class="truncate">Báo Cáo</span>
+          <span v-if="!isCollapsed" class="truncate">Báo cáo</span>
         </button>
 
         <!-- Văn bản QPPL -->
@@ -163,7 +163,7 @@
           :class="[
             'w-full flex items-center gap-3 py-3 rounded-xl font-bold text-xs transition-all duration-200 whitespace-nowrap overflow-hidden cursor-pointer',
             isCollapsed ? 'justify-center px-0 w-12 h-12 mx-auto' : 'px-3',
-            activeTab === 'legal-documents' ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+            activeTab === 'legal-documents' ? 'bg-blue-600 text-white ' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
           ]"
           :title="isCollapsed ? 'Văn bản QPPL' : ''"
         >
@@ -179,7 +179,7 @@
           :class="[
             'w-full flex items-center gap-3 py-3 rounded-xl font-bold text-xs transition-all duration-200 whitespace-nowrap overflow-hidden cursor-pointer',
             isCollapsed ? 'justify-center px-0 w-12 h-12 mx-auto' : 'px-3',
-            activeTab === 'agency-plans' ? 'bg-blue-600 text-white shadow-md shadow-blue-600/30' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
+            activeTab === 'agency-plans' ? 'bg-blue-600 text-white ' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
           ]"
           :title="isCollapsed ? 'Đầu mối liên hệ và KH CĐS' : ''"
         >
@@ -198,11 +198,11 @@
               isCollapsed ? 'justify-center px-0 w-12 h-12 mx-auto' : 'px-3',
               ['agencies', 'units', 'users', 'import-history', 'settings', 'master-data'].includes(activeTab) ? 'bg-slate-800 text-blue-400' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200'
             ]"
-            :title="isCollapsed ? 'Thiết Lập Chung' : ''"
+            :title="isCollapsed ? 'Thiết lập chung' : ''"
           >
             <div class="flex items-center gap-3 truncate">
               <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-              <span v-if="!isCollapsed" class="truncate">Thiết Lập Chung</span>
+              <span v-if="!isCollapsed" class="truncate">Thiết lập chung</span>
             </div>
             <svg v-if="!isCollapsed" class="w-4 h-4 transition-transform shrink-0" :class="{ 'rotate-180': isSettingsOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
           </button>
@@ -214,27 +214,27 @@
               @click="selectTab('agencies')"
               :class="['w-full text-left py-2 px-3 rounded-lg text-xs font-semibold transition whitespace-nowrap cursor-pointer', activeTab === 'agencies' ? 'text-blue-400 bg-slate-800' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50']"
             >
-              Danh mục Cơ quan
+              Danh mục cơ quan
             </button>
             <button 
               v-if="false"
               @click="selectTab('units')"
               :class="['w-full text-left py-2 px-3 rounded-lg text-xs font-semibold transition whitespace-nowrap cursor-pointer', activeTab === 'units' ? 'text-blue-400 bg-slate-800' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50']"
             >
-              Danh mục Đơn vị tính
+              Danh mục đơn vị tính
             </button>
             <button 
               v-if="authState.isAdmin.value"
               @click="selectTab('users')"
               :class="['w-full text-left py-2 px-3 rounded-lg text-xs font-semibold transition whitespace-nowrap cursor-pointer', activeTab === 'users' ? 'text-blue-400 bg-slate-800' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50']"
             >
-              Quản lý Tài khoản
+              Quản lý tài khoản
             </button>
             <button 
               @click="selectTab('import-history')"
               :class="['w-full text-left py-2 px-3 rounded-lg text-xs font-semibold transition whitespace-nowrap cursor-pointer', activeTab === 'import-history' ? 'text-blue-400 bg-slate-800' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50']"
             >
-              Lịch sử Nạp Dữ liệu File
+              Lịch sử nạp dữ liệu file
             </button>
           </div>
         </div>
@@ -244,7 +244,7 @@
       <!-- Footer user role badge -->
       <div v-if="!isCollapsed" class="p-4 border-t border-slate-800 text-xs text-slate-500 font-medium whitespace-nowrap overflow-hidden">
         <div>Đơn vị vận hành</div>
-        <div class="text-slate-300 font-bold truncate">Phòng Chính Sách Số - Cục CĐSQG</div>
+        <div class="text-slate-300 font-bold truncate">Phòng Chính sách số - Cục Chuyển đổi số quốc gia</div>
       </div>
     </aside>
   </div>

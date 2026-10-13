@@ -12,6 +12,11 @@ export function formatPercent(value) {
   const text = formatNumber(value);
   return text === '—' ? text : `${text}%`;
 }
+export function formatMeasuredValue(value, unitName = '%') {
+  const text = formatNumber(value);
+  if (text === '—') return text;
+  return unitName === '%' ? `${text}%` : `${text}${unitName ? ` ${unitName}` : ''}`;
+}
 export function formatDate(value) {
   if (!value) return '—';
   const text = String(value).trim();

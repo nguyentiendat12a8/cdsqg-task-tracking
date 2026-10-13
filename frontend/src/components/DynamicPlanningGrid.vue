@@ -39,7 +39,7 @@
                 v-model="filterDraft.selectedAgencyIds" 
                 :options="leadAgencyOptions" 
                 :isMulti="true" 
-                label="Cơ Quan Chủ Trì" 
+                label="Cơ quan chủ trì" 
                 placeholder="Tất cả cơ quan chủ trì"
               />
             </div>
@@ -50,7 +50,7 @@
                 v-model="filterDraft.selectedSubAgencyIds" 
                 :options="subAgencyOptions" 
                 :isMulti="true" 
-                label="Đơn Vị Trực Thuộc" 
+                label="Đơn vị trực thuộc" 
                 placeholder="Tất cả đơn vị trực thuộc"
               />
             </div>
@@ -62,7 +62,7 @@
                   v-model="filterDraft.selectedScopes" 
                   :options="gridScopeOptions" 
                   :isMulti="true" 
-                  label="Phạm Vi" 
+                  label="Phạm vi" 
                   placeholder="Tất cả phạm vi"
                 />
               </div>
@@ -72,7 +72,7 @@
                   v-model="filterDraft.selectedStatuses" 
                   :options="gridStatusOptions" 
                   :isMulti="true" 
-                  label="Trạng Thái Tiến Độ" 
+                  label="Trạng thái tiến độ" 
                   placeholder="Tất cả trạng thái"
                 />
               </div>
@@ -95,7 +95,7 @@
                 v-model="filterDraft.selectedGroups" 
                 :options="groupFilterOptions" 
                 :isMulti="true" 
-                label="Nhóm Trọng Tâm" 
+                label="Nhóm trọng tâm" 
                 placeholder="Tất cả nhóm"
               />
             </div>
@@ -103,8 +103,8 @@
             <!-- Year Range Filter -->
             <div>
               <div class="flex items-center justify-between mb-1">
-                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Giai Đoạn</label>
-                <label class="inline-flex items-center gap-1 cursor-pointer text-[10px] font-bold text-blue-700">
+                <label class="text-xs font-semibold text-slate-700 block">Giai đoạn</label>
+                <label class="inline-flex items-center gap-1 cursor-pointer text-xs font-bold text-blue-700">
                   <input type="checkbox" v-model="filterDraft.onlyOngoing" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3 h-3">
                   Thường xuyên
                 </label>
@@ -139,14 +139,14 @@
     <div v-else class="border border-slate-200/80 rounded-2xl bg-white overflow-hidden shadow-sm flex flex-col w-full">
       <div class="overflow-x-auto overflow-y-auto max-h-[calc(100vh-340px)] custom-scrollbar w-full max-w-full relative">
         <table class="w-full text-left text-sm text-slate-700 border-collapse">
-          <thead class="bg-slate-100 text-xs text-slate-600 uppercase font-bold border-b border-slate-200">
+          <thead class="bg-slate-100 text-xs text-slate-700 font-semibold border-b border-slate-200">
             <tr>
               <!-- STICKY FROZEN COLUMNS 1, 2, 3 -->
               <th class="px-3 py-2.5 border-r border-slate-200 min-w-[75px] w-[75px] max-w-[75px] sticky left-0 z-30 bg-slate-100 shadow-[1px_0_0_0_#e2e8f0]">Mã</th>
               <th class="px-3 py-2.5 border-r border-slate-200 min-w-[280px] w-[280px] max-w-[280px] sticky left-[75px] z-30 bg-slate-100 shadow-[1px_0_0_0_#e2e8f0]">
-                {{ filterItemType === 'Goal' ? 'Tên Mục Tiêu' : (filterItemType === 'Task' ? 'Tên Nhiệm Vụ' : (activeSubTab === 'goals' ? 'Tên Mục Tiêu' : 'Tên Nhiệm Vụ')) }}
+                {{ filterItemType === 'Goal' ? 'Tên mục tiêu' : (filterItemType === 'Task' ? 'Tên nhiệm vụ' : (activeSubTab === 'goals' ? 'Tên mục tiêu' : 'Tên nhiệm vụ')) }}
               </th>
-              <th class="px-3 py-2.5 border-r border-slate-200 min-w-[130px] w-[130px] max-w-[130px] sticky left-[355px] z-30 bg-slate-100 shadow-[3px_0_6px_-1px_rgba(0,0,0,0.15)]">Đơn Vị Chủ Trì</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 min-w-[130px] w-[130px] max-w-[130px] sticky left-[355px] z-30 bg-slate-100 shadow-[3px_0_6px_-1px_rgba(0,0,0,0.15)]">Đơn vị chủ trì</th>
               
               <!-- SCROLLABLE COLUMNS -->
               
@@ -158,7 +158,6 @@
               >
                 Năm {{ year }}
               </th>
-              <th class="px-4 py-3 text-center min-w-[120px] w-[120px]">Cấu Hình Mốc</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-200">
@@ -167,11 +166,11 @@
             <template v-if="activeSubTab === 'goals'">
               <tr v-for="(item, itemIdx) in paginatedGridList" :key="item.taskId" class="hover:bg-purple-50/40 transition group">
                 <!-- STICKY FROZEN CELLS -->
-                <td class="px-3 py-3 border-r border-slate-200 font-normal text-purple-900 whitespace-nowrap min-w-[75px] w-[75px] max-w-[75px] sticky left-0 z-20 bg-white group-hover:bg-[#FAF5FF] shadow-[1px_0_0_0_#e2e8f0]">
+                <td class="px-3 py-3 border-r border-slate-200 font-normal text-purple-900 whitespace-nowrap min-w-[75px] w-[75px] max-w-[75px] sticky left-0 z-20 bg-white group-hover:bg-blue-50 shadow-[1px_0_0_0_#e2e8f0]">
                   {{ item.code }}
                 </td>
 
-                <td class="px-4 py-3 border-r border-slate-200 sticky left-[75px] z-20 bg-white group-hover:bg-[#FAF5FF] shadow-[1px_0_0_0_#e2e8f0] min-w-[280px] w-[280px] max-w-[280px]">
+                <td class="px-4 py-3 border-r border-slate-200 sticky left-[75px] z-20 bg-white group-hover:bg-blue-50 shadow-[1px_0_0_0_#e2e8f0] min-w-[280px] w-[280px] max-w-[280px]">
                   <VTooltip 
                     theme="custom-dark"
                     placement="top"
@@ -183,14 +182,14 @@
 
                     <template #popper>
                       <div class="whitespace-normal break-words text-left leading-relaxed min-w-[280px] max-w-[450px] p-1">
-                        <span class="font-bold text-purple-300 block mb-1 text-[11px] uppercase tracking-wider">🎯 Chi Tiết Mục Tiêu</span>
+                        <span class="font-semibold text-purple-300 block mb-1 text-xs">🎯 Chi tiết mục tiêu</span>
                         {{ item.title }}
                       </div>
                     </template>
                   </VTooltip>
                 </td>
 
-                <td class="px-4 py-3 border-r border-slate-200 font-normal text-slate-700 min-w-[130px] w-[130px] max-w-[130px] sticky left-[355px] z-20 bg-white group-hover:bg-[#FAF5FF] shadow-[3px_0_6px_-1px_rgba(0,0,0,0.15)]">
+                <td class="px-4 py-3 border-r border-slate-200 font-normal text-slate-700 min-w-[130px] w-[130px] max-w-[130px] sticky left-[355px] z-20 bg-white group-hover:bg-blue-50 shadow-[3px_0_6px_-1px_rgba(0,0,0,0.15)]">
                   {{ item.leadAgencyName || item.leadAgencyCode || 'N/A' }}
                 </td>
 
@@ -205,15 +204,14 @@
                 >
                   <template v-if="isQuantitative(item)">
                     <div class="relative flex items-center">
-                      <input 
-                        type="number" 
-                        v-model.number="item.yearlyTargets[year]" 
+                      <QuantityInput  
+                        v-model="item.yearlyTargets[year]" 
                         :disabled="!isYearEnabledForItem(item, year)"
-                        @change="saveYearlyTarget(item, year, $event.target.value)"
+                        @change="saveYearlyTarget(item, year, $event)"
                         placeholder="—"
                         class="ui-single-line w-full text-center font-normal text-slate-800 bg-white border border-slate-300 rounded-lg py-1 pl-2 pr-6 focus:ring-2 focus:ring-blue-500 focus:outline-none transition hover:border-blue-400 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed disabled:border-slate-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
-                      <span v-if="isYearEnabledForItem(item, year) && (!item.unitName || item.unitName === '%' || item.unit?.name === '%')" class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-normal text-slate-400 pointer-events-none">%</span>
+                      <span v-if="isYearEnabledForItem(item, year) && (!item.unitName || item.unitName === '%' || item.unit?.name === '%')" class="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-normal text-slate-400 pointer-events-none">%</span>
                     </div>
                   </template>
                   <template v-else>
@@ -228,32 +226,10 @@
                     />
                   </template>
                 </td>
-
-                <!-- Custom Baseline Action -->
-                <td class="px-3 py-3 text-center min-w-[120px] w-[120px]">
-                  <div class="flex items-center justify-center w-full">
-                    <VTooltip theme="custom-dark" placement="top" :delay="{ show: 1000, hide: 0 }">
-                      <button 
-                        @click="openBaselineModal(item)" 
-                        class="w-7 h-7 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 flex items-center justify-center transition shadow-2xs"
-                      >
-                        <svg class="w-3.5 h-3.5 text-amber-700 hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        </svg>
-                      </button>
-                      <template #popper>
-                        <div class="text-[11px] font-bold whitespace-nowrap">
-                          ⚙️ Cấu hình / chia chỉ tiêu theo quý (Custom Baseline)
-                        </div>
-                      </template>
-                    </VTooltip>
-                  </div>
-                </td>
               </tr>
 
               <tr v-if="filteredGoalsList.length === 0">
-                <td :colspan="4 + gridData.dynamicYears.length" class="px-4 py-8 text-center text-slate-400 italic text-xs bg-slate-50/50">
+                <td :colspan="3 + gridData.dynamicYears.length" class="px-4 py-8 text-center text-slate-400 italic text-xs bg-slate-50/50">
                   Chưa có Mục tiêu (1A) nào trong văn bản này.
                 </td>
               </tr>
@@ -263,11 +239,11 @@
             <template v-else-if="activeSubTab === 'tasks'">
               <tr v-for="(item, itemIdx) in paginatedGridList" :key="item.taskId" class="hover:bg-blue-50/40 transition group">
                 <!-- STICKY FROZEN CELLS -->
-                <td class="px-3 py-3 border-r border-slate-200 font-normal text-blue-900 whitespace-nowrap min-w-[75px] w-[75px] max-w-[75px] sticky left-0 z-20 bg-white group-hover:bg-[#EFF6FF] shadow-[1px_0_0_0_#e2e8f0]">
+                <td class="px-3 py-3 border-r border-slate-200 font-normal text-blue-900 whitespace-nowrap min-w-[75px] w-[75px] max-w-[75px] sticky left-0 z-20 bg-white group-hover:bg-blue-50 shadow-[1px_0_0_0_#e2e8f0]">
                   {{ item.code }}
                 </td>
 
-                <td class="px-4 py-3 border-r border-slate-200 sticky left-[75px] z-20 bg-white group-hover:bg-[#EFF6FF] shadow-[1px_0_0_0_#e2e8f0] min-w-[280px] w-[280px] max-w-[280px]">
+                <td class="px-4 py-3 border-r border-slate-200 sticky left-[75px] z-20 bg-white group-hover:bg-blue-50 shadow-[1px_0_0_0_#e2e8f0] min-w-[280px] w-[280px] max-w-[280px]">
                   <VTooltip 
                     theme="custom-dark"
                     placement="top"
@@ -279,14 +255,14 @@
 
                     <template #popper>
                       <div class="whitespace-normal break-words text-left leading-relaxed min-w-[280px] max-w-[450px] p-1">
-                        <span class="font-bold text-blue-300 block mb-1 text-[11px] uppercase tracking-wider">📋 Chi Tiết Nhiệm Vụ</span>
+                        <span class="font-semibold text-blue-300 block mb-1 text-xs">📋 Chi tiết nhiệm vụ</span>
                         {{ item.title }}
                       </div>
                     </template>
                   </VTooltip>
                 </td>
 
-                <td class="px-4 py-3 border-r border-slate-200 font-normal text-slate-700 min-w-[130px] w-[130px] max-w-[130px] sticky left-[355px] z-20 bg-white group-hover:bg-[#EFF6FF] shadow-[3px_0_6px_-1px_rgba(0,0,0,0.15)]">
+                <td class="px-4 py-3 border-r border-slate-200 font-normal text-slate-700 min-w-[130px] w-[130px] max-w-[130px] sticky left-[355px] z-20 bg-white group-hover:bg-blue-50 shadow-[3px_0_6px_-1px_rgba(0,0,0,0.15)]">
                   {{ item.leadAgencyName || item.leadAgencyCode || 'N/A' }}
                 </td>
 
@@ -301,15 +277,14 @@
                 >
                   <template v-if="isQuantitative(item)">
                     <div class="relative flex items-center">
-                      <input 
-                        type="number" 
-                        v-model.number="item.yearlyTargets[year]" 
+                      <QuantityInput  
+                        v-model="item.yearlyTargets[year]" 
                         :disabled="!isYearEnabledForItem(item, year)"
-                        @change="saveYearlyTarget(item, year, $event.target.value)"
+                        @change="saveYearlyTarget(item, year, $event)"
                         placeholder="—"
                         class="ui-single-line w-full text-center font-normal text-slate-800 bg-white border border-slate-300 rounded-lg py-1 pl-2 pr-6 focus:ring-2 focus:ring-blue-500 focus:outline-none transition hover:border-blue-400 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed disabled:border-slate-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
                       />
-                      <span v-if="isYearEnabledForItem(item, year) && (!item.unitName || item.unitName === '%' || item.unit?.name === '%')" class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-slate-400 pointer-events-none">%</span>
+                      <span v-if="isYearEnabledForItem(item, year) && (!item.unitName || item.unitName === '%' || item.unit?.name === '%')" class="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-bold text-slate-400 pointer-events-none">%</span>
                     </div>
                   </template>
                   <template v-else>
@@ -324,32 +299,10 @@
                     />
                   </template>
                 </td>
-
-                <!-- Custom Baseline Action -->
-                <td class="px-3 py-3 text-center min-w-[120px] w-[120px]">
-                  <div class="flex items-center justify-center w-full">
-                    <VTooltip theme="custom-dark" placement="top" :delay="{ show: 1000, hide: 0 }">
-                      <button 
-                        @click="openBaselineModal(item)" 
-                        class="w-7 h-7 rounded-lg bg-amber-50 hover:bg-amber-100 border border-amber-200 text-amber-800 flex items-center justify-center transition shadow-2xs"
-                      >
-                        <svg class="w-3.5 h-3.5 text-amber-700 hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
-                        </svg>
-                      </button>
-                      <template #popper>
-                        <div class="text-[11px] font-bold whitespace-nowrap">
-                          ⚙️ Cấu hình / chia chỉ tiêu theo quý (Custom Baseline)
-                        </div>
-                      </template>
-                    </VTooltip>
-                  </div>
-                </td>
               </tr>
 
               <tr v-if="filteredTasksList.length === 0">
-                <td :colspan="4 + gridData.dynamicYears.length" class="px-4 py-8 text-center text-slate-400 italic text-xs bg-slate-50/50">
+                <td :colspan="3 + gridData.dynamicYears.length" class="px-4 py-8 text-center text-slate-400 italic text-xs bg-slate-50/50">
                   Chưa có Nhiệm vụ (1B) nào trong văn bản này.
                 </td>
               </tr>
@@ -362,7 +315,7 @@
       <!-- Attached Pagination Controls -->
       <div v-if="totalGridItems > 0" class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50/70 p-4 border-t border-slate-200/80 text-xs text-slate-600 font-semibold w-full">
         <div>
-          Hiển thị <span class="font-bold text-slate-900">{{ gridPageStart }} - {{ gridPageEnd }}</span> trên tổng số <span class="font-bold text-slate-900">{{ totalGridItems }}</span> {{ activeSubTab === 'goals' ? 'Mục tiêu' : 'Nhiệm vụ' }}
+          Hiển thị <span class="font-bold text-slate-900">{{ formatNumber(gridPageStart) }} - {{ formatNumber(gridPageEnd) }}</span> trên tổng số <span class="font-bold text-slate-900">{{ formatNumber(totalGridItems) }}</span> {{ activeSubTab === 'goals' ? 'Mục tiêu' : 'Nhiệm vụ' }}
         </div>
 
         <div class="flex items-center gap-2">
@@ -389,31 +342,16 @@
       </div>
     </div>
 
-    <!-- Custom Baseline Modal -->
-    <BaselineOverrideModal 
-      v-if="selectedTaskForOverride"
-      :isOpen="isBaselineModalOpen"
-      :taskId="selectedTaskForOverride.taskId"
-      :taskCode="selectedTaskForOverride.code"
-      :taskTitle="selectedTaskForOverride.title"
-      :evaluationType="selectedTaskForOverride.evaluationType"
-      :unitName="selectedTaskForOverride.unitName || selectedTaskForOverride.unit?.name || '%'"
-      :dynamicYears="gridData.dynamicYears"
-      :existingCustomBaseline="selectedTaskForOverride.customBaseline"
-      :yearlyTargets="selectedTaskForOverride.yearlyTargets"
-      @close="isBaselineModalOpen = false"
-      @saved="onBaselineSaved"
-    />
-
   </div>
 </template>
 
 <script setup>
+import { formatNumber } from "../shared/formatters";
+import QuantityInput from './QuantityInput.vue';
 import { fetchWithAuth } from '../services/auth';
 
 import { ref, computed, watch, onMounted } from 'vue';
 import { authState } from '../services/auth';
-import BaselineOverrideModal from './BaselineOverrideModal.vue';
 import LoadingSpinner from './LoadingSpinner.vue';
 import SearchableSelect from './SearchableSelect.vue';
 import OverlayPanel from './OverlayPanel.vue';
@@ -427,8 +365,6 @@ const props = defineProps({
 
 const activeSubTab = ref('goals');
 const isLoading = ref(false);
-const isBaselineModalOpen = ref(false);
-const selectedTaskForOverride = ref(null);
 const agencies = ref([]);
 const toastMessage = ref('');
 let toastTimeout = null;
@@ -478,7 +414,7 @@ const gridStatusOptions = ref([
   { value: 'Completed', label: 'Hoàn thành (≥100%)' },
   { value: 'OnTrack', label: 'Đạt kế hoạch (≥80%)' },
   { value: 'Lagging', label: 'Chậm tiến độ (<80%)' },
-  { value: 'NoReport', label: 'Chưa có Báo cáo' }
+  { value: 'NoReport', label: 'Chưa có báo cáo' }
 ]);
 
 const yearRangeOptions = computed(() => [2026, 2027, 2028, 2029, 2030].map(y => ({ value: y, label: String(y) })));
@@ -539,8 +475,8 @@ const appliedFilters = ref({
 });
 
 const gridScopeOptions = computed(() => [
-  { value: 'general', label: 'Phạm vi Chung (Tất cả đơn vị)' },
-  { value: 'specific', label: 'Phạm vi Riêng (Đơn vị cụ thể)' }
+  { value: 'general', label: 'Phạm vi chung (tất cả đơn vị)' },
+  { value: 'specific', label: 'Phạm vi riêng (đơn vị cụ thể)' }
 ]);
 
 const activeFilterCount = computed(() => {
@@ -878,18 +814,6 @@ function isYearEnabledForItem(item, year) {
   return yr >= startYr && yr <= dueYr;
 }
 
-function openBaselineModal(item) {
-  selectedTaskForOverride.value = item;
-  isBaselineModalOpen.value = true;
-}
-
-async function onBaselineSaved(newMilestones) {
-  if (selectedTaskForOverride.value) {
-    selectedTaskForOverride.value.customBaseline = { ...newMilestones };
-  }
-  await loadGridData();
-  showToast(`Đã lưu chỉ tiêu năm thành công!`);
-}
 
 async function saveYearlyTarget(item, year, val) {
   const isQuant = isQuantitative(item);

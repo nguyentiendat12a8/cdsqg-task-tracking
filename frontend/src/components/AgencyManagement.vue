@@ -6,7 +6,7 @@
       <div>
         <h2 class="text-lg sm:text-xl font-bold text-slate-800 flex items-center gap-2">
           <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m3 0h14"/></svg>
-          Danh Mục Cơ Quan & Đơn Vị Trực Thuộc
+          Danh mục cơ quan và đơn vị trực thuộc
         </h2>
         <p class="text-xs text-slate-500 mt-0.5">Cơ cấu cây phân cấp các Bộ, Ngành, Địa phương và Cục, Sở, Đơn vị trực thuộc</p>
       </div>
@@ -18,9 +18,7 @@
         <button @click="collapseAll" class="ui-single-line px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition">
           ► Thu gọn
         </button>
-        <button @click="openCreateModal()" class="ui-single-line bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl shadow-sm transition flex items-center gap-1.5 shrink-0">
-          + Thêm Cơ Quan / Đơn Vị Mới
-        </button>
+        <ActionButton kind="create" @click="openCreateModal()">Thêm cơ quan / đơn vị mới</ActionButton>
       </div>
     </div>
 
@@ -42,7 +40,7 @@
           <button @click="resetSearch" class="ui-single-line px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition shrink-0 cursor-pointer">↺</button>
         </div>
         <span class="text-xs text-slate-500 font-bold shrink-0">
-          Tổng số {{ totalCount }} cơ quan / đơn vị
+          Tổng số {{ formatNumber(totalCount) }} cơ quan / đơn vị
         </span>
       </div>
 
@@ -51,12 +49,12 @@
         <LoadingSpinner v-if="isLoading" text="Đang tải danh mục cơ quan..." />
 
         <table v-else class="w-full text-left text-sm text-slate-700 border-collapse">
-          <thead class="bg-slate-100 text-xs text-slate-600 uppercase font-bold border-b border-slate-200 sticky top-0 z-10">
+          <thead class="bg-slate-100 text-xs text-slate-700 font-semibold border-b border-slate-200 sticky top-0 z-10">
             <tr>
-              <th class="px-4 py-3 border-r border-slate-200 bg-slate-100 min-w-[320px] w-auto">Cấu Trúc Cây Cơ Quan & Đơn Vị Trực Thuộc</th>
-              <th class="px-4 py-3 border-r border-slate-200 bg-slate-100 text-center min-w-[180px] w-48 whitespace-nowrap">Phân Loại</th>
-              <th class="px-4 py-3 border-r border-slate-200 bg-slate-100 text-center min-w-[280px] w-72 whitespace-nowrap">Thông Tin Đầu Mối Liên Hệ</th>
-              <th class="px-4 py-3 text-center bg-slate-100 whitespace-nowrap min-w-[110px] w-28">Thao Tác</th>
+              <th class="px-4 py-3 border-r border-slate-200 bg-slate-100 min-w-[320px] w-auto">Cấu trúc cây cơ quan và đơn vị trực thuộc</th>
+              <th class="px-4 py-3 border-r border-slate-200 bg-slate-100 text-center min-w-[180px] w-48 whitespace-nowrap">Phân loại</th>
+              <th class="px-4 py-3 border-r border-slate-200 bg-slate-100 text-center min-w-[280px] w-72 whitespace-nowrap">Thông tin đầu mối liên hệ</th>
+              <th class="px-4 py-3 text-center bg-slate-100 whitespace-nowrap min-w-[110px] w-28">Thao tác</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
@@ -87,8 +85,8 @@
                     {{ row.name }}
                   </span>
 
-                  <span v-if="row.hasChildren" class="text-[10px] font-medium text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded-full shrink-0">
-                    {{ row.children.length }} đơn vị con
+                  <span v-if="row.hasChildren" class="text-xs font-medium text-blue-600 bg-blue-100 px-1.5 py-0.5 rounded-full shrink-0">
+                    {{ formatNumber(row.children.length) }} đơn vị con
                   </span>
                 </div>
               </td>
@@ -109,7 +107,7 @@
                   title="Click để xem chi tiết cán bộ đầu mối liên hệ"
                 >
                   <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                  <span>{{ row.contactPersons.length }} cán bộ đầu mối</span>
+                  <span>{{ formatNumber(row.contactPersons.length) }} cán bộ đầu mối</span>
                 </button>
                 <span v-else class="text-slate-400 italic text-xs">—</span>
               </td>
@@ -117,7 +115,7 @@
               <!-- Actions -->
               <td class="px-4 py-3 text-center space-x-1 whitespace-nowrap min-w-[110px] w-28">
                 <template v-if="isBKHCN(row)">
-                  <span class="inline-flex items-center gap-1 text-[11px] font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200 shadow-2xs" title="Bộ Khoa học và Công nghệ là cơ quan hệ thống cố định (Không thể sửa/xóa)">
+                  <span class="inline-flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200 shadow-2xs" title="Danh mục hệ thống cố định, không thể sửa/xóa">
                     🔒 Cố định
                   </span>
                 </template>
@@ -144,7 +142,7 @@
       <!-- Server Pagination Controls -->
       <div class="flex flex-col md:flex-row items-center justify-between gap-3 bg-slate-50/70 p-3.5 border-t border-slate-200/80 text-xs text-slate-600 font-semibold w-full">
         <div class="flex items-center gap-3 whitespace-nowrap flex-wrap justify-center sm:justify-start">
-          <span class="whitespace-nowrap">Hiển thị <span class="font-bold text-slate-900">{{ totalCount > 0 ? (pageNumber - 1) * pageSize + 1 : 0 }} - {{ Math.min(pageNumber * pageSize, totalCount) }}</span> trên tổng số <span class="font-bold text-slate-900">{{ totalCount }}</span> cơ quan / đơn vị</span>
+          <span class="whitespace-nowrap">Hiển thị <span class="font-bold text-slate-900">{{ formatNumber(totalCount > 0 ? (pageNumber - 1) * pageSize + 1 : 0) }} - {{ formatNumber(Math.min(pageNumber * pageSize, totalCount)) }}</span> trên tổng số <span class="font-bold text-slate-900">{{ formatNumber(totalCount) }}</span> cơ quan / đơn vị</span>
           
           <div class="flex items-center gap-1.5 border-l border-slate-200 pl-3 whitespace-nowrap">
             <span class="whitespace-nowrap">Số bản ghi/trang:</span>
@@ -188,17 +186,17 @@
     <div v-if="isModalOpen" @click.self="closeModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
       <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-3xl w-full p-6 sm:p-7 space-y-4 max-h-[90vh] flex flex-col">
         <h3 class="text-lg font-bold text-slate-800 border-b border-slate-100 pb-2 shrink-0">
-          {{ isEditing ? 'Chỉnh Sửa Cơ Quan' : 'Thêm Cơ Quan / Đơn Vị Mới' }}
+          {{ isEditing ? 'Chỉnh sửa cơ quan' : 'Thêm cơ quan / đơn vị mới' }}
         </h3>
 
         <form @submit.prevent="saveAgency" class="space-y-4 flex-1 overflow-y-auto pr-1">
           <div class="grid grid-cols-3 gap-3">
             <div class="col-span-2">
-              <label class="text-xs font-bold text-slate-700 uppercase">Tên Đầy Đủ Cơ Quan / Đơn Vị <span class="text-rose-500">*</span></label>
+              <label class="text-xs font-semibold text-slate-700">Tên đầy đủ cơ quan / đơn vị <span class="text-rose-500">*</span></label>
               <input v-model="form.name" @input="onNameInput" required placeholder="Nhập tên cơ quan / đơn vị..." class="ui-single-line w-full text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 mt-1 focus:bg-white focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
-              <label class="text-xs font-bold text-slate-700 uppercase">Mã Cơ Quan / Viết Tắt <span class="text-rose-500">*</span></label>
+              <label class="text-xs font-semibold text-slate-700">Mã cơ quan / viết tắt <span class="text-rose-500">*</span></label>
               <input v-model="form.code" required placeholder="VD: TTCDS (Tự động)..." class="ui-single-line w-full text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 mt-1 focus:bg-white focus:ring-2 focus:ring-blue-500" />
             </div>
           </div>
@@ -209,14 +207,14 @@
                 v-model="form.parentId" 
                 :options="parentAgencyOptions" 
                 :isMulti="false" 
-                label="Cơ Quan Cấp Trên (Cơ Quan Cha)" 
+                label="Cơ quan cấp trên (cơ quan cha)" 
                 placeholder="-- Không có (Cơ quan độc lập / Bộ / Tỉnh) --"
               />
             </div>
 
             <div>
               <template v-if="form.parentId">
-                <label class="text-xs font-bold text-slate-700 uppercase block mb-1">Phân Loại</label>
+                <label class="text-xs font-semibold text-slate-700 block mb-1">Phân loại</label>
                 <div class="h-[34px] min-h-[34px] max-h-[34px] px-2.5 bg-slate-100 text-slate-600 font-bold text-xs rounded-xl border border-slate-200 flex items-center gap-1.5 cursor-not-allowed">
                   <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
                   <span class="truncate">Đơn vị trực thuộc (Tự động theo cơ quan cấp trên)</span>
@@ -227,7 +225,7 @@
                   v-model="form.type" 
                   :options="agencyTypeOptions" 
                   :isMulti="false" 
-                  label="Phân Loại" 
+                  label="Phân loại" 
                 />
               </template>
             </div>
@@ -236,17 +234,13 @@
           <!-- Contact Persons Section -->
           <div class="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 space-y-3">
             <div class="flex items-center justify-between">
-              <label class="text-xs font-bold text-slate-800 uppercase flex items-center gap-1.5">
+              <label class="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
                 <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
-                Thông Tin Cán Bộ Đầu Mối (Liên Hệ)
+                Thông tin cán bộ đầu mối (liên hệ)
               </label>
-              <button 
-                type="button" 
-                @click="addContactPerson" 
-                class="ui-single-line px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs rounded-lg transition border border-blue-200 flex items-center gap-1"
-              >
-                + Thêm cán bộ đầu mối
-              </button>
+              <ActionButton kind="create" 
+                @click="addContactPerson"
+              >Thêm cán bộ đầu mối</ActionButton>
             </div>
 
             <div v-if="!form.contactPersons || form.contactPersons.length === 0" class="text-xs text-slate-400 italic text-center py-2">
@@ -272,7 +266,7 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <div>
-                    <label class="text-[11px] font-bold text-slate-600">Họ và tên</label>
+                    <label class="text-xs font-semibold text-slate-600">Họ và tên</label>
                     <input 
                       v-model="person.name" 
                       placeholder="Phạm Quang Cường" 
@@ -280,7 +274,7 @@
                     />
                   </div>
                   <div>
-                    <label class="text-[11px] font-bold text-slate-600">Chức vụ</label>
+                    <label class="text-xs font-semibold text-slate-600">Chức vụ</label>
                     <input 
                       v-model="person.position" 
                       placeholder="Phó giám đốc" 
@@ -288,7 +282,7 @@
                     />
                   </div>
                   <div>
-                    <label class="text-[11px] font-bold text-slate-600">Phòng ban / Đơn vị</label>
+                    <label class="text-xs font-semibold text-slate-600">Phòng ban / Đơn vị</label>
                     <input 
                       v-model="person.department" 
                       placeholder="Sở KHCN" 
@@ -299,7 +293,7 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div>
-                    <label class="text-[11px] font-bold text-slate-600">Số điện thoại</label>
+                    <label class="text-xs font-semibold text-slate-600">Số điện thoại</label>
                     <input 
                       v-model="person.phone" 
                       placeholder="0976 819 323" 
@@ -307,7 +301,7 @@
                     />
                   </div>
                   <div>
-                    <label class="text-[11px] font-bold text-slate-600">Email</label>
+                    <label class="text-xs font-semibold text-slate-600">Email</label>
                     <input 
                       v-model="person.email" 
                       placeholder="cuongpq.sokhcn@laichau.gov.vn" 
@@ -336,7 +330,7 @@
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
             </span>
             <div>
-              <h3 class="text-base font-bold text-slate-800">Danh Sách Cán Bộ Đầu Mối</h3>
+              <h3 class="text-base font-bold text-slate-800">Danh sách cán bộ đầu mối</h3>
               <p class="text-xs text-blue-700 font-bold mt-0.5">{{ selectedAgencyForContacts?.name }}</p>
             </div>
           </div>
@@ -351,10 +345,10 @@
           >
             <div class="flex items-center justify-between border-b border-slate-200/60 pb-1.5">
               <div class="flex items-center gap-2">
-                <span class="w-5 h-5 rounded-full bg-blue-600 text-white font-bold text-[11px] flex items-center justify-center shrink-0">{{ idx + 1 }}</span>
+                <span class="w-5 h-5 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shrink-0">{{ idx + 1 }}</span>
                 <span class="text-xs font-bold text-slate-900">{{ cp.name }}</span>
               </div>
-              <span v-if="cp.position" class="px-2 py-0.5 bg-blue-100 text-blue-800 text-[10px] font-bold rounded-full">{{ cp.position }}</span>
+              <span v-if="cp.position" class="px-2 py-0.5 bg-blue-100 text-blue-800 text-xs font-bold rounded-full">{{ cp.position }}</span>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs font-semibold text-slate-700">
@@ -393,6 +387,8 @@
 </template>
 
 <script setup>
+import ActionButton from "./ActionButton.vue";
+import { formatNumber } from "../shared/formatters";
 import { fetchWithAuth } from '../services/auth';
 
 import { ref, computed, watch, onMounted } from 'vue';
@@ -429,6 +425,7 @@ const parentAgencyOptions = computed(() => {
 
 function isFixedAgency(agency) {
   if (!agency) return false;
+  if (agency.isFixedProvince) return true;
   const name = (agency.name || '').toLowerCase().trim();
   const code = (agency.code || '').toLowerCase().trim();
   if (code === 'all_agencies' || code === 'all_ministries' || code === 'all_provinces' || code === 'all_provinces_ubnd' || code === 'all_ministries_direct') return true;
@@ -670,7 +667,7 @@ function openCreateModal(parentAgencyId = null) {
 
 function openEditModal(agency) {
   if (isBKHCN(agency)) {
-    toast.warning('Bộ Khoa học và Công nghệ là cơ quan hệ thống cố định, không thể chỉnh sửa.');
+    toast.warning('Cơ quan thuộc danh mục cố định, không thể chỉnh sửa.');
     return;
   }
 
@@ -799,7 +796,7 @@ async function saveAgency() {
 
 async function deleteAgency(agency) {
   if (isBKHCN(agency)) {
-    toast.warning('Bộ Khoa học và Công nghệ là cơ quan hệ thống cố định, không thể xóa.');
+    toast.warning('Cơ quan thuộc danh mục cố định, không thể xóa.');
     return;
   }
 

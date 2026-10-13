@@ -1,3 +1,4 @@
+import { loadAllExportPages } from '../../services/exportData';
 import { REPORTING_DOCUMENT_ID } from '../../config/reporting';
 import { fetchWithAuth } from '../../services/auth';
 import { ref, watch, onUnmounted } from 'vue';
@@ -62,20 +63,7 @@ export function useDocumentData({ props, getQueryState }) {
     return params;
   }
   async function loadExportItems() {
-    const params = buildQuery();
-    params.set('pageSize', '100');
-    const items = [];
-    for (let page = 1; ; page++) {
-      params.set('pageNumber', String(page));
-      const response = await fetchWithAuth(getApiUrl('/api/documents/' + REPORTING_DOCUMENT_ID + '/items?' + params.toString()));
-      if (!response.ok) throw new Error('Không tải được dữ liệu xuất Excel.');
-      const data = await response.json();
-      if (!Number.isInteger(data.totalCount) || data.totalCount < 0 || !Array.isArray(data.items)) throw new Error('Dữ liệu phân trang xuất Excel không hợp lệ.');
-      items.push(...(data.items || []));
-      if (items.length >= data.totalCount) break;
-      if (!data.items.length) throw new Error('Danh sách đã thay đổi khi xuất Excel. Vui lòng thử lại.');
-    }
-    return items;
+    return loadAllExportPages(getApiUrl('/api/documents/' + REPORTING_DOCUMENT_ID + '/items?' + buildQuery().toString()));
   }
   async function loadData() {
     const version = ++requestVersion;

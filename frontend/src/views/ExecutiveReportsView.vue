@@ -10,19 +10,19 @@
           </span>
           <div>
             <h2 class="text-sm sm:text-base font-bold text-slate-800">
-              Trung Tâm Báo Cáo & Xuất Dữ Liệu Excel
+              Trung tâm báo cáo và xuất dữ liệu Excel
             </h2>
           </div>
         </div>
       </div>
 
-      <button 
+      <div class="flex flex-wrap items-center gap-2">
+      <ReportYearSelect />
+      <ActionButton kind="export" 
         @click="exportCurrentReportToExcel" 
-        class="ui-single-line px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-2 shrink-0"
-      >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-        Xuất File Excel
-      </button>
+        :disabled="isLoading"
+      >Xuất file Excel</ActionButton>
+      </div>
     </div>
 
     <!-- REPORT TYPE SELECTOR TABS -->
@@ -34,8 +34,8 @@
           activeReportType === 'summary' ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
         ]"
       >
-        <div class="text-[10px] font-bold uppercase opacity-80">Báo cáo 1</div>
-        <div class="text-xs font-bold truncate">📊 Tiến độ các Bộ, Ngành & Địa phương</div>
+        <div class="text-xs font-semibold opacity-80">Báo cáo 1</div>
+        <div class="text-xs font-bold truncate">📊 Tiến độ các bộ, ngành và địa phương</div>
       </button>
 
       <button 
@@ -45,8 +45,8 @@
           activeReportType === 'urgent' ? 'bg-rose-600 text-white border-rose-600 shadow-md' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
         ]"
       >
-        <div class="text-[10px] font-bold uppercase opacity-80">Báo cáo 2</div>
-        <div class="text-xs font-bold truncate">⚠️ Cảnh báo Sắp hết hạn & Quá hạn</div>
+        <div class="text-xs font-semibold opacity-80">Báo cáo 2</div>
+        <div class="text-xs font-bold truncate">⚠️ Cảnh báo sắp hết hạn và quá hạn</div>
       </button>
 
       <button 
@@ -56,8 +56,8 @@
           activeReportType === 'governance' ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
         ]"
       >
-        <div class="text-[10px] font-bold uppercase opacity-80">Báo cáo 3</div>
-        <div class="text-xs font-bold truncate">🏛️ Thống kê Đôn đốc & Tuân thủ Báo cáo</div>
+        <div class="text-xs font-semibold opacity-80">Báo cáo 3</div>
+        <div class="text-xs font-bold truncate">🏛️ Thống kê đôn đốc và tuân thủ báo cáo</div>
       </button>
 
       <button 
@@ -67,8 +67,8 @@
           activeReportType === 'domain' ? 'bg-purple-600 text-white border-purple-600 shadow-md' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
         ]"
       >
-        <div class="text-[10px] font-bold uppercase opacity-80">Báo cáo 4</div>
-        <div class="text-xs font-bold truncate">📈 Tiến độ theo Lĩnh vực & Nhóm trọng tâm</div>
+        <div class="text-xs font-semibold opacity-80">Báo cáo 4</div>
+        <div class="text-xs font-bold truncate">📈 Tiến độ theo lĩnh vực và nhóm trọng tâm</div>
       </button>
     </div>
 
@@ -87,13 +87,13 @@
 
         <!-- Quick Item Type Select Dropdown -->
         <div class="w-full sm:w-64 shrink-0">
-          <SearchableSelect v-model="quickItemType" :options="[{ value: 'all', label: 'Tất cả (Mục tiêu & Nhiệm vụ)' }, { value: 'Goal', label: 'Chỉ Mục tiêu' }, { value: 'Task', label: 'Chỉ Nhiệm vụ' }]" :isMulti="false" :clearable="false" label="Loại đối tượng" label-class="sr-only" @change="onQuickItemTypeChange" />
+          <SearchableSelect v-model="quickItemType" :options="[{ value: 'all', label: 'Tất cả (mục tiêu & nhiệm vụ)' }, { value: 'Goal', label: 'Chỉ mục tiêu' }, { value: 'Task', label: 'Chỉ nhiệm vụ' }]" :isMulti="false" :clearable="false" label="Loại đối tượng" label-class="sr-only" @change="onQuickItemTypeChange" />
         </div>
 
         <!-- OverlayPanel Advanced Filter Popover -->
         <OverlayPanel 
-          title="Bộ Lọc Báo Cáo Nâng Cao"
-          buttonText="Lọc Nâng Cao"
+          title="Bộ lọc báo cáo nâng cao"
+          buttonText="Lọc nâng cao"
           :activeCount="activeFilterCount"
           widthClass="w-[340px] sm:w-[500px]"
           @apply="execFilterSearch"
@@ -106,7 +106,7 @@
                   v-model="filterDraft.selectedItemTypes" 
                   :options="itemTypeOptions" 
                   :isMulti="true" 
-                  label="Loại Đối Tượng" 
+                  label="Loại đối tượng" 
                   placeholder="Tất cả loại đối tượng"
                 />
               </div>
@@ -116,7 +116,7 @@
                   v-model="filterDraft.selectedScopes" 
                   :options="reportScopeOptions" 
                   :isMulti="true" 
-                  label="Phạm Vi" 
+                  label="Phạm vi" 
                   placeholder="Tất cả phạm vi"
                 />
               </div>
@@ -127,7 +127,7 @@
                 v-model="filterDraft.selectedAgencyIds" 
                 :options="leadAgencyOptions" 
                 :isMulti="true" 
-                label="Cơ Quan Chủ Trì" 
+                label="Cơ quan chủ trì" 
                 placeholder="Tất cả cơ quan chủ trì"
               />
             </div>
@@ -137,7 +137,7 @@
                 v-model="filterDraft.selectedSubAgencyIds" 
                 :options="subAgencyOptions" 
                 :isMulti="true" 
-                label="Đơn Vị Trực Thuộc" 
+                label="Đơn vị trực thuộc" 
                 placeholder="Tất cả đơn vị trực thuộc"
               />
             </div>
@@ -157,15 +157,15 @@
                 v-model="filterDraft.selectedGroups" 
                 :options="groupOptions" 
                 :isMulti="true" 
-                label="Nhóm Trọng Tâm" 
+                label="Nhóm trọng tâm" 
                 placeholder="Tất cả nhóm"
               />
             </div>
 
             <div>
               <div class="flex items-center justify-between mb-1">
-                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Giai Đoạn</label>
-                <label class="inline-flex items-center gap-1 cursor-pointer text-[10px] font-bold text-blue-700">
+                <label class="text-xs font-semibold text-slate-700 block">Giai đoạn</label>
+                <label class="inline-flex items-center gap-1 cursor-pointer text-xs font-bold text-blue-700">
                   <input type="checkbox" v-model="filterDraft.onlyOngoing" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5">
                   Thường xuyên
                 </label>
@@ -202,35 +202,39 @@
       <!-- BÁO CÁO 1: TỔNG HỢP TIẾN ĐỘ THEO BỘ / ĐỊA PHƯƠNG -->
       <div v-if="activeReportType === 'summary'" class="overflow-x-auto max-h-[560px] overflow-y-auto custom-scrollbar">
         <table class="w-full text-left text-xs text-slate-700 border-collapse">
-          <thead class="bg-slate-100 font-bold text-slate-700 border-b border-slate-200 sticky top-0 z-10 shadow-2xs">
+          <thead class="bg-slate-100 font-semibold text-slate-700 border-b border-slate-200 sticky top-0 z-10 shadow-2xs">
             <tr>
               <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center w-12">STT</th>
-              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-xs sm:text-sm font-bold min-w-[250px]">Tên Cơ Quan / Địa Phương</th>
-              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center min-w-[110px]">Tổng Mục Tiêu</th>
-              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center min-w-[110px]">Tổng Nhiệm Vụ</th>
-              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center min-w-[120px]">Đã Hoàn Thành</th>
-              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center min-w-[120px]">Đang Thực Hiện</th>
-              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center text-amber-700 min-w-[110px]">Sắp Hết Hạn</th>
-              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center text-rose-700 min-w-[110px]">Quá Hạn</th>
-              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center min-w-[130px]">Tỷ Lệ Hoàn Thành</th>
+              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-xs sm:text-sm font-semibold min-w-[250px]">Tên cơ quan / địa phương</th>
+              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center min-w-[110px]">Tổng mục tiêu</th>
+              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center min-w-[110px]">Tổng nhiệm vụ</th>
+              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center text-blue-700 min-w-[150px]">Hoàn thành (đúng hạn)</th>
+              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center text-orange-700 min-w-[150px]">Hoàn thành (quá hạn)</th>
+              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center min-w-[120px]">Đang thực hiện (trong hạn)</th>
+              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center text-amber-700 min-w-[110px]">Sắp hết hạn</th>
+              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center text-rose-700 min-w-[110px]">Đang thực hiện (quá hạn)</th>
+              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center min-w-[110px]">Chưa thực hiện</th>
+              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center min-w-[130px]">Tỷ lệ hoàn thành</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-200">
             <tr v-for="(ag, idx) in paginatedAgencySummaries" :key="ag.agencyId" class="hover:bg-slate-50 transition">
               <td class="p-3 text-center font-bold text-slate-500">{{ (currentPage - 1) * pageSize + idx + 1 }}</td>
               <td class="p-3 font-bold text-sm text-slate-900 leading-relaxed min-w-[250px]">{{ ag.name }}</td>
-              <td class="p-3 text-center font-bold text-slate-900">{{ ag.totalGoals }}</td>
-              <td class="p-3 text-center font-bold text-slate-900">{{ ag.totalTasks }}</td>
-              <td class="p-3 text-center font-bold text-emerald-700">{{ ag.completedOnTime + ag.completedOverdue }}</td>
-              <td class="p-3 text-center font-bold text-blue-700">{{ ag.inProgressOnTime }}</td>
-              <td class="p-3 text-center font-bold text-amber-700">{{ ag.expiringSoon }}</td>
-              <td class="p-3 text-center font-bold text-rose-700 bg-rose-50/30">{{ ag.inProgressOverdue }}</td>
+              <td class="p-3 text-center font-bold text-slate-900">{{ formatNumber(ag.totalGoals) }}</td>
+              <td class="p-3 text-center font-bold text-slate-900">{{ formatNumber(ag.totalTasks) }}</td>
+              <td class="p-3 text-center font-bold text-blue-700">{{ formatNumber(ag.completedOnTime ?? 0) }}</td>
+              <td class="p-3 text-center font-bold text-orange-700">{{ formatNumber(ag.completedOverdue ?? 0) }}</td>
+              <td class="p-3 text-center font-bold text-blue-700">{{ formatNumber(ag.inProgressOnTime) }}</td>
+              <td class="p-3 text-center font-bold text-amber-700">{{ formatNumber(ag.expiringSoon) }}</td>
+              <td class="p-3 text-center font-bold text-rose-700 bg-rose-50/30">{{ formatNumber(ag.inProgressOverdue) }}</td>
+              <td class="p-3 text-center font-bold text-slate-600">{{ formatNumber(ag.notStarted ?? 0) }}</td>
               <td class="p-3 text-center font-bold text-blue-800">
                 {{ getPct(ag.completedOnTime + ag.completedOverdue, ag.totalItems) }}%
               </td>
             </tr>
             <tr v-if="filteredAgencySummaries.length === 0">
-              <td colspan="9" class="p-8 text-center text-slate-400 italic font-medium">Không tìm thấy bản ghi nào phù hợp với bộ lọc.</td>
+              <td colspan="11" class="p-8 text-center text-slate-400 italic font-medium">Không tìm thấy bản ghi nào phù hợp với bộ lọc.</td>
             </tr>
           </tbody>
         </table>
@@ -239,21 +243,21 @@
       <!-- BÁO CÁO 2: DANH SÁCH NHIỆM VỤ SẮP HẾT HẠN & QUÁ HẠN -->
       <div v-else-if="activeReportType === 'urgent'" class="overflow-x-auto max-h-[560px] overflow-y-auto custom-scrollbar">
         <table class="w-full text-left text-xs text-slate-700 border-collapse">
-          <thead class="bg-rose-100 text-rose-950 font-bold border-b border-rose-200 sticky top-0 z-10 shadow-2xs">
+          <thead class="bg-rose-100 text-rose-950 font-semibold border-b border-rose-200 sticky top-0 z-10 shadow-2xs">
             <tr>
               <th class="p-3 bg-rose-100 sticky top-0 z-10 min-w-[90px]">Mã</th>
-              <th class="p-3 bg-rose-100 sticky top-0 z-10 min-w-[110px]">Phân Loại</th>
-              <th class="p-3 bg-rose-100 sticky top-0 z-10 min-w-[280px]">Tiêu Đề Mục Tiêu / Nhiệm Vụ</th>
-              <th class="p-3 bg-rose-100 sticky top-0 z-10 text-xs sm:text-sm font-bold min-w-[220px]">Đơn Vị Chủ Trì</th>
-              <th class="p-3 bg-rose-100 sticky top-0 z-10 min-w-[110px]">Hạn Chót</th>
-              <th class="p-3 bg-rose-100 sticky top-0 z-10 text-center min-w-[140px]">Trạng Thái Cảnh Báo</th>
+              <th class="p-3 bg-rose-100 sticky top-0 z-10 min-w-[110px]">Phân loại</th>
+              <th class="p-3 bg-rose-100 sticky top-0 z-10 min-w-[280px]">Tiêu đề mục tiêu / nhiệm vụ</th>
+              <th class="p-3 bg-rose-100 sticky top-0 z-10 text-xs sm:text-sm font-semibold min-w-[220px]">Đơn vị chủ trì</th>
+              <th class="p-3 bg-rose-100 sticky top-0 z-10 min-w-[110px]">Hạn chót</th>
+              <th class="p-3 bg-rose-100 sticky top-0 z-10 text-center min-w-[140px]">Trạng thái cảnh báo</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-200">
             <tr v-for="item in paginatedUrgentItems" :key="item.taskId" class="hover:bg-rose-50/40 transition">
               <td class="p-3 font-bold text-rose-800">{{ item.code }}</td>
               <td class="p-3">
-                <span :class="['px-2 py-0.5 rounded text-[10px] font-bold', item.itemType === 'Goal' ? 'bg-purple-100 text-purple-800' : 'bg-slate-100 text-slate-700']">
+                <span :class="['px-2 py-0.5 rounded text-xs font-bold', item.itemType === 'Goal' ? 'bg-purple-100 text-purple-800' : 'bg-slate-100 text-slate-700']">
                   {{ item.itemType === 'Goal' ? '🎯 Mục tiêu' : '📋 Nhiệm vụ' }}
                 </span>
               </td>
@@ -264,7 +268,7 @@
                   </div>
                   <template #popper>
                     <div class="whitespace-normal break-words text-left leading-relaxed min-w-[260px] max-w-[420px] p-1">
-                      <span class="font-bold text-blue-300 block mb-1 text-[11px] uppercase tracking-wider">📋 Nội dung chi tiết</span>
+                      <span class="font-semibold text-blue-300 block mb-1 text-xs">📋 Nội dung chi tiết</span>
                       {{ item.title }}
                     </div>
                   </template>
@@ -273,8 +277,8 @@
               <td class="p-3 font-bold text-sm text-slate-900 leading-relaxed min-w-[220px]">{{ item.leadAgencyName }}</td>
               <td class="p-3 font-semibold text-slate-600">{{ formatDate(item.dueDate) }}</td>
               <td class="p-3 text-center">
-                <span :class="['px-2.5 py-1 rounded-full text-[11px] font-bold', item.calculatedStatus === 'ExpiringSoon' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-rose-100 text-rose-900 border border-rose-300']">
-                  {{ item.calculatedStatus === 'ExpiringSoon' ? '⏰ Sắp Hết Hạn' : '🚨 Quá Hạn Thực Hiện' }}
+                <span :class="['px-2.5 py-1 rounded-full text-xs font-bold', item.calculatedStatus === 'ExpiringSoon' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-rose-100 text-rose-900 border border-rose-300']">
+                  {{ item.calculatedStatus === 'ExpiringSoon' ? '⏰ Sắp hết hạn' : '🚨 Quá hạn thực hiện' }}
                 </span>
               </td>
             </tr>
@@ -288,26 +292,26 @@
       <!-- BÁO CÁO 3 MỚI: THỐNG KÊ ĐÔN ĐỐC & TÍNH TUÂN THỦ BÁO CÁO -->
       <div v-else-if="activeReportType === 'governance'" class="overflow-x-auto max-h-[560px] overflow-y-auto custom-scrollbar">
         <table class="w-full text-left text-xs text-slate-700 border-collapse">
-          <thead class="bg-indigo-100 text-indigo-950 font-bold border-b border-indigo-200 sticky top-0 z-10 shadow-2xs">
+          <thead class="bg-indigo-100 text-indigo-950 font-semibold border-b border-indigo-200 sticky top-0 z-10 shadow-2xs">
             <tr>
               <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-center w-12">STT</th>
-              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-xs sm:text-sm font-bold min-w-[250px]">Tên Cơ Quan / Địa Phương</th>
-              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-center min-w-[120px]">Tổng NV Được Giao</th>
-              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-center text-amber-900 min-w-[110px]">Số Lần Đã Đôn Đốc</th>
-              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-center min-w-[120px]">Báo Cáo Đã Nạp</th>
-              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-center text-emerald-900 min-w-[120px]">Báo Cáo Đúng Hạn</th>
-              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-center text-rose-900 min-w-[120px]">Trễ Báo Cáo / Chưa Nạp</th>
-              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-center min-w-[140px]">Tỷ Lệ Tuân Thủ (%)</th>
-              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-center min-w-[130px]">Đánh Giá Tuân Thủ</th>
+              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-xs sm:text-sm font-semibold min-w-[250px]">Tên cơ quan / địa phương</th>
+              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-center min-w-[120px]">Tổng NV được giao</th>
+              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-center text-amber-900 min-w-[110px]">Số lần đã đôn đốc</th>
+              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-center min-w-[120px]">Báo cáo đã nạp</th>
+              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-center text-emerald-900 min-w-[120px]">Báo cáo đúng hạn</th>
+              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-center text-rose-900 min-w-[120px]">Trễ báo cáo / chưa nạp</th>
+              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-center min-w-[140px]">Tỷ lệ tuân thủ (%)</th>
+              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-center min-w-[130px]">Đánh giá tuân thủ</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-200">
             <tr v-for="(ag, idx) in paginatedGovernanceSummaries" :key="ag.agencyId" class="hover:bg-slate-50 transition">
               <td class="p-3 text-center font-bold text-slate-500">{{ (currentPage - 1) * pageSize + idx + 1 }}</td>
               <td class="p-3 font-bold text-sm text-slate-900 leading-relaxed min-w-[250px]">{{ ag.name }}</td>
-              <td class="p-3 text-center font-bold text-slate-900">{{ ag.totalItems }}</td>
-              <td class="p-3 text-center font-bold text-amber-700 bg-amber-50/40">{{ ag.urgedCount }}</td>
-              <td class="p-3 text-center font-bold text-blue-700">{{ ag.totalReportsSubmitted }}</td>
+              <td class="p-3 text-center font-bold text-slate-900">{{ formatNumber(ag.totalItems) }}</td>
+              <td class="p-3 text-center font-bold text-amber-700 bg-amber-50/40">{{ formatNumber(ag.urgedCount) }}</td>
+              <td class="p-3 text-center font-bold text-blue-700">{{ formatNumber(ag.totalReportsSubmitted) }}</td>
               <td class="p-3 text-center font-bold text-emerald-700">{{ ag.onTimeReports }}</td>
               <td class="p-3 text-center font-bold text-rose-700 bg-rose-50/40">{{ ag.lateOrPendingReports }}</td>
               <td class="p-3 text-center font-bold text-slate-900">
@@ -319,7 +323,7 @@
                 </div>
               </td>
               <td class="p-3 text-center">
-                <span :class="['px-2.5 py-1 rounded-full text-[11px] font-bold border inline-block whitespace-nowrap', ag.complianceBadgeClass]">
+                <span :class="['px-2.5 py-1 rounded-full text-xs font-bold border inline-block whitespace-nowrap', ag.complianceBadgeClass]">
                   {{ ag.complianceBadgeText }}
                 </span>
               </td>
@@ -334,17 +338,18 @@
       <!-- BÁO CÁO 4 MỚI: PHÂN LOẠI THEO LĨNH VỰC & TRỤ CỘT CHIẾN LƯỢC -->
       <div v-else-if="activeReportType === 'domain'" class="overflow-x-auto max-h-[560px] overflow-y-auto custom-scrollbar">
         <table class="w-full text-left text-xs text-slate-700 border-collapse">
-          <thead class="bg-purple-100 text-purple-950 font-bold border-b border-purple-200 sticky top-0 z-10 shadow-2xs">
+          <thead class="bg-purple-100 text-purple-950 font-semibold border-b border-purple-200 sticky top-0 z-10 shadow-2xs">
             <tr>
               <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center w-12">STT</th>
-              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-xs sm:text-sm font-bold min-w-[220px]">Lĩnh Vực / Trụ Cột Chiến Lược</th>
-              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center min-w-[100px]">Tổng Số</th>
-              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center text-emerald-900 min-w-[110px]">Đã Hoàn Thành</th>
-              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center text-blue-900 min-w-[110px]">Đang Thực Hiện</th>
-              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center text-amber-900 min-w-[100px]">Sắp Hết Hạn</th>
-              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center text-rose-900 min-w-[100px]">Quá Hạn</th>
-              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center text-slate-600 min-w-[100px]">Chưa Thực Hiện</th>
-              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center min-w-[150px]">Tỷ Lệ Hoàn Thành (%)</th>
+              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-xs sm:text-sm font-semibold min-w-[220px]">Lĩnh vực / trụ cột chiến lược</th>
+              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center min-w-[100px]">Tổng số</th>
+              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center text-blue-900 min-w-[150px]">Hoàn thành (đúng hạn)</th>
+              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center text-orange-900 min-w-[150px]">Hoàn thành (quá hạn)</th>
+              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center text-blue-900 min-w-[110px]">Đang thực hiện (trong hạn)</th>
+              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center text-amber-900 min-w-[100px]">Sắp hết hạn</th>
+              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center text-rose-900 min-w-[100px]">Đang thực hiện (quá hạn)</th>
+              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center text-slate-600 min-w-[100px]">Chưa thực hiện</th>
+              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center min-w-[150px]">Tỷ lệ hoàn thành (%)</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-200">
@@ -354,12 +359,13 @@
                 <span class="w-2 h-2 rounded-full bg-purple-600 shrink-0"></span>
                 <span>{{ dom.domainName }}</span>
               </td>
-              <td class="p-3 text-center font-bold text-slate-900">{{ dom.totalItems }}</td>
-              <td class="p-3 text-center font-bold text-emerald-700">{{ dom.completedOnTime + dom.completedOverdue }}</td>
-              <td class="p-3 text-center font-bold text-blue-700">{{ dom.inProgressOnTime }}</td>
-              <td class="p-3 text-center font-bold text-amber-700">{{ dom.expiringSoon }}</td>
-              <td class="p-3 text-center font-bold text-rose-700 bg-rose-50/30">{{ dom.inProgressOverdue }}</td>
-              <td class="p-3 text-center font-bold text-slate-500">{{ dom.notStarted }}</td>
+              <td class="p-3 text-center font-bold text-slate-900">{{ formatNumber(dom.totalItems) }}</td>
+              <td class="p-3 text-center font-bold text-blue-700">{{ formatNumber(dom.completedOnTime ?? 0) }}</td>
+              <td class="p-3 text-center font-bold text-orange-700">{{ formatNumber(dom.completedOverdue ?? 0) }}</td>
+              <td class="p-3 text-center font-bold text-blue-700">{{ formatNumber(dom.inProgressOnTime) }}</td>
+              <td class="p-3 text-center font-bold text-amber-700">{{ formatNumber(dom.expiringSoon) }}</td>
+              <td class="p-3 text-center font-bold text-rose-700 bg-rose-50/30">{{ formatNumber(dom.inProgressOverdue) }}</td>
+              <td class="p-3 text-center font-bold text-slate-500">{{ formatNumber(dom.notStarted) }}</td>
               <td class="p-3 text-center font-bold text-slate-900">
                 <div class="flex items-center justify-center gap-2">
                   <div class="w-16 bg-slate-200 rounded-full h-2 overflow-hidden">
@@ -370,7 +376,7 @@
               </td>
             </tr>
             <tr v-if="filteredDomainSummaries.length === 0">
-              <td colspan="9" class="p-8 text-center text-slate-400 italic font-medium">Không tìm thấy bản ghi nào phù hợp với bộ lọc.</td>
+              <td colspan="10" class="p-8 text-center text-slate-400 italic font-medium">Không tìm thấy bản ghi nào phù hợp với bộ lọc.</td>
             </tr>
           </tbody>
         </table>
@@ -379,7 +385,7 @@
       <!-- Server Pagination Controls Footer -->
       <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50/70 p-4 border-t border-slate-200/80 text-xs text-slate-600 font-semibold">
         <div class="flex flex-wrap items-center gap-3">
-          <span>Hiển thị <strong class="text-slate-900">{{ currentActiveTotalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0 }} - {{ Math.min(currentPage * pageSize, currentActiveTotalCount) }}</strong> trên tổng số <strong class="text-slate-900">{{ currentActiveTotalCount }}</strong> bản ghi</span>
+          <span>Hiển thị <strong class="text-slate-900">{{ formatNumber(currentActiveTotalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0) }} - {{ formatNumber(Math.min(currentPage * pageSize, currentActiveTotalCount)) }}</strong> trên tổng số <strong class="text-slate-900">{{ formatNumber(currentActiveTotalCount) }}</strong> bản ghi</span>
           <div class="flex items-center gap-1.5 ml-2">
             <span class="text-slate-500 font-normal">Kích thước trang:</span>
             <div class="w-40">
@@ -418,8 +424,12 @@
 </template>
 
 <script setup>
+import ActionButton from "../components/ActionButton.vue";
+import { formatNumber } from "../shared/formatters";
 import { formatDate, formatDateRange, formatFileName as getFileName } from '../shared/formatters';
 import { getStatusLabel } from '../shared/statusPresentation';
+import ReportYearSelect from '../components/ReportYearSelect.vue';
+import { reportYear } from '../shared/reportYear';
 import { fetchWithAuth } from '../services/auth';
 
 import { ref, computed, onMounted, watch } from 'vue';
@@ -464,8 +474,8 @@ const appliedFilters = ref({
 });
 
 const reportScopeOptions = computed(() => [
-  { value: 'general', label: 'Phạm vi Chung (Tất cả đơn vị)' },
-  { value: 'specific', label: 'Phạm vi Riêng (Đơn vị cụ thể)' }
+  { value: 'general', label: 'Phạm vi chung (tất cả đơn vị)' },
+  { value: 'specific', label: 'Phạm vi riêng (đơn vị cụ thể)' }
 ]);
 
 const currentPage = ref(1);
@@ -519,8 +529,8 @@ const sectionOptions = computed(() => [...GOAL_SECTIONS, ...TASK_SECTIONS]);
 const groupOptions = computed(() => [...GOAL_GROUPS, ...TASK_GROUPS]);
 
 const itemTypeOptions = ref([
-  { value: 'Goal', label: '🎯 Chỉ Mục tiêu' },
-  { value: 'Task', label: '📋 Chỉ Nhiệm vụ' }
+  { value: 'Goal', label: '🎯 Chỉ mục tiêu' },
+  { value: 'Task', label: '📋 Chỉ nhiệm vụ' }
 ]);
 
 function getPct(val, total) {
@@ -794,13 +804,18 @@ const paginatedDomainSummaries = computed(() => {
   return filteredDomainSummaries.value.slice(start, start + pageSize.value);
 });
 
+watch(reportYear, () => { loadReportData(); });
+
 watch(activeReportType, () => {
   currentPage.value = 1;
 });
 
 async function loadReportData() {
   const currentId = ++reportFetchRequestId;
+  const selectedYear = reportYear.value;
   isLoading.value = true;
+  allItems.value = [];
+  metrics.value = {};
   try {
     const agRes = await fetchWithAuth(getApiUrl('/api/agencies'));
     if (agRes.ok) {
@@ -810,6 +825,7 @@ async function loadReportData() {
     }
 
     const params = new URLSearchParams();
+    params.set('reportYear', selectedYear);
     if (appliedFilters.value.selectedAgencyIds && appliedFilters.value.selectedAgencyIds.length > 0) {
       appliedFilters.value.selectedAgencyIds.forEach(id => params.append('agencyId', id));
     } else if (!authState.isAdmin.value && authState.user.value?.agencyId) {
@@ -839,7 +855,7 @@ async function loadReportData() {
     }
 
     const docId = '12660000-0000-0000-0000-000000001266';
-    const gridRes = await fetchWithAuth(getApiUrl(`/api/planning/documents/${docId}/grid`));
+    const gridRes = await fetchWithAuth(getApiUrl(`/api/planning/documents/${docId}/grid?reportYear=${selectedYear}`));
     if (gridRes.ok) {
       const data = await gridRes.json();
       if (currentId !== reportFetchRequestId) return;
@@ -868,7 +884,7 @@ function exportCurrentReportToExcel() {
   let minColWidths = {};
 
   const now = new Date();
-  const timeStr = `${now.toLocaleDateString('vi-VN')} ${now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
+  const timeStr = `Năm báo cáo: ${reportYear.value} | ${now.toLocaleDateString('vi-VN')} ${now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
 
   if (activeReportType.value === 'summary') {
     title = "BÁO CÁO TỔNG HỢP TIẾN ĐỘ THEO CƠ QUAN / ĐƠN VỊ - QUYẾT ĐỊNH 1266/QĐ-TTg";
@@ -883,8 +899,8 @@ function exportCurrentReportToExcel() {
     tableTitle = "2. DANH SÁCH BỘ, NGÀNH, ĐỊA PHƯƠNG VÀ TIẾN ĐỘ THỰC HIỆN";
     fileName = "Bao_Cao_Tong_Hop_Tien_Do_Co_Quan";
     sheetName = "Tổng hợp tiến độ";
-    headers = ["STT", "Tên Cơ Quan / Địa Phương", "Tổng Hạng Mục", "Mục Tiêu", "Nhiệm Vụ", "Đã Hoàn Thành", "Đang T/H (Trong Hạn)", "Sắp Tới Hạn", "Đang T/H (Quá Hạn)", "Tỷ Lệ Hoàn Thành (%)"];
-    minColWidths = { 0: 8, 1: 38, 2: 15, 3: 12, 4: 12, 5: 15, 6: 20, 7: 15, 8: 20, 9: 22 };
+    headers = ["STT", "Tên cơ quan / địa phương", "Tổng hạng mục", "Mục tiêu", "Nhiệm vụ", "Hoàn thành (đúng hạn)", "Hoàn thành (quá hạn)", "Đang thực hiện (trong hạn)", "Sắp hết hạn", "Đang thực hiện (quá hạn)", "Chưa thực hiện", "Tỷ lệ hoàn thành (%)"];
+    minColWidths = { 0: 8, 1: 38, 2: 15, 3: 12, 4: 12, 5: 24, 6: 24, 7: 26, 8: 18, 9: 26, 10: 18, 11: 22 };
 
     rows = filteredAgencySummaries.value.map((ag, idx) => {
       const pct = getPct(ag.completedOnTime + ag.completedOverdue, ag.totalItems);
@@ -894,10 +910,12 @@ function exportCurrentReportToExcel() {
         ag.totalItems || 0,
         ag.totalGoals || 0,
         ag.totalTasks || 0,
-        (ag.completedOnTime || 0) + (ag.completedOverdue || 0),
+        ag.completedOnTime || 0,
+        ag.completedOverdue || 0,
         ag.inProgressOnTime || 0,
         ag.expiringSoon || 0,
         ag.inProgressOverdue || 0,
+        ag.notStarted || 0,
         `${pct}%`
       ];
     });
@@ -913,7 +931,7 @@ function exportCurrentReportToExcel() {
     tableTitle = "2. DANH SÁCH CHI TIẾT NHIỆM VỤ CẦN GỬI THÔNG BÁO";
     fileName = "Bao_Cao_Nhiem_Vu_Can_Gui_Thong_Bao";
     sheetName = "Sắp hết hạn & Quá hạn";
-    headers = ["STT", "Mã Hạng Mục", "Loại Hạng Mục", "Tên Mục Tiêu / Nhiệm Vụ", "Đơn Vị Chủ Trì", "Giao Đơn Vị Trực Thuộc", "Hạn Chót", "Trạng Thái Cảnh Báo"];
+    headers = ["STT", "Mã hạng mục", "Loại hạng mục", "Tên mục tiêu / nhiệm vụ", "Đơn vị chủ trì", "Giao đơn vị trực thuộc", "Hạn chót", "Trạng thái cảnh báo"];
     minColWidths = { 0: 8, 1: 15, 2: 15, 3: 45, 4: 28, 5: 28, 6: 20, 7: 25 };
 
     rows = urgentItems.value.map((i, idx) => [
@@ -938,7 +956,7 @@ function exportCurrentReportToExcel() {
     tableTitle = "2. DANH SÁCH THỐNG KÊ ĐÔN ĐỐC VÀ TÍNH TUÂN THỦ CỦA TỪNG BỘ, NGÀNH, ĐỊA PHURƠNG";
     fileName = "Bao_Cao_Thong_Ke_Don_Doc_Tuan_Thu_Bao_Cao";
     sheetName = "Đôn đốc & Tuân thủ";
-    headers = ["STT", "Tên Cơ Quan / Địa Phương", "Tổng NV Được Giao", "Số Lần Đã Đôn Đốc", "Báo Cáo Đã Nạp", "Báo Cáo Đúng Hạn", "Trễ Báo Cáo / Chưa Nạp", "Tỷ Lệ Tuân Thủ (%)", "Đánh Giá Tuân Thủ"];
+    headers = ["STT", "Tên cơ quan / địa phương", "Tổng nhiệm vụ được giao", "Số lần đã đôn đốc", "Báo cáo đã nạp", "Báo cáo đúng hạn", "Trễ báo cáo / chưa nạp", "Tỷ lệ tuân thủ (%)", "Đánh giá tuân thủ"];
     minColWidths = { 0: 8, 1: 38, 2: 18, 3: 18, 4: 18, 5: 18, 6: 22, 7: 20, 8: 22 };
 
     rows = filteredGovernanceSummaries.value.map((ag, idx) => [
@@ -964,14 +982,15 @@ function exportCurrentReportToExcel() {
     tableTitle = "2. DANH SÁCH CHI TIẾT TIẾN ĐỘ THEO LĨNH VỰC VÀ TRỤ CỘT CHIẾN LƯỢC";
     fileName = "Bao_Cao_Tien_Do_Theo_Linh_Vuc_Tru_Cot";
     sheetName = "Tiến độ theo lĩnh vực";
-    headers = ["STT", "Lĩnh Vực / Trụ Cột Chiến Lược", "Tổng Hạng Mục", "Đã Hoàn Thành", "Đang Thực Hiện (Trong Hạn)", "Sắp Tới Hạn", "Đang T/H (Quá Hạn)", "Chưa Thực Hiện", "Tỷ Lệ Hoàn Thành (%)"];
-    minColWidths = { 0: 8, 1: 45, 2: 15, 3: 15, 4: 22, 5: 15, 6: 20, 7: 15, 8: 22 };
+    headers = ["STT", "Lĩnh vực / trụ cột chiến lược", "Tổng hạng mục", "Hoàn thành (đúng hạn)", "Hoàn thành (quá hạn)", "Đang thực hiện (trong hạn)", "Sắp hết hạn", "Đang thực hiện (quá hạn)", "Chưa thực hiện", "Tỷ lệ hoàn thành (%)"];
+    minColWidths = { 0: 8, 1: 45, 2: 15, 3: 24, 4: 24, 5: 26, 6: 18, 7: 26, 8: 18, 9: 22 };
 
     rows = filteredDomainSummaries.value.map((dom, idx) => [
       idx + 1,
       dom.domainName,
       dom.totalItems,
-      dom.completedOnTime + dom.completedOverdue,
+      dom.completedOnTime,
+      dom.completedOverdue,
       dom.inProgressOnTime,
       dom.expiringSoon,
       dom.inProgressOverdue,

@@ -130,6 +130,7 @@ namespace Cdsqg.Application.DTOs
     [System.Text.Json.Serialization.JsonUnmappedMemberHandling(System.Text.Json.Serialization.JsonUnmappedMemberHandling.Disallow)]
     public class ImportProgressBulkItemDto
     {
+        public List<TaskDeliverable>? Deliverables { get; set; }
         public string Code { get; set; } = string.Empty;
         public decimal? Value { get; set; }
         public TextStatusEnum? Status { get; set; }
@@ -139,6 +140,8 @@ namespace Cdsqg.Application.DTOs
 
     public class ImportProgressBulkRequestDto
     {
+        public string? CreatedBy { get; set; }
+        public Guid? ReportingAgencyId { get; set; }
         public Guid? UserAgencyId { get; set; }
         public string? UserRole { get; set; } = string.Empty;
         public List<ImportProgressBulkItemDto> Items { get; set; } = new List<ImportProgressBulkItemDto>();

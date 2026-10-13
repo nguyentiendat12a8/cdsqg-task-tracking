@@ -6,7 +6,7 @@
       <div class="px-6 py-4 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0">
         <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
           <span>📜</span>
-          <span>{{ isReadOnly ? 'Chi Tiết Văn Bản Quy Phạm Pháp Luật' : (isEditing ? 'Chỉnh Sửa Văn Bản Quy Phạm Pháp Luật' : 'Thêm Mới Văn Bản Quy Phạm Pháp Luật') }}</span>
+          <span>{{ isReadOnly ? 'Chi tiết văn bản quy phạm pháp luật' : (isEditing ? 'Chỉnh sửa văn bản quy phạm pháp luật' : 'Thêm mới văn bản quy phạm pháp luật') }}</span>
         </h3>
         <button @click="close" class="text-slate-400 hover:text-slate-700 font-bold text-lg cursor-pointer">✕</button>
       </div>
@@ -20,7 +20,7 @@
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label class="block font-semibold text-slate-700 mb-1">
-              Số Ký Hiệu Văn Bản <span v-if="!isReadOnly" class="text-rose-500">*</span>
+              Số ký hiệu văn bản <span v-if="!isReadOnly" class="text-rose-500">*</span>
             </label>
             <input 
               v-model="form.code" 
@@ -38,7 +38,8 @@
               :isMulti="false" 
               :clearable="false"
               :disabled="isReadOnly"
-              label="Loại Văn Bản *" 
+              :required="!isReadOnly"
+              label="Loại văn bản" 
             />
           </div>
 
@@ -49,7 +50,8 @@
               :isMulti="false" 
               :clearable="false"
               :disabled="isReadOnly"
-              label="Trạng Thái Hiệu Lực *" 
+              :required="!isReadOnly"
+              label="Trạng thái hiệu lực" 
             />
           </div>
         </div>
@@ -57,7 +59,7 @@
         <!-- Row 2: Tên / Trích yếu văn bản -->
         <div>
           <label class="block font-semibold text-slate-700 mb-1">
-            Tên / Trích Yếu Nội Dung Văn Bản <span v-if="!isReadOnly" class="text-rose-500">*</span>
+            Tên / trích yếu nội dung văn bản <span v-if="!isReadOnly" class="text-rose-500">*</span>
           </label>
           <textarea 
             v-model="form.title" 
@@ -77,13 +79,14 @@
               :options="issuingAgencyOptions" 
               :isMulti="false" 
               :disabled="isReadOnly || isIssuingAgencyLocked"
-              label="Cơ Quan Ban Hành *" 
+              :required="!isReadOnly"
+              label="Cơ quan ban hành" 
               placeholder="Chọn cơ quan ban hành"
             />
-            <p v-if="!isReadOnly && isIssuingAgencyLocked" class="text-[10px] text-amber-700 mt-1 italic font-medium">
+            <p v-if="!isReadOnly && isIssuingAgencyLocked" class="text-xs text-amber-700 mt-1 italic font-medium">
               🔒 Tài khoản Cấp 3: Cơ quan ban hành mặc định cố định là cơ quan của bạn.
             </p>
-            <p v-else-if="!isReadOnly && isLevel2" class="text-[10px] text-blue-700 mt-1 italic font-medium">
+            <p v-else-if="!isReadOnly && isLevel2" class="text-xs text-blue-700 mt-1 italic font-medium">
               🏢 Tài khoản Cấp 2: Chỉ được chọn Bộ/Ngành của bạn hoặc các đơn vị trực thuộc.
             </p>
           </div>
@@ -94,7 +97,7 @@
               :options="agencySelectOptions" 
               :isMulti="false" 
               :disabled="isReadOnly"
-              label="Cơ Quan Dự Thảo" 
+              label="Cơ quan dự thảo" 
               placeholder="Chọn cơ quan dự thảo văn bản"
             />
           </div>
@@ -103,7 +106,7 @@
         <!-- Row 4: Người ký, Chức danh, Ngày ban hành & Có hiệu lực -->
         <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
           <div>
-            <label class="block font-semibold text-slate-700 mb-1">Người Ký</label>
+            <label class="block font-semibold text-slate-700 mb-1">Người ký</label>
             <input 
               v-model="form.signerName" 
               :disabled="isReadOnly"
@@ -113,7 +116,7 @@
           </div>
 
           <div>
-            <label class="block font-semibold text-slate-700 mb-1">Chức Danh Người Ký</label>
+            <label class="block font-semibold text-slate-700 mb-1">Chức danh người ký</label>
             <input 
               v-model="form.signerTitle" 
               :disabled="isReadOnly"
@@ -123,7 +126,7 @@
           </div>
 
           <div>
-            <label class="block font-semibold text-slate-700 mb-1">Ngày Ban Hành</label>
+            <label class="block font-semibold text-slate-700 mb-1">Ngày ban hành</label>
             <input 
               type="date" 
               v-model="form.issuedDate" 
@@ -133,7 +136,7 @@
           </div>
 
           <div>
-            <label class="block font-semibold text-slate-700 mb-1">Ngày Có Hiệu Lực</label>
+            <label class="block font-semibold text-slate-700 mb-1">Ngày có hiệu lực</label>
             <input 
               type="date" 
               v-model="form.effectiveDate" 
@@ -151,7 +154,7 @@
               :options="fieldOptions" 
               :isMulti="false" 
               :disabled="isReadOnly"
-              label="Lĩnh Vực / Nhóm Chuyển Đổi Số" 
+              label="Lĩnh vực / nhóm chuyển đổi số" 
               placeholder="Chọn lĩnh vực"
             />
           </div>
@@ -162,7 +165,7 @@
               :options="scopeOptions" 
               :isMulti="false" 
               :disabled="isReadOnly"
-              label="Phạm Vi Áp Dụng" 
+              label="Phạm vi áp dụng" 
             />
           </div>
         </div>
@@ -170,8 +173,8 @@
         <!-- Row 6: Multi-File Attachments Section -->
         <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/60 space-y-3">
           <div class="flex items-center justify-between">
-            <label class="font-semibold text-slate-800 flex items-center gap-1.5 uppercase tracking-wider text-[11px]">
-              📎 Danh Sách Tệp Văn Bản Đính Kèm (Hỗ trợ nhiều file)
+            <label class="font-semibold text-slate-800 flex items-center gap-1.5 text-xs">
+              📎 Danh sách tệp văn bản đính kèm (hỗ trợ nhiều file)
             </label>
           </div>
 
@@ -219,10 +222,10 @@
                 >
                   {{ att.cleanName || att.fileName }}
                 </button>
-                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
+                <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 border border-blue-200 shrink-0">
                   {{ att.fileType }}
                 </span>
-                <span class="text-[10px] text-slate-400 shrink-0">
+                <span class="text-xs text-slate-400 shrink-0">
                   ({{ formatBytes(att.fileSize) }})
                 </span>
               </div>
@@ -245,7 +248,7 @@
 
         <!-- Row 7: Ghi chú -->
         <div>
-          <label class="block font-semibold text-slate-700 mb-1">Ghi Chú Chi Tiết</label>
+          <label class="block font-semibold text-slate-700 mb-1">Ghi chú chi tiết</label>
           <textarea 
             v-model="form.notes" 
             :disabled="isReadOnly"
@@ -278,7 +281,7 @@
               :disabled="isSubmitting"
               class="ui-single-line px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-sm transition disabled:opacity-50 cursor-pointer"
             >
-              {{ isSubmitting ? 'Đang lưu...' : (isEditing ? 'Cập Nhật Văn Bản' : 'Tạo Mới Văn Bản') }}
+              {{ isSubmitting ? 'Đang lưu...' : (isEditing ? 'Cập nhật văn bản' : 'Tạo mới văn bản') }}
             </button>
           </template>
         </div>
@@ -289,6 +292,7 @@
 </template>
 
 <script setup>
+import { legalDocumentTypeOptions as documentTypeOptions } from '../config/legalDocumentTypes';
 import { fetchWithAuth } from '../services/auth';
 
 import { ref, reactive, computed, watch, onMounted } from 'vue';
@@ -317,15 +321,7 @@ const fileInputRef = ref(null);
 const selectedFileToUpload = ref(null);
 const uploadFileType = ref('Văn bản chính');
 
-const documentTypeOptions = [
-  { value: 'Luật', label: 'Luật' },
-  { value: 'Nghị định', label: 'Nghị định' },
-  { value: 'Thông tư', label: 'Thông tư' },
-  { value: 'Quyết định', label: 'Quyết định' },
-  { value: 'Nghị quyết', label: 'Nghị quyết' },
-  { value: 'Chỉ thị', label: 'Chỉ thị' },
-  { value: 'Khác', label: 'Khác' }
-];
+
 
 const effectStatusOptions = [
   { value: 'Còn hiệu lực', label: 'Còn hiệu lực' },

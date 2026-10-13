@@ -11,9 +11,9 @@
       </svg>
       <span 
         v-if="unreadCount > 0" 
-        class="absolute -top-1 -right-1 px-1.5 py-0.5 bg-rose-600 text-white text-[10px] font-bold rounded-full shadow-sm animate-pulse"
+        class="absolute -top-1 -right-1 px-1.5 py-0.5 bg-rose-600 text-white text-xs font-bold rounded-full shadow-sm animate-pulse"
       >
-        {{ unreadCount }}
+        {{ formatNumber(unreadCount) }}
       </span>
     </button>
 
@@ -24,9 +24,9 @@
     >
       <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
         <div class="flex items-center gap-2">
-          <span class="font-bold text-sm">🔔 Thông báo Nhắc Nhở</span>
-          <span v-if="unreadCount > 0" class="px-2 py-0.5 bg-blue-500 text-white text-[10px] font-bold rounded-full">
-            {{ unreadCount }} mới
+          <span class="font-bold text-sm">🔔 Thông báo nhắc nhở</span>
+          <span v-if="unreadCount > 0" class="px-2 py-0.5 bg-blue-500 text-white text-xs font-bold rounded-full">
+            {{ formatNumber(unreadCount) }} mới
           </span>
         </div>
         <button 
@@ -58,7 +58,7 @@
           </div>
           <div class="flex-1 space-y-1">
             <div class="text-xs font-bold text-slate-900 leading-snug">{{ notif.title }}</div>
-            <div class="text-[10px] text-slate-400 font-semibold pt-0.5">{{ formatDate(notif.createdAt) }}</div>
+            <div class="text-xs text-slate-400 font-semibold pt-0.5">{{ formatDate(notif.createdAt) }}</div>
           </div>
         </div>
       </div>
@@ -67,6 +67,7 @@
 </template>
 
 <script setup>
+import { formatNumber } from "../shared/formatters";
 import { formatDateTime as formatDate } from '../shared/formatters';
 import { fetchWithAuth } from '../services/auth';
 

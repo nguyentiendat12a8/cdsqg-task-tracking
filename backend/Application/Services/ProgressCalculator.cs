@@ -46,6 +46,33 @@ public static class ProgressCalculator
         return item.ProgressLogs.Where(l => l.AgencyId == id || (!item.IsGeneralTask && l.AgencyId == null && id == item.LeadAgencyId));
     }
 
+    public static int FinalTargetYear(GoalTaskItem item, int fallbackYear)
+        => item.DueDate?.Year ?? item.Document?.EndYear
+            ?? item.Baselines.Select(b => b.Year).Concat(item.CustomBaseline.Keys.Where(k => k.Length == 4 && int.TryParse(k, out _)).Select(int.Parse)).DefaultIfEmpty(fallbackYear).Max();
+
+    public static bool HasReachedFinalCompletion(GoalTaskItem item, ProgressLog report)
+    {
+        if (item.IsOngoing) return false;
+        if (item.EvaluationType == EvaluationTypeEnum.Quantitative)
+        {
+            var target = ResolveBaseline(item, FinalTargetYear(item, report.PeriodYear)).Target;
+            return target > 0 && report.QuantitativeValue >= target;
+        }
+        return item.Deliverables.Count > 0
+            ? report.Deliverables is { Count: > 0 } products && products.Count == item.Deliverables.Count && item.Deliverables.All(d => products.Any(p => p.Id == d.Id && p.CurrentStatus?.ToLowerInvariant() is "completed" or "4"))
+            : report.QualitativeStatus == TextStatusEnum.Completed;
+    }
+
+    public static ProgressLog? AnnualReport(GoalTaskItem item, Guid? agencyId, int? year)
+    {
+        var report = LatestApproved(item, agencyId, year);
+        if (report != null || !year.HasValue || item.IsOngoing) return report;
+        // Use the latest approved revision of each earlier year, never a superseded report.
+        return ScopedLogs(item, agencyId).Where(l => l.ApprovalStatus == ApprovalStatusEnum.Approved && l.PeriodYear < year)
+            .GroupBy(l => l.PeriodYear).Select(g => g.OrderByDescending(l => l.LogDate).ThenByDescending(l => l.Id).First())
+            .Where(l => HasReachedFinalCompletion(item, l)).OrderBy(l => l.PeriodYear).FirstOrDefault();
+    }
+
     public static decimal DeliverablePercentage(IReadOnlyCollection<TaskDeliverable>? deliverables)
         => deliverables is { Count: > 0 } ? Math.Round(deliverables.Average(d => d.CurrentStatus?.ToLowerInvariant() switch
         {
@@ -60,14 +87,15 @@ public static class ProgressCalculator
         List<TaskDeliverable>? deliverables = null, Guid? agencyId = null, int? year = null, DateTime? evaluatedAt = null)
     {
         var now = evaluatedAt ?? DateTime.UtcNow;
-        report ??= LatestApproved(item, agencyId, year);
+        report ??= AnnualReport(item, agencyId, year);
         var reportYear = year ?? report?.PeriodYear ?? now.Year;
-        var (target, custom) = ResolveBaseline(item, reportYear);
+        var carriedCompletion = year.HasValue && report != null && report.PeriodYear < year && HasReachedFinalCompletion(item, report);
+        var (target, custom) = ResolveBaseline(item, carriedCompletion ? FinalTargetYear(item, reportYear) : reportYear);
         decimal? actual = report?.QuantitativeValue;
         // Annual input is the total achieved through the report year, including for the
         // legacy Cumulative identifier. Adding previous reports would count results twice.
         var products = deliverables is { Count: > 0 } ? deliverables
-            : report?.Deliverables is { Count: > 0 } ? report.Deliverables : item.Deliverables;
+            : report?.Deliverables is { Count: > 0 } ? report.Deliverables : year.HasValue ? AnnualDeliverables(item, report) : item.Deliverables;
         decimal? percentage = item.EvaluationType == EvaluationTypeEnum.Quantitative
             ? (actual.HasValue && target > 0 ? Math.Round(actual.Value / target.Value * 100m, 2) : null)
             : products.Count > 0 ? DeliverablePercentage(products) : report?.QualitativeStatus switch
@@ -98,16 +126,16 @@ public static class ProgressCalculator
         return new(reportYear, actual, target, custom, percentage, status, alert);
     }
 
-    public static Result EvaluateOverall(GoalTaskItem item, IEnumerable<Agency> agencies, DateTime? evaluatedAt = null)
+    public static Result EvaluateOverall(GoalTaskItem item, IEnumerable<Agency> agencies, DateTime? evaluatedAt = null, int? reportYear = null)
     {
-        if (!item.IsGeneralTask) return Evaluate(item, evaluatedAt: evaluatedAt);
+        if (!item.IsGeneralTask) return Evaluate(item, year: reportYear, evaluatedAt: evaluatedAt);
         var code = item.LeadAgency?.Code ?? "ALL_AGENCIES";
         var eligible = agencies.Where(a => a.IsActive && a.ParentId == null
             && !a.Code.StartsWith("ALL_", StringComparison.OrdinalIgnoreCase)
             && a.Type is AgencyTypeEnum.Ministry or AgencyTypeEnum.Province
             && (!code.StartsWith("ALL_MINISTRIES") || a.Type == AgencyTypeEnum.Ministry)
             && (!code.StartsWith("ALL_PROVINCES") || a.Type == AgencyTypeEnum.Province)).ToList();
-        var year = item.ProgressLogs.Where(l => l.ApprovalStatus == ApprovalStatusEnum.Approved && eligible.Any(a => a.Id == l.AgencyId))
+        var year = reportYear ?? item.ProgressLogs.Where(l => l.ApprovalStatus == ApprovalStatusEnum.Approved && eligible.Any(a => a.Id == l.AgencyId))
             .Select(l => (int?)l.PeriodYear).Max() ?? (evaluatedAt ?? DateTime.UtcNow).Year;
         var results = eligible.Select(a => Evaluate(item, agencyId: a.Id, year: year, evaluatedAt: evaluatedAt)).ToList();
         var (target, custom) = ResolveBaseline(item, year);
@@ -123,6 +151,15 @@ public static class ProgressCalculator
         return new(year, null, target, custom, percentage, status,
             percentage >= 95 ? AlertStatusEnum.Green : percentage >= 70 ? AlertStatusEnum.Yellow : AlertStatusEnum.Red);
     }
+
+    public static DateTime? AnnualEvaluationDate(int? year)
+        => year.HasValue && year.Value < DateTime.UtcNow.Year ? new DateTime(year.Value, 12, 31) : null;
+
+    public static List<TaskDeliverable> AnnualDeliverables(GoalTaskItem item, ProgressLog? report)
+        => report?.Deliverables is { Count: > 0 } ? report.Deliverables : item.Deliverables.Select(d => new TaskDeliverable
+        {
+            Id = d.Id, Title = d.Title, DueDate = d.DueDate, CurrentStatus = "NotStarted"
+        }).ToList();
 
     public static void RefreshExecution(GoalTaskItem item, AgencyTaskExecution execution)
     {

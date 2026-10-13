@@ -1,5 +1,6 @@
+import { legalDocumentTypeOptions as sharedDocumentTypeOptions } from '../../config/legalDocumentTypes';
 import { fetchWithAuth } from '../../services/auth';
-import { ref, computed } from 'vue';
+import { ref, computed, onUnmounted } from 'vue';
 import { toast } from 'vue3-toastify';
 import { getApiUrl } from '../../config/api';
 import { authState } from '../../services/auth';
@@ -39,16 +40,7 @@ export function useLegalDashboard({ agencies, isSpecialAgencyCode }) {
   const isLegalViewerOpen = ref(false);
   const selectedLegalViewerFile = ref(null);
 
-  const legalDocumentTypeOptions = ref([
-    { value: 'Thông tư', label: 'Thông tư' },
-    { value: 'Nghị định', label: 'Nghị định' },
-    { value: 'Quyết định', label: 'Quyết định' },
-    { value: 'Nghị quyết', label: 'Nghị quyết' },
-    { value: 'Chỉ thị', label: 'Chỉ thị' },
-    { value: 'Quy chế', label: 'Quy chế' },
-    { value: 'Luật', label: 'Luật' },
-    { value: 'Khác', label: 'Khác' }
-  ]);
+  const legalDocumentTypeOptions = ref(sharedDocumentTypeOptions);
 
   const legalAgencyOptions = computed(() => {
     return (agencies.value || [])
@@ -80,7 +72,13 @@ export function useLegalDashboard({ agencies, isSpecialAgencyCode }) {
     loadLegalDashboardStats();
   }
 
+  let requestVersion = 0;
+  let requestController;
+  onUnmounted(() => { requestVersion++; requestController?.abort(); });
   async function loadLegalDashboardStats() {
+    const version = ++requestVersion;
+    requestController?.abort();
+    const controller = requestController = new AbortController();
     isLegalStatsLoading.value = true;
     try {
       const params = new URLSearchParams();
@@ -99,14 +97,15 @@ export function useLegalDashboard({ agencies, isSpecialAgencyCode }) {
 
       const queryString = params.toString();
       const url = getApiUrl(`/api/legaldocuments/dashboard-stats${queryString ? '?' + queryString : ''}`);
-      const res = await fetchWithAuth(url);
+      const res = await fetchWithAuth(url, { signal: controller.signal });
       if (res.ok) {
-        legalStats.value = await res.json();
+        const data = await res.json();
+        if (version === requestVersion) legalStats.value = data;
       }
     } catch (err) {
-      console.error("Lỗi khi tải thống kê VB QPPL:", err);
+      if (err.name !== 'AbortError' && version === requestVersion) console.error("Lỗi khi tải thống kê VB QPPL:", err);
     } finally {
-      isLegalStatsLoading.value = false;
+      if (version === requestVersion) isLegalStatsLoading.value = false;
     }
   }
 

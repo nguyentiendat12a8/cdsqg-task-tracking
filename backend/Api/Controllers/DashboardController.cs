@@ -30,6 +30,7 @@ namespace Cdsqg.Api.Controllers
             [FromQuery] Guid? parentAgencyId = null,
             [FromQuery] string[]? section = null,
             [FromQuery] string[]? group = null,
+            [FromQuery] int? reportYear = null,
             [FromQuery] int? fromYear = null,
             [FromQuery] int? toYear = null,
             [FromQuery] bool? isOngoing = null,
@@ -38,6 +39,7 @@ namespace Cdsqg.Api.Controllers
         {
             try
             {
+                if (reportYear.HasValue && reportYear.Value is < 1900 or > 9999) return BadRequest("Năm báo cáo không hợp lệ.");
                 var query = _context.GoalTaskItems
                     .Include(i => i.LeadAgency)
                     .Include(i => i.Unit)
@@ -320,9 +322,9 @@ namespace Cdsqg.Api.Controllers
 
                     foreach (var item in agencyItems)
                     {
-                        var latestLog = PlanningService.GetLatestProgressLogForAgency(item, agency.Id);
-                        var agencyDeliverables = PlanningService.GetDeliverablesForAgency(item, agency.Id);
-                        var status = PlanningService.CalculateExecutionStatus(item, latestLog, agencyDeliverables);
+                        var latestLog = ProgressCalculator.AnnualReport(item, agency.Id, reportYear);
+                        var agencyDeliverables = reportYear.HasValue ? ProgressCalculator.AnnualDeliverables(item, latestLog) : PlanningService.GetDeliverablesForAgency(item, agency.Id);
+                        var status = ProgressCalculator.Evaluate(item, latestLog, agencyDeliverables, agency.Id, reportYear, ProgressCalculator.AnnualEvaluationDate(reportYear)).Status;
                         bool isGoal = item.ItemType == ItemTypeEnum.Goal;
 
                         switch (status)
@@ -358,7 +360,7 @@ namespace Cdsqg.Api.Controllers
                     {
                         AgencyId = agency.Id,
                         Code = agency.Code,
-                        Name = agency.Name ?? string.Empty,
+                        Name = ProvinceCatalog.DisplayName(agency),
                         Type = agency.Type.ToString(),
                         HasChildAgencies = agencyChildren[agency.Id].Any(),
                         ContactPersons = agency.ContactPersons ?? new List<AgencyContactPerson>(),
@@ -495,8 +497,8 @@ namespace Cdsqg.Api.Controllers
                 {
                     if (IsGeneralItem(item)) continue;
 
-                    var latestLog = ProgressCalculator.LatestApproved(item);
-                    var status = PlanningService.CalculateExecutionStatus(item, latestLog, latestLog?.Deliverables);
+                    var latestLog = ProgressCalculator.AnnualReport(item, null, reportYear);
+                    var status = ProgressCalculator.Evaluate(item, latestLog, year: reportYear, evaluatedAt: ProgressCalculator.AnnualEvaluationDate(reportYear)).Status;
                     bool isGoal = item.ItemType == ItemTypeEnum.Goal;
 
                     switch (status)
@@ -638,6 +640,7 @@ namespace Cdsqg.Api.Controllers
             [FromQuery] Guid agencyId,
             [FromQuery] string[]? section = null,
             [FromQuery] string[]? group = null,
+            [FromQuery] int? reportYear = null,
             [FromQuery] int? fromYear = null,
             [FromQuery] int? toYear = null,
             [FromQuery] bool? isOngoing = null,
@@ -648,6 +651,7 @@ namespace Cdsqg.Api.Controllers
         {
             try
             {
+                if (reportYear.HasValue && reportYear.Value is < 1900 or > 9999) return BadRequest("Năm báo cáo không hợp lệ.");
                 var query = _context.GoalTaskItems
                     .Include(i => i.LeadAgency)
                     .Include(i => i.Unit)
@@ -790,11 +794,11 @@ namespace Cdsqg.Api.Controllers
 
                 var resultList = agencyItems.Select(item =>
                 {
-                    var latestLog = PlanningService.GetLatestProgressLogForAgency(item, agencyId);
-                    var agencyDeliverables = PlanningService.GetDeliverablesForAgency(item, agencyId);
+                    var latestLog = ProgressCalculator.AnnualReport(item, agencyId, reportYear);
+                    var agencyDeliverables = reportYear.HasValue ? ProgressCalculator.AnnualDeliverables(item, latestLog) : PlanningService.GetDeliverablesForAgency(item, agencyId);
                     var progress = item.IsGeneralTask && agencyId == Guid.Empty
-                        ? ProgressCalculator.EvaluateOverall(item, allAgencies)
-                        : ProgressCalculator.Evaluate(item, latestLog, agencyDeliverables, agencyId);
+                        ? ProgressCalculator.EvaluateOverall(item, allAgencies, ProgressCalculator.AnnualEvaluationDate(reportYear), reportYear)
+                        : ProgressCalculator.Evaluate(item, latestLog, agencyDeliverables, agencyId, reportYear, ProgressCalculator.AnnualEvaluationDate(reportYear));
                     var execStatus = progress.Status;
                     double? latestPercent = (double?)progress.Percentage;
                     double? latestValue = (double?)progress.ActualValue;
@@ -818,13 +822,13 @@ namespace Cdsqg.Api.Controllers
                         Section = item.Section,
                         Group = item.Group,
                         LeadAgencyId = item.LeadAgencyId,
-                        LeadAgencyName = item.LeadAgency?.Name ?? (item.IsGeneralTask ? "Tất cả đơn vị (Chung)" : "Bộ Khoa học và Công nghệ"),
+                        LeadAgencyName = (item.LeadAgency == null ? null : ProvinceCatalog.DisplayName(item.LeadAgency)) ?? (item.IsGeneralTask ? "Tất cả đơn vị (Chung)" : "Bộ Khoa học và Công nghệ"),
                         AssignedAgencyId = item.AssignedAgencyId,
                         AssignedAgencyCode = assignedAgency?.Code,
-                        AssignedAgencyName = assignedAgency?.Name,
+                        AssignedAgencyName = assignedAgency == null ? null : ProvinceCatalog.DisplayName(assignedAgency),
                         CoordinatingAgencyIds = item.CoordinatingAgencyIds ?? new List<Guid>(),
                         CoordinatingAgencyCodes = coordAgencies.Select(a => a.Code).ToList(),
-                        CoordinatingAgencyNames = coordAgencies.Select(a => a.Name).ToList(),
+                        CoordinatingAgencyNames = coordAgencies.Select(ProvinceCatalog.DisplayName).ToList(),
                         StartDate = item.StartDate,
                         DueDate = item.DueDate,
                         IsOngoing = item.IsOngoing,
@@ -1013,5 +1017,10 @@ namespace Cdsqg.Api.Controllers
         public int TaskCompletedOnTime { get; set; }
         public int TaskCompletedOverdue { get; set; }
         public int TaskExpiringSoon { get; set; }
+        // Share-count completion rate, distinct from the progress percentage of one item.
+        public decimal? GoalCompletionRate => CompletionRate(GoalCompletedOnTime + GoalCompletedOverdue, TotalGoals);
+        public decimal? TaskCompletionRate => CompletionRate(TaskCompletedOnTime + TaskCompletedOverdue, TotalTasks);
+        public decimal? CompletionRateOverall => CompletionRate(CompletedOnTime + CompletedOverdue, TotalItems);
+        private static decimal? CompletionRate(int completed, int total) => total > 0 ? Math.Round(completed * 100m / total, 2) : null;
     }
 }

@@ -1,0 +1,2 @@
+import {createRequire} from 'node:module';
+const {chromium}=createRequire(process.env.PLAYWRIGHT_PACKAGE)('playwright');const browser=await chromium.launch({channel:'msedge',headless:true});const page=await browser.newPage();await page.goto('http://localhost:5173');console.log(await page.evaluate(async()=>{try{const r=await import('/src/utils/excelReports.js');r.exportProgressReportTemplate({items:[{code:'MT',title:'Test',itemType:'Goal',evaluationType:'Quantitative'}],itemType:'Goal'});return 'ok'}catch(e){return e.stack}}));await browser.close();

@@ -19,16 +19,10 @@
         </div>
 
         <div class="flex items-center gap-2 flex-wrap shrink-0">
-          <button 
+          <ActionButton kind="export" 
             @click="exportAgencyPlansToExcel"
-            class="ui-single-line px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition shadow-2xs flex items-center gap-1.5 cursor-pointer"
             title="Xuất Báo cáo Excel danh sách kế hoạch & đầu mối"
-          >
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-            </svg>
-            <span>Xuất Excel Danh Sách</span>
-          </button>
+          ><span>Xuất Excel danh sách</span></ActionButton>
         </div>
       </div>
     </div>
@@ -54,8 +48,8 @@
 
           <!-- OverlayPanel Advanced Filter Popover -->
           <OverlayPanel 
-            title="Bộ Lọc Tìm Kiếm Nâng Cao"
-            buttonText="Lọc Nâng Cao"
+            title="Bộ lọc tìm kiếm nâng cao"
+            buttonText="Lọc nâng cao"
             :activeCount="activeFilterCount"
             widthClass="w-[340px] sm:w-[500px]"
             @apply="applyFilters"
@@ -87,7 +81,7 @@
                   v-model="planFileFilter" 
                   :options="planFileFilterOptions" 
                   :isMulti="false" 
-                  label="Thông tin Kế hoạch CĐS" 
+                  label="Thông tin kế hoạch CĐS" 
                   placeholder="Tất cả trạng thái"
                 />
               </div>
@@ -101,13 +95,13 @@
         <LoadingSpinner v-if="loading" text="Đang tải danh sách cơ quan & thông tin đầu mối..." />
 
         <table v-else class="w-full min-w-[1000px] text-left text-sm text-slate-700 border-collapse">
-          <thead class="bg-slate-100 text-xs text-slate-600 uppercase font-bold border-b border-slate-200 sticky top-0 z-10 shadow-2xs">
+          <thead class="bg-slate-100 text-xs text-slate-700 font-semibold border-b border-slate-200 sticky top-0 z-10 shadow-2xs">
             <tr>
               <th class="px-3.5 py-3 border-r border-slate-200 text-center min-w-[60px] bg-slate-100 whitespace-nowrap">STT</th>
-              <th class="px-3.5 py-3 border-r border-slate-200 min-w-[240px] bg-slate-100">Cơ Quan, Đơn Vị</th>
-              <th class="px-3.5 py-3 border-r border-slate-200 min-w-[320px] bg-slate-100">Danh Sách Cán Bộ Đầu Mối</th>
-              <th class="px-3.5 py-3 border-r border-slate-200 min-w-[280px] bg-slate-100">Tệp Đính Kèm Kế Hoạch CĐS(2026-2030)</th>
-              <th class="px-3.5 py-3 text-center w-[90px] min-w-[90px] bg-slate-100 whitespace-nowrap">Thao Tác</th>
+              <th class="px-3.5 py-3 border-r border-slate-200 min-w-[240px] bg-slate-100">Cơ quan, đơn vị</th>
+              <th class="px-3.5 py-3 border-r border-slate-200 min-w-[320px] bg-slate-100">Danh sách cán bộ đầu mối</th>
+              <th class="px-3.5 py-3 border-r border-slate-200 min-w-[280px] bg-slate-100">Tệp đính kèm kế hoạch CĐS (2026-2030)</th>
+              <th class="px-3.5 py-3 text-center w-[90px] min-w-[90px] bg-slate-100 whitespace-nowrap">Thao tác</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 text-xs">
@@ -147,15 +141,15 @@
                   >
                     <!-- Header: Index + Name + Position + Department -->
                     <div class="flex items-center gap-2">
-                      <div class="w-5 h-5 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-bold text-[10px] flex items-center justify-center shrink-0 shadow-2xs">
+                      <div class="w-5 h-5 rounded-lg bg-gradient-to-br from-blue-600 to-indigo-700 text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-2xs">
                         {{ idx + 1 }}
                       </div>
                       <div class="min-w-0 flex-1 flex items-center gap-1.5 flex-wrap">
                         <span class="font-bold text-slate-900 text-xs tracking-tight">{{ cp.name || 'Chưa rõ họ tên' }}</span>
-                        <span v-if="cp.position" class="text-[11px] font-semibold text-slate-500">
+                        <span v-if="cp.position" class="text-xs font-semibold text-slate-500">
                           ({{ cp.position }})
                         </span>
-                        <span v-if="cp.department" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-semibold text-[10px] border border-slate-200/60">
+                        <span v-if="cp.department" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-semibold text-xs border border-slate-200/60">
                           <svg class="w-3 h-3 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
                           </svg>
@@ -165,14 +159,14 @@
                     </div>
 
                     <!-- Contact Details: Phone & Email -->
-                    <div v-if="cp.phone || cp.email" class="pl-7 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] pt-1.5 border-t border-slate-100">
+                    <div v-if="cp.phone || cp.email" class="pl-7 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs pt-1.5 border-t border-slate-100">
                       <span v-if="cp.phone" class="inline-flex items-center gap-1 text-slate-700 hover:text-emerald-700 transition">
                         <span class="w-4 h-4 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
                           <svg class="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                           </svg>
                         </span>
-                        <a :href="'tel:' + cp.phone" class="font-bold hover:underline font-mono text-[11px]">{{ cp.phone }}</a>
+                        <a :href="'tel:' + cp.phone" class="font-bold hover:underline font-mono text-xs">{{ cp.phone }}</a>
                       </span>
                       <span v-if="cp.email" class="inline-flex items-center gap-1 text-slate-700 hover:text-blue-700 transition">
                         <span class="w-4 h-4 rounded-full bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
@@ -180,7 +174,7 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                           </svg>
                         </span>
-                        <a :href="'mailto:' + cp.email" class="font-semibold hover:underline text-[11px] truncate max-w-[180px]">{{ cp.email }}</a>
+                        <a :href="'mailto:' + cp.email" class="font-semibold hover:underline text-xs truncate max-w-[180px]">{{ cp.email }}</a>
                       </span>
                     </div>
                   </div>
@@ -217,7 +211,7 @@
                         >
                           {{ file.fileName }}
                         </a>
-                        <span class="text-[10px] text-slate-400 font-semibold">
+                        <span class="text-xs text-slate-400 font-semibold">
                           {{ formatFileSize(file.fileSize) }}
                         </span>
                       </div>
@@ -227,7 +221,7 @@
                       :href="getFileFullUrl(file.fileUrl)" 
                       target="_blank" 
                       download
-                      class="px-2.5 py-1 bg-white hover:bg-blue-600 hover:text-white text-blue-700 text-[11px] font-bold rounded-lg border border-blue-200 transition shrink-0 flex items-center gap-1 shadow-xs"
+                      class="px-2.5 py-1 bg-white hover:bg-blue-600 hover:text-white text-blue-700 text-xs font-bold rounded-lg border border-blue-200 transition shrink-0 flex items-center gap-1 shadow-xs"
                       title="Tải xuống tệp kế hoạch"
                     >
                       <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -268,7 +262,7 @@
       <!-- Pagination Bar -->
       <div class="flex flex-col md:flex-row items-center justify-between gap-3 bg-slate-50/70 p-3.5 border-t border-slate-200/80 text-xs text-slate-600 font-semibold w-full">
         <div class="flex items-center gap-3 whitespace-nowrap flex-wrap justify-center sm:justify-start">
-          <span class="whitespace-nowrap">Hiển thị <span class="font-bold text-slate-900">{{ totalCount > 0 ? (pageNumber - 1) * pageSize + 1 : 0 }} - {{ Math.min(pageNumber * pageSize, totalCount) }}</span> trên tổng số <span class="font-bold text-slate-900">{{ totalCount }}</span> đơn vị</span>
+          <span class="whitespace-nowrap">Hiển thị <span class="font-bold text-slate-900">{{ formatNumber(totalCount > 0 ? (pageNumber - 1) * pageSize + 1 : 0) }} - {{ formatNumber(Math.min(pageNumber * pageSize, totalCount)) }}</span> trên tổng số <span class="font-bold text-slate-900">{{ formatNumber(totalCount) }}</span> đơn vị</span>
           
           <div class="flex items-center gap-1.5 border-l border-slate-200 pl-3 whitespace-nowrap">
             <span class="whitespace-nowrap">Số bản ghi/trang:</span>
@@ -323,7 +317,7 @@
             </span>
             <div>
               <h3 class="text-base font-bold text-slate-800 leading-snug">
-                Cập nhật Kế hoạch CĐS & Đầu mối liên hệ
+                Cập nhật kế hoạch CĐS và đầu mối liên hệ
               </h3>
               <p class="text-xs text-slate-500 font-medium mt-0.5">
                 {{ editingAgency?.name }}
@@ -346,9 +340,9 @@
           <!-- SECTION 1: CONTACT PERSONS -->
           <div class="space-y-2.5">
             <div class="flex items-center justify-between border-b border-slate-200 pb-2">
-              <h4 class="text-xs uppercase font-bold text-slate-800 tracking-wider flex items-center gap-2">
+              <h4 class="text-xs font-semibold text-slate-800 flex items-center gap-2">
                 <span class="text-blue-600">👥</span>
-                <span>1. Danh sách Cán bộ Đầu mối liên hệ</span>
+                <span>1. Danh sách cán bộ đầu mối liên hệ</span>
               </h4>
 
               <button 
@@ -358,14 +352,14 @@
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
                 </svg>
-                <span>Thêm Cán bộ</span>
+                <span>Thêm cán bộ</span>
               </button>
             </div>
 
             <!-- Scrollable container for Contact Persons list -->
             <div class="max-h-[220px] sm:max-h-[250px] overflow-y-auto custom-scrollbar space-y-3 pr-1">
               <div v-if="contactPersonsForm.length === 0" class="p-4 bg-slate-50 rounded-xl text-center text-xs text-slate-400 italic border border-dashed border-slate-200">
-                Chưa có cán bộ đầu mối nào. Nhấn "Thêm Cán bộ" ở trên để bổ sung.
+                Chưa có cán bộ đầu mối nào. Nhấn "Thêm cán bộ" ở trên để bổ sung.
               </div>
 
               <div 
@@ -375,7 +369,7 @@
               >
                 <div class="flex items-center justify-between">
                   <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
-                    <span class="w-5 h-5 rounded-full bg-blue-600 text-white text-[10px] flex items-center justify-center font-bold">{{ idx + 1 }}</span>
+                    <span class="w-5 h-5 rounded-full bg-blue-600 text-white text-xs flex items-center justify-center font-bold">{{ idx + 1 }}</span>
                     <span>Cán bộ đầu mối #{{ idx + 1 }}</span>
                   </span>
                   <button 
@@ -447,9 +441,9 @@
           <!-- SECTION 2: PLAN FILES -->
           <div class="space-y-2.5 pt-1">
             <div class="border-b border-slate-200 pb-2">
-              <h4 class="text-xs uppercase font-bold text-slate-800 tracking-wider flex items-center gap-2">
+              <h4 class="text-xs font-semibold text-slate-800 flex items-center gap-2">
                 <span class="text-indigo-600">📄</span>
-                <span>2. Tệp đính kèm Kế hoạch giai đoạn 2026-2030</span>
+                <span>2. Tệp đính kèm kế hoạch giai đoạn 2026-2030</span>
               </h4>
             </div>
 
@@ -470,7 +464,7 @@
                     <span class="font-bold text-slate-800 text-xs truncate block" :title="file.fileName">
                       {{ file.fileName }}
                     </span>
-                    <span class="text-[10px] text-slate-400 font-semibold">
+                    <span class="text-xs text-slate-400 font-semibold">
                       {{ formatFileSize(file.fileSize) }}
                     </span>
                   </div>
@@ -519,7 +513,7 @@
                 <span v-else class="text-xs font-bold text-blue-600 animate-pulse">
                   Đang tải lên tệp...
                 </span>
-                <span class="text-[10px] text-slate-400 font-semibold">
+                <span class="text-xs text-slate-400 font-semibold">
                   Hỗ trợ định dạng: .pdf, .doc, .docx, .xls, .xlsx (Tối đa 10MB)
                 </span>
               </div>
@@ -547,7 +541,7 @@
             <svg v-if="saving" class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
-            <span>{{ saving ? 'Đang lưu...' : 'Lưu Thay Đổi' }}</span>
+            <span>{{ saving ? 'Đang lưu...' : 'Lưu thay đổi' }}</span>
           </button>
         </div>
 
@@ -557,6 +551,8 @@
 </template>
 
 <script setup>
+import ActionButton from "../components/ActionButton.vue";
+import { formatNumber } from "../shared/formatters";
 import { fetchWithAuth } from '../services/auth';
 
 import { ref, computed, onMounted } from 'vue';

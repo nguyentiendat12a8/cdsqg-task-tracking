@@ -1,5 +1,8 @@
+import { fitPresentationRows } from './worksheetLayout';
+
 export function styleWorksheet(ws, { numCols = 8, headerRowIndex = 3, titleRowIndex = 0 } = {}, XLSX) {
   if (!ws || !ws['!ref']) return;
+  fitPresentationRows(ws, { numCols, headerRowIndex, titleRowIndex }, XLSX);
   const range = XLSX.utils.decode_range(ws['!ref']);
   const thinBorder = {
     top: { style: 'thin', color: { rgb: 'CBD5E1' } },
@@ -23,7 +26,7 @@ export function styleWorksheet(ws, { numCols = 8, headerRowIndex = 3, titleRowIn
   const sectionStyle = {
     font: { name: 'Segoe UI', sz: 11, bold: true, color: { rgb: '0F172A' } },
     fill: { fgColor: { rgb: 'E2E8F0' } }, // Slate 200
-    alignment: { horizontal: 'left', vertical: 'center' },
+    alignment: { horizontal: 'left', vertical: 'center', wrapText: true },
     border: {
       top: { style: 'thin', color: { rgb: '94A3B8' } },
       bottom: { style: 'thin', color: { rgb: '94A3B8' } },
@@ -35,27 +38,27 @@ export function styleWorksheet(ws, { numCols = 8, headerRowIndex = 3, titleRowIn
   const titleStyle = {
     font: { name: 'Segoe UI', sz: 13, bold: true, color: { rgb: 'FFFFFF' } },
     fill: { fgColor: { rgb: '1E3A8A' } },
-    alignment: { horizontal: 'center', vertical: 'center' },
+    alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
     border: thinBorder
   };
 
   const subtitleStyle = {
     font: { name: 'Segoe UI', sz: 10, italic: true, color: { rgb: '475569' } },
     fill: { fgColor: { rgb: 'F1F5F9' } },
-    alignment: { horizontal: 'center', vertical: 'center' }
+    alignment: { horizontal: 'center', vertical: 'center', wrapText: true }
   };
 
   const kpiLabelStyle = {
     font: { name: 'Segoe UI', sz: 10, bold: true, color: { rgb: '1E293B' } },
     fill: { fgColor: { rgb: 'F8FAFC' } },
-    alignment: { horizontal: 'left', vertical: 'center' },
+    alignment: { horizontal: 'left', vertical: 'center', wrapText: true },
     border: thinBorder
   };
 
   const kpiValueStyle = {
     font: { name: 'Segoe UI', sz: 10, bold: true, color: { rgb: '1E3A8A' } },
     fill: { fgColor: { rgb: 'FFFFFF' } },
-    alignment: { horizontal: 'left', vertical: 'center' },
+    alignment: { horizontal: 'left', vertical: 'center', wrapText: true },
     border: thinBorder
   };
 
@@ -79,11 +82,11 @@ export function styleWorksheet(ws, { numCols = 8, headerRowIndex = 3, titleRowIn
       const valStr = cell.v !== undefined && cell.v !== null ? String(cell.v).trim() : '';
 
       // 1. Main Title Row
-      if (r === titleRowIndex) {
+      if (r === titleRowIndex && !isHeaderRow) {
         cell.s = titleStyle;
       }
       // 2. Subtitle Row
-      else if (r === titleRowIndex + 1) {
+      else if (r === titleRowIndex + 1 && !isHeaderRow) {
         cell.s = subtitleStyle;
       }
       // 3. Section Title Rows
@@ -96,7 +99,7 @@ export function styleWorksheet(ws, { numCols = 8, headerRowIndex = 3, titleRowIn
       }
       // 5. KPI Overview rows (between title and header row when not section title)
       else if (r > 2 && r < headerRowIndex && valStr !== '' && !/^(\d+\.|CHỈ SỐ|DANH SÁCH)/i.test(firstColVal)) {
-        cell.s = c === 0 ? kpiLabelStyle : (c === 1 ? kpiValueStyle : { font: { name: 'Segoe UI', sz: 10 }, border: thinBorder });
+        cell.s = c === 0 ? kpiLabelStyle : kpiValueStyle;
       }
       // 6. Data Rows
       else if (valStr !== '') {

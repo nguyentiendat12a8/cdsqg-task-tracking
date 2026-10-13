@@ -5,8 +5,8 @@
       <!-- Modal Header -->
       <div class="flex justify-between items-start border-b border-slate-100 pb-3 shrink-0">
         <div>
-          <span class="text-xs font-bold text-blue-600 uppercase tracking-wider block">Nhật Ký & Lịch Sử Thông Báo</span>
-          <h3 class="text-lg font-bold text-slate-800">📜 Lịch Sử Các Văn Bản Thông Báo</h3>
+          <span class="text-xs font-semibold text-blue-600 block">Nhật ký & lịch sử thông báo</span>
+          <h3 class="text-lg font-bold text-slate-800">📜 Lịch sử các văn bản thông báo</h3>
         </div>
         <button @click="close" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1">✕</button>
       </div>
@@ -32,7 +32,7 @@
               <span class="text-xs font-bold text-slate-800">{{ log.taskTitle }}</span>
             </div>
 
-            <div class="text-right text-[11px] text-slate-400 font-semibold">
+            <div class="text-right text-xs text-slate-400 font-semibold">
               🕒 {{ formatDate(log.createdAt) }} bởi <span class="text-slate-700 font-bold">{{ log.createdBy }}</span>
             </div>
           </div>
@@ -41,7 +41,7 @@
             {{ log.urgeContent }}
           </div>
 
-          <div class="flex items-center justify-between text-[11px] text-slate-500 font-semibold pt-1">
+          <div class="flex items-center justify-between text-xs text-slate-500 font-semibold pt-1">
             <span>👥 Người nhận: <span class="font-bold text-slate-800">{{ log.recipientsSummary || log.leadAgencyName || log.leadAgencyCode }}</span></span>
             <span class="text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded">Đã lưu CSDL</span>
           </div>

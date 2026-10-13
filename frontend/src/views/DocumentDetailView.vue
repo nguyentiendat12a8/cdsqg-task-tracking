@@ -8,20 +8,18 @@
       <div class="p-4 sm:p-5 border-b border-slate-200/80 bg-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
           <h2 class="text-sm sm:text-base font-bold text-slate-800">
-            {{ filterItemType === 'Goal' ? '🎯 Danh Sách Mục Tiêu' : '📋 Danh Sách Nhiệm Vụ' }}
+            {{ filterItemType === 'Goal' ? '🎯 Danh sách mục tiêu' : '📋 Danh sách nhiệm vụ' }}
           </h2>
         </div>
 
         <div class="flex items-center gap-2 flex-wrap">
+          <ActionButton kind="export" @click="handleExportProgressReport" :disabled="isExportingDocument || isLoading">Xuất Excel báo cáo tiến độ</ActionButton>
+          <ActionButton kind="import" @click="openProgressImport" :disabled="isLoadingImport || isLoading" :aria-busy="isLoadingImport">{{ isLoadingImport ? 'Đang tải dữ liệu…' : 'Nhập Excel báo cáo tiến độ' }}</ActionButton>
           <!-- General List Export (All Users including Admin) -->
-          <button
+          <ActionButton kind="export"
             @click="exportDocumentItemsToExcel" :disabled="isExportingDocument" :aria-busy="isExportingDocument"
-            class="ui-single-line px-3.5 py-2 text-slate-700 hover:text-slate-900 font-bold text-xs rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200/80 transition shadow-2xs flex items-center gap-1.5 cursor-pointer"
             title="Xuất danh sách mục tiêu/nhiệm vụ ra file Excel"
-          >
-            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-            <span>Xuất Excel Danh Sách</span>
-          </button>
+          ><span>Xuất Excel danh sách</span></ActionButton>
 
           <button
             v-if="authState.isAdmin.value"
@@ -30,19 +28,16 @@
             title="Xem danh sách báo cáo tiến độ chờ phê duyệt"
           >
             <span class="text-amber-700">⏳</span>
-            <span>Duyệt Báo Cáo Tiến Độ</span>
-            <span v-if="globalPendingLogs?.length > 0" class="ml-1 px-2 py-0.5 bg-amber-600 text-white rounded-full text-[10px] font-bold animate-pulse">
-              {{ globalPendingLogs.length }}
+            <span>Duyệt báo cáo tiến độ</span>
+            <span v-if="globalPendingLogs?.length > 0" class="ml-1 px-2 py-0.5 bg-amber-600 text-white rounded-full text-xs font-bold animate-pulse">
+              {{ formatNumber(globalPendingLogs.length) }}
             </span>
           </button>
 
-          <button
+          <ActionButton kind="create"
             v-if="authState.isAdmin.value"
             @click="openCreateModal(filterItemType || 'Task')"
-            class="ui-single-line px-3.5 py-2 text-white font-bold text-xs rounded-xl bg-blue-600 hover:bg-blue-700 transition shadow-sm flex items-center gap-1.5 cursor-pointer"
-          >
-            + Thêm {{ filterItemType === 'Goal' ? 'Mục Tiêu' : 'Nhiệm Vụ' }} Mới
-          </button>
+          >Thêm {{ filterItemType === 'Goal' ? 'mục tiêu' : 'nhiệm vụ' }} mới</ActionButton>
         </div>
       </div>
 
@@ -207,7 +202,7 @@
     <div v-if="isAssignModalOpen" @click.self="isAssignModalOpen = false" class="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
       <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-5 space-y-4 font-sans">
         <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-          <h4 class="font-bold text-slate-800 text-sm">⚡ Giao Đơn Vị Trực Thuộc</h4>
+          <h4 class="font-bold text-slate-800 text-sm">⚡ Giao đơn vị trực thuộc</h4>
           <button @click="isAssignModalOpen = false" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
         </div>
         <div class="space-y-3">
@@ -219,18 +214,18 @@
             <SearchableSelect
               v-model="selectedSubAgencyId"
               :options="[
-                { value: '', label: '— Bỏ giao (Chưa giao đơn vị trực thuộc) —' },
+                { value: '', label: '— Bỏ giao (chưa giao đơn vị trực thuộc) —' },
                 ...assignSubAgencyOptions.map(sub => ({ value: sub.id, label: sub.name }))
               ]"
               :isMulti="false"
               :clearable="false"
-              placeholder="— Bỏ giao (Chưa giao đơn vị trực thuộc) —"
+              placeholder="— Bỏ giao (chưa giao đơn vị trực thuộc) —"
             />
           </div>
         </div>
         <div class="flex justify-end gap-2 border-t border-slate-100 pt-3">
           <button @click="isAssignModalOpen = false" class="ui-single-line px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-xl font-bold cursor-pointer">Hủy</button>
-          <button @click="submitAssignTaskFromList" class="ui-single-line px-4 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-2xs cursor-pointer">Lưu Giao Đơn Vị Trực Thuộc</button>
+          <button @click="submitAssignTaskFromList" class="ui-single-line px-4 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-2xs cursor-pointer">Lưu giao đơn vị trực thuộc</button>
         </div>
       </div>
     </div>
@@ -238,7 +233,8 @@
     <!-- Progress Import Modal -->
     <ProgressImportModal
       :isOpen="isProgressImportModalOpen"
-      :items="rawItemsList"
+      :items="progressImportItems"
+      :agencies="agencies"
       :agencyId="userAgencyId"
       :userRole="userRoleStr"
       :currentAgency="currentUserAgencyObj"
@@ -254,7 +250,7 @@
           <div>
             <h3 class="text-base sm:text-lg font-bold text-slate-800 flex items-center gap-2">
               <span class="p-1.5 bg-amber-100 text-amber-800 rounded-xl text-sm">⏳</span>
-              Danh Sách Báo Cáo Tiến Độ Chờ Phê Duyệt
+              Danh sách báo cáo tiến độ chờ phê duyệt
             </h3>
           </div>
           <button @click="isPendingApprovalsModalOpen = false" class="p-1.5 text-slate-400 hover:text-slate-700 bg-slate-100 rounded-xl transition cursor-pointer">✕</button>
@@ -284,10 +280,10 @@
                     <span v-if="log.parentAgencyName" class="text-xs text-slate-700 font-bold flex items-center gap-1">
                       ➔ Thuộc {{ log.parentAgencyName }}
                     </span>
-                    <span v-if="isGoalItem(log)" class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
+                    <span v-if="isGoalItem(log)" class="px-2 py-0.5 rounded text-xs font-bold bg-purple-100 text-purple-800 border border-purple-200">
                       🎯 Mục tiêu
                     </span>
-                    <span v-else-if="log.isGeneralTask" class="px-2 py-0.5 rounded text-[10px] font-bold bg-purple-100 text-purple-800 border border-purple-200">
+                    <span v-else-if="log.isGeneralTask" class="px-2 py-0.5 rounded text-xs font-bold bg-purple-100 text-purple-800 border border-purple-200">
                       🌐 Nhiệm vụ chung
                     </span>
                   </div>
@@ -296,7 +292,7 @@
                   </h4>
                 </div>
 
-                <span class="text-[11px] font-semibold text-slate-400 shrink-0">
+                <span class="text-xs font-semibold text-slate-400 shrink-0">
                   🕒 {{ formatDateTime(log.logDate) }}
                 </span>
               </div>
@@ -304,19 +300,19 @@
               <!-- Card Body: Reported Progress, Notes, Files -->
               <div class="grid grid-cols-1 md:grid-cols-12 gap-4 text-xs font-semibold text-slate-700">
                 <div class="md:col-span-4 bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1">
-                  <span class="text-[10px] font-bold text-slate-400 uppercase block">Tiến độ báo cáo</span>
-                  <div class="text-sm font-bold text-blue-700">{{ log.completionPercentage || 0 }}% hoàn thành</div>
-                  <div v-if="!isGoalItem(log) && log.actualValue !== null && log.actualValue !== undefined" class="text-slate-600 text-[11px]">Giá trị thực tế: <strong>{{ log.actualValue }}</strong></div>
-                  <div v-if="log.status" class="text-slate-600 text-[11px]">Trạng thái: <strong>{{ getStatusLabel(log.status) }}</strong></div>
+                  <span class="text-xs font-semibold text-slate-500 block">Tiến độ báo cáo</span>
+                  <div v-if="isGoalItem(log)" class="text-sm font-bold text-blue-700">{{ log.completionPercentage || 0 }}% hoàn thành</div>
+                  <div v-else class="text-xs font-bold text-blue-700">{{ getStatusLabel(log.status || 'NotStarted') }}</div>
+                  <div v-if="isGoalItem(log) && log.status" class="text-slate-600 text-xs">Trạng thái: <strong>{{ getStatusLabel(log.status) }}</strong></div>
                 </div>
 
                 <div class="md:col-span-8 bg-slate-50 p-3 rounded-xl border border-slate-200 space-y-1.5">
-                  <span class="text-[10px] font-bold text-slate-400 uppercase block">Diễn giải / File minh chứng</span>
+                  <span class="text-xs font-semibold text-slate-500 block">Diễn giải / file minh chứng</span>
                   <p v-if="log.summaryNotes" class="text-slate-800 text-xs font-normal leading-relaxed">{{ log.summaryNotes }}</p>
-                  <span v-else class="text-slate-400 italic font-normal block text-[11px]">Không có ghi chú diễn giải.</span>
+                  <span v-else class="text-slate-400 italic font-normal block text-xs">Không có ghi chú diễn giải.</span>
 
                   <div v-if="log.attachmentFileUrls?.length" class="pt-1 flex flex-wrap items-center gap-2">
-                    <a v-for="(fileUrl, fIdx) in log.attachmentFileUrls" :key="fIdx" :href="getApiUrl(fileUrl)" target="_blank" class="px-2.5 py-1 bg-white hover:bg-blue-50 text-blue-700 font-bold text-[11px] rounded-lg border border-blue-200 shadow-2xs transition inline-flex items-center gap-1">
+                    <a v-for="(fileUrl, fIdx) in log.attachmentFileUrls" :key="fIdx" :href="getApiUrl(fileUrl)" target="_blank" class="px-2.5 py-1 bg-white hover:bg-blue-50 text-blue-700 font-bold text-xs rounded-lg border border-blue-200 shadow-2xs transition inline-flex items-center gap-1">
                       📎 {{ formatFileName(fileUrl) }}
                     </a>
                   </div>
@@ -329,13 +325,13 @@
                   @click="handleApproveFromGlobalList(log.id)"
                   class="ui-single-line px-4 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-2xs transition cursor-pointer flex items-center gap-1"
                 >
-                  ✓ Phê Duyệt
+                  ✓ Phê duyệt
                 </button>
                 <button
                   @click="openRejectModalFromGlobalList(log.id)"
                   class="ui-single-line px-4 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl shadow-2xs transition cursor-pointer flex items-center gap-1"
                 >
-                  ✕ Từ Chối Phê Duyệt
+                  ✕ Từ chối phê duyệt
                 </button>
               </div>
             </div>
@@ -355,7 +351,7 @@
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
           <h3 class="text-base font-bold text-rose-700 flex items-center gap-2">
             <span class="p-1.5 bg-rose-100 text-rose-700 rounded-xl text-sm">❌</span>
-            Từ Chối Phê Duyệt Báo Cáo
+            Từ chối phê duyệt báo cáo
           </h3>
           <button
             @click="isRejectModalOpen = false"
@@ -400,6 +396,8 @@
 </template>
 
 <script setup>
+import ActionButton from "../components/ActionButton.vue";
+import { formatNumber as formatQuantity } from '../shared/formatters';
 import { REPORTING_DOCUMENT_ID } from '../config/reporting';
 import { useCreateItem } from '../features/document/useCreateItem';
 import { useEditItem } from '../features/document/useEditItem';
@@ -458,11 +456,23 @@ const userRoleStr = computed(() => {
   if (r === 'Level3' || r === 3 || r === '3') return 'Level3';
   return String(r || 'Level2');
 });
-const currentUserAgencyObj = computed(() => authState.user.value?.agency || null);
+const currentUserAgencyObj = computed(() => authState.user.value?.agency || agencies.value.find(agency => agency.id === userAgencyId.value) || null);
 
 const isProgressModalOpen = ref(false);
 const selectedTaskForProgress = ref(null);
 const isProgressImportModalOpen = ref(false);
+const progressImportItems = ref([]);
+const isLoadingImport = ref(false);
+async function openProgressImport() {
+  if (isLoadingImport.value) return;
+  isLoadingImport.value = true;
+  try {
+    progressImportItems.value = await loadExportItems();
+    isProgressImportModalOpen.value = true;
+  } catch {
+    toast.error('Không thể tải dữ liệu để import. Vui lòng thử lại.');
+  } finally { isLoadingImport.value = false; }
+}
 
 function handleProgressImported() {
   loadData();

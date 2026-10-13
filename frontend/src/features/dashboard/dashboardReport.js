@@ -3,7 +3,7 @@ import { loadExcelWriter } from '../../utils/excelRuntime';
 import { appendSummaryWorksheet } from './summaryWorksheet';
 import { appendAgencyWorksheet } from './agencyWorksheet';
 
-export async function exportDashboardReport({ dashboardFilter, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, metrics, filterOutSpecialAgencies, filteredMinistriesPerformance, filteredProvincesPerformance, filteredOthersPerformance, formatDate, formatItemProgressDisplay, isExportingExcel }) {
+export async function exportDashboardReport({ reportYear, dashboardFilter, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, metrics, filterOutSpecialAgencies, filteredMinistriesPerformance, filteredProvincesPerformance, filteredOthersPerformance, formatDate, formatItemProgressDisplay, isExportingExcel }) {
   const XLSX = await loadExcelWriter();
   isExportingExcel.value = true;
   const filterType = dashboardFilter.value; // 'goals', 'tasks', or 'all'
@@ -28,7 +28,7 @@ export async function exportDashboardReport({ dashboardFilter, selectedScopes, s
 
     const wb = XLSX.utils.book_new();
     const now = new Date();
-    const timeStr = `${now.toLocaleDateString('vi-VN')} ${now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
+    const timeStr = `Năm báo cáo: ${reportYear?.value || now.getFullYear()} | ${now.toLocaleDateString('vi-VN')} ${now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
 
     // ==========================================
     // SHEET 1: TỔNG HỢP CHUNG
@@ -36,6 +36,7 @@ export async function exportDashboardReport({ dashboardFilter, selectedScopes, s
     appendSummaryWorksheet({ XLSX, wb, isGoalsOnly, isTasksOnly, filterNameLabel, timeStr, allFilteredAgencies, metrics });
 
     const filters = {
+      reportYear: reportYear?.value,
       dashboardFilter: filterType,
       selectedScopes: [...selectedScopes.value],
       selectedSections: [...selectedSections.value],

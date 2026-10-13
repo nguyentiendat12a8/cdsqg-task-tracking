@@ -115,6 +115,7 @@ const chartData = computed(() => {
 });
 
 const chartOptions = computed(() => ({
+  locale: 'vi-VN',
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
@@ -129,7 +130,7 @@ const chartOptions = computed(() => ({
         padding: 14,
         font: {
           family: 'system-ui, -apple-system, sans-serif',
-          size: 11,
+          size: 12,
           weight: 'bold'
         },
         color: '#334155'
@@ -140,7 +141,7 @@ const chartOptions = computed(() => ({
       titleColor: '#f8fafc',
       bodyColor: '#e2e8f0',
       titleFont: { size: 12, weight: 'bold' },
-      bodyFont: { size: 11 },
+      bodyFont: { size: 12 },
       padding: 10,
       cornerRadius: 8,
       displayColors: true,
@@ -163,7 +164,7 @@ const chartOptions = computed(() => ({
       grid: { display: false },
       ticks: {
         font: {
-          size: 11,
+          size: 12,
           weight: 'bold'
         },
         color: '#475569',
@@ -178,7 +179,7 @@ const chartOptions = computed(() => ({
         stepSize: 1,
         precision: 0,
         font: {
-          size: 11,
+          size: 12,
           weight: '600'
         },
         color: '#64748b'

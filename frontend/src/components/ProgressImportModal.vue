@@ -10,23 +10,25 @@
           </span>
           <div>
             <h3 class="text-sm sm:text-base font-bold text-slate-800">
-              Import Báo Cáo Tiến Độ Từ File Excel
+              Nhập báo cáo tiến độ từ file Excel
             </h3>
             <p class="text-xs text-slate-500 font-semibold mt-0.5">
               Số liệu định lượng là tổng đã đạt đến năm báo cáo, không phải phần tăng thêm trong năm. Hệ thống đối soát mã, quyền và dữ liệu trước khi nhập.
             </p>
           </div>
         </div>
-        <button @click="close" class="p-1.5 text-slate-400 hover:text-slate-700 bg-slate-100 rounded-xl transition cursor-pointer">✕</button>
+        <button type="button" aria-label="Đóng import báo cáo" @click="close" :disabled="isSubmitting || isParsing" class="p-1.5 text-slate-400 hover:text-slate-700 bg-slate-100 rounded-xl transition cursor-pointer">✕</button>
       </div>
 
+      <SearchableSelect v-model="reportYear" label="Năm báo cáo" :isMulti="false" :clearable="false" :options="yearOptions" :disabled="isSubmitting || step !== 1" />
+      <SearchableSelect v-if="needsReportingAgency" v-model="reportingAgencyId" label="Cơ quan báo cáo cho mục tiêu / nhiệm vụ chung" :isMulti="false" :clearable="false" :options="reportingAgencyOptions" :disabled="isSubmitting || step === 3" />
       <!-- STEP 1: File Picker & Drag-and-Drop Area -->
       <div v-if="step === 1" class="space-y-4 flex-1 flex flex-col justify-center items-center py-8 border-2 border-dashed border-slate-300 rounded-2xl bg-slate-50/50 hover:bg-slate-50 transition text-center px-4">
         <div class="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-2xl shadow-2xs mb-2">
           📄
         </div>
         <div>
-          <h4 class="text-sm font-bold text-slate-800">Kéo thả file báo cáo Excel (.xlsx, .xls) vào đây</h4>
+          <h4 class="text-sm font-bold text-slate-800">Chọn file báo cáo Excel (.xlsx, .xls)</h4>
           <p class="text-xs text-slate-500 mt-1">Hoặc sử dụng file Excel đã xuất từ hệ thống để nhập tiến độ mới</p>
         </div>
 
@@ -44,7 +46,7 @@
             @click="$refs.fileInputRef.click()" 
             class="ui-single-line px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-2 cursor-pointer"
           >
-            <span>📁 Chọn File Báo Cáo Excel</span>
+            <span>📁 Chọn file báo cáo Excel</span>
           </button>
         </div>
 
@@ -59,23 +61,23 @@
         <!-- Summary Stats Banner -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs font-bold shrink-0">
           <div class="bg-slate-100 p-2.5 rounded-xl border border-slate-200">
-            <span class="text-slate-500 block text-[10px] uppercase">Tổng mã đọc được</span>
-            <span class="text-slate-800 text-base font-bold">{{ parsedItems.length }}</span>
+            <span class="text-slate-500 block text-xs">Tổng mục có tiến độ mới</span>
+            <span class="text-slate-800 text-base font-bold">{{ formatNumber(parsedItems.length) }}</span>
           </div>
 
           <div class="bg-emerald-50 p-2.5 rounded-xl border border-emerald-200">
-            <span class="text-emerald-700 block text-[10px] uppercase">Hợp lệ (Duyệt ngay)</span>
-            <span class="text-emerald-800 text-base font-bold">{{ validApprovedCount }}</span>
+            <span class="text-emerald-700 block text-xs">Hợp lệ (duyệt ngay)</span>
+            <span class="text-emerald-800 text-base font-bold">{{ formatNumber(validApprovedCount) }}</span>
           </div>
 
           <div class="bg-amber-50 p-2.5 rounded-xl border border-amber-200">
-            <span class="text-amber-700 block text-[10px] uppercase">Hợp lệ (Chờ Cấp 2 duyệt)</span>
-            <span class="text-amber-800 text-base font-bold">{{ validPendingCount }}</span>
+            <span class="text-amber-700 block text-xs">Hợp lệ (chờ phê duyệt)</span>
+            <span class="text-amber-800 text-base font-bold">{{ formatNumber(validPendingCount) }}</span>
           </div>
 
           <div class="bg-rose-50 p-2.5 rounded-xl border border-rose-200">
-            <span class="text-rose-700 block text-[10px] uppercase">Lỗi / Không có quyền</span>
-            <span class="text-rose-800 text-base font-bold">{{ invalidCount }}</span>
+            <span class="text-rose-700 block text-xs">Lỗi / không có quyền</span>
+            <span class="text-rose-800 text-base font-bold">{{ formatNumber(invalidCount) }}</span>
           </div>
         </div>
 
@@ -90,7 +92,7 @@
                 <th class="p-2.5 w-28">Đơn vị tính</th>
                 <th class="p-2.5 w-32">Tiến độ mới</th>
                 <th class="p-2.5">Ghi chú / Trích yếu</th>
-                <th class="p-2.5 w-44 text-center">Kiểm tra quyền & Trạng thái</th>
+                <th class="p-2.5 w-44 text-center">Kiểm tra quyền & trạng thái</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-200">
@@ -117,7 +119,7 @@
                   {{ row.summaryNotes || '—' }}
                 </td>
                 <td class="p-2.5 text-center">
-                  <span :class="['px-2 py-0.5 rounded-full text-[10px] font-bold border inline-block whitespace-nowrap', row.statusBadgeClass]">
+                  <span :class="['px-2 py-0.5 rounded-full text-xs font-bold border inline-block whitespace-nowrap', row.statusBadgeClass]">
                     {{ row.statusText }}
                   </span>
                 </td>
@@ -133,7 +135,7 @@
             @click="step = 1" 
             class="ui-single-line px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer"
           >
-            ← Chọn lại File
+            ← Chọn lại file
           </button>
 
           <button 
@@ -143,7 +145,7 @@
             class="ui-single-line px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-2 cursor-pointer"
           >
             <span v-if="isSubmitting" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-            <span>{{ isSubmitting ? 'Đang cập nhật tiến độ...' : `Xác Nhận Import (${validTotalCount} Hạng Mục Hợp Lệ)` }}</span>
+            <span>{{ isSubmitting ? 'Đang cập nhật tiến độ...' : `Xác nhận nhập (${formatNumber(validTotalCount)} mục hợp lệ)` }}</span>
           </button>
         </div>
       </div>
@@ -156,7 +158,7 @@
             <div>
               <h4 class="text-sm font-bold text-emerald-900">Nhập tiến độ hàng loạt hoàn tất!</h4>
               <p class="text-xs text-emerald-700 font-medium">
-                Đã xử lý thành công {{ importResults.successCount }} mục, {{ importResults.pendingCount }} mục đã gửi chờ Cấp 2 phê duyệt, {{ importResults.failureCount }} mục lỗi/bỏ qua.
+                Đã xử lý thành công {{ formatNumber(importResults.successCount) }} mục, {{ formatNumber(importResults.pendingCount) }} mục đã gửi chờ cấp 2 phê duyệt, {{ formatNumber(importResults.failureCount) }} mục lỗi/bỏ qua.
               </p>
             </div>
           </div>
@@ -180,14 +182,14 @@
                 <td class="p-2.5 font-bold text-blue-700">{{ res.code }}</td>
                 <td class="p-2.5 font-semibold text-slate-800 leading-snug">{{ res.title }}</td>
                 <td class="p-2.5 text-center">
-                  <span v-if="res.success && res.approvalStatus === 'Pending'" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                    ⏳ Chờ Cấp 2 Duyệt
+                  <span v-if="res.success && res.approvalStatus === 'Pending'" class="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
+                    ⏳ Chờ cấp 2 duyệt
                   </span>
-                  <span v-else-if="res.success" class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
-                    ✅ Đã Cập Nhật
+                  <span v-else-if="res.success" class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                    ✅ Đã cập nhật
                   </span>
-                  <span v-else class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-800 border border-rose-200">
-                    ❌ Thất Bại
+                  <span v-else class="px-2 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-800 border border-rose-200">
+                    ❌ Thất bại
                   </span>
                 </td>
                 <td class="p-2.5 text-slate-700 font-medium">{{ res.message }}</td>
@@ -202,7 +204,7 @@
             @click="finishImport" 
             class="ui-single-line px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-md transition cursor-pointer"
           >
-            Hoàn Tất & Đóng
+            Hoàn tất và đóng
           </button>
         </div>
       </div>
@@ -212,7 +214,14 @@
 </template>
 
 <script setup>
+import { formatNumber } from "../shared/formatters";
 import { isAdminRole } from '../shared/roles';
+import SearchableSelect from './SearchableSelect.vue';
+import { availableReportingYears, currentReportingYear, isValidReportingYear } from '../config/reporting';
+import { formatMeasuredValue } from '../shared/formatters';
+import { parseQuantityInput } from '../shared/numericInput';
+import { readProductProgress } from '../utils/progressProducts';
+import { parseReportStatus, reportStatusLabel } from '../shared/reportStatuses';
 import { fetchWithAuth } from '../services/auth';
 
 import { ref, computed } from 'vue';
@@ -223,6 +232,7 @@ import { getApiUrl } from '../config/api';
 const props = defineProps({
   isOpen: { type: Boolean, default: false },
   items: { type: Array, default: () => [] },
+  agencies: { type: Array, default: () => [] },
   agencyId: { type: String, default: null },
   userRole: { type: String, default: '' },
   currentAgency: { type: Object, default: () => null }
@@ -231,6 +241,11 @@ const props = defineProps({
 const emit = defineEmits(['close', 'imported']);
 
 const step = ref(1);
+const reportingAgencyId = ref(null);
+const needsReportingAgency = computed(() => isAdminRole(props.userRole) && props.items.some(item => item.isGeneralTask));
+const reportingAgencyOptions = computed(() => props.agencies.filter(agency => !agency.code?.startsWith('ALL_')).map(agency => ({ value: agency.id, label: agency.name })));
+const reportYear = ref(currentReportingYear());
+const yearOptions = availableReportingYears().map(value => ({ value, label: String(value) }));
 const fileInputRef = ref(null);
 const isParsing = ref(false);
 const isSubmitting = ref(false);
@@ -249,6 +264,7 @@ const validTotalCount = computed(() => parsedItems.value.filter(i => i.isValid).
 const invalidCount = computed(() => parsedItems.value.filter(i => !i.isValid).length);
 
 function close() {
+  if (isSubmitting.value || isParsing.value) return;
   step.value = 1;
   parsedItems.value = [];
   emit('close');
@@ -260,22 +276,11 @@ function finishImport() {
 }
 
 function mapQualitativeStatus(str) {
-  if (!str) return null;
-  const s = String(str).trim().toLowerCase();
-  if (s.includes('hoàn thành') || s === 'completed') return 'Completed';
-  if (s.includes('trình duyệt') || s === 'reviewing') return 'Reviewing';
-  if (s.includes('soạn thảo') || s === 'drafting') return 'Drafting';
-  if (s.includes('chưa') || s === 'notstarted') return 'NotStarted';
-  return null;
+  return parseReportStatus(str);
 }
 
 function mapQualitativeStatusDisplay(statusKey) {
-  switch (statusKey) {
-    case 'Drafting': return 'Đang xây dựng / Soạn thảo';
-    case 'Reviewing': return 'Đang xin ý kiến / Thẩm định';
-    case 'Completed': return 'Đã hoàn thành / Ban hành';
-    case 'NotStarted': default: return 'Chưa thực hiện';
-  }
+  return reportStatusLabel(statusKey);
 }
 
 function checkUserPermission(task) {
@@ -310,19 +315,11 @@ function checkUserPermission(task) {
 }
 
 function checkIsLevel3Pending(task) {
-  if (!task) return false;
-  const isLevel3 = props.currentAgency && props.currentAgency.parentId;
-  if (!isLevel3) return false;
-  
-  // Level 3 updating a task assigned to them
-  const currAgId = props.agencyId ? String(props.agencyId).toLowerCase() : null;
-  const assignedAgId = task.assignedAgencyId ? String(task.assignedAgencyId).toLowerCase() : null;
-  if (assignedAgId === currAgId) return true;
-
-  return true;
+  return Boolean(task) && !isAdminRole(props.userRole);
 }
 
 async function handleFileUpload(e) {
+  if (isParsing.value) return;
   const file = e.target.files?.[0];
   if (!file) return;
 
@@ -353,7 +350,7 @@ async function handleFileUpload(e) {
       }
     }
 
-    if (headerRowIdx === -1) headerRowIdx = 3;
+    if (headerRowIdx === -1) throw new Error('Missing headers');
 
     const headerRow = jsonRows[headerRowIdx] || [];
     let codeColIdx = -1;
@@ -365,7 +362,7 @@ async function handleFileUpload(e) {
       if (str === 'mã' || str.includes('mã hạng mục') || str.includes('mã mục tiêu')) {
         codeColIdx = idx;
       }
-      if (str.includes('tiến độ') || str.includes('mới') || str.includes('tiến độ thực hiện')) {
+      if (str.includes('tiến độ') && (str.includes('mới') || str.includes('cần điền'))) {
         newProgressColIdx = idx;
       }
       if (str.includes('ghi chú') || str.includes('trích yếu')) {
@@ -373,9 +370,7 @@ async function handleFileUpload(e) {
       }
     });
 
-    if (codeColIdx === -1) codeColIdx = 1; // Default Col B
-    if (newProgressColIdx === -1) newProgressColIdx = 8; // Default Col I
-    if (notesColIdx === -1) notesColIdx = 9; // Default Col J
+    if (codeColIdx === -1 || newProgressColIdx === -1) throw new Error('Missing report columns');
 
     const resultList = [];
     for (let r = headerRowIdx + 1; r < jsonRows.length; r++) {
@@ -390,12 +385,18 @@ async function handleFileUpload(e) {
 
       // Match item by code in props.items
       const matchedTask = props.items.find(i => i.code && i.code.trim().toLowerCase() === rawCode.toLowerCase());
+      const productInput = matchedTask && !['Quantitative', '1', 1].includes(matchedTask.evaluationType) && matchedTask.deliverables?.length
+        ? readProductProgress(workbook, matchedTask, XLSX) : null;
+      // A blank new value is an intentional omission, not a validation failure.
+      // For product tasks inspect all merged rows, including non-first products.
+      if (productInput?.skipped || (!productInput && rawVal === '')) continue;
 
       let hasPerm = false;
       let isPending = false;
       let isValid = false;
       let parsedValue = null;
       let parsedStatus = null;
+      let parsedDeliverables = null;
       let newValueDisplay = '—';
       let statusText = 'Chưa rõ';
       let statusBadgeClass = 'bg-slate-100 text-slate-700 border-slate-300';
@@ -412,14 +413,14 @@ async function handleFileUpload(e) {
           isPending = checkIsLevel3Pending(matchedTask);
 
           // Parse value based on evaluation type
-          const isQuantitative = matchedTask.evaluationType === 'Quantitative' || matchedTask.unitName === '%' || matchedTask.unitName === 'Số lượng';
+          const isQuantitative = ['Quantitative', '1', 1].includes(matchedTask.evaluationType);
           
           if (isQuantitative) {
             if (rawVal !== '') {
-              const num = parseFloat(rawVal.replace(',', '.'));
-              if (!isNaN(num)) {
+              const num = typeof row[newProgressColIdx] === 'number' ? row[newProgressColIdx] : parseQuantityInput(rawVal);
+              if (num != null && Number.isFinite(num) && num >= 0) {
                 parsedValue = num;
-                newValueDisplay = `${num} ${matchedTask.unitName || ''}`;
+                newValueDisplay = formatMeasuredValue(num, matchedTask.unitName || '');
                 isValid = true;
               } else {
                 statusText = 'Con số không hợp lệ';
@@ -429,17 +430,26 @@ async function handleFileUpload(e) {
               statusText = 'Chưa nhập giá trị';
               statusBadgeClass = 'bg-amber-50 text-amber-700 border-amber-200';
             }
+          } else if (matchedTask.deliverables?.length) {
+            const products = productInput;
+            if (products.error) {
+              statusText = products.error;
+              statusBadgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
+            } else {
+              parsedDeliverables = products.deliverables;
+              newValueDisplay = parsedDeliverables.map((product, index) => `${index + 1}. ${reportStatusLabel(product.currentStatus)}`).join('; ');
+              isValid = true;
+            }
           } else {
-            // Qualitative text status
+            // Direct status only when there are no output products.
             const mappedSt = mapQualitativeStatus(rawVal);
             if (mappedSt) {
               parsedStatus = mappedSt;
               newValueDisplay = mapQualitativeStatusDisplay(mappedSt);
               isValid = true;
             } else if (rawVal !== '') {
-              newValueDisplay = rawVal;
-              parsedStatus = 'Drafting'; // Fallback
-              isValid = true;
+              statusText = 'Trạng thái không hợp lệ';
+              statusBadgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
             } else {
               statusText = 'Chưa nhập trạng thái';
               statusBadgeClass = 'bg-amber-50 text-amber-700 border-amber-200';
@@ -448,7 +458,7 @@ async function handleFileUpload(e) {
 
           if (isValid) {
             if (isPending) {
-              statusText = 'Hợp lệ (Chờ Cấp 2 duyệt)';
+              statusText = 'Hợp lệ (Chờ phê duyệt)';
               statusBadgeClass = 'bg-amber-50 text-amber-800 border-amber-200';
             } else {
               statusText = 'Hợp lệ (Duyệt ngay)';
@@ -466,6 +476,7 @@ async function handleFileUpload(e) {
         rawVal,
         value: parsedValue,
         status: parsedStatus,
+        deliverables: parsedDeliverables,
         summaryNotes: rawNotes,
         newValueDisplay,
         isValid,
@@ -476,21 +487,39 @@ async function handleFileUpload(e) {
       });
     }
 
+    const counts = new Map();
+    resultList.forEach(row => counts.set(row.code.toLowerCase(), (counts.get(row.code.toLowerCase()) ?? 0) + 1));
+    resultList.forEach(row => {
+      if (counts.get(row.code.toLowerCase()) > 1) {
+        row.isValid = false;
+        row.statusText = 'Mã bị trùng trong file';
+        row.statusBadgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
+      }
+    });
     parsedItems.value = resultList;
     if (resultList.length === 0) {
-      toast.warning('Không tìm thấy dòng dữ liệu nào phù hợp trong file Excel.');
+      toast.info('Không có tiến độ mới để nhập. Các mục để trống đã được bỏ qua.');
     } else {
       step.value = 2;
     }
   } catch (err) {
     console.error('Lỗi khi đọc file Excel:', err);
-    toast.error('Không thể đọc file Excel. Vui lòng kiểm tra định dạng file.');
+    toast.error('Không thể đọc báo cáo. Dùng mẫu xuất báo cáo tiến độ có cột Mã và Tiến độ thực hiện mới.');
   } finally {
     isParsing.value = false;
   }
 }
 
 async function submitImport() {
+  if (needsReportingAgency.value && !reportingAgencyId.value) {
+    toast.warning('Chọn cơ quan báo cáo cụ thể cho mục tiêu / nhiệm vụ chung.');
+    return;
+  }
+  if (isSubmitting.value) return;
+  if (!isValidReportingYear(reportYear.value)) {
+    toast.error('Năm báo cáo không hợp lệ hoặc lớn hơn năm hiện tại.');
+    return;
+  }
   const validRows = parsedItems.value.filter(i => i.isValid);
   if (validRows.length === 0) {
     toast.warning('Không có hạng mục hợp lệ nào để nhập.');
@@ -502,13 +531,15 @@ async function submitImport() {
   try {
     const payload = {
       userAgencyId: props.agencyId,
+      reportingAgencyId: needsReportingAgency.value ? reportingAgencyId.value : null,
       userRole: props.userRole,
       items: validRows.map(r => ({
         code: r.code,
         value: r.value,
         status: r.status,
+        deliverables: r.deliverables,
         summaryNotes: r.summaryNotes,
-        periodYear: 2026
+        periodYear: reportYear.value
       }))
     };
 

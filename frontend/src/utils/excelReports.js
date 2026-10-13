@@ -1,6 +1,9 @@
 import XLSX from 'xlsx-js-style/dist/xlsx.bundle.js';
 import { toast } from 'vue3-toastify';
 import { styleWorksheet } from './worksheetStyle';
+import { formatMeasuredValue } from '../shared/formatters';
+import { reportStatusLabel } from '../shared/reportStatuses';
+import { downloadProgressWorkbook } from './progressWorkbook';
 
 /**
  * Export structured Excel report with Title Banner, Subtitle, KPI section, and Data Table.
@@ -29,7 +32,7 @@ export function exportFormattedReportExcel({
   const data = [];
 
   // Title & Subtitle
-  if (title) data.push([title.toUpperCase()]);
+  data.push([(title || 'Báo cáo dữ liệu').toUpperCase()]);
   data.push([subtitle || `Thời gian xuất báo cáo: ${timeStr}`]);
   data.push([]); // blank separator
 
@@ -127,164 +130,65 @@ export function exportToExcel({
 /**
  * Export specialized Progress Report template file for users to update & import back.
  */
-export function exportProgressReportTemplate({
-  items = [],
-  currentAgency = null,
-  userRole = '',
-  fileName = 'Bao_Cao_Tien_Do_Thuc_Hien'
-}) {
+export function exportProgressReportTemplate({ items = [], itemType, currentAgency = null, fileName = 'Bao_Cao_Tien_Do_Thuc_Hien' }) {
   const now = new Date();
-  const day = String(now.getDate()).padStart(2, '0');
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const year = now.getFullYear();
-  const dateStr = `${day}/${month}/${year}`;
-
-  const agencyName = currentAgency?.name || 'Bộ, Ngành, Địa phương';
-
-  const rows = [];
-  // Title row
-  rows.push(["BÁO CÁO TIẾN ĐỘ THỰC HIỆN MỤC TIÊU & NHIỆM VỤ"]);
-  // Subtitle row
-  rows.push([`Đơn vị báo cáo: ${agencyName} | Ngày xuất file: ${dateStr}`]);
-  // Instruction row
-  rows.push([`HƯỚNG DẪN: Điền con số thực tế (nếu % hoặc Số lượng) hoặc chọn/nhập trạng thái văn bản vào cột [I] "TIẾN ĐỘ THỰC HIỆN MỚI", điền ghi chú/trích yếu vào cột [J]. Sau khi điền xong, chọn nút "Import Báo Cáo Tiến Độ" trên phần mềm để tải file này lên.`]);
-
-  // Headers
-  const headers = [
-    "STT",
-    "Mã",
-    "Tên Mục Tiêu / Nhiệm Vụ",
-    "Loại Hạng Mục",
-    "Cơ Quan Chủ Trì",
-    "Giao Đơn Vị Trực Thuộc",
-    "Đơn Vị Tính & Loại Đánh Giá",
-    "Chỉ Tiêu Kế Hoạch",
-    "Tiến Độ Hiện Tại",
-    "TIẾN ĐỘ THỰC HIỆN MỚI [CẦN ĐIỀN]",
-    "GHI CHÚ / TRÍCH YẾU [CẦN ĐIỀN]",
-    "Quyền Cập Nhật"
+  const isTask = (itemType || items[0]?.itemType) !== 'Goal';
+  const noun = isTask ? 'Nhiệm Vụ' : 'Mục Tiêu';
+  const numCols = isTask ? 9 : 8;
+  const currentCol = isTask ? 6 : 5, inputCol = currentCol + 1, notesCol = inputCol + 1;
+  const headers = ['STT', 'Mã', `Tên ${noun}`, 'Cơ Quan Chủ Trì', 'Đơn Vị Tính'];
+  if (isTask) headers.push('Sản Phẩm Đầu Ra');
+  headers.push('Tiến Độ Hiện Tại', 'TIẾN ĐỘ THỰC HIỆN MỚI [CẦN ĐIỀN]', 'GHI CHÚ [CẦN ĐIỀN]');
+  if (isTask) headers.push('Mã Sản Phẩm');
+  const rows = [
+    [`BÁO CÁO TIẾN ĐỘ THỰC HIỆN ${noun.toUpperCase()}`],
+    [`Đơn vị báo cáo: ${currentAgency?.name || 'Bộ, Ngành, Địa phương'} | Ngày xuất file: ${now.toLocaleDateString('vi-VN')}`],
+    [`HƯỚNG DẪN: Điền tổng kết quả đã đạt đến năm báo cáo hoặc chọn trạng thái ở cột [${isTask ? 'H' : 'G'}]; ghi chú ở cột [${isTask ? 'I' : 'H'}]. Mỗi sản phẩm đầu ra chọn một trạng thái riêng. Chọn năm báo cáo khi import.`],
+    headers
   ];
-  rows.push(headers);
-
-  const roleStr = userRole !== null && userRole !== undefined ? String(userRole).toLowerCase() : '';
-  const isAdmin = roleStr === 'admin' || roleStr === '1';
-  const currAgId = currentAgency?.id ? String(currentAgency.id).toLowerCase() : null;
-  const isLevel2 = currentAgency && !currentAgency.parentId;
-  const isLevel3 = currentAgency && currentAgency.parentId;
-
+  const statusCells = [], merges = [];
   items.forEach((item, index) => {
-    const code = item.code || '';
-    const title = item.title || '';
-    const itemType = item.itemType === 'Goal' ? 'Mục tiêu' : 'Nhiệm vụ';
-    const leadAgName = item.leadAgencyName || item.leadAgency?.name || '—';
-    const assignedAgName = item.assignedAgencyName || '—';
-    const unitName = item.unitName || item.unit?.name || '%';
-    const evalType = item.evaluationType === 'Quantitative' ? 'Định lượng' : 'Văn bản';
-    const unitDisplay = `${unitName} (${evalType})`;
-
-    const targetVal = item.targetQuantity !== null && item.targetQuantity !== undefined ? item.targetQuantity : '—';
-    
-    // Progress display
-    let curProgressStr = 'Chưa cập nhật';
-    if (item.latestProgressValue !== null && item.latestProgressValue !== undefined) {
-      curProgressStr = `${item.latestProgressValue} ${unitName}`;
-    } else if (item.latestQualitativeStatus) {
-      curProgressStr = item.latestQualitativeStatus;
+    const qualitative = isTask || ['Qualitative', '2', 2].includes(item.evaluationType);
+    const products = isTask && qualitative ? (item.deliverables || []) : [];
+    const unit = qualitative ? 'Trạng thái' : (item.unitName || item.unit?.name || '%');
+    const current = qualitative ? (item.latestQualitativeStatus ? reportStatusLabel(item.latestQualitativeStatus) : 'Chưa cập nhật') : (item.latestProgressValue != null ? formatMeasuredValue(item.latestProgressValue, unit) : 'Chưa cập nhật');
+    const start = rows.length;
+    (products.length ? products : [null]).forEach((product, productIndex) => {
+      const row = productIndex === 0 ? [index + 1, item.code || '', item.title || '', item.leadAgencyName || item.leadAgency?.name || '—', unit] : ['', '', '', '', ''];
+      if (isTask) row.push(product?.title || '—');
+      row.push(product ? reportStatusLabel(product.currentStatus) : current, '', '');
+      if (isTask) row.push(product?.id || '');
+      rows.push(row);
+      if (qualitative) statusCells.push(`${XLSX.utils.encode_col(inputCol)}${rows.length}`);
+    });
+    if (products.length > 1) {
+      for (const c of [0, 1, 2, 3, 4, notesCol]) merges.push({ s: { r: start, c }, e: { r: rows.length - 1, c } });
     }
-
-    // Permission check for user
-    let permStr = 'Không có quyền';
-    const leadAgId = item.leadAgencyId ? String(item.leadAgencyId).toLowerCase() : null;
-    const assignedAgId = item.assignedAgencyId ? String(item.assignedAgencyId).toLowerCase() : null;
-    const isGeneral = item.isGeneralTask || item.leadAgencyCode === 'ALL_AGENCIES';
-
-    if (isAdmin) {
-      permStr = 'Có quyền (Duyệt ngay)';
-    } else if (isLevel2) {
-      if (leadAgId === currAgId || isGeneral || (item.leadAgency?.parentId && String(item.leadAgency.parentId).toLowerCase() === currAgId)) {
-        permStr = 'Có quyền (Duyệt ngay)';
-      } else if (assignedAgId && currentAgency?.children?.some(c => String(c.id).toLowerCase() === assignedAgId)) {
-        permStr = 'Có quyền (Duyệt ngay)';
-      }
-    } else if (isLevel3) {
-      if (assignedAgId === currAgId || leadAgId === currAgId) {
-        permStr = 'Có quyền (Chờ Cấp 2 duyệt)';
-      }
-    }
-
-    // Suggested new value column
-    let fillValue = '';
-    if (item.evaluationType === 'Quantitative') {
-      fillValue = item.latestProgressValue !== null && item.latestProgressValue !== undefined ? item.latestProgressValue : '';
-    } else {
-      fillValue = item.latestQualitativeStatus || 'Đang soạn thảo';
-    }
-
-    rows.push([
-      index + 1,
-      code,
-      title,
-      itemType,
-      leadAgName,
-      assignedAgName,
-      unitDisplay,
-      targetVal,
-      curProgressStr,
-      fillValue,
-      '',
-      permStr
-    ]);
   });
-
   const ws = XLSX.utils.aoa_to_sheet(rows);
-
-  // Apply styling
-  styleWorksheet(ws, { numCols: 12, headerRowIndex: 3, titleRowIndex: 0 }, XLSX);
-
-  // Custom column widths
-  ws['!cols'] = [
-    { wch: 6 },  // STT
-    { wch: 14 }, // Mã
-    { wch: 45 }, // Tên
-    { wch: 12 }, // Loại
-    { wch: 28 }, // Chủ trì
-    { wch: 28 }, // Giao đơn vị trực thuộc
-    { wch: 22 }, // Đơn vị tính
-    { wch: 16 }, // Mục tiêu
-    { wch: 18 }, // Tiến độ hiện tại
-    { wch: 32 }, // Tiến độ mới [CẦN ĐIỀN]
-    { wch: 35 }, // Ghi chú [CẦN ĐIỀN]
-    { wch: 24 }  // Quyền
-  ];
-
-  // Highlight column I and J headers (indices 9 and 10)
-  const headerRowIdx = 3;
-  const colI_Ref = XLSX.utils.encode_cell({ r: headerRowIdx, c: 9 });
-  const colJ_Ref = XLSX.utils.encode_cell({ r: headerRowIdx, c: 10 });
-
-  if (ws[colI_Ref]) {
-    ws[colI_Ref].s = {
-      font: { name: 'Segoe UI', sz: 10, bold: true, color: { rgb: '0F172A' } },
-      fill: { fgColor: { rgb: 'FEF08A' } }, // Yellow Highlight
-      alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
-      border: ws[colI_Ref].s?.border
-    };
+  ws['!cols'] = (isTask ? [6, 14, 50, 30, 16, 50, 22, 34, 40] : [6, 14, 50, 30, 16, 22, 34, 40]).map(wch => ({ wch }));
+  if (isTask) ws['!cols'].push({ wch: 36, hidden: true });
+  styleWorksheet(ws, { numCols, headerRowIndex: 3, titleRowIndex: 0 }, XLSX);
+  for (const merge of ws['!merges'] || []) {
+    if (merge.s.r < 3) merge.e.c = numCols - 1;
   }
-
-  if (ws[colJ_Ref]) {
-    ws[colJ_Ref].s = {
-      font: { name: 'Segoe UI', sz: 10, bold: true, color: { rgb: '0F172A' } },
-      fill: { fgColor: { rgb: 'BAE6FD' } }, // Light Blue Highlight
-      alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
-      border: ws[colJ_Ref].s?.border
-    };
+  ws['!merges'] = [...(ws['!merges'] || []), ...merges];
+  // Distribute the height of long shared task text across its merged product rows.
+  for (const merge of merges.filter(merge => merge.s.c === 2)) {
+    const height = Math.max(30, (ws['!rows'][merge.s.r]?.hpt || 30) / (merge.e.r - merge.s.r + 1));
+    for (let r = merge.s.r; r <= merge.e.r; r++) {
+      const productLines = String(rows[r][5] || '').split('\n').reduce((sum, line) => sum + Math.max(1, Math.ceil(line.length / 42)), 0);
+      ws['!rows'][r] = { hpt: Math.max(height, productLines * 15 + 10, r === merge.s.r ? 30 : ws['!rows'][r]?.hpt || 30) };
+    }
   }
-
+  ws['!rows'][2] = { hpt: 42 };
+  ws['!rows'][3] = { hpt: 36 };
+  for (const [column, color] of [[inputCol, 'FEF08A'], [notesCol, 'BAE6FD']]) {
+    const ref = XLSX.utils.encode_cell({ r: 3, c: column });
+    ws[ref].s = { ...ws[ref].s, font: { name: 'Segoe UI', sz: 10, bold: true, color: { rgb: '0F172A' } }, fill: { fgColor: { rgb: color } } };
+  }
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, "Báo Cáo Tiến Độ");
-
-  const dateFileStr = now.toISOString().slice(0, 10);
-  const fullFileName = `${fileName}_${dateFileStr}.xlsx`;
-  XLSX.writeFile(wb, fullFileName);
-  toast.success("Đã xuất file Excel Báo Cáo Tiến Độ thành công!");
+  XLSX.utils.book_append_sheet(wb, ws, 'Báo Cáo Tiến Độ');
+  downloadProgressWorkbook(wb, [statusCells], `${fileName}_${now.toISOString().slice(0, 10)}.xlsx`, XLSX);
+  toast.success('Đã xuất file Excel Báo Cáo Tiến Độ thành công!');
 }

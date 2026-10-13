@@ -1,0 +1,26 @@
+using System.Text.Json;
+using System.Text.Json.Serialization;
+using Cdsqg.Infrastructure.Data;
+using Cdsqg.Application.Services;
+using Cdsqg.Core.Entities;
+using Microsoft.EntityFrameworkCore;
+AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior", true);
+using var settings = JsonDocument.Parse(File.ReadAllText("backend/appsettings.json"), new JsonDocumentOptions { CommentHandling=JsonCommentHandling.Skip, AllowTrailingCommas=true });
+var connection = settings.RootElement.GetProperty("ConnectionStrings").GetProperty("DefaultConnection").GetString();
+await using var db = new AppDbContext(new DbContextOptionsBuilder<AppDbContext>().UseNpgsql(connection).Options);
+await using var transaction = await db.Database.BeginTransactionAsync();
+var task = await db.GoalTaskItems.Include(t=>t.ProgressLogs).Include(t=>t.AgencyExecutions).SingleAsync(t=>t.Code=="MT-24");
+var agency = await db.Agencies.SingleAsync(a=>a.Name=="Bộ Công an");
+var candidates = task.ProgressLogs.Where(l=>l.PeriodYear==2026 && l.QuantitativeValue==20000 && l.AgencyId==task.LeadAgencyId && l.CreatedBy=="Import Excel").ToList();
+if (!task.IsGeneralTask || candidates.Count!=1 || task.ProgressLogs.Any(l=>l.PeriodYear==2026 && l.AgencyId==agency.Id)) throw new InvalidOperationException("Unexpected report state; no changes made.");
+await File.WriteAllTextAsync("scratch/repair-report-agency/MT-24-before.json", JsonSerializer.Serialize(new { Reports=task.ProgressLogs, Executions=task.AgencyExecutions },new JsonSerializerOptions {WriteIndented=true,ReferenceHandler=ReferenceHandler.IgnoreCycles}));
+var report = candidates.Single(); report.AgencyId=agency.Id;
+var execution = task.AgencyExecutions.SingleOrDefault(e=>e.AgencyId==agency.Id);
+if(execution==null){execution=new AgencyTaskExecution {GoalTaskId=task.Id,AgencyId=agency.Id};task.AgencyExecutions.Add(execution);db.Add(execution);}
+execution.LastReportedAt=report.LogDate; execution.LastReportedBy=report.CreatedBy;
+await db.SaveChangesAsync();
+await ProgressCalculator.RefreshCachesAsync(db, task); await db.SaveChangesAsync();
+await transaction.CommitAsync();
+var loaded = await new ExecutionService(db,null!).GetProgressLogAsync(task.Id,2026,agency.Id);
+if(loaded?.ActualValue!=20000)throw new InvalidOperationException("Verification failed");
+Console.WriteLine("MT-24/2026: reporting agency corrected to Bộ Công an; value 20000 verified. Assignment and original author unchanged; backup saved.");

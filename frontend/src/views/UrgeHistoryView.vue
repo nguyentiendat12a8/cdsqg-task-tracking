@@ -8,26 +8,22 @@
           <span class="p-2 bg-rose-600 text-white rounded-xl shadow-sm font-bold text-base">
             ⚡
           </span>
-          <h1 class="text-xl font-bold text-slate-800">Lịch Sử Thông Báo & Chỉ Đạo Tiến Độ</h1>
+          <h1 class="text-xl font-bold text-slate-800">Lịch sử thông báo & chỉ đạo tiến độ</h1>
         </div>
-        <p class="text-xs text-slate-500 mt-1">Tổng hợp nhật ký chỉ đạo, thông báo nhiệm vụ từ Lãnh đạo cấp cao</p>
+        <p class="text-xs text-slate-500 mt-1">Tổng hợp nhật ký chỉ đạo, thông báo nhiệm vụ từ lãnh đạo cấp cao</p>
       </div>
 
       <div class="flex items-center gap-2">
-        <button 
-          @click="exportExcel"
-          class="ui-single-line px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs"
+        <ActionButton kind="export" 
+          @click="exportExcel" :disabled="isExporting || isLoading" :aria-busy="isExporting"
           title="Xuất lịch sử thông báo ra file Excel"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-          Xuất Excel
-        </button>
+        >Xuất Excel</ActionButton>
 
         <button 
-          @click="loadLogs"
+          @click="loadLogs" 
           class="ui-single-line px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition flex items-center gap-1.5 cursor-pointer"
         >
-          🔄 Làm Mới
+          🔄 Làm mới
         </button>
       </div>
     </div>
@@ -39,8 +35,8 @@
           📜
         </div>
         <div>
-          <span class="text-[11px] font-bold text-slate-400 uppercase block">Tổng Văn Bản Thông Báo</span>
-          <span class="text-xl font-bold text-slate-800">{{ logs.length }}</span>
+          <span class="text-xs font-semibold text-slate-500 block">Tổng văn bản thông báo</span>
+          <span class="text-xl font-bold text-slate-800">{{ formatNumber(logs.length) }}</span>
         </div>
       </div>
 
@@ -49,8 +45,8 @@
           🏢
         </div>
         <div>
-          <span class="text-[11px] font-bold text-slate-400 uppercase block">Cơ Quan Nhận Thông Báo</span>
-          <span class="text-xl font-bold text-slate-800">{{ uniqueAgenciesCount }}</span>
+          <span class="text-xs font-semibold text-slate-500 block">Cơ quan nhận thông báo</span>
+          <span class="text-xl font-bold text-slate-800">{{ formatNumber(uniqueAgenciesCount) }}</span>
         </div>
       </div>
 
@@ -59,7 +55,7 @@
           🕒
         </div>
         <div>
-          <span class="text-[11px] font-bold text-slate-400 uppercase block">Lần Thông Báo Gần Nhất</span>
+          <span class="text-xs font-semibold text-slate-500 block">Lần thông báo gần nhất</span>
           <span class="text-xs font-bold text-slate-800">{{ latestLogDate }}</span>
         </div>
       </div>
@@ -84,8 +80,8 @@
 
           <!-- OverlayPanel Advanced Filter Popover -->
           <OverlayPanel
-            title="Lọc Lịch Sử Thông Báo"
-            buttonText="Lọc Nâng Cao"
+            title="Lọc lịch sử thông báo"
+            buttonText="Lọc nâng cao"
             :activeCount="activeFilterCount"
             widthClass="w-[340px] sm:w-[460px]"
             @apply="execSearch"
@@ -97,7 +93,7 @@
                   v-model="selectedAgencyIds" 
                   :options="leadAgencyOptions" 
                   :isMulti="true" 
-                  label="Cơ Quan Chủ Trì" 
+                  label="Cơ quan chủ trì" 
                   placeholder="Tất cả cơ quan chủ trì"
                 />
               </div>
@@ -107,28 +103,29 @@
                   v-model="selectedSubAgencyIds" 
                   :options="subAgencyOptions" 
                   :isMulti="true" 
-                  label="Đơn Vị Trực Thuộc" 
+                  label="Đơn vị trực thuộc" 
                   placeholder="Tất cả đơn vị trực thuộc"
                 />
               </div>
 
               <div>
-                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Khoảng Thời Gian Gửi</label>
+                <label class="text-xs font-semibold text-slate-600 block mb-1">Khoảng thời gian gửi</label>
                 <div class="grid grid-cols-2 gap-2">
                   <div>
-                    <label class="text-[10px] font-bold text-slate-400 block mb-0.5">Từ ngày</label>
+                    <label class="text-xs font-semibold text-slate-400 block mb-0.5">Từ ngày</label>
                     <DatePicker v-model="fromDate" placeholder="dd/mm/yyyy" />
                   </div>
                   <div>
-                    <label class="text-[10px] font-bold text-slate-400 block mb-0.5">Đến ngày</label>
+                    <label class="text-xs font-semibold text-slate-400 block mb-0.5">Đến ngày</label>
                     <DatePicker v-model="toDate" placeholder="dd/mm/yyyy" />
                   </div>
                 </div>
               </div>
             </div>
           </OverlayPanel>
+        </div>
         <span class="text-xs font-bold text-slate-500 shrink-0">
-          Hiển thị {{ logs.length }} / {{ totalCount }} nhật ký thông báo
+          Hiển thị {{ formatNumber(logs.length) }} / {{ formatNumber(totalCount) }} nhật ký thông báo
         </span>
       </div>
 
@@ -158,7 +155,7 @@
                 <h3 class="text-sm font-bold text-slate-800">{{ log.taskTitle }}</h3>
               </div>
 
-              <div class="text-[11px] text-slate-400 font-semibold shrink-0">
+              <div class="text-xs text-slate-400 font-semibold shrink-0">
                 🕒 {{ formatDate(log.createdAt) }} | Người chỉ đạo: <span class="text-slate-700 font-bold">{{ log.createdBy || 'Lãnh đạo' }}</span>
               </div>
             </div>
@@ -186,7 +183,7 @@
                 </span>
               </div>
 
-              <span class="text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-lg text-[11px] font-bold">
+              <span class="text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1 rounded-lg text-xs font-bold">
                 ✓ Đã lưu lịch sử CSDL
               </span>
             </div>
@@ -197,7 +194,7 @@
       <!-- 3. Bottom Footer: Server Pagination Controls -->
       <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50/70 p-4 border-t border-slate-200/80 text-xs text-slate-600 font-semibold">
         <div>
-          Hiển thị <span class="font-bold text-slate-900">{{ totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0 }} - {{ Math.min(currentPage * pageSize, totalCount) }}</span> trên tổng số <span class="font-bold text-slate-900">{{ totalCount }}</span> văn bản thông báo
+          Hiển thị <span class="font-bold text-slate-900">{{ formatNumber(totalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0) }} - {{ formatNumber(Math.min(currentPage * pageSize, totalCount)) }}</span> trên tổng số <span class="font-bold text-slate-900">{{ formatNumber(totalCount) }}</span> văn bản thông báo
         </div>
 
         <div class="flex items-center gap-2">
@@ -236,6 +233,12 @@
 </template>
 
 <script setup>
+import ActionButton from "../components/ActionButton.vue";
+import { formatNumber } from "../shared/formatters";
+import { toast } from 'vue3-toastify';
+import { loadAllExportPages } from '../services/exportData';
+const isExporting = ref(false);
+let loadedExportUrl = null;
 import { formatDateTime as formatDate } from '../shared/formatters';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
 import { fetchWithAuth } from '../services/auth';
@@ -403,11 +406,16 @@ function resetSearch() {
   loadLogs();
 }
 
-function exportExcel() {
-  const headers = ["STT", "Mã Nhiệm Vụ", "Nhiệm Vụ", "Cơ Quan Nhận Thông Báo", "Chỉ Số Dự Báo (%)", "Nội Dung Thông Báo", "Thời Gian Gửi"];
+async function exportExcel() {
+  if (isExporting.value || isLoading.value || !loadedExportUrl) return;
+  isExporting.value = true;
+  try {
+  const exportRows = await loadAllExportPages(loadedExportUrl);
+  if (!exportRows.length) { toast.warning('Không có dữ liệu để xuất Excel!'); return; }
+  const headers = ["STT", "Mã nhiệm vụ", "Nhiệm vụ", "Cơ quan nhận thông báo", "Chỉ số dự báo (%)", "Nội dung thông báo", "Thời gian gửi"];
   const minColWidths = { 0: 8, 1: 15, 2: 45, 3: 28, 4: 18, 5: 50, 6: 20 };
 
-  const rows = logs.value.map((log, idx) => [
+  const rows = exportRows.map((log, idx) => [
     idx + 1,
     log.taskCode || '',
     log.taskTitle || '',
@@ -417,7 +425,7 @@ function exportExcel() {
     formatDate(log.createdAt)
   ]);
 
-  exportToExcel({
+  await exportToExcel({
     title: "BÁO CÁO LỊCH SỬ THÔNG BÁO & CHỈ ĐẠO TIẾN ĐỘ",
     headers,
     rows,
@@ -425,6 +433,11 @@ function exportExcel() {
     sheetName: "Lịch sử thông báo",
     minColWidths
   });
+  } catch (error) {
+    toast.error(error.message || 'Không thể xuất Excel.');
+  } finally {
+    isExporting.value = false;
+  }
 }
 
 function changePage(newPage) {
@@ -470,10 +483,7 @@ async function checkAndOpenLogFromHash() {
   }
 }
 
-async function loadLogs() {
-  const currentRequestId = ++urgeFetchRequestId;
-  isLoading.value = true;
-  try {
+function buildListUrl() {
     const url = new URL(getApiUrl('/api/execution/urge-logs'));
     url.searchParams.append('pageNumber', currentPage.value);
     url.searchParams.append('pageSize', pageSize.value);
@@ -494,10 +504,20 @@ async function loadLogs() {
       url.searchParams.append('toDate', appliedToDate.value);
     }
 
+    return url;
+}
+
+async function loadLogs() {
+  const currentRequestId = ++urgeFetchRequestId;
+  isLoading.value = true;
+  try {
+    const url = buildListUrl();
     const res = await fetchWithAuth(url);
     if (res.ok) {
       const data = await res.json();
       if (currentRequestId !== urgeFetchRequestId) return;
+
+      loadedExportUrl = url.toString();
       if (data.items) {
         logs.value = data.items;
         totalCount.value = data.totalCount || data.items.length;

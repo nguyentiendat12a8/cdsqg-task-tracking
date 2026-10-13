@@ -9,7 +9,7 @@ export const accessibleDialog = {
     panel.setAttribute('role', 'dialog');
     panel.setAttribute('aria-modal', 'true');
     panel.setAttribute('tabindex', '-1');
-    const heading = panel.querySelector('h1,h2,h3,h4');
+    const heading = panel.querySelector('h1,h2,h3,h4,[role="heading"]');
     if (heading) panel.setAttribute('aria-label', heading.textContent.trim());
     else panel.setAttribute('aria-label', 'Chi tiết và thao tác');
     const entry = {el, previous};

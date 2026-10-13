@@ -374,10 +374,12 @@ void SeedInitialData(AppDbContext db, IPasswordHasher hasher)
         var btttt = new Agency { Id = Guid.NewGuid(), Code = "BTTTT", Name = "Bộ Thông tin và Truyền thông", Type = AgencyTypeEnum.Ministry, CreatedAt = DateTime.UtcNow };
         var bca = new Agency { Id = Guid.NewGuid(), Code = "BCA", Name = "Bộ Công an", Type = AgencyTypeEnum.Ministry, CreatedAt = DateTime.UtcNow };
         var bkhdt = new Agency { Id = Guid.NewGuid(), Code = "BKHĐT", Name = "Bộ Kế hoạch và Đầu tư", Type = AgencyTypeEnum.Ministry, CreatedAt = DateTime.UtcNow };
-        var tphcm = new Agency { Id = Guid.NewGuid(), Code = "TPHCM", Name = "UBND TP. Hồ Chí Minh", Type = AgencyTypeEnum.Province, CreatedAt = DateTime.UtcNow };
+        var tphcm = new Agency { Id = Guid.NewGuid(), Code = "TPHCM", Name = "Thành phố Hồ Chí Minh", Type = AgencyTypeEnum.Province, CreatedAt = DateTime.UtcNow };
         db.Agencies.AddRange(btttt, bca, bkhdt, tphcm);
         db.SaveChanges();
     }
+
+    ProvinceCatalog.Seed(db);
 
     // 2. Seed Reference Units Dictionary if missing
     if (!db.Units.Any(u => u.Name == "%"))
@@ -398,7 +400,7 @@ void SeedInitialData(AppDbContext db, IPasswordHasher hasher)
             Id = Guid.NewGuid(),
             Username = "admin",
             PasswordHash = hasher.HashPassword("adminpassword"),
-            FullName = "Quản trị viên Hệ thống",
+            FullName = "Quản trị viên hệ thống",
             Email = "admin@cdsqg.gov.vn",
             Role = UserRoleEnum.Admin,
             IsActive = true,

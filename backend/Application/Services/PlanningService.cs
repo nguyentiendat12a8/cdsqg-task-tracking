@@ -12,7 +12,7 @@ namespace Cdsqg.Application.Services
 {
     public interface IPlanningService
     {
-        Task<PlanningGridResponseDto> GetDocumentPlanningGridAsync(Guid documentId, Guid? agencyId = null);
+        Task<PlanningGridResponseDto> GetDocumentPlanningGridAsync(Guid documentId, Guid? agencyId = null, int? reportYear = null);
         Task<PagedResultDto<PlanningGridItemDto>> GetDocumentItemsPagedAsync(Guid documentId, DocumentItemsQueryDto queryDto);
         Task<GoalTaskItem> CreateGoalTaskItemAsync(CreateGoalTaskItemRequestDto dto);
         Task<bool> UpdateTaskCustomBaselineAsync(Guid taskId, UpdateCustomBaselineDto dto);
@@ -28,7 +28,7 @@ namespace Cdsqg.Application.Services
             _context = context;
         }
 
-        public async Task<PlanningGridResponseDto> GetDocumentPlanningGridAsync(Guid documentId, Guid? agencyId = null)
+        public async Task<PlanningGridResponseDto> GetDocumentPlanningGridAsync(Guid documentId, Guid? agencyId = null, int? reportYear = null)
         {
             var doc = await _context.Documents
                 .FirstOrDefaultAsync(d => d.Id == documentId)
@@ -110,12 +110,12 @@ namespace Cdsqg.Application.Services
                     }
                 }
 
-                var latestLog = GetLatestProgressLogForAgency(item, agencyId);
-                var agencyDeliverables = GetDeliverablesForAgency(item, agencyId);
+                var latestLog = ProgressCalculator.AnnualReport(item, agencyId, reportYear);
+                var agencyDeliverables = reportYear.HasValue ? ProgressCalculator.AnnualDeliverables(item, latestLog) : GetDeliverablesForAgency(item, agencyId);
 
                 var progress = item.IsGeneralTask && !agencyId.HasValue
-                    ? ProgressCalculator.EvaluateOverall(item, agenciesMap.Values)
-                    : ProgressCalculator.Evaluate(item, latestLog, agencyDeliverables, agencyId);
+                    ? ProgressCalculator.EvaluateOverall(item, agenciesMap.Values, ProgressCalculator.AnnualEvaluationDate(reportYear), reportYear)
+                    : ProgressCalculator.Evaluate(item, latestLog, agencyDeliverables, agencyId, reportYear, ProgressCalculator.AnnualEvaluationDate(reportYear));
 
                 return new PlanningGridItemDto
                 {
@@ -153,7 +153,7 @@ namespace Cdsqg.Application.Services
                     LatestProgressStatus = latestLog?.QualitativeStatus?.ToString(),
                     LastUpdated = latestLog?.LogDate ?? item.LastUpdated ?? item.CreatedAt,
                     CreatedAt = item.CreatedAt,
-                    HasPendingApproval = item.ProgressLogs != null && item.ProgressLogs.Any(l => l.ApprovalStatus == ApprovalStatusEnum.Pending),
+                    HasPendingApproval = item.ProgressLogs != null && item.ProgressLogs.Any(l => l.ApprovalStatus == ApprovalStatusEnum.Pending && (!reportYear.HasValue || l.PeriodYear == reportYear)),
                     CalculatedStatus = progress.Status.ToString(),
                     CalculatedAlert = progress.Alert.ToString(),
                     CustomBaseline = item.CustomBaseline ?? new Dictionary<string, string>(),

@@ -105,7 +105,10 @@ export async function exportLegalReport({ formatDate, legalStats, legalFilterDoc
 
     const wsSummary = XLSX.utils.aoa_to_sheet(summaryRows);
     wsSummary['!merges'] = merges;
-    styleWorksheet(wsSummary, { numCols: Math.max(docTypes.length + 3, 6), headerRowIndex: 5, titleRowIndex: 0 }, XLSX);
+    const firstHeader = summaryRows.findIndex(row => row[0] === 'STT');
+    const summaryCols = Math.max(docTypes.length + 3, 7);
+    wsSummary['!cols'] = Array.from({ length: summaryCols }, (_, index) => ({ wch: index === 0 ? 7 : index === 1 ? 38 : index === 2 ? 50 : 24 }));
+    styleWorksheet(wsSummary, { numCols: summaryCols, headerRowIndex: firstHeader < 0 ? summaryRows.length : firstHeader, titleRowIndex: 0 }, XLSX);
     XLSX.utils.book_append_sheet(wb, wsSummary, "Thống Kê Tổng Hợp");
 
     // ==========================================

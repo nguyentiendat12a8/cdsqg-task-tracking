@@ -8,9 +8,9 @@
           <span class="p-2 bg-blue-100 text-blue-700 rounded-xl font-bold text-sm shrink-0">📄</span>
           <div class="truncate">
             <h3 class="text-sm sm:text-base font-bold text-slate-800 truncate" :title="fileItem?.cleanName || fileItem?.fileName">
-              {{ fileItem?.cleanName || fileItem?.fileName || 'Xem Văn Bản Đính Kèm' }}
+              {{ fileItem?.cleanName || fileItem?.fileName || 'Xem văn bản đính kèm' }}
             </h3>
-            <p class="text-[11px] text-slate-500 truncate" v-if="fileItem?.fileType">
+            <p class="text-xs text-slate-500 truncate" v-if="fileItem?.fileType">
               Phân loại: <span class="font-bold text-blue-700">{{ fileItem.fileType }}</span>
             </p>
           </div>
@@ -21,10 +21,10 @@
             v-if="fileItem?.fileUrl" 
             @click="openInNewWindow"
             class="ui-single-line px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-sm"
-            title="Mở trong cửa sổ mới (Full screen)"
+            title="Mở trong cửa sổ mới (toàn màn hình)"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-            <span>Mở Cửa Sổ Mới (Full)</span>
+            <span>Mở cửa sổ mới</span>
           </button>
 
           <a 
@@ -80,7 +80,7 @@
               @click="openInNewWindow" 
               class="ui-single-line px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition shadow-sm inline-flex items-center gap-2 cursor-pointer"
             >
-              🚀 Mở cửa sổ mới (Full screen)
+              🚀 Mở cửa sổ mới
             </button>
             <a 
               :href="fullFileUrl" 
@@ -147,7 +147,7 @@ function openInNewWindow() {
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; padding: 0; background: #0f172a; color: #f8fafc; height: 100vh; display: flex; flex-direction: column; }
           .header { background: #1e293b; color: white; padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; border-b: 1px solid #334155; }
-          .title { font-size: 15px; font-weight: 700; }
+          .title { font-size: 16px; font-weight: 700; }
           .btn { background: #2563eb; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; text-decoration: none; font-size: 12px; }
           .btn:hover { background: #1d4ed8; }
           .viewer { flex: 1; width: 100%; height: 100%; border: none; }

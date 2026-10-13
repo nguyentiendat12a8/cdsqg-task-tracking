@@ -21,9 +21,9 @@
       <span>{{ buttonText }}</span>
       <span 
         v-if="activeCount > 0" 
-        class="ml-0.5 px-1.5 py-0.5 bg-blue-600 text-white font-bold text-[10px] rounded-full min-w-[18px] text-center leading-none shadow-xs"
+        class="ml-0.5 px-1.5 py-0.5 bg-blue-600 text-white font-bold text-xs rounded-full min-w-[18px] text-center leading-none shadow-xs"
       >
-        {{ activeCount }}
+        {{ formatNumber(activeCount) }}
       </span>
       <svg class="w-3.5 h-3.5 opacity-60 transition-transform duration-200" :class="{ 'rotate-180': isOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
@@ -45,7 +45,7 @@
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/>
               </svg>
             </div>
-            <h4 class="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-wide">
+            <h4 class="text-xs sm:text-sm font-semibold text-slate-900">
               {{ title }}
             </h4>
           </div>
@@ -73,7 +73,7 @@
             class="ui-single-line px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-1"
           >
             <span>↺</span>
-            <span>Đặt Lại</span>
+            <span>Đặt lại</span>
           </button>
 
           <div class="flex items-center gap-2">
@@ -90,7 +90,7 @@
               class="ui-single-line px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer flex items-center gap-1.5"
             >
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-              <span>Áp Dụng Lọc</span>
+              <span>Áp dụng lọc</span>
             </button>
           </div>
         </div>
@@ -100,6 +100,7 @@
 </template>
 
 <script setup>
+import { formatNumber } from "../shared/formatters";
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 
 const props = defineProps({

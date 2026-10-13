@@ -5,7 +5,7 @@
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>
         </span>
         <div>
-          <h2 class="text-sm sm:text-base font-bold text-slate-800">
+          <h2 class="ui-page-title text-slate-900">
             {{ dashboardTitleText }}
           </h2>
         </div>
@@ -13,14 +13,15 @@
 
       <!-- Action Buttons & Advanced Filter Popover -->
       <div class="flex flex-wrap items-center gap-2 min-w-0">
+        <ReportYearSelect />
         <!-- Segmented Tab Filter: Mục tiêu | Nhiệm vụ -->
-        <div class="inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200/90 shrink-0 h-[34px] items-center">
+        <div class="inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200/90 shrink-0 h-9 items-center">
           <button
             type="button"
             @click="setDashboardFilter('goals')"
             :class="[
               'px-3.5 py-1 text-xs font-bold rounded-lg transition cursor-pointer whitespace-nowrap h-full flex items-center gap-1.5',
-              dashboardFilter === 'goals' ? 'bg-purple-600 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'
+              dashboardFilter === 'goals' ? 'bg-blue-600 text-white shadow-2xs' : 'text-slate-600 hover:text-slate-900'
             ]"
           >
             <span>🎯</span> Mục tiêu
@@ -37,21 +38,16 @@
           </button>
         </div>
 
-        <button
-          type="button"
+        <ActionButton kind="export"
           @click="exportDashboardExcelReport"
-          :disabled="isExportingExcel"
-          class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-2xs transition h-[34px] flex items-center gap-1.5 cursor-pointer whitespace-nowrap shrink-0"
+          :disabled="isExportingExcel || isLoading"
           title="Xuất file báo cáo Excel theo bộ lọc (Mỗi Bộ/Ngành/Địa phương 1 Sheet)"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-          <span>{{ isExportingExcel ? 'Đang xuất...' : 'Xuất Báo Cáo Excel' }}</span>
-        </button>
+        ><span>{{ isExportingExcel ? 'Đang xuất...' : 'Xuất báo cáo Excel' }}</span></ActionButton>
 
         <!-- OverlayPanel Filter Popover -->
         <OverlayPanel
-          title="Lọc Dữ Liệu Bảng Điều Khiển"
-          buttonText="Bộ Lọc Nâng Cao"
+          title="Lọc dữ liệu bảng điều khiển"
+          buttonText="Bộ lọc nâng cao"
           :activeCount="activeDashboardFilterCount"
           widthClass="w-[340px] sm:w-[500px]"
           @apply="loadDashboardMetrics"
@@ -64,7 +60,7 @@
                   v-model="dashboardFilter"
                   :options="dashboardFilterOptions"
                   :isMulti="false"
-                  label="Loại Đối Tượng"
+                  label="Loại đối tượng"
                   placeholder="Tất cả (Mục tiêu & Nhiệm vụ)"
                 />
               </div>
@@ -74,7 +70,7 @@
                   v-model="selectedScopes"
                   :options="scopeOptions"
                   :isMulti="true"
-                  label="Phạm Vi"
+                  label="Phạm vi"
                   placeholder="Tất cả phạm vi"
                 />
               </div>
@@ -85,7 +81,7 @@
                 v-model="selectedAgencyIds"
                 :options="leadAgencyOptions"
                 :isMulti="true"
-                label="Cơ Quan Chủ Trì"
+                label="Cơ quan chủ trì"
                 placeholder="Tất cả cơ quan chủ trì"
               />
             </div>
@@ -95,7 +91,7 @@
                 v-model="selectedSubAgencyIds"
                 :options="subAgencyOptions"
                 :isMulti="true"
-                label="Đơn Vị Trực Thuộc"
+                label="Đơn vị trực thuộc"
                 placeholder="Tất cả đơn vị trực thuộc"
               />
             </div>
@@ -115,15 +111,15 @@
                 v-model="selectedGroups"
                 :options="groupOptions"
                 :isMulti="true"
-                label="Nhóm Trọng Tâm"
+                label="Nhóm trọng tâm"
                 placeholder="Tất cả nhóm"
               />
             </div>
 
             <div>
               <div class="flex items-center justify-between mb-1">
-                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Giai Đoạn (Từ năm ➔ Đến năm)</label>
-                <label class="inline-flex items-center gap-1 cursor-pointer text-[10px] font-bold text-blue-700">
+                <label class="text-xs font-semibold text-slate-600 block">Giai đoạn (từ năm ➔ đến năm)</label>
+                <label class="inline-flex items-center gap-1 cursor-pointer text-xs font-bold text-blue-700">
                   <input type="checkbox" v-model="isOngoingOnly" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3 h-3">
                   Thường xuyên
                 </label>
@@ -153,6 +149,8 @@
 </template>
 
 <script setup>
+import ActionButton from "../../components/ActionButton.vue";
+import ReportYearSelect from '../../components/ReportYearSelect.vue';
 import SearchableSelect from '../../components/SearchableSelect.vue';
 import OverlayPanel from '../../components/OverlayPanel.vue';
 
@@ -172,6 +170,7 @@ defineProps([
   'isBKHCNAgency',
   'loadDashboardMetrics',
   'isExportingExcel',
+  'isLoading',
   'exportDashboardExcelReport'
 ]);
 const dashboardFilter = defineModel('dashboardFilter', { required: true });

@@ -1,9 +1,11 @@
+import { installReportingClock } from './reporting-clock.mjs';
 import { createRequire } from 'node:module';
 import assert from 'node:assert/strict';
 const { chromium } = createRequire(process.env.PLAYWRIGHT_PACKAGE)('playwright');
 const browser = await chromium.launch({ channel: 'msedge', headless: true });
 try {
   const page = await browser.newPage();
+  await installReportingClock(page);
   const errors = [], warnings = [], queries = [];
   let baseline, progress;
   page.on('pageerror', e => errors.push(e.message));
@@ -14,7 +16,11 @@ try {
     if (url.pathname.endsWith('/custom-baseline') && req.method() === 'POST') { baseline = req.postDataJSON(); data = { success: true }; }
     if (url.pathname.endsWith('/progress')) {
       if (req.method() === 'POST') { progress = req.postData(); data = { approvalStatus: 'Approved' }; }
-      else { queries.push(url); data = null; }
+      else {
+        queries.push(url);
+        if (url.searchParams.get('year') === '2027') await new Promise(resolve => setTimeout(resolve, 500));
+        data = { actualValue: url.searchParams.get('year') === '2028' ? 123 : 20000, summaryNotes: 'Đã lưu', attachmentFileUrls: [] };
+      }
     }
     await route.fulfill({ json: data });
   });
@@ -23,11 +29,11 @@ try {
     const f = await import('/tests/refactor-fixture.js');
     f.authState.user.value = { role: 1, username: 'review' }; f.authState.token.value = 'fixture';
     document.querySelector('#app').style.display = 'none';
-    const node = document.createElement('div'); node.id = 'annual-test'; document.body.append(node);
+    const node = document.createElement('div'); node.id = 'annual-test'; node.className = 'ui-density-compact'; document.body.append(node);
     window.annualMode = f.ref('baseline');
     const agency = { id: '11111111-1111-1111-1111-111111111111', name: 'Cơ quan kiểm thử', code: 'TEST', type: 'Ministry' };
     const app = f.createApp({ render: () => f.h(window.annualMode.value === 'baseline' ? f.AnnualBaseline : f.AnnualProgress, {
-      isOpen: true, taskId: '22222222-2222-2222-2222-222222222222', taskCode: 'MT01', evaluationType: 'Quantitative',
+      isOpen: true, taskId: '22222222-2222-2222-2222-222222222222', taskCode: 'MT01', taskTitle: 'Nội dung nhiệm vụ dài '.repeat(20), evaluationType: 'Quantitative',
       existingCustomBaseline: { '2026': '50', Q1_2026: '10', M1_2026: '2', hasQuarter: 'true' },
       customBaseline: { hasQuarter: 'true', Q1_2026: '10', M1_2026: '2' },
       agencies: [agency], leadAgencyId: agency.id, dynamicYears: [2026, 2027], yearlyTargets: { '2026': 100 }
@@ -41,20 +47,39 @@ try {
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
   await page.screenshot({ path: 'tests/annual-baseline-mobile.png' });
   await page.setViewportSize({ width: 1280, height: 720 });
-  await root.getByLabel('Năm 2026 (%)').fill('40');
+  await root.getByLabel('Năm 2026 (%)').fill('40.000,5');
   await root.getByRole('button', { name: 'Lưu chỉ tiêu năm' }).click();
   await page.waitForFunction(() => !document.querySelector('#annual-test button[disabled]'));
-  assert.deepEqual(baseline, { milestones: { '2026': '40' } });
+  assert.deepEqual(baseline, { milestones: { '2026': '40000.5' } });
   await page.evaluate(() => { window.annualMode.value = 'progress'; });
   await root.getByPlaceholder('Nhập con số thực tế...').waitFor();
+  const initialYearSelect = root.getByRole('combobox').last();
+  await initialYearSelect.click(); await page.getByRole('option', { name: 'Năm 2026', exact: true }).click();
+  await page.waitForFunction(() => document.querySelector('#annual-test input[inputmode=decimal]')?.value === '20.000');
+  const yearSelect = root.getByRole('combobox').last();
+  await yearSelect.click(); await page.getByRole('option', { name: 'Năm 2027', exact: true }).click();
+  await yearSelect.click(); await page.getByRole('option', { name: 'Năm 2028', exact: true }).click();
+  await page.waitForTimeout(650);
+  assert.equal(await root.getByPlaceholder('Nhập con số thực tế...').inputValue(), '123');
+  await yearSelect.click(); await page.getByRole('option', { name: 'Năm 2026', exact: true }).click();
+  await page.waitForFunction(() => document.querySelector('#annual-test input[inputmode=decimal]')?.value === '20.000');
+  const taskContent = root.locator('p').filter({ hasText: 'MT01 -' });
+  for (const width of [1280, 390]) {
+    await page.setViewportSize({ width, height: 844 });
+    assert.equal(await taskContent.evaluate(el => getComputedStyle(el).fontSize), '12px');
+    assert.equal(await taskContent.evaluate(el => el.scrollWidth > el.clientWidth), false);
+  }
+  assert.equal(await root.getByRole('dialog').getAttribute('aria-label'), 'Báo cáo tiến độ thực hiện');
+  await page.setViewportSize({ width: 1280, height: 720 });
   await page.waitForTimeout(200);
   assert.equal(await root.getByText(/Theo Quý|Theo Tháng|Chọn Quý|Chọn Tháng/).count(), 0);
   assert.ok(queries.length > 0);
   assert.ok(queries.every(u => u.searchParams.has('year') && !u.searchParams.has('period') && !u.searchParams.has('quarter')));
-  await root.getByPlaceholder('Nhập con số thực tế...').fill('40');
+  await root.getByPlaceholder('Nhập con số thực tế...').fill('40.000,5');
   await root.getByRole('button', { name: /Lưu|Gửi|Cập nhật/ }).last().click();
   await page.waitForTimeout(300);
   assert.ok(progress?.includes('name="PeriodYear"'));
+  assert.match(progress, /40000\.5/);
   assert.ok(!/name="Period(?:Quarter|Month|Type)"/.test(progress));
   assert.deepEqual(errors, []); assert.deepEqual(warnings, []);
   console.log('Passed: annual baseline payload, annual report query and multipart fields, no quarter/month controls, no Vue errors.');

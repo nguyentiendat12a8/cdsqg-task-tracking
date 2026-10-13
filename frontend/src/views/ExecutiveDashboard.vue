@@ -18,6 +18,7 @@
       :isBKHCNAgency="isBKHCNAgency"
       :loadDashboardMetrics="loadDashboardMetrics"
       :isExportingExcel="isExportingExcel"
+      :isLoading="isLoading"
       :exportDashboardExcelReport="exportDashboardExcelReport"
       v-model:dashboardFilter="dashboardFilter"
       v-model:selectedScopes="selectedScopes"
@@ -40,6 +41,8 @@
     <div v-else class="space-y-3.5 w-full">
 
       <!-- 2 Biểu đồ Thống kê (Chia đôi màn hình 50%-50% trên Desktop, 1 hàng trên màn hình nhỏ) -->
+      <LeadershipHighlights v-if="!isSubAgencyUser" :summary="activeStatusSummary" />
+
       <DashboardSummary
       :dashboardFilter="dashboardFilter"
       :dashboardItemNoun="dashboardItemNoun"
@@ -70,7 +73,7 @@
             @click="drilldownAgency(singleSubAgencyPerformance)"
             class="ui-single-line px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-2xs transition flex items-center gap-1.5 cursor-pointer shrink-0"
           >
-            <span>📋 Xem Danh Sách Chi Tiết {{ dashboardItemNounCap }}</span>
+            <span>📋 Xem danh sách chi tiết {{ dashboardItemNoun }}</span>
             <span>→</span>
           </button>
         </div>
@@ -83,7 +86,7 @@
             <div class="md:col-span-5 flex flex-col items-center justify-center p-4 bg-white rounded-2xl border border-slate-200/80 shadow-2xs space-y-2">
               <MiniStatusDonut :stats="singleSubAgencyPerformance" :size="160" :innerSize="105" :fontSize="32" />
               <div class="text-center pt-1">
-                <div class="text-xs font-bold text-slate-800">Tổng số: {{ (dashboardFilter === 'goals' ? singleSubAgencyPerformance.totalGoals : singleSubAgencyPerformance.totalTasks) || 0 }} {{ dashboardItemNoun }}</div>
+                <div class="text-xs font-bold text-slate-800">Tổng số: {{ formatNumber((dashboardFilter === 'goals' ? singleSubAgencyPerformance.totalGoals : singleSubAgencyPerformance.totalTasks) || 0) }} {{ dashboardItemNoun }}</div>
               </div>
             </div>
 
@@ -94,7 +97,7 @@
                   <span class="w-3 h-3 rounded-full bg-slate-400"></span>
                   <span class="text-slate-700">Chưa thực hiện</span>
                 </div>
-                <span class="font-bold text-slate-900 text-sm">{{ singleSubAgencyPerformance.notStarted || 0 }}</span>
+                <span class="font-bold text-slate-900 text-sm">{{ formatNumber(singleSubAgencyPerformance.notStarted || 0) }}</span>
               </div>
 
               <div class="flex items-center justify-between p-2.5 rounded-xl bg-blue-50/70 border border-blue-200">
@@ -102,7 +105,7 @@
                   <span class="w-3 h-3 rounded-full bg-blue-500"></span>
                   <span class="text-blue-800">Đang thực hiện (trong hạn)</span>
                 </div>
-                <span class="font-bold text-blue-900 text-sm">{{ singleSubAgencyPerformance.inProgressOnTime || 0 }}</span>
+                <span class="font-bold text-blue-900 text-sm">{{ formatNumber(singleSubAgencyPerformance.inProgressOnTime || 0) }}</span>
               </div>
 
               <div class="flex items-center justify-between p-2.5 rounded-xl bg-rose-50/70 border border-rose-200">
@@ -110,7 +113,7 @@
                   <span class="w-3 h-3 rounded-full bg-rose-500"></span>
                   <span class="text-rose-800">Đang thực hiện (quá hạn)</span>
                 </div>
-                <span class="font-bold text-rose-900 text-sm">{{ singleSubAgencyPerformance.inProgressOverdue || 0 }}</span>
+                <span class="font-bold text-rose-900 text-sm">{{ formatNumber(singleSubAgencyPerformance.inProgressOverdue || 0) }}</span>
               </div>
 
               <div class="flex items-center justify-between p-2.5 rounded-xl bg-emerald-50/70 border border-emerald-200">
@@ -118,7 +121,7 @@
                   <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
                   <span class="text-emerald-800">Hoàn thành (đúng hạn)</span>
                 </div>
-                <span class="font-bold text-emerald-900 text-sm">{{ singleSubAgencyPerformance.completedOnTime || 0 }}</span>
+                <span class="font-bold text-emerald-900 text-sm">{{ formatNumber(singleSubAgencyPerformance.completedOnTime || 0) }}</span>
               </div>
 
               <div class="flex items-center justify-between p-2.5 rounded-xl bg-teal-50/70 border border-teal-200">
@@ -126,7 +129,7 @@
                   <span class="w-3 h-3 rounded-full bg-teal-500"></span>
                   <span class="text-teal-800">Hoàn thành (quá hạn)</span>
                 </div>
-                <span class="font-bold text-teal-900 text-sm">{{ singleSubAgencyPerformance.completedOverdue || 0 }}</span>
+                <span class="font-bold text-teal-900 text-sm">{{ formatNumber(singleSubAgencyPerformance.completedOverdue || 0) }}</span>
               </div>
 
               <div class="flex items-center justify-between p-2.5 rounded-xl bg-amber-50/70 border border-amber-200">
@@ -134,7 +137,7 @@
                   <span class="w-3 h-3 rounded-full bg-amber-500"></span>
                   <span class="text-amber-800">Sắp hết hạn</span>
                 </div>
-                <span class="font-bold text-amber-900 text-sm">{{ singleSubAgencyPerformance.expiringSoon || 0 }}</span>
+                <span class="font-bold text-amber-900 text-sm">{{ formatNumber(singleSubAgencyPerformance.expiringSoon || 0) }}</span>
               </div>
             </div>
 
@@ -142,18 +145,18 @@
         </div>
       </div>
 
-      <!-- 2. Subordinate Child Agencies Progress Block (Khối Các Đơn Vị Trực Thuộc - Chỉ hiển thị cho BKHCN đối với Cấp 2) -->
+      <!-- 2. Subordinate Child Agencies Progress Block (Khối các đơn vị trực thuộc - Chỉ hiển thị cho BKHCN đối với Cấp 2) -->
       <div v-if="!isLevel3User && isBKHCNAgency" class="bg-white p-4.5 rounded-2xl shadow-sm border border-slate-200/80 space-y-4 w-full">
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
           <div>
             <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
-              🏛️ Khối Các Đơn Vị Trực Thuộc
+              🏛️ Khối các đơn vị trực thuộc
             </h3>
           </div>
         </div>
 
         <div v-if="userSubAgenciesPerformance?.length" class="space-y-3">
-          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          <div class="agency-card-scroll grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
             <AgencyProgressCard v-for="(item, index) in visibleSubAgencies" :key="item.agencyId" :item="item" :index="index" :dashboardFilter="dashboardFilter" tone="blue" @select="drilldownAgency" />
           </div>
 
@@ -163,7 +166,7 @@
               @click="isSubAgenciesExpanded = !isSubAgenciesExpanded"
               class="ui-single-line px-5 py-2 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
             >
-              <span>{{ isSubAgenciesExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${userSubAgenciesPerformance.length - 8} Đơn vị trực thuộc khác)` }}</span>
+              <span>{{ isSubAgenciesExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${userSubAgenciesPerformance.length - 8} đơn vị trực thuộc khác)` }}</span>
             </button>
           </div>
         </div>
@@ -177,38 +180,40 @@
     <!-- Main Sections: Admin / Parent Agency View -->
     <div v-else class="space-y-6 w-full">
 
-      <!-- Collapsible Overall Agencies Ranking Line & Stacked Chart -->
-      <AllAgenciesProgressChart
-        :ministriesData="metrics.ministriesPerformance"
-        :provincesData="metrics.provincesPerformance"
-        :othersData="metrics.othersPerformance"
-        :filterType="dashboardFilter"
-        @select-agency="drilldownAgency"
-      />
-
+      <section class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden" aria-labelledby="agency-block-heading">
+        <div class="px-4 pt-4 sm:px-5 sm:pt-5 space-y-3">
+          <div>
+            <h2 id="agency-block-heading" class="text-base font-semibold text-slate-900">Tiến độ theo khối cơ quan</h2>
+            <p class="mt-1 text-xs text-slate-600">Chọn khối để xem tiến độ và mở chi tiết từng đơn vị. Số lượng theo bộ lọc hiện tại.</p>
+          </div>
+          <div role="tablist" aria-label="Khối cơ quan" class="flex gap-1 rounded-xl bg-slate-100 p-1 overflow-x-auto">
+            <button v-for="(tab, index) in agencyBlockTabs" :key="tab.value" :id="`agency-tab-${tab.value}`" type="button" role="tab" :aria-selected="activeAgencyBlock === tab.value" :aria-controls="visitedAgencyBlocks.has(tab.value) ? `agency-panel-${tab.value}` : undefined" :tabindex="activeAgencyBlock === tab.value ? 0 : -1" @click="selectAgencyBlock(tab.value)" @keydown="handleAgencyTabKey($event, index)" :class="['ui-single-line flex-1 inline-flex items-center justify-center gap-2 px-3 text-sm font-semibold whitespace-nowrap rounded-lg transition', activeAgencyBlock === tab.value ? 'bg-white text-blue-700 shadow-sm' : 'text-slate-600 hover:bg-white/60 hover:text-slate-900']">
+              {{ tab.label }} <span :class="['rounded-full px-2 py-0.5 text-xs tabular-nums', activeAgencyBlock === tab.value ? 'bg-blue-50 text-blue-700' : 'bg-slate-200/70 text-slate-600']">{{ formatNumber(tab.count) }}</span>
+            </button>
+          </div>
+        </div>
       <!-- Section 1: Khối Bộ / Ngành -->
-      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
+      <div v-if="visitedAgencyBlocks.has('ministries')" v-show="activeAgencyBlock === 'ministries'" id="agency-panel-ministries" role="tabpanel" aria-labelledby="agency-tab-ministries" tabindex="0" class="p-4 sm:p-5 space-y-4">
         <div
-          @click="isSection1Collapsed = !isSection1Collapsed"
-          class="flex items-center justify-between border-b border-slate-100 pb-3 cursor-pointer select-none hover:opacity-80 transition"
+          class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3"
         >
           <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
-            <span>🏢 Khối Các Bộ / Ngành Trung Ương</span>
-            <span class="text-xs font-normal text-slate-400">({{ isSection1Collapsed ? 'Nhấp để mở rộng' : 'Nhấp để thu gọn' }})</span>
+            <span>🏢 Khối các bộ, ngành Trung ương</span>
           </h3>
           <div class="flex items-center gap-2">
             <span class="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-xl border border-blue-200/60">
-              {{ filteredMinistriesPerformance?.length ?? 0 }} Bộ/Ngành
-            </span>
-            <span class="text-slate-500 text-xs font-bold px-2.5 py-1 bg-slate-100 rounded-lg">
-              {{ isSection1Collapsed ? '▼ Mở rộng' : '▲ Thu gọn' }}
+              {{ filteredMinistriesPerformance?.length ?? 0 }} bộ, ngành
             </span>
           </div>
         </div>
 
-        <div v-show="!isSection1Collapsed" class="space-y-4 pt-1">
-          <div v-if="filteredMinistriesPerformance?.length" class="space-y-3">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div class="space-y-4 pt-1">
+          <div class="flex flex-wrap gap-2" role="group" aria-label="Chọn loại biểu đồ">
+            <button v-for="tab in agencyChartTabs" :key="tab.value" type="button" :aria-pressed="agencyChartViews.ministries === tab.value" @click="agencyChartViews.ministries = tab.value" :class="['ui-single-line px-4 text-sm font-semibold rounded-lg border transition', agencyChartViews.ministries === tab.value ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50']">{{ tab.label }}</button>
+          </div>
+          <AllAgenciesProgressChart v-if="agencyChartViews.ministries === 'bar'" :ministriesData="filteredMinistriesPerformance" :filterType="dashboardFilter" @select-agency="drilldownAgency" />
+          <div v-if="agencyChartViews.ministries === 'pie' && filteredMinistriesPerformance?.length" class="space-y-3">
+            <div class="agency-card-scroll grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
               <AgencyProgressCard v-for="(item, index) in visibleMinistries" :key="item.agencyId" :item="item" :index="index" :dashboardFilter="dashboardFilter" tone="blue" @select="drilldownAgency" />
             </div>
 
@@ -218,40 +223,41 @@
                 @click="isMinistriesExpanded = !isMinistriesExpanded"
                 class="ui-single-line px-5 py-2 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
               >
-                <span>{{ isMinistriesExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${filteredMinistriesPerformance.length - 8} Bộ/Ngành khác)` }}</span>
+                <span>{{ isMinistriesExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${filteredMinistriesPerformance.length - 8} bộ, ngành khác)` }}</span>
               </button>
             </div>
           </div>
 
-          <div v-if="!filteredMinistriesPerformance?.length" class="p-8 text-center text-xs text-slate-400 italic font-semibold">
-            Không có dữ liệu Bộ/Ngành.
+          <div v-if="agencyChartViews.ministries === 'pie' && !filteredMinistriesPerformance?.length" class="p-8 text-center text-xs text-slate-400 italic font-semibold">
+            Không có dữ liệu bộ, ngành.
           </div>
         </div>
       </div>
 
       <!-- Section 2: Khối Địa Phương -->
-      <div class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
+      <div v-if="visitedAgencyBlocks.has('provinces')" v-show="activeAgencyBlock === 'provinces'" id="agency-panel-provinces" role="tabpanel" aria-labelledby="agency-tab-provinces" tabindex="0" class="p-4 sm:p-5 space-y-4">
         <div
-          @click="isSection2Collapsed = !isSection2Collapsed"
-          class="flex items-center justify-between border-b border-slate-100 pb-3 cursor-pointer select-none hover:opacity-80 transition"
+          class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3"
         >
           <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
-            <span>🏛️ Khối Các Tỉnh / Thành Phố</span>
-            <span class="text-xs font-normal text-slate-400">({{ isSection2Collapsed ? 'Nhấp để mở rộng' : 'Nhấp để thu gọn' }})</span>
+            <span>🏛️ Khối các tỉnh, thành phố</span>
           </h3>
           <div class="flex items-center gap-2">
             <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-xl border border-emerald-200/60">
-              {{ filteredProvincesPerformance?.length ?? 0 }} Địa phương
-            </span>
-            <span class="text-slate-500 text-xs font-bold px-2.5 py-1 bg-slate-100 rounded-lg">
-              {{ isSection2Collapsed ? '▼ Mở rộng' : '▲ Thu gọn' }}
+              {{ filteredProvincesPerformance?.length ?? 0 }} địa phương
             </span>
           </div>
         </div>
 
-        <div v-show="!isSection2Collapsed" class="space-y-4 pt-1">
-          <div v-if="filteredProvincesPerformance?.length" class="space-y-3">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div class="rounded-2xl border border-slate-200 bg-white p-3 space-y-3" data-testid="province-visualization-block">
+          <div class="flex flex-wrap gap-2" role="group" aria-label="Chọn loại biểu đồ">
+            <button v-for="tab in provinceChartTabs" :key="tab.value" type="button" :aria-pressed="agencyChartViews.provinces === tab.value" @click="agencyChartViews.provinces = tab.value" :class="['ui-single-line px-4 text-sm font-semibold rounded-lg border transition', agencyChartViews.provinces === tab.value ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50']">{{ tab.label }}</button>
+          </div>
+          <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,65fr)_minmax(0,35fr)] gap-3 items-start">
+          <div class="min-w-0 space-y-3" data-testid="province-chart-panel">
+          <AllAgenciesProgressChart v-if="agencyChartViews.provinces === 'bar'" :ministriesData="filteredProvincesPerformance" :filterType="dashboardFilter" @select-agency="drilldownAgency" />
+          <div v-if="agencyChartViews.provinces === 'pie' && filteredProvincesPerformance?.length" class="space-y-3">
+            <div class="agency-card-scroll grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               <AgencyProgressCard v-for="(item, index) in visibleProvinces" :key="item.agencyId" :item="item" :index="index" :dashboardFilter="dashboardFilter" tone="blue" @select="drilldownAgency" />
             </div>
 
@@ -261,40 +267,42 @@
                 @click="isProvincesExpanded = !isProvincesExpanded"
                 class="ui-single-line px-5 py-2 text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 rounded-xl transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
               >
-                <span>{{ isProvincesExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${filteredProvincesPerformance.length - 8} Địa phương khác)` }}</span>
+                <span>{{ isProvincesExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${filteredProvincesPerformance.length - 8} địa phương khác)` }}</span>
               </button>
             </div>
           </div>
 
-          <div v-if="!filteredProvincesPerformance?.length" class="col-span-full p-8 text-center text-xs text-slate-400 italic font-semibold">
-            Không có dữ liệu Địa phương.
+          <div v-if="agencyChartViews.provinces === 'pie' && !filteredProvincesPerformance?.length" class="col-span-full p-8 text-center text-xs text-slate-400 italic font-semibold">
+            Không có dữ liệu địa phương.
+          </div>
+          </div>
+          <ProvinceProgressMap :agencies="filteredProvincesPerformance" :filterType="dashboardFilter" @select-agency="drilldownAgency" class="min-w-0" data-testid="province-map-panel" />
           </div>
         </div>
       </div>
 
       <!-- Section 3: Khối Các Cơ Quan / Đơn Vị Khác (Hiển thị khi có dữ liệu được gán chủ trì) -->
-      <div v-if="filteredOthersPerformance?.length" class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
+      <div v-if="visitedAgencyBlocks.has('others')" v-show="activeAgencyBlock === 'others'" id="agency-panel-others" role="tabpanel" aria-labelledby="agency-tab-others" tabindex="0" class="p-4 sm:p-5 space-y-4">
         <div
-          @click="isSection3Collapsed = !isSection3Collapsed"
-          class="flex items-center justify-between border-b border-slate-100 pb-3 cursor-pointer select-none hover:opacity-80 transition"
+          class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3"
         >
           <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
-            <span>🏢 Khối Các Đơn Vị Khác</span>
-            <span class="text-xs font-normal text-slate-400">({{ isSection3Collapsed ? 'Nhấp để mở rộng' : 'Nhấp để thu gọn' }})</span>
+            <span>🏢 Khối các đơn vị khác</span>
           </h3>
           <div class="flex items-center gap-2">
             <span class="text-xs font-bold text-purple-600 bg-purple-50 px-3 py-1 rounded-xl border border-purple-200/60">
-              {{ filteredOthersPerformance?.length ?? 0 }} Cơ quan / Đơn vị
-            </span>
-            <span class="text-slate-500 text-xs font-bold px-2.5 py-1 bg-slate-100 rounded-lg">
-              {{ isSection3Collapsed ? '▼ Mở rộng' : '▲ Thu gọn' }}
+              {{ filteredOthersPerformance?.length ?? 0 }} cơ quan, đơn vị
             </span>
           </div>
         </div>
 
-        <div v-show="!isSection3Collapsed" class="space-y-4 pt-1">
-          <div class="space-y-3">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div class="space-y-4 pt-1">
+          <div class="flex flex-wrap gap-2" role="group" aria-label="Chọn loại biểu đồ">
+            <button v-for="tab in agencyChartTabs" :key="tab.value" type="button" :aria-pressed="agencyChartViews.others === tab.value" @click="agencyChartViews.others = tab.value" :class="['ui-single-line px-4 text-sm font-semibold rounded-lg border transition', agencyChartViews.others === tab.value ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50']">{{ tab.label }}</button>
+          </div>
+          <AllAgenciesProgressChart v-if="agencyChartViews.others === 'bar'" :ministriesData="filteredOthersPerformance" :filterType="dashboardFilter" @select-agency="drilldownAgency" />
+          <div v-if="agencyChartViews.others === 'pie'" class="space-y-3">
+            <div class="agency-card-scroll grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
               <AgencyProgressCard v-for="(item, index) in visibleOthers" :key="item.agencyId" :item="item" :index="index" :dashboardFilter="dashboardFilter" tone="purple" @select="drilldownAgency" />
             </div>
 
@@ -304,36 +312,37 @@
                 @click="isOthersExpanded = !isOthersExpanded"
                 class="ui-single-line px-5 py-2 text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-100 border border-purple-200 rounded-xl transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
               >
-                <span>{{ isOthersExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${filteredOthersPerformance.length - 8} Đơn vị khác)` }}</span>
+                <span>{{ isOthersExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${filteredOthersPerformance.length - 8} đơn vị khác)` }}</span>
               </button>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Section 4 (Admin View Only): Khối Các Đơn Vị Trực Thuộc Bộ Khoa học và Công nghệ -->
+      </section>
+
+      <!-- Section 4 (Admin View Only): Khối các đơn vị trực thuộc Bộ Khoa học và Công nghệ -->
       <div v-if="authState.isAdmin.value && filteredMostSubAgenciesPerformance?.length" class="bg-white p-4 rounded-2xl shadow-sm border border-slate-200/80 space-y-4">
         <div
-          @click="isSection4Collapsed = !isSection4Collapsed"
-          class="flex items-center justify-between border-b border-slate-100 pb-3 cursor-pointer select-none hover:opacity-80 transition"
+          class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3"
         >
           <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
-            <span>🏛️ Các Đơn Vị Trực Thuộc Bộ Khoa Học và Công Nghệ</span>
-            <span class="text-xs font-normal text-slate-400">({{ isSection4Collapsed ? 'Nhấp để mở rộng' : 'Nhấp để thu gọn' }})</span>
+            <span>🏛️ Các đơn vị trực thuộc Bộ Khoa học và Công nghệ</span>
           </h3>
           <div class="flex items-center gap-2">
             <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-xl border border-indigo-200/60">
-              {{ filteredMostSubAgenciesPerformance?.length ?? 0 }} Đơn vị trực thuộc
-            </span>
-            <span class="text-slate-500 text-xs font-bold px-2.5 py-1 bg-slate-100 rounded-lg">
-              {{ isSection4Collapsed ? '▼ Mở rộng' : '▲ Thu gọn' }}
+              {{ filteredMostSubAgenciesPerformance?.length ?? 0 }} đơn vị trực thuộc
             </span>
           </div>
         </div>
 
-        <div v-show="!isSection4Collapsed" class="space-y-4 pt-1">
-          <div class="space-y-3">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+        <div class="space-y-4 pt-1">
+          <div class="flex flex-wrap gap-2" role="group" aria-label="Chọn loại biểu đồ">
+            <button v-for="tab in agencyChartTabs" :key="tab.value" type="button" :aria-pressed="agencyChartViews.subAgencies === tab.value" @click="agencyChartViews.subAgencies = tab.value" :class="['ui-single-line px-4 text-sm font-semibold rounded-lg border transition', agencyChartViews.subAgencies === tab.value ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50']">{{ tab.label }}</button>
+          </div>
+          <AllAgenciesProgressChart v-if="agencyChartViews.subAgencies === 'bar'" :ministriesData="filteredMostSubAgenciesPerformance" :filterType="dashboardFilter" @select-agency="drilldownAgency" />
+          <div v-if="agencyChartViews.subAgencies === 'pie'" class="space-y-3">
+            <div class="agency-card-scroll grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
               <AgencyProgressCard v-for="(item, index) in visibleMostSubAgencies" :key="item.agencyId" :item="item" :index="index" :dashboardFilter="dashboardFilter" tone="indigo" @select="drilldownAgency" />
             </div>
 
@@ -343,7 +352,7 @@
                 @click="isMostExpanded = !isMostExpanded"
                 class="ui-single-line px-5 py-2 text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 rounded-xl transition shadow-2xs inline-flex items-center gap-2 cursor-pointer"
               >
-                <span>{{ isMostExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${filteredMostSubAgenciesPerformance.length - 8} Đơn vị khác)` }}</span>
+                <span>{{ isMostExpanded ? '▲ Thu gọn danh sách' : `▼ Xem thêm (${filteredMostSubAgenciesPerformance.length - 8} đơn vị khác)` }}</span>
               </button>
             </div>
           </div>
@@ -397,11 +406,13 @@
 </template>
 
 <script setup>
+import { formatNumber } from "../shared/formatters";
 import AgencyProgressCard from '../features/dashboard/AgencyProgressCard.vue';
 import DashboardHeader from '../features/dashboard/DashboardHeader.vue';
+import LeadershipHighlights from '../features/dashboard/LeadershipHighlights.vue';
 import DashboardSummary from '../features/dashboard/DashboardSummary.vue';
 const AgencyDrilldownDialog = defineAsyncComponent(() => import('../features/dashboard/AgencyDrilldownDialog.vue'));
-import { defineAsyncComponent, ref, onMounted } from 'vue';
+import { defineAsyncComponent, ref, computed, onMounted, watch } from 'vue';
 import { authState } from '../services/auth';
 import { toast } from 'vue3-toastify';
 
@@ -412,7 +423,32 @@ const ItemDetailModal = defineAsyncComponent(() => import('../components/ItemDet
 const LegalFileViewerModal = defineAsyncComponent(() => import('../components/LegalFileViewerModal.vue'));
 
 import AllAgenciesProgressChart from '../components/AllAgenciesProgressChart.vue';
+const ProvinceProgressMap = defineAsyncComponent(() => import('../features/dashboard/ProvinceProgressMap.vue'));
+const provinceChartTabs = [{ value: 'bar', label: 'Biểu đồ cột' }, { value: 'pie', label: 'Biểu đồ tròn' }];
+const agencyChartViews = ref({ ministries: 'bar', provinces: 'bar', others: 'bar', subAgencies: 'bar' });
+const activeAgencyBlock = ref('provinces');
+const visitedAgencyBlocks = ref(new Set(['provinces']));
+const agencyBlockTabs = computed(() => [
+  { value: 'provinces', label: 'Địa phương', count: filteredProvincesPerformance.value?.length || 0 },
+  { value: 'ministries', label: 'Bộ / Ngành', count: filteredMinistriesPerformance.value?.length || 0 },
+  { value: 'others', label: 'Khối khác', count: filteredOthersPerformance.value?.length || 0 }
+]);
+function selectAgencyBlock(value) {
+  visitedAgencyBlocks.value.add(value);
+  activeAgencyBlock.value = value;
+}
+function handleAgencyTabKey(event, index) {
+  const keys = ['ArrowLeft', 'ArrowRight', 'Home', 'End'];
+  if (!keys.includes(event.key)) return;
+  event.preventDefault();
+  const tabs = agencyBlockTabs.value;
+  const next = event.key === 'Home' ? 0 : event.key === 'End' ? tabs.length - 1 : (index + (event.key === 'ArrowRight' ? 1 : -1) + tabs.length) % tabs.length;
+  selectAgencyBlock(tabs[next].value);
+  document.getElementById(`agency-tab-${tabs[next].value}`)?.focus();
+}
+const agencyChartTabs = [{ value: 'bar', label: 'Biểu đồ cột' }, { value: 'pie', label: 'Biểu đồ tròn' }];
 import { getStatusBadgeClass, getStatusLabel, formatDate, formatItemProgressDisplay } from '../features/dashboard/presentation';
+import { reportYear } from '../shared/reportYear';
 import { useDashboardFilters } from '../features/dashboard/useDashboardFilters';
 import { useDashboardMetrics } from '../features/dashboard/useDashboardMetrics';
 import { useAgencyDrilldown } from '../features/dashboard/useAgencyDrilldown';
@@ -462,10 +498,6 @@ const {
   isProvincesExpanded,
   isOthersExpanded,
   isSubAgenciesExpanded,
-  isSection1Collapsed,
-  isSection2Collapsed,
-  isSection3Collapsed,
-  isSection4Collapsed,
   filterOutSpecialAgencies,
   getAgencySortCount,
   sortAgenciesByCount,
@@ -491,7 +523,7 @@ const {
   getPct,
   loadAgencies,
   loadDashboardMetrics
-} = useDashboardMetrics({ dashboardFilter, selectedAgencyIds, selectedSubAgencyIds, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, isSpecialAgencyCode });
+} = useDashboardMetrics({ reportYear, dashboardFilter, selectedAgencyIds, selectedSubAgencyIds, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, isSpecialAgencyCode });
 
 const {
   selectedDrilldownAgency,
@@ -512,7 +544,7 @@ const {
   loadSubAgencies,
   switchDrilldownTab,
   drilldownAgency
-} = useAgencyDrilldown({ dashboardFilter, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, metrics });
+} = useAgencyDrilldown({ reportYear, dashboardFilter, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, metrics });
 
 const {
   legalStats,
@@ -541,11 +573,11 @@ const {
 const isExportingExcel = ref(false);
 const isExportingLegalExcel = ref(false);
 async function exportDashboardExcelReport() {
-  if (isExportingExcel.value) return;
+  if (isExportingExcel.value || isLoading.value) return;
   isExportingExcel.value = true;
   try {
     const { exportDashboardReport } = await import('../features/dashboard/dashboardReport');
-    await exportDashboardReport({ dashboardFilter, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, metrics, filterOutSpecialAgencies, filteredMinistriesPerformance, filteredProvincesPerformance, filteredOthersPerformance, formatDate, formatItemProgressDisplay, isExportingExcel });
+    await exportDashboardReport({ reportYear, dashboardFilter, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, metrics, filterOutSpecialAgencies, filteredMinistriesPerformance, filteredProvincesPerformance, filteredOthersPerformance, formatDate, formatItemProgressDisplay, isExportingExcel });
   } catch (error) {
     toast.error('Không thể tải chức năng xuất Excel. Vui lòng thử lại.');
   } finally { isExportingExcel.value = false; }
@@ -561,9 +593,26 @@ async function exportLegalStatsExcelReport() {
   } finally { isExportingLegalExcel.value = false; }
 }
 
+watch(reportYear, () => { closeDrilldownForYear(); loadDashboardMetrics(); });
+function closeDrilldownForYear() { selectedDrilldownAgency.value = null; }
+
 onMounted(async () => {
   await loadAgencies();
   await Promise.all([loadDashboardMetrics(), loadLegalDashboardStats()]);
 });
 </script>
+
+<style scoped>
+.agency-card-scroll {
+  max-height: min(640px, 70vh);
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  scrollbar-gutter: stable;
+  padding: 2px 4px 2px 2px;
+  align-content: start;
+}
+</style>
+
+
+
 

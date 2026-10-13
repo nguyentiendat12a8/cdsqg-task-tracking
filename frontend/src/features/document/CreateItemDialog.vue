@@ -2,7 +2,7 @@
 <div v-accessible-dialog="() => isCreateModalOpen = false"  @click.self="isCreateModalOpen = false" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
       <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-4xl sm:max-w-5xl w-full p-6 sm:p-7 max-h-[92vh] flex flex-col font-sans">
         <h3 class="text-base font-bold text-slate-800 border-b border-slate-100 pb-2 shrink-0">
-          {{ `Thêm mới ${createItemType === 'Goal' ? 'Mục Tiêu' : 'Nhiệm Vụ'}` }}
+          {{ `Thêm mới ${createItemType === 'Goal' ? 'mục tiêu' : 'nhiệm vụ'}` }}
         </h3>
 
         <form @submit.prevent="submitCreateItem" class="flex-1 flex flex-col min-h-0 pt-3">
@@ -17,8 +17,8 @@
           <!-- Row 1: Code, Section & Group -->
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
-              <label class="text-sm font-semibold text-slate-700 uppercase block mb-1">
-                Mã {{ createItemType === 'Goal' ? 'Mục Tiêu' : 'Nhiệm Vụ' }}
+              <label class="text-xs font-semibold text-slate-700 block mb-1">
+                Mã {{ createItemType === 'Goal' ? 'mục tiêu' : 'nhiệm vụ' }}
               </label>
               <input
                 v-model="createForm.code"
@@ -35,7 +35,7 @@
                 :isMulti="false"
                 :required="true"
                 label="Mục"
-                placeholder="-- Chọn Mục --"
+                placeholder="-- Chọn mục --"
               />
             </div>
 
@@ -44,16 +44,16 @@
                 v-model="createForm.group"
                 :options="currentFormGroups"
                 :isMulti="false"
-                label="Nhóm Trọng Tâm"
-                placeholder="-- Chọn Nhóm --"
+                label="Nhóm trọng tâm"
+                placeholder="-- Chọn nhóm --"
               />
             </div>
           </div>
 
           <!-- Row 2: Title (Full Width) -->
           <div>
-            <label class="text-sm font-semibold text-slate-700 uppercase block mb-1">
-              {{ createItemType === 'Goal' ? 'Tên Mục Tiêu' : 'Tên Nhiệm Vụ' }} <span class="text-rose-500">*</span>
+            <label class="text-xs font-semibold text-slate-700 block mb-1">
+              {{ createItemType === 'Goal' ? 'Tên mục tiêu' : 'Tên nhiệm vụ' }} <span class="text-rose-500">*</span>
             </label>
             <textarea
               v-model="createForm.title"
@@ -71,8 +71,8 @@
               :options="goalUnitOptions"
               :isMulti="false"
               :required="true"
-              label="Đơn Vị Tính"
-              placeholder="-- Chọn Đơn vị tính --"
+              label="Đơn vị tính"
+              placeholder="-- Chọn đơn vị tính --"
             />
           </div>
 
@@ -84,9 +84,9 @@
               v-model="createForm.isOngoing"
               class="w-4 h-4 text-blue-600 rounded focus:ring-blue-500 cursor-pointer"
             />
-            <label for="docIsOngoingToggle" class="text-sm font-semibold text-blue-950 cursor-pointer select-none flex items-center gap-1.5">
+            <label for="docIsOngoingToggle" class="text-xs font-semibold text-blue-950 cursor-pointer select-none flex items-center gap-1.5">
               <span>Thời hạn thực hiện: Thường xuyên</span>
-              <span class="text-[11px] font-normal text-slate-500">(Tự động áp dụng từ 01/01/2026 đến 31/12/2030)</span>
+              <span class="text-xs font-normal text-slate-500">(Tự động áp dụng từ 01/01/2026 đến 31/12/2030)</span>
             </label>
           </div>
 
@@ -97,7 +97,7 @@
                 v-model="createForm.startYear"
                 :options="yearOptions"
                 :isMulti="false"
-                label="Năm Bắt Đầu"
+                label="Năm bắt đầu"
                 placeholder="-- Chọn năm bắt đầu --"
               />
             </div>
@@ -106,18 +106,18 @@
                 v-model="createForm.dueYear"
                 :options="yearOptions"
                 :isMulti="false"
-                label="Năm Hoàn Thành"
+                label="Năm hoàn thành"
                 placeholder="-- Chọn năm hoàn thành --"
               />
             </div>
           </div>
           <div v-else class="grid grid-cols-2 gap-3 bg-blue-50/50 p-3 rounded-xl border border-blue-200/60">
             <div>
-              <label class="text-sm font-semibold text-slate-700 uppercase block mb-1">Ngày Bắt Đầu</label>
+              <label class="text-xs font-semibold text-slate-700 block mb-1">Ngày bắt đầu</label>
               <DatePicker v-model="createForm.startDate" placeholder="dd/mm/yyyy" />
             </div>
             <div>
-              <label class="text-sm font-semibold text-slate-700 uppercase block mb-1">Ngày Hoàn Thành</label>
+              <label class="text-xs font-semibold text-slate-700 block mb-1">Ngày hoàn thành</label>
               <DatePicker v-model="createForm.dueDate" placeholder="dd/mm/yyyy" />
             </div>
           </div>
@@ -130,7 +130,7 @@
                 :options="leadAgencyOptions"
                 :isMulti="false"
                 :required="true"
-                label="Đơn Vị Chủ Trì"
+                label="Đơn vị chủ trì"
                 placeholder="-- Chọn đơn vị chủ trì --"
               />
             </div>
@@ -139,7 +139,7 @@
                 v-model="createForm.assignedAgencyId"
                 :options="createAssignedAgencyOptions"
                 :isMulti="false"
-                label="Giao Đơn Vị Trực Thuộc"
+                label="Giao đơn vị trực thuộc"
                 placeholder="-- Chọn đơn vị trực thuộc --"
                 :disabled="!createForm.leadAgencyId || createAssignedAgencyOptions.length === 0"
               />
@@ -149,7 +149,7 @@
                 v-model="createForm.coordinatingAgencyIds"
                 :options="coordinatingAgencyOptions"
                 :isMulti="true"
-                label="Cơ Quan Phối Hợp"
+                label="Cơ quan phối hợp"
                 placeholder="-- Chọn cơ quan phối hợp --"
               />
             </div>
@@ -158,16 +158,12 @@
           <!-- Multi-Deliverables Section for Tasks (Phương án 1: Phụ lục II) -->
           <div v-if="createItemType === 'Task'" class="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 space-y-3">
             <div class="flex items-center justify-between">
-              <label class="text-sm font-semibold text-slate-800 uppercase flex items-center gap-1.5">
-                <span>📋 DANH MỤC SẢN PHẨM ĐẦU RA DỰ KIẾN</span>
+              <label class="text-xs font-semibold text-slate-800 flex items-center gap-1.5">
+                <span>📋 Danh mục sản phẩm đầu ra dự kiến</span>
               </label>
-              <button
-                type="button"
+              <ActionButton kind="create"
                 @click="addDeliverable"
-                class="ui-single-line px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs rounded-lg transition border border-blue-200 flex items-center gap-1 cursor-pointer"
-              >
-                + Thêm sản phẩm đầu ra
-              </button>
+              >Thêm sản phẩm đầu ra</ActionButton>
             </div>
 
             <div v-if="!createForm.deliverables || createForm.deliverables.length === 0" class="text-xs text-slate-400 italic text-center py-2">
@@ -181,7 +177,7 @@
                 class="bg-white p-2.5 rounded-xl border border-slate-200 shadow-2xs space-y-2 relative"
               >
                 <div class="flex items-center justify-between border-b border-slate-100 pb-1">
-                  <span class="text-[11px] font-bold text-blue-800">Sản phẩm đầu ra #{{ idx + 1 }}</span>
+                  <span class="text-xs font-bold text-blue-800">Sản phẩm đầu ra #{{ idx + 1 }}</span>
                   <button
                     type="button"
                     @click="removeDeliverable(idx)"
@@ -193,7 +189,7 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
                   <div class="sm:col-span-2">
-                    <label class="text-[10px] font-semibold text-slate-600">Tên sản phẩm / Tên văn bản <span class="text-rose-500">*</span></label>
+                    <label class="text-xs font-semibold text-slate-600">Tên sản phẩm / Tên văn bản <span class="text-rose-500">*</span></label>
                     <input
                       v-model="del.title"
                       required
@@ -202,7 +198,7 @@
                     />
                   </div>
                   <div>
-                    <label class="text-[10px] font-semibold text-slate-600">Hạn chót sản phẩm</label>
+                    <label class="text-xs font-semibold text-slate-600">Hạn chót sản phẩm</label>
                     <DatePicker v-model="del.dueDate" placeholder="dd/mm/yyyy" />
                   </div>
                 </div>
@@ -221,6 +217,7 @@
 </template>
 
 <script setup>
+import ActionButton from "../../components/ActionButton.vue";
 import SearchableSelect from '../../components/SearchableSelect.vue';
 import DatePicker from '../../components/DatePicker.vue';
 

@@ -6,7 +6,7 @@
       <div class="flex justify-between items-center border-b border-slate-100 pb-2.5 shrink-0">
         <div class="flex items-center gap-2.5">
           <h3 class="text-sm font-semibold text-slate-700">
-            Chi tiết {{ item?.itemType === 'Goal' ? 'Mục Tiêu' : 'Nhiệm Vụ' }}
+            Chi tiết {{ item?.itemType === 'Goal' ? 'mục tiêu' : 'nhiệm vụ' }}
           </h3>
 
         </div>
@@ -19,15 +19,15 @@
           @click="activeTab = 'info'" 
           :class="['px-4 py-2 text-xs font-semibold transition border-b-2 cursor-pointer', activeTab === 'info' ? 'border-blue-600 text-blue-700 bg-blue-50/50 rounded-t-lg' : 'border-transparent text-slate-500 hover:text-slate-800']"
         >
-          📋 Thông Tin Chi Tiết
+          📋 Thông tin chi tiết
         </button>
         <button 
           @click="switchTab('reports')" 
           :class="['px-4 py-2 text-xs font-semibold transition border-b-2 cursor-pointer flex items-center gap-1.5', activeTab === 'reports' ? 'border-blue-600 text-blue-700 bg-blue-50/50 rounded-t-lg' : 'border-transparent text-slate-500 hover:text-slate-800']"
         >
-          <span>📊 Lịch Sử Báo Cáo Tiến Độ</span>
-          <span v-if="reportHistory.length > 0" class="px-1.5 py-0.2 bg-blue-100 text-blue-800 rounded-full text-[10px] font-bold">
-            {{ reportHistory.length }}
+          <span>📊 Lịch sử báo cáo tiến độ</span>
+          <span v-if="reportHistory.length > 0" class="px-1.5 py-0.2 bg-blue-100 text-blue-800 rounded-full text-xs font-bold">
+            {{ formatNumber(reportHistory.length) }}
           </span>
         </button>
 
@@ -36,15 +36,15 @@
           @click="switchTab('agencies-matrix')" 
           :class="['px-4 py-2 text-xs font-semibold transition border-b-2 cursor-pointer flex items-center gap-1.5', activeTab === 'agencies-matrix' ? 'border-purple-600 text-purple-700 bg-purple-50/50 rounded-t-lg font-bold' : 'border-transparent text-slate-500 hover:text-slate-800']"
         >
-          <span>🌐 Tiến Độ Các Đơn Vị</span>
+          <span>🌐 Tiến độ các đơn vị</span>
         </button>
         <button 
           @click="activeTab = 'notifications'" 
           :class="['px-4 py-2 text-xs font-semibold transition border-b-2 cursor-pointer flex items-center gap-1.5', activeTab === 'notifications' ? 'border-blue-600 text-blue-700 bg-blue-50/50 rounded-t-lg' : 'border-transparent text-slate-500 hover:text-slate-800']"
         >
-          <span>🔔 Lịch Sử Gửi Thông Báo</span>
-          <span v-if="notificationHistory.length > 0" class="px-1.5 py-0.2 bg-amber-100 text-amber-800 rounded-full text-[10px] font-bold">
-            {{ notificationHistory.length }}
+          <span>🔔 Lịch sử gửi thông báo</span>
+          <span v-if="notificationHistory.length > 0" class="px-1.5 py-0.2 bg-amber-100 text-amber-800 rounded-full text-xs font-bold">
+            {{ formatNumber(notificationHistory.length) }}
           </span>
         </button>
       </div>
@@ -56,55 +56,55 @@
         <div v-if="activeTab === 'info'" class="space-y-4">
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5 bg-slate-50/80 p-4 rounded-2xl border border-slate-200 text-xs">
             <div>
-              <span class="text-slate-500 font-semibold uppercase block text-[10px]">Mã Số {{ item?.itemType === 'Goal' ? 'Mục Tiêu' : 'Nhiệm Vụ' }}</span>
+              <span class="text-slate-500 font-semibold block text-xs">Mã số {{ item?.itemType === 'Goal' ? 'mục tiêu' : 'nhiệm vụ' }}</span>
               <span class="font-semibold text-blue-700 text-xs mt-0.5 block">{{ item?.code || '—' }}</span>
             </div>
 
             <div>
-              <span class="text-slate-500 font-semibold uppercase block text-[10px]">Phạm Vi Triển Khai</span>
-              <span :class="['px-2.5 py-0.5 rounded-full font-medium text-[11px] inline-block mt-0.5', isGeneralTaskItem ? 'bg-purple-100 text-purple-800' : 'bg-slate-200 text-slate-700']">
+              <span class="text-slate-500 font-semibold block text-xs">Phạm vi triển khai</span>
+              <span :class="['px-2.5 py-0.5 rounded-full font-medium text-xs inline-block mt-0.5', isGeneralTaskItem ? 'bg-purple-100 text-purple-800' : 'bg-slate-200 text-slate-700']">
                 {{ isGeneralTaskItem ? 'Phạm vi chung' : 'Phạm vi riêng' }}
               </span>
             </div>
 
             <div class="md:col-span-2 border-t border-slate-200/60 pt-2">
-              <span class="text-slate-500 font-semibold uppercase block text-[10px]">Tên Chi Tiết</span>
+              <span class="text-slate-500 font-semibold block text-xs">Tên chi tiết</span>
               <p class="font-normal text-slate-800 text-xs leading-relaxed mt-0.5">{{ item?.title || '—' }}</p>
             </div>
 
             <div class="border-t border-slate-200/60 pt-2">
-              <span class="text-slate-500 font-semibold uppercase block text-[10px]">Đơn Vị Chủ Trì</span>
+              <span class="text-slate-500 font-semibold block text-xs">Đơn vị chủ trì</span>
               <span class="font-medium text-slate-800 mt-0.5 block">
                 🏛️ {{ item?.leadAgencyName || '—' }}
               </span>
             </div>
 
             <div class="border-t border-slate-200/60 pt-2">
-              <span class="text-slate-500 font-semibold uppercase block text-[10px]">Đơn Vị Trực Thuộc Được Giao</span>
+              <span class="text-slate-500 font-semibold block text-xs">Đơn vị trực thuộc được giao</span>
               <span class="font-medium text-slate-800 mt-0.5 block">
                 <span>{{ item?.assignedAgencyName || 'Chưa giao đơn vị trực thuộc' }}</span>
               </span>
             </div>
 
             <div class="border-t border-slate-200/60 pt-2">
-              <span class="text-slate-500 font-semibold uppercase block text-[10px]">Đơn Vị Phối Hợp</span>
+              <span class="text-slate-500 font-semibold block text-xs">Đơn vị phối hợp</span>
               <span class="font-medium text-slate-800 mt-0.5 block">
                 🤝 {{ coordinatingNamesDisplay }}
               </span>
             </div>
 
             <div v-if="item?.itemType === 'Goal'" class="border-t border-slate-200/60 pt-2">
-              <span class="text-slate-500 font-semibold uppercase block text-[10px]">Mục (Phụ Lục QĐ 1266)</span>
+              <span class="text-slate-500 font-semibold block text-xs">Mục (phụ lục QĐ 1266)</span>
               <span class="font-normal text-slate-800 mt-0.5 block">{{ item?.section || '—' }}</span>
             </div>
 
             <div class="border-t border-slate-200/60 pt-2">
-              <span class="text-slate-500 font-semibold uppercase block text-[10px]">Nhóm Trọng Tâm</span>
+              <span class="text-slate-500 font-semibold block text-xs">Nhóm trọng tâm</span>
               <span class="font-normal text-slate-800 mt-0.5 block">{{ item?.group || '—' }}</span>
             </div>
 
             <div class="border-t border-slate-200/60 pt-2">
-              <span class="text-slate-500 font-semibold uppercase block text-[10px]">Thời Gian Thực Hiện</span>
+              <span class="text-slate-500 font-semibold block text-xs">Thời gian thực hiện</span>
               <span v-if="item?.isOngoing" class="font-medium text-blue-700 mt-0.5 inline-flex items-center gap-1 bg-blue-50 px-2.5 py-0.5 rounded-full border border-blue-200 text-xs">
                 Thường xuyên
               </span>
@@ -114,7 +114,7 @@
             </div>
 
             <div class="border-t border-slate-200/60 pt-2">
-              <span class="text-slate-500 font-semibold uppercase block text-[10px]">Trạng Thái Hiện Tại</span>
+              <span class="text-slate-500 font-semibold block text-xs">Trạng thái hiện tại</span>
               <span :class="['px-2.5 py-0.5 rounded-full text-xs font-medium inline-block mt-0.5', getStatusBadgeClass(item?.calculatedStatus)]">
                 {{ getStatusLabel(item?.calculatedStatus) }}
               </span>
@@ -123,8 +123,8 @@
 
           <!-- Multi-Deliverables Checklist Display (Dedicated 100% Full-Width Block) -->
           <div v-if="item?.deliverables && item.deliverables.length > 0" class="bg-white p-4 rounded-2xl border border-slate-200 space-y-3 shadow-2xs">
-            <h4 class="text-xs font-bold text-blue-900 uppercase flex items-center gap-1.5">
-              <span>📋 Danh Mục Sản Phẩm Đầu Ra Dự Kiến ({{ item.deliverables.length }} sản phẩm)</span>
+            <h4 class="text-xs font-bold text-blue-900 flex items-center gap-1.5">
+              <span>📋 Danh mục sản phẩm đầu ra dự kiến ({{ formatNumber(item.deliverables.length) }} sản phẩm)</span>
             </h4>
             <div class="space-y-2">
               <div 
@@ -134,11 +134,11 @@
               >
                 <div class="flex items-center justify-between font-bold text-slate-800 gap-3">
                   <span class="text-slate-900 font-bold flex-1 min-w-0 text-xs leading-snug">{{ idx + 1 }}. {{ del.title }}</span>
-                  <span :class="['px-3 py-1 rounded-full text-[10px] font-bold shrink-0 whitespace-nowrap shadow-2xs', getDeliverableStatusClass(del.currentStatus)]">
+                  <span :class="['px-3 py-1 rounded-full text-xs font-bold shrink-0 whitespace-nowrap shadow-2xs', getDeliverableStatusClass(del.currentStatus)]">
                     {{ getDeliverableStatusLabel(del.currentStatus) }}
                   </span>
                 </div>
-                <div v-if="del.dueDate || del.documentNumber" class="flex flex-wrap items-center gap-4 text-[11px] text-slate-600 font-semibold pt-1 border-t border-slate-200/60 mt-1">
+                <div v-if="del.dueDate || del.documentNumber" class="flex flex-wrap items-center gap-4 text-xs text-slate-600 font-semibold pt-1 border-t border-slate-200/60 mt-1">
                   <span v-if="del.dueDate" class="flex items-center gap-1">
                     📅 Hạn chót: <strong class="text-slate-800">{{ formatDate(del.dueDate) }}</strong>
                   </span>
@@ -181,43 +181,43 @@
               <!-- History Log Card Header -->
               <div class="flex flex-wrap justify-between items-center border-b border-slate-100 pb-2.5 gap-2">
                 <div class="flex items-center gap-2 flex-wrap">
-                  <span class="px-2.5 py-0.5 bg-blue-600 text-white rounded-md font-bold text-[11px]">
+                  <span class="px-2.5 py-0.5 bg-blue-600 text-white rounded-md font-bold text-xs">
                     Lần {{ reportHistory.length - idx }}
                   </span>
-                  <span class="px-2 py-0.5 bg-blue-50 text-blue-800 border border-blue-200 rounded-md font-bold text-[11px]">
+                  <span class="px-2 py-0.5 bg-blue-50 text-blue-800 border border-blue-200 rounded-md font-bold text-xs">
                     {{ formatPeriodLabel(rep) }}
                   </span>
-                  <span class="text-slate-500 font-semibold text-[11px]">
+                  <span class="text-slate-500 font-semibold text-xs">
                     🕒 {{ formatDate(rep.logDate) }}
                   </span>
 
                   <!-- Approval Status Badge -->
-                  <span v-if="rep.approvalStatus === 'Pending' || rep.approvalStatus === '2'" class="px-2.5 py-0.5 bg-amber-100 text-amber-900 border border-amber-300 rounded-md font-bold text-[11px] animate-pulse">
+                  <span v-if="rep.approvalStatus === 'Pending' || rep.approvalStatus === '2'" class="px-2.5 py-0.5 bg-amber-100 text-amber-900 border border-amber-300 rounded-md font-bold text-xs animate-pulse">
                     ⏳ Chờ duyệt
                   </span>
-                  <span v-else-if="rep.approvalStatus === 'Rejected' || rep.approvalStatus === '3'" class="px-2.5 py-0.5 bg-rose-100 text-rose-900 border border-rose-300 rounded-md font-bold text-[11px]" :title="rep.rejectionReason">
+                  <span v-else-if="rep.approvalStatus === 'Rejected' || rep.approvalStatus === '3'" class="px-2.5 py-0.5 bg-rose-100 text-rose-900 border border-rose-300 rounded-md font-bold text-xs" :title="rep.rejectionReason">
                     ❌ Từ chối: {{ rep.rejectionReason || 'Chưa đạt yêu cầu' }}
                   </span>
-                  <span v-else class="px-2.5 py-0.5 bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-md font-bold text-[11px]">
+                  <span v-else class="px-2.5 py-0.5 bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-md font-bold text-xs">
                     ✅ Đã duyệt
                   </span>
                 </div>
                 <div class="flex items-center gap-2">
                   <div class="text-slate-600 font-semibold text-xs">
-                    ✍️ Cán bộ báo cáo: <strong class="text-slate-900 font-bold">{{ rep.createdBy || rep.agencyName || 'Đơn vị chủ trì' }}</strong>
+                    ✍️ Đơn vị thực hiện: <strong class="text-slate-900 font-bold">{{ formatReportActor(rep.createdBy, rep.agencyName) }}</strong>
                   </div>
 
                   <!-- Action Buttons for Parent Agency to Approve / Reject -->
                   <div v-if="(rep.approvalStatus === 'Pending' || rep.approvalStatus === '2') && canApproveProgress" class="flex items-center gap-1.5 ml-2">
                     <button 
                       @click="approveProgressLog(rep.id || rep.progressLogId)" 
-                      class="ui-single-line px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] rounded-lg shadow-2xs transition cursor-pointer"
+                      class="ui-single-line px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-lg shadow-2xs transition cursor-pointer"
                     >
                       ✓ Duyệt
                     </button>
                     <button 
                       @click="openRejectModal(rep.id || rep.progressLogId)" 
-                      class="ui-single-line px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold text-[11px] rounded-lg shadow-2xs transition cursor-pointer"
+                      class="ui-single-line px-2.5 py-1 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-lg shadow-2xs transition cursor-pointer"
                     >
                       ✕ Từ chối
                     </button>
@@ -229,7 +229,7 @@
               <div class="bg-blue-50/40 border border-blue-200/80 rounded-xl p-3.5 space-y-2.5">
                 <!-- Quantitative value or qualitative status after update -->
                 <div class="space-y-1">
-                  <span class="text-[10px] font-bold text-blue-700 uppercase block">Trạng Thái / Tiến Độ Ghi Nhận</span>
+                  <span class="text-xs font-semibold text-blue-700 block">Kết quả / trạng thái ghi nhận</span>
                   <div class="font-bold text-blue-900 text-sm">
                     {{ formatReportProgressValue(rep) }}
                   </div>
@@ -237,20 +237,20 @@
 
                 <!-- Deliverables status after update -->
                 <div v-if="rep.deliverables && rep.deliverables.length > 0" class="space-y-1 pt-1.5 border-t border-blue-100">
-                  <span class="text-[10px] font-bold text-blue-800 uppercase block">📋 Tiến Độ Danh Mục Sản Phẩm Đầu Ra ({{ rep.deliverables.length }})</span>
+                  <span class="text-xs font-semibold text-blue-800 block">📋 Tiến độ danh mục sản phẩm đầu ra ({{ formatNumber(rep.deliverables.length) }})</span>
                   <div class="space-y-1 max-h-44 overflow-y-auto pr-1 custom-scrollbar">
                     <div 
                       v-for="(del, dIdx) in rep.deliverables" 
                       :key="dIdx"
-                      class="bg-white p-2 rounded-lg border border-blue-100 text-[11px] space-y-0.5 shadow-2xs"
+                      class="bg-white p-2 rounded-lg border border-blue-100 text-xs space-y-0.5 shadow-2xs"
                     >
                       <div class="flex justify-between font-bold text-slate-900">
                         <span class="truncate pr-1">{{ dIdx + 1 }}. {{ del.title }}</span>
-                        <span :class="['px-1.5 py-0.2 rounded text-[10px] shrink-0 font-bold', getDeliverableStatusClass(del.currentStatus)]">
+                        <span :class="['px-1.5 py-0.2 rounded text-xs shrink-0 font-bold', getDeliverableStatusClass(del.currentStatus)]">
                           {{ getDeliverableStatusLabel(del.currentStatus) }}
                         </span>
                       </div>
-                      <div v-if="del.documentNumber" class="text-[10px] text-blue-800 font-semibold">
+                      <div v-if="del.documentNumber" class="text-xs text-blue-800 font-semibold">
                         📄 Số VB: <strong class="text-blue-950 font-bold">{{ del.documentNumber }}</strong>
                       </div>
                     </div>
@@ -258,15 +258,15 @@
                 </div>
 
                 <!-- Notes / Explanation after update -->
-                <div v-if="rep.summaryNotes || rep.notes" class="bg-white p-2.5 rounded-lg border border-blue-100 text-[11px] text-slate-800 font-medium leading-relaxed">
+                <div v-if="rep.summaryNotes || rep.notes" class="bg-white p-2.5 rounded-lg border border-blue-100 text-xs text-slate-800 font-medium leading-relaxed">
                   📌 <strong>Ghi chú / Giải trình:</strong> {{ rep.summaryNotes || rep.notes }}
                 </div>
 
                 <!-- Evidence file attachments -->
                 <div v-if="rep.attachmentFileUrls && rep.attachmentFileUrls.length > 0" class="pt-1 space-y-1">
-                  <span class="text-[10px] font-bold text-purple-900 uppercase block">📄 File Minh Chứng Đính Kèm ({{ rep.attachmentFileUrls.length }})</span>
+                  <span class="text-xs font-semibold text-purple-900 block">📄 File minh chứng đính kèm ({{ formatNumber(rep.attachmentFileUrls.length) }})</span>
                   <div class="space-y-1">
-                    <div v-for="(fileUrl, fIdx) in rep.attachmentFileUrls" :key="fIdx" class="flex items-center justify-between text-[11px] bg-white p-1.5 rounded-lg border border-purple-100">
+                    <div v-for="(fileUrl, fIdx) in rep.attachmentFileUrls" :key="fIdx" class="flex items-center justify-between text-xs bg-white p-1.5 rounded-lg border border-purple-100">
                       <a 
                         :href="getApiUrl(fileUrl)" 
                         target="_blank" 
@@ -279,7 +279,7 @@
                         :href="getApiUrl(fileUrl)" 
                         target="_blank" 
                         download
-                        class="text-[10px] font-bold text-purple-700 bg-purple-50 hover:bg-purple-600 hover:text-white px-2 py-0.5 rounded transition cursor-pointer shrink-0 ml-1"
+                        class="text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-600 hover:text-white px-2 py-0.5 rounded transition cursor-pointer shrink-0 ml-1"
                       >
                         Tải về
                       </a>
@@ -309,7 +309,7 @@
               <div class="flex flex-wrap items-center justify-between border-b border-amber-200/70 pb-2 gap-2">
                 <div class="flex items-center gap-2">
                   <span class="px-2.5 py-0.5 bg-amber-200 text-amber-900 rounded-full font-bold">
-                    🔔 Thông Báo
+                    🔔 Thông báo
                   </span>
                   <span class="text-slate-600 font-bold">
                     🕒 {{ formatDate(notif.createdAt) }}
@@ -325,7 +325,7 @@
                 <span class="font-bold text-slate-900">{{ notif.title }}</span>
               </div>
 
-              <div v-if="notif.recipientsSummary" class="text-[11px] text-amber-950 bg-amber-100/70 px-3 py-1.5 rounded-lg font-bold flex items-start gap-1.5 leading-snug">
+              <div v-if="notif.recipientsSummary" class="text-xs text-amber-950 bg-amber-100/70 px-3 py-1.5 rounded-lg font-bold flex items-start gap-1.5 leading-snug">
                 <span class="shrink-0">👥 <strong>Đầu mối / Người nhận:</strong></span>
                 <span>{{ notif.recipientsSummary }}</span>
               </div>
@@ -349,16 +349,16 @@
               <!-- Row 1: 3 Counter Cards -->
               <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 <div class="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs flex items-center justify-between">
-                  <span class="text-xs font-bold text-slate-600 uppercase">Tổng cơ quan/địa phương</span>
-                  <span class="text-lg font-bold text-slate-800">{{ matrixData.agencyExecutions.length }}</span>
+                  <span class="text-xs font-semibold text-slate-600">Tổng cơ quan/địa phương</span>
+                  <span class="text-lg font-bold text-slate-800">{{ formatNumber(matrixData.agencyExecutions.length) }}</span>
                 </div>
                 <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-200 shadow-2xs flex items-center justify-between">
-                  <span class="text-xs font-bold text-emerald-800 uppercase">Đã hoàn thành</span>
-                  <span class="text-lg font-bold text-emerald-900">{{ matrixData.agencyExecutions.filter(a => (a.calculatedStatus || '').includes('Completed')).length }}</span>
+                  <span class="text-xs font-semibold text-emerald-800">Đã hoàn thành</span>
+                  <span class="text-lg font-bold text-emerald-900">{{ formatNumber(matrixData.agencyExecutions.filter(a => (a.calculatedStatus || '').includes('Completed')).length) }}</span>
                 </div>
                 <div class="bg-blue-50 p-3 rounded-xl border border-blue-200 shadow-2xs flex items-center justify-between">
-                  <span class="text-xs font-bold text-blue-800 uppercase">Đang thực hiện</span>
-                  <span class="text-lg font-bold text-blue-900">{{ matrixData.agencyExecutions.filter(a => (a.calculatedStatus || '').includes('InProgress')).length }}</span>
+                  <span class="text-xs font-semibold text-blue-800">Đang thực hiện</span>
+                  <span class="text-lg font-bold text-blue-900">{{ formatNumber(matrixData.agencyExecutions.filter(a => (a.calculatedStatus || '').includes('InProgress')).length) }}</span>
                 </div>
               </div>
 
@@ -392,10 +392,10 @@
                   <thead class="bg-slate-100 text-slate-700 font-bold border-b border-slate-200 sticky top-0 z-10">
                     <tr>
                       <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 sticky top-0 z-10 w-10 text-center">STT</th>
-                      <th class="px-3.5 py-2.5 border-r border-slate-200 bg-slate-100 sticky top-0 z-10 min-w-[220px]">Cơ Quan / Địa Phương Thực Hiện</th>
-                      <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 sticky top-0 z-10 text-center min-w-[120px]">Tiến Độ (%)</th>
-                      <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 sticky top-0 z-10 text-center min-w-[150px]">Trạng Thái</th>
-                      <th class="px-3.5 py-2.5 border-r border-slate-200 bg-slate-100 sticky top-0 z-10 min-w-[250px]">Nội Dung Báo Cáo & File Minh Chứng</th>
+                      <th class="px-3.5 py-2.5 border-r border-slate-200 bg-slate-100 sticky top-0 z-10 min-w-[220px]">Cơ quan / địa phương thực hiện</th>
+                      <th v-if="item?.itemType === 'Goal'" class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 sticky top-0 z-10 text-center min-w-[120px]">Tiến độ (%)</th>
+                      <th class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 sticky top-0 z-10 text-center min-w-[150px]">Trạng thái</th>
+                      <th class="px-3.5 py-2.5 border-r border-slate-200 bg-slate-100 sticky top-0 z-10 min-w-[250px]">Nội dung báo cáo & file minh chứng</th>
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-slate-200 font-semibold text-slate-800">
@@ -404,30 +404,30 @@
                       <td class="px-3.5 py-2.5 border-r border-slate-200 font-bold text-slate-900">
                         <div>{{ row.agencyName }}</div>
                       </td>
-                      <td class="px-3 py-2.5 border-r border-slate-200 text-center">
+                      <td v-if="item?.itemType === 'Goal'" class="px-3 py-2.5 border-r border-slate-200 text-center">
                         <div class="font-bold text-blue-700 text-sm">{{ row.completionPercentage == null ? 'Chưa có chỉ tiêu / báo cáo' : row.completionPercentage + '%' }}</div>
                         <div class="w-full bg-slate-200 rounded-full h-1.5 mt-1 overflow-hidden">
                           <div class="bg-blue-600 h-1.5 rounded-full" :style="{ width: Math.min(100, Math.max(0, row.completionPercentage || 0)) + '%' }"></div>
                         </div>
                       </td>
                       <td class="px-3 py-2.5 border-r border-slate-200 text-center">
-                        <span :class="['px-2.5 py-0.5 rounded-full text-[11px] font-bold inline-block whitespace-nowrap border', getStatusBadgeClass(row.calculatedStatus)]">
+                        <span :class="['px-2.5 py-0.5 rounded-full text-xs font-bold inline-block whitespace-nowrap border', getStatusBadgeClass(row.calculatedStatus)]">
                           {{ getStatusLabel(row.calculatedStatus) }}
                         </span>
                       </td>
                       <td class="px-3.5 py-2.5 border-r border-slate-200 font-normal">
                         <p v-if="row.summaryNotes" class="text-slate-700 text-xs line-clamp-2" :title="row.summaryNotes">{{ row.summaryNotes }}</p>
-                        <span v-else class="text-slate-400 italic text-[11px]">Chưa có ghi chú</span>
+                        <span v-else class="text-slate-400 italic text-xs">Chưa có ghi chú</span>
                         
                         <div v-if="row.attachmentFileUrls?.length" class="mt-1.5 space-y-1">
-                          <a v-for="(fileUrl, fIdx) in row.attachmentFileUrls" :key="fIdx" :href="getApiUrl(fileUrl)" target="_blank" class="text-[11px] text-blue-700 hover:underline font-bold block truncate" title="Xem file minh chứng">
+                          <a v-for="(fileUrl, fIdx) in row.attachmentFileUrls" :key="fIdx" :href="getApiUrl(fileUrl)" target="_blank" class="text-xs text-blue-700 hover:underline font-bold block truncate" title="Xem file minh chứng">
                             📎 {{ formatFileName(fileUrl) }}
                           </a>
                         </div>
                       </td>
                     </tr>
                     <tr v-if="filteredAgencyExecutions.length === 0">
-                      <td colspan="5" class="px-4 py-8 text-center text-slate-400 italic font-medium">
+                      <td :colspan="item?.itemType === 'Goal' ? 5 : 4" class="px-4 py-8 text-center text-slate-400 italic font-medium">
                         🔍 Không tìm thấy cơ quan nào phù hợp với từ khóa "{{ agencyMatrixSearchKeyword }}".
                       </td>
                     </tr>
@@ -448,7 +448,7 @@
           @click="onEditClick" 
           class="ui-single-line px-4 py-2 text-xs font-bold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-xl transition cursor-pointer flex items-center gap-1.5 shadow-2xs"
         >
-          ✏️ Chỉnh Sửa {{ item?.itemType === 'Goal' ? 'Mục Tiêu' : 'Nhiệm Vụ' }}
+          ✏️ Chỉnh sửa {{ item?.itemType === 'Goal' ? 'mục tiêu' : 'nhiệm vụ' }}
         </button>
         <div v-else></div>
         <button 
@@ -466,7 +466,7 @@
     <div v-if="isAssignModalOpen" @click.self="isAssignModalOpen = false" class="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4" v-accessible-dialog="() => isAssignModalOpen = false">
       <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-5 space-y-4">
         <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-          <h4 class="font-bold text-slate-800 text-sm">⚡ Giao Đơn Vị Trực Thuộc</h4>
+          <h4 class="font-bold text-slate-800 text-sm">⚡ Giao đơn vị trực thuộc</h4>
           <button @click="isAssignModalOpen = false" class="text-slate-400 hover:text-slate-600">✕</button>
         </div>
         <div class="space-y-3">
@@ -481,18 +481,18 @@
             <SearchableSelect
               v-model="selectedSubAgencyId"
               :options="[
-                { value: '', label: '— Bỏ giao (Chưa giao đơn vị trực thuộc) —' },
+                { value: '', label: '— Bỏ giao (chưa giao đơn vị trực thuộc) —' },
                 ...subAgencyOptions.map(sub => ({ value: sub.id, label: sub.name }))
               ]"
               :isMulti="false"
               :clearable="false"
-              placeholder="— Bỏ giao (Chưa giao đơn vị trực thuộc) —"
+              placeholder="— Bỏ giao (chưa giao đơn vị trực thuộc) —"
             />
           </div>
         </div>
         <div class="flex justify-end gap-2 border-t border-slate-100 pt-3">
           <button @click="isAssignModalOpen = false" class="ui-single-line px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-xl font-bold">Hủy</button>
-          <button @click="submitAssignTask" class="ui-single-line px-4 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-2xs">Lưu Giao Đơn Vị Trực Thuộc</button>
+          <button @click="submitAssignTask" class="ui-single-line px-4 py-1.5 text-xs bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-2xs">Lưu giao đơn vị trực thuộc</button>
         </div>
       </div>
     </div>
@@ -501,21 +501,21 @@
     <div v-if="isRejectModalOpen" @click.self="isRejectModalOpen = false" class="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4" v-accessible-dialog="() => isRejectModalOpen = false">
       <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-5 space-y-4">
         <div class="flex justify-between items-center border-b border-slate-100 pb-2">
-          <h4 class="font-bold text-rose-700 text-sm">❌ Từ Chối Báo Cáo Tiến Độ</h4>
+          <h4 class="font-bold text-rose-700 text-sm">❌ Từ chối báo cáo tiến độ</h4>
           <button @click="isRejectModalOpen = false" class="text-slate-400 hover:text-slate-600">✕</button>
         </div>
         <div class="space-y-3">
-          <p class="text-xs text-slate-600">Điền lý do từ chối báo cáo tiến độ từ đơn vị trực thuộc (Option):</p>
+          <p class="text-xs text-slate-600">Điền lý do từ chối báo cáo tiến độ từ đơn vị trực thuộc (tùy chọn):</p>
           <textarea 
             v-model="rejectionReasonInput" 
             rows="3" 
-            placeholder="Nhập lý do từ chối (e.g. Số liệu chưa đầy đủ, file minh chứng không hợp lệ...)" 
+            placeholder="Nhập lý do từ chối (ví dụ: Số liệu chưa đầy đủ, file minh chứng không hợp lệ...)" 
             class="w-full text-xs font-medium bg-slate-50 border border-slate-300 rounded-xl p-2.5 focus:bg-white focus:ring-2 focus:ring-rose-500"
           ></textarea>
         </div>
         <div class="flex justify-end gap-2 border-t border-slate-100 pt-3">
           <button @click="isRejectModalOpen = false" class="ui-single-line px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-xl font-bold">Hủy</button>
-          <button @click="submitRejectProgressLog" class="ui-single-line px-4 py-1.5 text-xs bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-2xs">Xác Nhận Từ Chối</button>
+          <button @click="submitRejectProgressLog" class="ui-single-line px-4 py-1.5 text-xs bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl shadow-2xs">Xác nhận từ chối</button>
         </div>
       </div>
     </div>
@@ -524,7 +524,8 @@
 </template>
 
 <script setup>
-import { formatFileName, formatDateRange, formatDate, formatDate as formatDateOnly } from '../shared/formatters';
+import { formatNumber } from "../shared/formatters";
+import { formatFileName, formatDateRange, formatDate, formatDate as formatDateOnly, formatMeasuredValue } from '../shared/formatters';
 import { getStatusLabel, getStatusBadgeClass } from '../shared/statusPresentation';
 import { sanitizeHtml } from '../utils/sanitizeHtml';
 import { fetchWithAuth } from '../services/auth';
@@ -596,24 +597,19 @@ function formatPeriodLabel(rep) {
 
 function formatReportProgressValue(rep) {
   if (!rep) return '—';
-  if (rep.completionPercentage != null) return `${Number(rep.completionPercentage).toLocaleString('vi-VN', { maximumFractionDigits: 2 })}%`;
+  if (props.item?.itemType === 'Task') return getStatusLabel(rep.status || 'NotStarted');
   const unitName = props.item?.unitName || props.item?.unit?.name || '%';
-  const val = (rep.actualValue !== null && rep.actualValue !== undefined)
-    ? rep.actualValue
-    : (rep.completionPercentage !== null && rep.completionPercentage !== undefined ? rep.completionPercentage : null);
-
-  if (val !== null && val !== undefined) {
-    if (unitName === 'Số lượng') {
-      return `${val}`;
-    }
-    return `${val}%`;
-  }
+  if (rep.actualValue !== null && rep.actualValue !== undefined) return formatMeasuredValue(rep.actualValue, unitName);
 
   if (rep.status) {
     return getStatusLabel(rep.status);
   }
 
   return '—';
+}
+function formatReportActor(value, agencyName) {
+  const name = String(value || '').replace(/\s*\(Import Excel\)\s*$/i, '').trim();
+  return !name || name === agencyName || /^(Import Excel|Người import chưa được ghi nhận|System User|Chuyên viên theo dõi)$/i.test(name) ? 'Chưa ghi nhận người thao tác' : name;
 }
 
 
@@ -686,7 +682,7 @@ async function loadHistories() {
         const agencyMap = new Map();
         data.forEach(rep => {
           if (rep.agencyId) {
-            const agName = rep.createdBy || 'Đơn vị báo cáo';
+            const agName = rep.agencyName || 'Đơn vị báo cáo';
             if (!agencyMap.has(rep.agencyId)) {
               agencyMap.set(rep.agencyId, { id: rep.agencyId, name: agName, count: 1 });
             } else {

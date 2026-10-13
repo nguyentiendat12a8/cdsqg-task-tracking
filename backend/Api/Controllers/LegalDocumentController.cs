@@ -22,7 +22,7 @@ namespace Cdsqg.Api.Controllers
 
         private static readonly HashSet<string> AllowedDocumentTypes = new(StringComparer.OrdinalIgnoreCase)
         {
-            "Luật", "Nghị định", "Thông tư", "Quyết định", "Nghị quyết", "Chỉ thị", "Khác"
+            "Hiến pháp", "Bộ luật", "Luật", "Pháp lệnh", "Lệnh", "Nghị quyết", "Nghị quyết liên tịch", "Nghị định", "Thông tư", "Thông tư liên tịch", "Quyết định", "Văn bản hợp nhất", "Chỉ thị", "Công văn", "Công điện", "Thông báo", "Kế hoạch", "Chương trình", "Đề án", "Báo cáo", "Quy chế", "Quy định", "Hướng dẫn", "Tờ trình", "Khác"
         };
 
         private static readonly HashSet<string> AllowedEffectStatuses = new(StringComparer.OrdinalIgnoreCase)
@@ -113,7 +113,7 @@ namespace Cdsqg.Api.Controllers
         {
             await EnsureSeedDataAsync();
 
-            var query = _context.LegalDocuments.AsQueryable();
+            var query = _context.LegalDocuments.AsNoTracking();
 
             // 1. DATA ACCESS PERMISSION: All authenticated accounts can view all legal documents
             // (Creation, modification, and deletion are restricted to Admin on frontend & backend write endpoints)
@@ -217,7 +217,7 @@ namespace Cdsqg.Api.Controllers
         {
             await EnsureSeedDataAsync();
 
-            var baseQuery = _context.LegalDocuments.AsQueryable();
+            var baseQuery = _context.LegalDocuments.AsNoTracking();
 
             if (!string.IsNullOrWhiteSpace(documentType))
             {
@@ -261,7 +261,7 @@ namespace Cdsqg.Api.Controllers
                 baseQuery = baseQuery.Where(d => d.DraftingAgencyId == draftingAgencyId.Value);
             }
 
-            var allAgencies = await _context.Agencies.ToListAsync();
+            var allAgencies = await _context.Agencies.AsNoTracking().ToListAsync();
 
             bool isAdmin = string.IsNullOrWhiteSpace(userRole) || userRole.ToLower() == "admin" || userRole == "1";
             Guid? currAgId = userAgencyId;
@@ -271,7 +271,22 @@ namespace Cdsqg.Api.Controllers
 
             // 1. DATA ACCESS PERMISSION FOR DASHBOARD: All authenticated accounts view statistics across all legal documents
 
-            var allDocs = await baseQuery.ToListAsync();
+            // Summary roles do not need long abstracts, notes or attachment JSON.
+            // Level 3 still receives full records for its five recent documents.
+            var allDocs = await (!isAdmin && isLevel3 ? baseQuery : baseQuery.Select(document => new LegalDocument
+            {
+                Id = document.Id,
+                IssuingAgencyId = document.IssuingAgencyId,
+                DraftingAgencyId = document.DraftingAgencyId,
+                DocumentType = document.DocumentType,
+                Field = document.Field
+            })).ToListAsync();
+            // One document counts once per agency, even when issuer and drafter coincide.
+            var documentsByAgency = allDocs.SelectMany(document =>
+                new[] { document.IssuingAgencyId, document.DraftingAgencyId }
+                    .Where(id => id.HasValue).Distinct()
+                    .Select(id => new { AgencyId = id!.Value, Document = document }))
+                .ToLookup(entry => entry.AgencyId, entry => entry.Document);
             var result = new LegalDocumentChartStatsDto();
 
             if (isAdmin)
@@ -282,7 +297,7 @@ namespace Cdsqg.Api.Controllers
 
                 foreach (var ag in primaryAgencies)
                 {
-                    var agDocs = allDocs.Where(d => d.IssuingAgencyId == ag.Id || d.DraftingAgencyId == ag.Id).ToList();
+                    var agDocs = documentsByAgency[ag.Id].ToList();
                     var typeCounts = agDocs.GroupBy(d => d.DocumentType)
                                            .ToDictionary(g => g.Key, g => g.Count());
                     var fieldCounts = agDocs.Where(d => !string.IsNullOrWhiteSpace(d.Field))
@@ -330,7 +345,7 @@ namespace Cdsqg.Api.Controllers
 
                 foreach (var ag in subAgencies)
                 {
-                    var agDocs = allDocs.Where(d => d.IssuingAgencyId == ag.Id || d.DraftingAgencyId == ag.Id).ToList();
+                    var agDocs = documentsByAgency[ag.Id].ToList();
                     var typeCounts = agDocs.GroupBy(d => d.DocumentType)
                                            .ToDictionary(g => g.Key, g => g.Count());
                     var fieldCounts = agDocs.Where(d => !string.IsNullOrWhiteSpace(d.Field))
@@ -590,7 +605,7 @@ namespace Cdsqg.Api.Controllers
                     }
                     else
                     {
-                        itemErrors.Add($"Loại văn bản '{cleanType}' không thuộc danh sách lựa chọn (Luật, Nghị định, Thông tư, Quyết định, Nghị quyết, Chỉ thị, Khác)");
+                        itemErrors.Add($"Loại văn bản '{cleanType}' không thuộc danh sách lựa chọn ({string.Join(", ", AllowedDocumentTypes)})");
                     }
                 }
 

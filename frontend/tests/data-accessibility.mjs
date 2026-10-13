@@ -6,7 +6,7 @@ try {
   const page = await browser.newPage({viewport:{width:390,height:844}});
   const errors=[]; page.on('pageerror',e => errors.push(e.message));
   await page.route('**/api/**',r=>r.fulfill({contentType:'application/json',body:'{"items":[],"totalCount":0}'}));
-  await page.goto('http://127.0.0.1:5201');
+  await page.goto(process.env.FRONTEND_TEST_URL || 'http://127.0.0.1:5201');
   await page.evaluate(async () => {
     const {createApp,h,ref,withDirectives,FloatingVue}=await import('/tests/refactor-fixture.js');
     const Select=(await import('/src/components/SearchableSelect.vue')).default;
@@ -68,7 +68,7 @@ try {
   let resetRequests=0;
   await page.route('**/api/auth/reset-password',r=>{resetRequests++;return r.fulfill({status:501,contentType:'application/json',body:'{"message":"Tính năng đang phát triển"}'});});
   await page.goto('about:blank');
-  await page.goto('http://127.0.0.1:5201/#reset-password?token='+ 'A'.repeat(64));
+  await page.goto((process.env.FRONTEND_TEST_URL || 'http://127.0.0.1:5201')+'/#reset-password?token='+ 'A'.repeat(64));
   await page.getByText('Tính năng đang phát triển',{exact:true}).waitFor();
   assert.equal(await page.locator('input').count(),0);
   assert.equal(resetRequests,0);

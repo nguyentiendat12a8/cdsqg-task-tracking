@@ -5,6 +5,7 @@ export function createDocumentReportActions({ props, userRoleStr, currentUserAge
   async function handleExportProgressReport() {
     await exportProgressReportTemplate({
       items: await loadExportItems(),
+      itemType: props.filterItemType,
       currentAgency: currentUserAgencyObj.value,
       userRole: userRoleStr.value,
       fileName: `Bao_Cao_Tien_Do_${props.filterItemType === 'Goal' ? 'Muc_Tieu' : 'Nhiem_Vu'}`

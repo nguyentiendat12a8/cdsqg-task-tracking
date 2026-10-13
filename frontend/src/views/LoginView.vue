@@ -10,8 +10,7 @@
       <div class="text-center space-y-3">
         <img src="/logo-cds.jpg" alt="Logo Cục Chuyển đổi số" class="w-16 h-16 rounded-2xl mx-auto shadow-lg object-cover border border-slate-200 bg-white" />
         <div>
-          <h1 class="text-xl font-bold text-slate-800">Hệ Thống Theo Dõi Nhiệm Vụ CĐS Quốc Gia</h1>
-          <p class="text-xs text-slate-500 mt-1 font-semibold">Vui lòng đăng nhập để truy cập hệ thống quản hành</p>
+          <h1 class="text-xl font-bold text-slate-800">Hệ thống theo dõi nhiệm vụ CĐS quốc gia</h1>
         </div>
       </div>
 
@@ -24,7 +23,7 @@
       <!-- Login Form -->
       <form @submit.prevent="handleLogin" class="space-y-4">
         <div>
-          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Tên Đăng Nhập <span class="text-rose-500">*</span></label>
+          <label class="block text-xs font-semibold text-slate-700 mb-1.5">Tên đăng nhập <span class="text-rose-500">*</span></label>
           <div class="relative">
             <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>
             <input 
@@ -38,7 +37,7 @@
         </div>
 
         <div>
-          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">Mật Khẩu <span class="text-rose-500">*</span></label>
+          <label class="block text-xs font-semibold text-slate-700 mb-1.5">Mật khẩu <span class="text-rose-500">*</span></label>
           <div class="relative">
             <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
             <input 
@@ -98,7 +97,7 @@
         <div class="flex items-center justify-between border-b border-slate-100 pb-3">
           <div class="flex items-center gap-2 text-slate-900">
             <span class="p-2 bg-blue-100 text-blue-700 rounded-xl font-bold">🔑</span>
-            <h3 class="text-base font-bold">Khôi Phục Mật Khẩu Tài Khoản</h3>
+            <h3 class="text-base font-bold text-slate-800">Khôi phục mật khẩu tài khoản</h3>
           </div>
           <button @click="isForgotPasswordOpen = false" class="text-slate-400 hover:text-slate-600 font-bold text-lg">✕</button>
         </div>

@@ -6,14 +6,12 @@
       <div>
         <h2 class="text-xl font-bold text-slate-800 flex items-center gap-2">
           <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
-          Danh Mục Đơn Vị Tính
+          Danh mục đơn vị tính
         </h2>
-        <p class="text-xs text-slate-500 mt-1">Cấu hình tên đơn vị (%, Lượt, Văn bản...) và Kiểu dữ liệu hỗ trợ</p>
+        <p class="text-xs text-slate-500 mt-1">Cấu hình tên đơn vị (%, lượt, văn bản...) và kiểu dữ liệu hỗ trợ</p>
       </div>
 
-      <button @click="openCreateModal" class="ui-single-line bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm transition flex items-center gap-1.5 shrink-0">
-        + Thêm Đơn Vị Tính Mới
-      </button>
+      <ActionButton kind="create" @click="openCreateModal">Thêm đơn vị tính mới</ActionButton>
     </div>
 
     <!-- Unified Container Block for Search, Table & Server Pagination -->
@@ -34,7 +32,7 @@
           <button @click="resetSearch" class="ui-single-line px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer">↺</button>
         </div>
         <span class="text-xs text-slate-500 font-semibold shrink-0">
-          Hiển thị {{ units.length }} / {{ totalCount }} đơn vị
+          Hiển thị {{ formatNumber(units.length) }} / {{ formatNumber(totalCount) }} đơn vị
         </span>
       </div>
 
@@ -43,12 +41,12 @@
         <LoadingSpinner v-if="isLoading" text="Đang tải danh mục đơn vị tính..." />
 
         <table v-else class="w-full text-left text-sm text-slate-700">
-          <thead class="bg-slate-100 text-xs text-slate-500 uppercase font-bold border-b border-slate-200 sticky top-0 z-10">
+          <thead class="bg-slate-100 text-xs text-slate-500 font-bold border-b border-slate-200 sticky top-0 z-10">
             <tr>
-              <th class="px-4 py-3 border-r border-slate-200 bg-slate-100 min-w-[150px] w-48">Mã Đơn Vị</th>
-              <th class="px-4 py-3 border-r border-slate-200 bg-slate-100 min-w-[280px]">Tên Hiển Thị</th>
-              <th class="px-4 py-3 border-r border-slate-200 bg-slate-100 text-center min-w-[200px] w-60">Kiểu Dữ Liệu</th>
-              <th class="px-4 py-3 text-center bg-slate-100 whitespace-nowrap min-w-[110px] w-28">Thao Tác</th>
+              <th class="px-4 py-3 border-r border-slate-200 bg-slate-100 min-w-[150px] w-48">Mã đơn vị</th>
+              <th class="px-4 py-3 border-r border-slate-200 bg-slate-100 min-w-[280px]">Tên hiển thị</th>
+              <th class="px-4 py-3 border-r border-slate-200 bg-slate-100 text-center min-w-[200px] w-60">Kiểu dữ liệu</th>
+              <th class="px-4 py-3 text-center bg-slate-100 whitespace-nowrap min-w-[110px] w-28">Thao tác</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100">
@@ -82,7 +80,7 @@
       <!-- 3. Bottom Footer: Server Pagination Controls -->
       <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50/70 p-3.5 border-t border-slate-200/80 text-xs text-slate-600 font-semibold">
         <div class="flex items-center gap-3 whitespace-nowrap flex-wrap sm:flex-nowrap">
-          <span class="whitespace-nowrap">Hiển thị <span class="font-bold text-slate-900">{{ totalCount > 0 ? (pageNumber - 1) * pageSize + 1 : 0 }} - {{ Math.min(pageNumber * pageSize, totalCount) }}</span> trên tổng số <span class="font-bold text-slate-900">{{ totalCount }}</span> đơn vị tính</span>
+          <span class="whitespace-nowrap">Hiển thị <span class="font-bold text-slate-900">{{ formatNumber(totalCount > 0 ? (pageNumber - 1) * pageSize + 1 : 0) }} - {{ formatNumber(Math.min(pageNumber * pageSize, totalCount)) }}</span> trên tổng số <span class="font-bold text-slate-900">{{ formatNumber(totalCount) }}</span> đơn vị tính</span>
           
           <div class="flex items-center gap-1.5 border-l border-slate-200 pl-3 whitespace-nowrap">
             <span class="whitespace-nowrap">Số bản ghi/trang:</span>
@@ -126,18 +124,18 @@
     <div v-if="isModalOpen" @click.self="isModalOpen = false" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
       <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-xl w-full p-6 sm:p-7 space-y-4">
         <h3 class="text-lg font-bold text-slate-800 border-b border-slate-100 pb-2">
-          {{ isEditing ? 'Sửa Đơn Vị Tính' : 'Thêm Đơn Vị Tính Mới' }}
+          {{ isEditing ? 'Sửa đơn vị tính' : 'Thêm đơn vị tính mới' }}
         </h3>
 
         <form @submit.prevent="saveUnit" class="space-y-3">
           <div class="grid grid-cols-2 gap-3">
             <div>
-              <label class="text-xs font-bold text-slate-700 uppercase">Mã Đơn Vị (e.g. PERCENT) <span class="text-rose-500">*</span></label>
+              <label class="text-xs font-semibold text-slate-700">Mã đơn vị (ví dụ: PERCENT) <span class="text-rose-500">*</span></label>
               <input v-model="form.code" required class="ui-single-line w-full text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 mt-1" />
             </div>
 
             <div>
-              <label class="text-xs font-bold text-slate-700 uppercase">Tên Hiển Thị (e.g. %) <span class="text-rose-500">*</span></label>
+              <label class="text-xs font-semibold text-slate-700">Tên hiển thị (ví dụ: %) <span class="text-rose-500">*</span></label>
               <input v-model="form.name" required class="ui-single-line w-full text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 mt-1" />
             </div>
           </div>
@@ -147,11 +145,11 @@
               v-model="form.dataType" 
               :options="dataTypeOptions" 
               :isMulti="false" 
-              label="Kiểu Dữ Liệu" 
+              label="Kiểu dữ liệu" 
             />
-            <p v-if="isEditing && editingUsedCount > 0" class="text-[11px] text-amber-700 bg-amber-50 p-2 rounded-lg border border-amber-200 mt-1.5 font-semibold flex items-center gap-1.5">
+            <p v-if="isEditing && editingUsedCount > 0" class="text-xs text-amber-700 bg-amber-50 p-2 rounded-lg border border-amber-200 mt-1.5 font-semibold flex items-center gap-1.5">
               <span>⚠️</span>
-              <span>Đơn vị tính này đã được sử dụng bởi <strong>{{ editingUsedCount }}</strong> mục tiêu/nhiệm vụ. Không thể thay đổi kiểu dữ liệu.</span>
+              <span>Đơn vị tính này đã được sử dụng bởi <strong>{{ formatNumber(editingUsedCount) }}</strong> mục tiêu/nhiệm vụ. Không thể thay đổi kiểu dữ liệu.</span>
             </p>
           </div>
 
@@ -167,6 +165,8 @@
 </template>
 
 <script setup>
+import ActionButton from "./ActionButton.vue";
+import { formatNumber } from "../shared/formatters";
 import { fetchWithAuth } from '../services/auth';
 
 import { ref, computed, watch, onMounted } from 'vue';

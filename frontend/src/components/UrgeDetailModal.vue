@@ -5,7 +5,7 @@
       <!-- Modal Header -->
       <div class="flex justify-between items-start border-b border-slate-100 pb-3 shrink-0">
         <div>
-          <span class="text-xs font-bold text-rose-600 uppercase tracking-wider block">Chi Tiết Văn Bản Thông Báo</span>
+          <span class="text-xs font-semibold text-rose-600 block">Chi tiết văn bản thông báo</span>
           <h3 class="text-base font-bold text-slate-800 mt-0.5">
             {{ log.taskCode }} - {{ log.taskTitle }}
           </h3>
@@ -25,14 +25,14 @@
             </span>
           </div>
 
-          <div class="text-slate-500 font-medium text-[11px]">
+          <div class="text-slate-500 font-medium text-xs">
             🕒 Thời gian lập: <strong class="text-slate-800">{{ formatDate(log.createdAt) }}</strong> | Bởi: <strong class="text-slate-800">{{ log.createdBy || 'Lãnh đạo' }}</strong>
           </div>
         </div>
 
         <!-- Full Directive Content -->
         <div class="space-y-1.5">
-          <label class="text-xs font-bold text-slate-700 uppercase">Nội Dung Văn Bản Thông Báo</label>
+          <label class="text-xs font-semibold text-slate-700">Nội dung văn bản thông báo</label>
           <div 
             v-html="sanitizeHtml(log.urgeContent)"
             class="p-5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 font-medium leading-relaxed shadow-2xs space-y-2 whitespace-pre-line"

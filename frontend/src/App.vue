@@ -1,5 +1,5 @@
 <template>
-  <div class="h-dvh w-full bg-slate-100 text-slate-900 font-sans flex flex-col antialiased overflow-hidden">
+  <div class="app-surface ui-density-compact h-dvh w-full text-slate-900 font-sans flex flex-col antialiased overflow-hidden">
     <!-- Global Confirmation Modal -->
     <ConfirmModal />
 
@@ -19,7 +19,7 @@
       />
 
       <!-- Main Content Area -->
-      <div class="flex-1 flex flex-col h-full overflow-hidden bg-slate-100 min-w-0">
+      <div class="app-surface flex-1 flex flex-col h-full overflow-hidden min-w-0">
         
         <!-- Fixed Top Header -->
         <AppHeader 
@@ -30,7 +30,7 @@
 
         <!-- Scrollable Dynamic View Content -->
         <ApiFeedback />
-        <main v-accessible-data id="main-content" tabindex="-1" class="flex-1 overflow-y-auto px-4 sm:px-6 pb-6 custom-scrollbar" style="padding-top: 16px;">
+        <main v-accessible-data id="main-content" tabindex="-1" class="flex-1 overflow-y-auto px-3 sm:px-4 pb-4 custom-scrollbar" style="padding-top: 12px;">
           
           <!-- Trang chủ (Executive / Agency User Dashboard) -->
           <ExecutiveDashboard 

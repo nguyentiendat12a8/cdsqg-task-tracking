@@ -136,10 +136,11 @@ public class SecurityTests
     {
         using var db = Database();
         var agencyId = Guid.NewGuid();
-        var dto = new ImportProgressBulkRequestDto { UserRole = "Admin", UserAgencyId = Guid.NewGuid() };
+        var dto = new ImportProgressBulkRequestDto { UserRole = "Admin", UserAgencyId = Guid.NewGuid(), CreatedBy = "Spoofed admin" };
         Assert.True(await Run(db, Context("Execution", "ImportProgressBulk", "POST", new() { ["dto"] = dto }, agencyId)));
         Assert.Equal("AgencyUser", dto.UserRole);
         Assert.Equal(agencyId, dto.UserAgencyId);
+        Assert.Equal("Verified user", dto.CreatedBy);
     }
 
     [Theory]

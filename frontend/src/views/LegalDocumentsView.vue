@@ -17,25 +17,17 @@
         </div>
 
         <div class="flex items-center gap-2 flex-wrap">
-          <button 
-            @click="exportExcel"
-            class="ui-single-line px-3.5 py-2 text-slate-700 hover:text-slate-900 font-bold text-xs rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200/80 transition shadow-2xs flex items-center gap-1.5 cursor-pointer"
+          <ActionButton kind="export" 
+            @click="exportExcel" :disabled="isExporting || isLoading" :aria-busy="isExporting"
             title="Xuất danh sách văn bản QPPL ra Excel"
-          >
-            <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-            <span>Xuất Báo Cáo Excel</span>
-          </button>
+          ><span>Xuất báo cáo Excel</span></ActionButton>
 
-          <button 
+          <ActionButton kind="import" 
             v-if="authState.isAdmin.value"
             @click="triggerImportExcel"
             :disabled="isImporting"
-            class="ui-single-line px-3.5 py-2 text-slate-700 hover:text-slate-900 font-bold text-xs rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200/80 transition shadow-2xs flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
             title="Nhập danh sách văn bản QPPL từ file Excel"
-          >
-            <svg class="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
-            <span>{{ isImporting ? 'Đang Import...' : 'Import Excel' }}</span>
-          </button>
+          ><span>{{ isImporting ? 'Đang nhập...' : 'Nhập Excel' }}</span></ActionButton>
           <input 
             type="file" 
             ref="importFileInputRef" 
@@ -44,13 +36,10 @@
             class="hidden" 
           />
 
-          <button 
+          <ActionButton kind="create" 
             v-if="authState.isAdmin.value"
             @click="openCreateModal"
-            class="ui-single-line px-3.5 py-2 text-white font-bold text-xs rounded-xl bg-blue-600 hover:bg-blue-700 transition shadow-sm flex items-center gap-1.5 cursor-pointer"
-          >
-            + Thêm Văn Bản QPPL Mới
-          </button>
+          >Thêm văn bản QPPL mới</ActionButton>
         </div>
       </div>
     </div>
@@ -74,8 +63,8 @@
 
           <!-- OverlayPanel Advanced Filter -->
           <OverlayPanel 
-            title="Bộ Lọc Tìm Kiếm Nâng Cao"
-            buttonText="Lọc Nâng Cao"
+            title="Bộ lọc tìm kiếm nâng cao"
+            buttonText="Lọc nâng cao"
             :activeCount="activeFilterCount"
             widthClass="w-[340px] sm:w-[500px]"
             @apply="execSearch"
@@ -88,7 +77,7 @@
                     v-model="filterDraft.documentType" 
                     :options="documentTypeFilterOptions" 
                     :isMulti="false" 
-                    label="Loại Văn Bản" 
+                    label="Loại văn bản" 
                     placeholder="Tất cả loại"
                   />
                 </div>
@@ -98,7 +87,7 @@
                     v-model="filterDraft.effectStatus" 
                     :options="effectStatusFilterOptions" 
                     :isMulti="false" 
-                    label="Trạng Thái Hiệu Lực" 
+                    label="Trạng thái hiệu lực" 
                     placeholder="Tất cả trạng thái"
                   />
                 </div>
@@ -109,7 +98,7 @@
                   v-model="filterDraft.field" 
                   :options="fieldFilterOptions" 
                   :isMulti="false" 
-                  label="Lĩnh Vực / Nhóm CĐS" 
+                  label="Lĩnh vực / nhóm CĐS" 
                   placeholder="Tất cả lĩnh vực"
                 />
               </div>
@@ -119,7 +108,7 @@
                   v-model="filterDraft.issuingAgencyId" 
                   :options="agencyFilterOptions" 
                   :isMulti="false" 
-                  label="Cơ Quan Ban Hành" 
+                  label="Cơ quan ban hành" 
                   placeholder="Tất cả cơ quan ban hành"
                 />
               </div>
@@ -129,13 +118,13 @@
                   v-model="filterDraft.draftingAgencyId" 
                   :options="agencyFilterOptions" 
                   :isMulti="false" 
-                  label="Cơ Quan Dự Thảo" 
+                  label="Cơ quan dự thảo" 
                   placeholder="Tất cả cơ quan dự thảo"
                 />
               </div>
 
               <div>
-                <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block mb-1">Thời Gian Ban Hành (Từ ngày ➔ Đến ngày)</label>
+                <label class="text-xs font-semibold text-slate-700 block mb-1">Thời gian ban hành (từ ngày ➔ đến ngày)</label>
                 <div class="flex items-center gap-2">
                   <input type="date" v-model="filterDraft.fromDate" class="ui-single-line w-full text-xs font-semibold p-2 bg-white border border-slate-200 rounded-xl" />
                   <span class="text-xs font-bold text-slate-400 shrink-0">➔</span>
@@ -147,7 +136,7 @@
         </div>
 
         <span class="text-xs text-slate-500 font-bold shrink-0">
-          Tổng số {{ totalCount }} văn bản QPPL
+          Tổng số {{ formatNumber(totalCount) }} văn bản QPPL
         </span>
       </div>
 
@@ -156,17 +145,17 @@
         <LoadingSpinner v-if="isLoading" text="Đang tải danh sách văn bản quy phạm pháp luật..." />
 
         <table v-else class="w-full min-w-[1100px] text-left text-sm text-slate-700 border-collapse">
-          <thead class="bg-slate-100 text-xs text-slate-600 uppercase font-bold border-b border-slate-200 sticky top-0 z-10 shadow-2xs">
+          <thead class="bg-slate-100 text-xs text-slate-700 font-semibold border-b border-slate-200 sticky top-0 z-10 shadow-2xs">
             <tr>
-              <th class="px-3.5 py-3 border-r border-slate-200 min-w-[130px] bg-slate-100">Số Ký Hiệu</th>
-              <th class="px-3.5 py-3 border-r border-slate-200 min-w-[280px] bg-slate-100">Trích Yếu Nội Dung</th>
+              <th class="px-3.5 py-3 border-r border-slate-200 min-w-[130px] bg-slate-100">Số ký hiệu</th>
+              <th class="px-3.5 py-3 border-r border-slate-200 min-w-[280px] bg-slate-100">Trích yếu nội dung</th>
               <th class="px-3.5 py-3 border-r border-slate-200 text-center min-w-[110px] bg-slate-100 whitespace-nowrap">Loại VB</th>
-              <th class="px-3.5 py-3 border-r border-slate-200 min-w-[180px] bg-slate-100">Cơ Quan Ban Hành</th>
-              <th class="px-3.5 py-3 border-r border-slate-200 min-w-[180px] bg-slate-100">Cơ Quan Dự Thảo</th>
-              <th class="px-3.5 py-3 border-r border-slate-200 text-center min-w-[110px] bg-slate-100 whitespace-nowrap">Ngày Ban Hành</th>
-              <th class="px-3.5 py-3 border-r border-slate-200 text-center min-w-[145px] bg-slate-100 whitespace-nowrap">Trạng Thái</th>
-              <th class="px-3.5 py-3 border-r border-slate-200 min-w-[200px] bg-slate-100">File Đính Kèm</th>
-              <th class="px-3.5 py-3 text-center min-w-[100px] bg-slate-100 whitespace-nowrap">Thao Tác</th>
+              <th class="px-3.5 py-3 border-r border-slate-200 min-w-[180px] bg-slate-100">Cơ quan ban hành</th>
+              <th class="px-3.5 py-3 border-r border-slate-200 min-w-[180px] bg-slate-100">Cơ quan dự thảo</th>
+              <th class="px-3.5 py-3 border-r border-slate-200 text-center min-w-[110px] bg-slate-100 whitespace-nowrap">Ngày ban hành</th>
+              <th class="px-3.5 py-3 border-r border-slate-200 text-center min-w-[145px] bg-slate-100 whitespace-nowrap">Trạng thái</th>
+              <th class="px-3.5 py-3 border-r border-slate-200 min-w-[200px] bg-slate-100">File đính kèm</th>
+              <th class="px-3.5 py-3 text-center min-w-[100px] bg-slate-100 whitespace-nowrap">Thao tác</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 text-xs">
@@ -180,17 +169,20 @@
 
               <!-- Trích yếu -->
               <td class="px-3.5 py-3 border-r border-slate-200 font-normal text-slate-800 leading-relaxed">
+                <button type="button" @click="copyDocumentReference(item)" class="float-right ml-2 p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg" :aria-label="`Sao chép thông tin văn bản ${item.code}`" :title="`Sao chép thông tin văn bản: ${formatLegalDocumentReference(item)}`">
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><rect x="9" y="9" width="12" height="12" rx="2" stroke-width="2"/><path d="M15 9V5a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2h4" stroke-width="2"/></svg>
+                </button>
                 <div class="line-clamp-2" :title="item.title">
                   {{ item.title }}
                 </div>
-                <div v-if="item.signerName" class="text-[11px] text-slate-500 mt-0.5 truncate">
+                <div v-if="item.signerName" class="text-xs text-slate-500 mt-0.5 truncate">
                   ✍️ {{ item.signerTitle ? `${item.signerTitle}: ` : '' }}{{ item.signerName }}
                 </div>
               </td>
 
               <!-- Loại VB -->
               <td class="px-3.5 py-3 border-r border-slate-200 text-center whitespace-nowrap">
-                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-700 border border-slate-200">
+                <span class="px-2.5 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-700 border border-slate-200">
                   {{ item.documentType }}
                 </span>
               </td>
@@ -212,7 +204,7 @@
 
               <!-- Trạng thái -->
               <td class="px-3.5 py-3 border-r border-slate-200 text-center whitespace-nowrap">
-                <span :class="['px-2.5 py-0.5 rounded-full text-[11px] font-medium inline-block', getStatusBadgeClass(item.effectStatus)]">
+                <span :class="['px-2.5 py-0.5 rounded-full text-xs font-medium inline-block', getStatusBadgeClass(item.effectStatus)]">
                   {{ item.effectStatus }}
                 </span>
               </td>
@@ -233,10 +225,10 @@
                       <span class="text-blue-500">📄</span>
                       <span class="truncate max-w-[150px] font-normal">{{ att.cleanName || att.fileName }}</span>
                     </button>
-                    <span class="text-[10px] text-slate-400">({{ att.fileType }})</span>
+                    <span class="text-xs text-slate-400">({{ att.fileType }})</span>
                   </div>
                 </div>
-                <span v-else class="text-slate-400 italic text-[11px]">Không có file</span>
+                <span v-else class="text-slate-400 italic text-xs">Không có file</span>
               </td>
 
               <!-- Thao tác -->
@@ -281,7 +273,7 @@
       <!-- Pagination Bar -->
       <div class="flex flex-col md:flex-row items-center justify-between gap-3 bg-slate-50/70 p-3.5 border-t border-slate-200/80 text-xs text-slate-600 font-semibold w-full">
         <div class="flex items-center gap-3 whitespace-nowrap flex-wrap justify-center sm:justify-start">
-          <span class="whitespace-nowrap">Hiển thị <span class="font-bold text-slate-900">{{ totalCount > 0 ? (pageNumber - 1) * pageSize + 1 : 0 }} - {{ Math.min(pageNumber * pageSize, totalCount) }}</span> trên tổng số <span class="font-bold text-slate-900">{{ totalCount }}</span> văn bản QPPL</span>
+          <span class="whitespace-nowrap">Hiển thị <span class="font-bold text-slate-900">{{ formatNumber(totalCount > 0 ? (pageNumber - 1) * pageSize + 1 : 0) }} - {{ formatNumber(Math.min(pageNumber * pageSize, totalCount)) }}</span> trên tổng số <span class="font-bold text-slate-900">{{ formatNumber(totalCount) }}</span> văn bản QPPL</span>
           
           <div class="flex items-center gap-1.5 border-l border-slate-200 pl-3 whitespace-nowrap">
             <span class="whitespace-nowrap">Số bản ghi/trang:</span>
@@ -341,6 +333,22 @@
 </template>
 
 <script setup>
+import ActionButton from "../components/ActionButton.vue";
+import { legalDocumentTypeOptions as documentTypeFilterOptions } from '../config/legalDocumentTypes';
+import { formatLegalDocumentReference } from '../shared/legalDocumentText';
+
+async function copyDocumentReference(item) {
+  try {
+    await navigator.clipboard.writeText(formatLegalDocumentReference(item));
+    toast.success('Đã sao chép thông tin văn bản.');
+  } catch {
+    toast.error('Không thể sao chép. Vui lòng cho phép trình duyệt truy cập clipboard và thử lại.');
+  }
+}
+import { formatNumber } from "../shared/formatters";
+import { loadAllExportPages } from '../services/exportData';
+const isExporting = ref(false);
+let loadedExportUrl = null;
 import { formatDate } from '../shared/formatters';
 import { fetchWithAuth } from '../services/auth';
 
@@ -694,15 +702,7 @@ const activeFilterCount = computed(() => {
   return count;
 });
 
-const documentTypeFilterOptions = [
-  { value: 'Luật', label: 'Luật' },
-  { value: 'Nghị định', label: 'Nghị định' },
-  { value: 'Thông tư', label: 'Thông tư' },
-  { value: 'Quyết định', label: 'Quyết định' },
-  { value: 'Nghị quyết', label: 'Nghị quyết' },
-  { value: 'Chỉ thị', label: 'Chỉ thị' },
-  { value: 'Khác', label: 'Khác' }
-];
+
 
 const effectStatusFilterOptions = [
   { value: 'Còn hiệu lực', label: 'Còn hiệu lực' },
@@ -741,9 +741,7 @@ async function fetchAgencies() {
   }
 }
 
-async function fetchDocuments() {
-  isLoading.value = true;
-  try {
+function buildListQuery() {
     const params = new URLSearchParams({
       pageNumber: pageNumber.value.toString(),
       pageSize: pageSize.value.toString()
@@ -761,9 +759,17 @@ async function fetchDocuments() {
     if (userAgencyId.value) params.append('userAgencyId', userAgencyId.value);
     if (userRoleStr.value) params.append('userRole', String(userRoleStr.value));
 
+    return params;
+}
+
+async function fetchDocuments() {
+  isLoading.value = true;
+  try {
+    const params = buildListQuery();
     const res = await fetchWithAuth(getApiUrl(`/api/legaldocuments?${params.toString()}`));
     if (res.ok) {
       const data = await res.json();
+      loadedExportUrl = getApiUrl(`/api/legaldocuments?${params.toString()}`);
       documents.value = data.items || [];
       totalCount.value = data.totalCount || 0;
       totalPages.value = data.totalPages || 1;
@@ -889,8 +895,13 @@ function getStatusBadgeClass(status) {
   }
 }
 
-function exportExcel() {
-  const docsList = documents.value || [];
+async function exportExcel() {
+  if (isExporting.value || isLoading.value || !loadedExportUrl) return;
+  isExporting.value = true;
+  try {
+  const exportRows = await loadAllExportPages(loadedExportUrl);
+  if (!exportRows.length) { toast.warning('Không có dữ liệu để xuất Excel!'); return; }
+  const docsList = exportRows;
   if (docsList.length === 0) {
     toast.warning("Không có dữ liệu để xuất file Excel!");
     return;
@@ -898,17 +909,17 @@ function exportExcel() {
 
   const headers = [
     "STT",
-    "Số Ký Hiệu",
-    "Trích Yếu Nội Dung",
-    "Loại VB",
-    "Cơ Quan Ban Hành",
-    "Cơ Quan Dự Thảo",
-    "Người Ký & Chức Danh",
-    "Ngày Ban Hành",
-    "Ngày Hiệu Lực",
-    "Trạng Thái Hiệu Lực",
-    "Lĩnh Vực",
-    "Tệp Đính Kèm"
+    "Số ký hiệu",
+    "Trích yếu nội dung",
+    "Loại văn bản",
+    "Cơ quan ban hành",
+    "Cơ quan dự thảo",
+    "Người ký & chức danh",
+    "Ngày ban hành",
+    "Ngày hiệu lực",
+    "Trạng thái hiệu lực",
+    "Lĩnh vực",
+    "Tệp đính kèm"
   ];
 
   const rows = docsList.map((d, i) => {
@@ -935,7 +946,7 @@ function exportExcel() {
   const now = new Date();
   const timeStr = `${now.toLocaleDateString('vi-VN')} ${now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
 
-  exportFormattedReportExcel({
+  await exportFormattedReportExcel({
     title: "BÁO CÁO DANH SÁCH VĂN BẢN QUY PHẠM PHÁP LUẬT (VB QPPL)",
     subtitle: `Thời gian xuất: ${timeStr} | Tổng số văn bản: ${docsList.length}`,
     kpiTitle: "1. TỔNG QUAN HỆ THỐNG VĂN BẢN QPPL",
@@ -948,6 +959,11 @@ function exportExcel() {
     fileName: `Bao_Cao_Van_Ban_QPPL`,
     sheetName: 'Danh Sách VB QPPL'
   });
+  } catch (error) {
+    toast.error(error.message || 'Không thể xuất Excel.');
+  } finally {
+    isExporting.value = false;
+  }
 }
 
 onMounted(async () => {

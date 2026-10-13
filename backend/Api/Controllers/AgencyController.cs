@@ -39,7 +39,7 @@ namespace Cdsqg.Api.Controllers
             [FromQuery] Guid? userAgencyId = null,
             [FromQuery] bool? restrictForUser = null)
         {
-            var query = _context.Agencies.Include(a => a.ParentAgency).AsQueryable();
+            var query = _context.Agencies.Include(a => a.ParentAgency).AsNoTrackingWithIdentityResolution();
 
             if (agencyId.HasValue && agencyId.Value != Guid.Empty)
             {
@@ -186,9 +186,10 @@ namespace Cdsqg.Api.Controllers
                     {
                         a.Id,
                         a.Code,
-                        a.Name,
+                        Name = ProvinceCatalog.DisplayName(a),
                         a.Type,
                         a.ParentId,
+                        IsFixedProvince = ProvinceCatalog.IsFixed(a),
                         ParentName = a.ParentAgency?.Name,
                         a.ContactPersons,
                         a.PlanFiles,
@@ -211,9 +212,10 @@ namespace Cdsqg.Api.Controllers
             {
                 a.Id,
                 a.Code,
-                a.Name,
+                Name = ProvinceCatalog.DisplayName(a),
                 a.Type,
                 a.ParentId,
+                        IsFixedProvince = ProvinceCatalog.IsFixed(a),
                 ParentName = a.ParentAgency?.Name,
                 a.ContactPersons,
                 a.PlanFiles,
@@ -227,6 +229,7 @@ namespace Cdsqg.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateAgency([FromBody] Agency agency)
         {
+            if (ProvinceCatalog.Conflicts(agency)) return StatusCode(403, new { error = "Danh mục 34 tỉnh/thành cố định không được thêm mới." });
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             if (agency.ParentId.HasValue && agency.ParentId.Value != Guid.Empty)
@@ -273,7 +276,7 @@ namespace Cdsqg.Api.Controllers
             var existing = await _context.Agencies.FindAsync(id);
             if (existing == null) return NotFound(new { error = "Không tìm thấy Cơ quan." });
 
-            bool isFixedSystemAgency = string.Equals(existing.Code, "bkhcn", StringComparison.OrdinalIgnoreCase) ||
+            bool isFixedSystemAgency = ProvinceCatalog.IsFixed(existing) || string.Equals(existing.Code, "bkhcn", StringComparison.OrdinalIgnoreCase) ||
                                        string.Equals(existing.Code, "ALL_AGENCIES", StringComparison.OrdinalIgnoreCase) ||
                                        string.Equals(existing.Code, "ALL_MINISTRIES", StringComparison.OrdinalIgnoreCase) ||
                                        string.Equals(existing.Code, "ALL_PROVINCES", StringComparison.OrdinalIgnoreCase) ||
@@ -282,6 +285,11 @@ namespace Cdsqg.Api.Controllers
                                        (!existing.ParentId.HasValue && existing.Name.StartsWith("Bộ", StringComparison.OrdinalIgnoreCase) &&
                                         (existing.Name.Contains("Khoa học và Công nghệ", StringComparison.OrdinalIgnoreCase) ||
                                          existing.Name.Contains("Khoa học & Công nghệ", StringComparison.OrdinalIgnoreCase)));
+
+            if (ProvinceCatalog.IsFixed(existing) && (dto.Code != existing.Code || ProvinceCatalog.Normalize(dto.Name) != ProvinceCatalog.Normalize(existing.Name) || dto.Type != existing.Type || dto.ParentId != existing.ParentId || dto.IsActive != existing.IsActive))
+                return StatusCode(403, new { error = "Danh mục 34 tỉnh/thành không được sửa mã, tên, phân loại, cấp trên hoặc trạng thái hoạt động." });
+            if (!ProvinceCatalog.IsFixed(existing) && ProvinceCatalog.Conflicts(dto))
+                return StatusCode(403, new { error = "Không được chuyển cơ quan khác vào danh mục tỉnh/thành cố định." });
 
             if (isFixedSystemAgency)
             {
@@ -398,7 +406,7 @@ namespace Cdsqg.Api.Controllers
             var existing = await _context.Agencies.FindAsync(id);
             if (existing == null) return NotFound(new { error = "Không tìm thấy Cơ quan." });
 
-            bool isFixedSystemAgency = string.Equals(existing.Code, "bkhcn", StringComparison.OrdinalIgnoreCase) ||
+            bool isFixedSystemAgency = ProvinceCatalog.IsFixed(existing) || string.Equals(existing.Code, "bkhcn", StringComparison.OrdinalIgnoreCase) ||
                                        string.Equals(existing.Code, "ALL_AGENCIES", StringComparison.OrdinalIgnoreCase) ||
                                        string.Equals(existing.Code, "ALL_MINISTRIES", StringComparison.OrdinalIgnoreCase) ||
                                        string.Equals(existing.Code, "ALL_PROVINCES", StringComparison.OrdinalIgnoreCase) ||
@@ -408,6 +416,7 @@ namespace Cdsqg.Api.Controllers
                                         (existing.Name.Contains("Khoa học và Công nghệ", StringComparison.OrdinalIgnoreCase) ||
                                          existing.Name.Contains("Khoa học & Công nghệ", StringComparison.OrdinalIgnoreCase)));
 
+            if (ProvinceCatalog.IsFixed(existing)) return StatusCode(403, new { error = "Danh mục 34 tỉnh/thành cố định không thể xóa." });
             if (isFixedSystemAgency)
             {
                 return BadRequest(new { error = "Cơ quan / Đơn vị hệ thống cố định không thể xóa." });
@@ -610,9 +619,9 @@ namespace Cdsqg.Api.Controllers
                         new AgencyContactPerson { Name = "Trần Thị Thanh Hương", Position = "Chuyên viên", Department = "P CĐS TTCNTT", Phone = "0973 031 435", Email = "huongtt@moc.gov.vn" }
                     }
                 },
-                // 9. Bắc Ninh
+                // 9. Thành phố Bắc Ninh
                 {
-                    new[] { "BACNINH", "Bắc Ninh" },
+                    new[] { "BACNINH", "Bắc Ninh", "Thành phố Bắc Ninh" },
                     new List<AgencyContactPerson>
                     {
                         new AgencyContactPerson { Name = "Nguyễn Văn Khánh", Position = "Trưởng phòng", Department = "P CĐS", Phone = "0886 088 666", Email = "khanhnv107@bacninh.gov.vn" },
@@ -702,9 +711,9 @@ namespace Cdsqg.Api.Controllers
                         new AgencyContactPerson { Name = "Đặng Bảo Hy", Position = "Chuyên viên", Department = "P BCVT&CĐS", Phone = "0905 181 088", Email = "" }
                     }
                 },
-                // 19. Quảng Ninh
+                // 19. Thành phố Quảng Ninh
                 {
-                    new[] { "QUANGNINH", "Quảng Ninh" },
+                    new[] { "QUANGNINH", "Quảng Ninh", "Thành phố Quảng Ninh" },
                     new List<AgencyContactPerson>
                     {
                         new AgencyContactPerson { Name = "Nguyễn Trung Tiến", Position = "Phó giám đốc", Department = "Sở KHCN", Phone = "0913 388 266", Email = "" },
@@ -759,7 +768,7 @@ namespace Cdsqg.Api.Controllers
                 },
                 // 25. Thành phố Cần Thơ
                 {
-                    new[] { "CANTHO", "Cần Thơ" },
+                    new[] { "CANTHO", "Cần Thơ", "Thành phố Cần Thơ" },
                     new List<AgencyContactPerson>
                     {
                         new AgencyContactPerson { Name = "Ngô Anh Tín", Position = "Giám đốc", Department = "SKHCN", Phone = "0917 939 939", Email = "anhtin@cantho.gov.vn" },
@@ -768,7 +777,7 @@ namespace Cdsqg.Api.Controllers
                 },
                 // 26. Thành phố Hải Phòng
                 {
-                    new[] { "HAIPHONG", "Hải Phòng" },
+                    new[] { "HAIPHONG", "Hải Phòng", "Thành phố Hải Phòng" },
                     new List<AgencyContactPerson>
                     {
                         new AgencyContactPerson { Name = "Nguyễn Minh Kha", Position = "Phó giám đốc", Department = "Sở KHCN", Phone = "0904 081 819", Email = "" },
@@ -778,7 +787,7 @@ namespace Cdsqg.Api.Controllers
                 },
                 // 27. Thành phố Hồ Chí Minh
                 {
-                    new[] { "TPHCM", "Hồ Chí Minh", "TP.HCM" },
+                    new[] { "TPHCM", "Hồ Chí Minh", "TP.HCM", "Thành phố Hồ Chí Minh" },
                     new List<AgencyContactPerson>
                     {
                         new AgencyContactPerson { Name = "Võ Minh Thành", Position = "Phó giám đốc", Department = "Sở KHCN", Phone = "0918 804 410", Email = "vmthanh.skhcn@tphcm.gov.vn" },
@@ -788,7 +797,7 @@ namespace Cdsqg.Api.Controllers
                 },
                 // 28. Thành phố Huế
                 {
-                    new[] { "HUE", "Huế", "Thừa Thiên Huế" },
+                    new[] { "HUE", "Huế", "Thừa Thiên Huế", "Thành phố Huế" },
                     new List<AgencyContactPerson>
                     {
                         new AgencyContactPerson { Name = "Nguyễn Xuân Sơn", Position = "Giám đốc", Department = "SKHCN", Phone = "0914 202 345", Email = "nxson.skhcn@hue.gov.vn" },

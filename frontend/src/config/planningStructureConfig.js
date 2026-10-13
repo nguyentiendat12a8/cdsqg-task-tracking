@@ -1,8 +1,8 @@
 // Shared Fixed Sections (Mục) & Groups (Nhóm) for Decision 1266 / Phụ lục I & II
 
 export const GOAL_SECTIONS = [
-  { value: 'Mục A', label: 'Mục A: MỤC TIÊU ĐẾN NĂM 2030' },
-  { value: 'Mục B', label: 'Mục B: MỤC TIÊU ĐẾN NĂM 2045' }
+  { value: 'Mục A', label: 'Mục A: Mục tiêu đến năm 2030' },
+  { value: 'Mục B', label: 'Mục B: Mục tiêu đến năm 2045' }
 ];
 
 export const GOAL_GROUPS = [
@@ -21,7 +21,7 @@ export const TASK_GROUPS = [
   { value: 'Nhóm IV: Phát triển nhân lực số', label: 'Nhóm IV: Phát triển nhân lực số' },
   { value: 'Nhóm V: Phát triển doanh nghiệp công nghệ số', label: 'Nhóm V: Phát triển doanh nghiệp công nghệ số' },
   { value: 'Nhóm VI: Tăng cường hợp tác quốc tế', label: 'Nhóm VI: Tăng cường hợp tác quốc tế' },
-  { value: 'Nhóm Thường Xuyên: Công tác truyền thông, chỉ đạo điều hành hàng năm', label: 'Nhóm Thường Xuyên: Công tác truyền thông, chỉ đạo điều hành hàng năm' }
+  { value: 'Nhóm Thường Xuyên: Công tác truyền thông, chỉ đạo điều hành hàng năm', label: 'Nhóm thường xuyên: Công tác truyền thông, chỉ đạo điều hành hàng năm' }
 ];
 
 export const YEAR_LIST = [

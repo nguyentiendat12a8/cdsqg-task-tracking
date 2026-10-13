@@ -4,7 +4,7 @@
     <!-- System Official Title Branding -->
     <div class="flex items-center gap-3">
       <div>
-        <h1 class="text-sm sm:text-base md:text-lg font-bold text-slate-800 leading-snug">
+        <h1 class="text-sm sm:text-base font-bold text-slate-800 leading-snug">
           Hệ thống theo dõi nhiệm vụ được giao tại Quyết định số 1266/QĐ-TTg ngày 14/07/2026
         </h1>
       </div>
@@ -46,9 +46,9 @@
               </div>
               <div class="overflow-hidden min-w-0 flex-1">
                 <div class="text-xs font-bold text-slate-900 truncate leading-snug">
-                  {{ user?.fullName || user?.username || 'Quản trị viên Hệ thống' }}
+                  {{ user?.fullName || user?.username || 'Quản trị viên hệ thống' }}
                 </div>
-                <div class="text-[11px] font-bold text-blue-600 mt-0.5 truncate" :title="userDisplayAgency">
+                <div class="text-xs font-bold text-blue-600 mt-0.5 truncate" :title="userDisplayAgency">
                   {{ userDisplayAgency }}
                 </div>
               </div>
@@ -91,8 +91,8 @@ const userMenuContainer = ref(null);
 const userDisplayAgency = computed(() => {
   if (props.user?.agencyName) return props.user.agencyName;
   if (props.user?.agency?.name) return props.user.agency.name;
-  if (authState.isAdmin.value) return 'Quản trị viên Hệ thống';
-  return 'Cơ quan / Đơn vị';
+  if (authState.isAdmin.value) return 'Quản trị viên hệ thống';
+  return 'Cơ quan / đơn vị';
 });
 
 function handleLogout() {

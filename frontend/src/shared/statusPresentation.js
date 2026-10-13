@@ -1,10 +1,10 @@
 export const executionStatuses = Object.freeze({
   NotStarted: { label: 'Chưa thực hiện', tone: 'slate' },
-  InProgressOnTime: { label: 'Đang thực hiện (trong hạn)', tone: 'emerald' },
+  InProgressOnTime: { label: 'Đang thực hiện (trong hạn)', tone: 'blue' },
   InProgressOverdue: { label: 'Đang thực hiện (quá hạn)', tone: 'rose' },
   ExpiringSoon: { label: 'Sắp hết hạn', tone: 'amber' },
-  CompletedOnTime: { label: 'Hoàn thành (đúng hạn)', tone: 'blue' },
-  CompletedOverdue: { label: 'Hoàn thành (quá hạn)', tone: 'orange' }
+  CompletedOnTime: { label: 'Hoàn thành (đúng hạn)', tone: 'emerald' },
+  CompletedOverdue: { label: 'Hoàn thành (quá hạn)', tone: 'teal' }
 });
 const labels = {
   InProgress: 'Đang thực hiện', Completed: 'Hoàn thành', Drafting: 'Đang xây dựng / soạn thảo',
@@ -17,7 +17,8 @@ const badges = {
   rose: 'border bg-rose-50 text-rose-700 border-rose-200',
   amber: 'border bg-amber-50 text-amber-700 border-amber-200',
   blue: 'border bg-blue-50 text-blue-700 border-blue-200',
-  orange: 'border bg-orange-50 text-orange-700 border-orange-200'
+  teal: 'border bg-teal-50 text-teal-700 border-teal-200',
+  orange: 'border bg-teal-50 text-teal-700 border-teal-200'
 };
 export function getStatusLabel(status) {
   return executionStatuses[status]?.label ?? labels[status] ?? (status || executionStatuses.NotStarted.label);

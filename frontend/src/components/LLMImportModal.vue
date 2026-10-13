@@ -9,8 +9,8 @@
             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
             AI Data Extraction - Human-in-the-Loop Review
           </span>
-          <h3 class="text-xl font-bold text-slate-800">Đồng Bộ Dữ Liệu Tự Động Từ LLM JSON</h3>
-          <p class="text-xs text-slate-500 mt-0.5">Kiểm tra, điều chỉnh các chỉ tiêu trích xuất từ Quyết định PDF trước khi ghi vào PostgreSQL</p>
+          <h3 class="text-xl font-bold text-slate-800">Đồng bộ dữ liệu tự động từ LLM JSON</h3>
+          <p class="text-xs text-slate-500 mt-0.5">Kiểm tra, điều chỉnh các chỉ tiêu trích xuất từ quyết định PDF trước khi ghi vào PostgreSQL</p>
         </div>
         <button @click="close" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1">✕</button>
       </div>
@@ -18,7 +18,7 @@
       <!-- JSON Input Area or Upload Button -->
       <div v-if="!payload" class="space-y-4">
         <div class="space-y-1.5">
-          <label class="text-xs font-bold text-slate-700 uppercase">Dán chuỗi JSON trích xuất từ LLM (Qwen2.5 / Gemma 4):</label>
+          <label class="text-xs font-semibold text-slate-700">Dán chuỗi JSON trích xuất từ LLM (Qwen2.5 / Gemma 4):</label>
           <textarea 
             v-model="rawJsonInput" 
             rows="8" 
@@ -29,10 +29,10 @@
 
         <div class="flex justify-between items-center">
           <button @click="loadSamplePayload" class="text-xs font-bold text-blue-600 hover:underline">
-            + Tải Dữ Liệu JSON Mẫu Quyết Định 749/QĐ-TTg
+            + Tải dữ liệu JSON mẫu quyết định 749/QĐ-TTg
           </button>
           <button @click="parseJson" class="ui-single-line px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm">
-            Xem Trước & Kiểm Tra (Preview)
+            Xem trước & kiểm tra
           </button>
         </div>
       </div>
@@ -43,36 +43,36 @@
         <!-- Document Meta Preview -->
         <div class="grid grid-cols-3 gap-4 bg-purple-50/70 p-4 rounded-xl border border-purple-100">
           <div>
-            <span class="text-[11px] font-bold text-purple-700 uppercase block">Số Hiệu Quyết Định</span>
-            <input v-model="payload.document.documentNumber" class="ui-single-line w-full text-sm font-bold bg-white border border-purple-200 rounded-lg px-2.5 py-1 text-slate-800" />
+            <span class="text-xs font-semibold text-purple-700 block">Số hiệu quyết định</span>
+            <input v-model="payload.document.documentNumber" class="ui-single-line w-full text-xs font-bold bg-white border border-purple-200 rounded-lg px-2.5 py-1 text-slate-800" />
           </div>
           <div>
-            <span class="text-[11px] font-bold text-purple-700 uppercase block">Khung Thời Gian</span>
-            <span class="text-sm font-bold text-purple-900 block mt-1">{{ payload.document.startYear }} - {{ payload.document.endYear }}</span>
+            <span class="text-xs font-semibold text-purple-700 block">Khung thời gian</span>
+            <span class="text-xs font-bold text-purple-900 block mt-1">{{ payload.document.startYear }} - {{ payload.document.endYear }}</span>
           </div>
           <div>
-            <span class="text-[11px] font-bold text-purple-700 uppercase block">Số Cơ Quan Phát Hiện</span>
-            <span class="text-sm font-bold text-purple-900 block mt-1">{{ payload.agencies.length }} Cơ quan</span>
+            <span class="text-xs font-semibold text-purple-700 block">Số cơ quan phát hiện</span>
+            <span class="text-xs font-bold text-purple-900 block mt-1">{{ formatNumber(payload.agencies.length) }} cơ quan</span>
           </div>
         </div>
 
         <!-- Editable Items Table -->
         <div class="overflow-x-auto border border-slate-200 rounded-xl max-h-72 overflow-y-auto">
           <table class="w-full text-left text-xs text-slate-700">
-            <thead class="bg-slate-100 uppercase text-slate-500 font-bold sticky top-0 border-b border-slate-200">
+            <thead class="bg-slate-100 text-slate-500 font-bold sticky top-0 border-b border-slate-200">
               <tr>
-                <th class="px-3 py-2.5">Cấp / Mã</th>
-                <th class="px-3 py-2.5">Tên Nhiệm Vụ / Mục Tiêu</th>
-                <th class="px-3 py-2.5">Chủ Trì</th>
+                <th class="px-3 py-2.5">Cấp / mã</th>
+                <th class="px-3 py-2.5">Tên nhiệm vụ / mục tiêu</th>
+                <th class="px-3 py-2.5">Chủ trì</th>
                 <th class="px-3 py-2.5">Loại</th>
-                <th class="px-3 py-2.5 text-center">Chỉ Tiêu Năm 2026</th>
-                <th class="px-3 py-2.5 text-center">Thao Tác</th>
+                <th class="px-3 py-2.5 text-center">Chỉ tiêu năm 2026</th>
+                <th class="px-3 py-2.5 text-center">Thao tác</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-100">
               <tr v-for="(item, idx) in payload.items" :key="idx" class="hover:bg-slate-50">
                 <td class="px-3 py-2 border-r border-slate-100">
-                  <span :class="['px-1.5 py-0.5 rounded font-bold text-[10px]', item.itemType === 'Goal' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800']">
+                  <span :class="['px-1.5 py-0.5 rounded font-bold text-xs', item.itemType === 'Goal' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800']">
                     {{ item.itemType }}
                   </span>
                   <input v-model="item.code" class="ui-single-line w-16 font-bold bg-white border border-slate-300 rounded px-1.5 py-0.5 mt-1 block" />
@@ -93,10 +93,9 @@
                   />
                 </td>
                 <td class="px-3 py-2 border-r border-slate-100 text-center">
-                  <input 
+                  <QuantityInput
                     v-if="item.baselines && item.baselines.length > 0" 
-                    type="number" 
-                    v-model.number="item.baselines[0].targetQuantity" 
+                    v-model="item.baselines[0].targetQuantity"
                     class="w-16 text-center font-bold bg-white border border-slate-300 rounded px-1 py-0.5" 
                   />
                   <span v-else class="text-slate-400">—</span>
@@ -112,7 +111,7 @@
         <!-- Footer Actions -->
         <div class="flex justify-between items-center border-t border-slate-100 pt-4">
           <button @click="payload = null" class="text-xs font-bold text-slate-500 hover:text-slate-700">
-            ← Nhập Lại Chuỗi JSON
+            ← Nhập lại chuỗi JSON
           </button>
 
           <div class="flex gap-3">
@@ -123,7 +122,7 @@
               class="ui-single-line px-6 py-2.5 text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 rounded-xl shadow-sm transition flex items-center gap-2"
             >
               <span v-if="isSyncing" class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-              {{ isSyncing ? 'Đang Đồng Bộ...' : 'Đồng Bộ Vào PostgreSQL' }}
+              {{ isSyncing ? 'Đang đồng bộ...' : 'Đồng bộ vào PostgreSQL' }}
             </button>
           </div>
         </div>
@@ -135,6 +134,8 @@
 </template>
 
 <script setup>
+import { formatNumber } from "../shared/formatters";
+import QuantityInput from './QuantityInput.vue';
 import { ref } from 'vue';
 import SearchableSelect from './SearchableSelect.vue';
 import { toast } from 'vue3-toastify';

@@ -50,7 +50,8 @@ namespace Cdsqg.Application.Services
                 throw new KeyNotFoundException($"Không tìm thấy Nhiệm vụ với ID: {taskId}");
             }
 
-            if (dto.PeriodYear is < 1900 or > 9999 || dto.Value < 0)
+            ReportingPeriod.ValidateYear(dto.PeriodYear);
+            if (dto.Value < 0)
                 throw new InvalidOperationException("Năm báo cáo hoặc giá trị không hợp lệ.");
             if (task.EvaluationType == EvaluationTypeEnum.Quantitative && !dto.Value.HasValue)
                 throw new InvalidOperationException("Vui lòng nhập giá trị đạt được trong năm.");
@@ -356,6 +357,8 @@ namespace Cdsqg.Application.Services
                 ItemType = task != null ? task.ItemType.ToString() : "Task",
                 PeriodYear = log.PeriodYear,
                 ActualValue = log.QuantitativeValue,
+                ApprovalStatus = log.ApprovalStatus.ToString(),
+                AgencyId = log.AgencyId,
                 Status = log.QualitativeStatus?.ToString(),
                 CompletionPercentage = task == null ? null : ProgressCalculator.Evaluate(task, log, log.Deliverables, log.AgencyId).Percentage,
                 SummaryNotes = log.SummaryNotes,
@@ -440,10 +443,6 @@ namespace Cdsqg.Application.Services
                     {
                         createdByStr = log.Agency.Name;
                     }
-                    else if (!createdByStr.StartsWith(log.Agency.Name))
-                    {
-                        createdByStr = $"{log.Agency.Name} ({createdByStr})";
-                    }
                 }
                 else if (string.IsNullOrWhiteSpace(createdByStr) ||
                     createdByStr == "System User" ||
@@ -508,6 +507,8 @@ namespace Cdsqg.Application.Services
                     LogDate = log.LogDate,
                     CalculatedAlert = log.CalculatedAlert,
                     CreatedBy = createdByStr,
+                    AgencyName = log.Agency?.Name ?? defaultAgencyName,
+                    AgencyCode = log.Agency?.Code ?? string.Empty,
                     ApprovalStatus = log.ApprovalStatus.ToString(),
                     RejectionReason = log.RejectionReason,
                     ApprovedBy = log.ApprovedBy,
@@ -742,19 +743,50 @@ namespace Cdsqg.Application.Services
                     continue;
                 }
 
+                var reportingAgency = isAdmin && task.IsGeneralTask && dto.ReportingAgencyId.HasValue
+                    ? await _context.Agencies.FindAsync(dto.ReportingAgencyId.Value)
+                    : userAgency ?? task.LeadAgency;
+                if (task.IsGeneralTask && (reportingAgency == null || reportingAgency.Code.StartsWith("ALL_")))
+                {
+                    response.Results.Add(new() { Code = task.Code, Title = task.Title, Success = false, Message = "Chọn cơ quan báo cáo cụ thể khi import mục tiêu/nhiệm vụ chung." });
+                    response.FailureCount++;
+                    continue;
+                }
                 var submitDto = new SubmitProgressRequestDto
                 {
                     PeriodYear = item.PeriodYear > 0 ? item.PeriodYear : 2026,
                     Value = item.Value,
                     Status = item.Status,
                     SummaryNotes = item.SummaryNotes ?? string.Empty,
-                    AgencyId = userAgency?.Id ?? task.LeadAgencyId,
-                    CreatedBy = userAgency?.Name ?? "Import Excel",
+                    AgencyId = reportingAgency?.Id ?? task.LeadAgencyId,
+                    CreatedBy = string.IsNullOrWhiteSpace(dto.CreatedBy) ? "Người import chưa được ghi nhận" : dto.CreatedBy,
                     UserRole = isAdmin ? "Admin" : "AgencyUser"
                 };
 
                 try
                 {
+                    if (task.EvaluationType == EvaluationTypeEnum.Qualitative)
+                    {
+                        var allowed = new[] { "NotStarted", "Drafting", "Completed" };
+                        if (task.Deliverables.Count > 0)
+                        {
+                            var products = item.Deliverables;
+                            if (products == null || products.Count != task.Deliverables.Count || products.Select(d => d.Id).Distinct().Count() != products.Count
+                                || products.Any(d => !task.Deliverables.Any(required => required.Id == d.Id) || !allowed.Contains(d.CurrentStatus)))
+                                throw new InvalidOperationException("Báo cáo phải có đúng các sản phẩm và chọn một trong ba trạng thái cho từng sản phẩm.");
+                            var previous = PlanningService.GetDeliverablesForAgency(task, reportingAgency?.Id);
+                            submitDto.Deliverables = task.Deliverables.Select(d =>
+                            {
+                                var old = previous.FirstOrDefault(p => p.Id == d.Id) ?? d;
+                                return new TaskDeliverable { Id = d.Id, Title = d.Title, DueDate = d.DueDate,
+                                    CurrentStatus = products.Single(p => p.Id == d.Id).CurrentStatus,
+                                    DocumentNumber = old.DocumentNumber, PromulgationDate = old.PromulgationDate,
+                                    AttachmentUrl = old.AttachmentUrl, AttachmentName = old.AttachmentName };
+                            }).ToList();
+                        }
+                        else if (!item.Status.HasValue || !allowed.Contains(item.Status.Value.ToString()))
+                            throw new InvalidOperationException("Chọn một trong ba trạng thái của nhiệm vụ.");
+                    }
                     var submitResult = await SubmitProgressAsync(task.Id, submitDto);
                     bool isPending = submitResult.ApprovalStatus == "Pending";
 

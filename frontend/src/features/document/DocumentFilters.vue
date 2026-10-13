@@ -14,8 +14,8 @@
 
             <!-- OverlayPanel Advanced Filter Popover -->
             <OverlayPanel
-              title="Bộ Lọc Tìm Kiếm Nâng Cao"
-              buttonText="Lọc Nâng Cao"
+              title="Bộ lọc tìm kiếm nâng cao"
+              buttonText="Lọc nâng cao"
               :activeCount="activeFilterCount"
               widthClass="w-[320px] sm:w-[480px] max-w-[90vw]"
               @apply="execFilterSearch"
@@ -27,7 +27,7 @@
                     v-model="filterDraft.selectedAgencyIds"
                     :options="leadAgencyOptions"
                     :isMulti="true"
-                    label="Cơ Quan Chủ Trì"
+                    label="Cơ quan chủ trì"
                     placeholder="Tất cả cơ quan chủ trì"
                   />
                 </div>
@@ -37,19 +37,19 @@
                     v-model="filterDraft.selectedSubAgencyIds"
                     :options="subAgencyOptions"
                     :isMulti="true"
-                    label="Đơn Vị Trực Thuộc"
+                    label="Đơn vị trực thuộc"
                     placeholder="Tất cả đơn vị trực thuộc"
                   />
                 </div>
 
-                <!-- Combined 2-Column Row: Phạm Vi & Trạng Thái Hạng Mục -->
+                <!-- Combined 2-Column Row: Phạm vi & Trạng thái hạng mục -->
                 <div class="grid grid-cols-2 gap-3">
                   <div>
                     <SearchableSelect
                       v-model="filterDraft.selectedScopes"
                       :options="scopeOptions"
                       :isMulti="true"
-                      label="Phạm Vi"
+                      label="Phạm vi"
                       placeholder="Tất cả phạm vi"
                     />
                   </div>
@@ -59,7 +59,7 @@
                       v-model="filterDraft.selectedStatuses"
                       :options="statusOptions"
                       :isMulti="true"
-                      label="Trạng Thái Hạng Mục"
+                      label="Trạng thái hạng mục"
                       placeholder="Tất cả trạng thái"
                     />
                   </div>
@@ -80,15 +80,15 @@
                     v-model="filterDraft.selectedGroups"
                     :options="groupFilterOptions"
                     :isMulti="true"
-                    label="Nhóm Trọng Tâm"
+                    label="Nhóm trọng tâm"
                     placeholder="Tất cả nhóm"
                   />
                 </div>
 
                 <div>
                   <div class="flex items-center justify-between mb-1">
-                    <label class="text-[10px] font-bold text-slate-500 uppercase tracking-wider block">Giai Đoạn (Từ năm ➔ Đến năm)</label>
-                    <label class="inline-flex items-center gap-1 cursor-pointer text-[10px] font-bold text-blue-700 select-none">
+                    <label class="text-xs font-semibold text-slate-600 block">Giai đoạn (từ năm ➔ đến năm)</label>
+                    <label class="inline-flex items-center gap-1 cursor-pointer text-xs font-bold text-blue-700 select-none">
                       <input type="checkbox" v-model="filterDraft.onlyOngoing" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5">
                       <span>Thường xuyên</span>
                     </label>

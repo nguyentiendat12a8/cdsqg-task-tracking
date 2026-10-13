@@ -9,7 +9,7 @@
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 01-2-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           </span>
           <div>
-            <h1 class="text-xl font-bold text-slate-800">Danh Mục Văn Bản & Quyết Định Chỉ Đạo</h1>
+            <h1 class="text-xl font-bold text-slate-800">Danh mục văn bản & quyết định chỉ đạo</h1>
             <p class="text-xs text-slate-500 mt-0.5">Quản lý các chương trình, chiến lược và văn bản chỉ đạo CĐS Quốc gia</p>
           </div>
         </div>
@@ -21,41 +21,37 @@
           class="ui-single-line px-4 py-2.5 bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold text-xs rounded-xl border border-purple-200/80 transition flex items-center gap-2 shadow-2xs"
         >
           <svg class="w-4 h-4 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
-          AI LLM Import JSON
+          Nhập dữ liệu AI (JSON)
         </button>
 
-        <button 
-          @click="isDecisionModalOpen = true" 
-          class="ui-single-line px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition flex items-center gap-2 shadow-sm"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-          Thêm Quyết Định
-        </button>
+        <ActionButton kind="create" 
+          @click="isDecisionModalOpen = true"
+        >Thêm quyết định</ActionButton>
       </div>
     </div>
 
     <!-- Document Level Summary Cards -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 w-full">
       <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
-        <span class="text-xs font-bold text-slate-400 uppercase">Tổng Số Văn Bản Chỉ Đạo</span>
-        <div class="text-3xl font-bold text-slate-800 mt-1.5">{{ documents.length }}</div>
-        <span class="text-xs text-slate-500 mt-1 block">Quyết định / Nghị quyết đang lưu vết</span>
+        <span class="text-xs font-semibold text-slate-500 block">Tổng số văn bản chỉ đạo</span>
+        <div class="text-3xl font-bold text-slate-800 mt-1.5">{{ formatNumber(documents.length) }}</div>
+        <span class="text-xs text-slate-500 mt-1 block">Quyết định / nghị quyết đang lưu vết</span>
       </div>
 
       <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
-        <span class="text-xs font-bold text-purple-600 uppercase">Tổng Mục Tiêu Chiến Lược</span>
-        <div class="text-3xl font-bold text-purple-900 mt-1.5">{{ totalGoalsSum }}</div>
+        <span class="text-xs font-semibold text-purple-700 block">Tổng mục tiêu chiến lược</span>
+        <div class="text-3xl font-bold text-purple-900 mt-1.5">{{ formatNumber(totalGoalsSum) }}</div>
         <span class="text-xs text-slate-500 mt-1 block">Mục tiêu tổng thể thuộc các văn bản</span>
       </div>
 
       <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200/80">
-        <span class="text-xs font-bold text-blue-600 uppercase">Tổng Nhiệm Vụ Thực Thi</span>
-        <div class="text-3xl font-bold text-blue-900 mt-1.5">{{ totalTasksSum }}</div>
-        <span class="text-xs text-slate-500 mt-1 block">Nhiệm vụ cụ thể giao các Bộ/Ngành</span>
+        <span class="text-xs font-semibold text-blue-700 block">Tổng nhiệm vụ thực thi</span>
+        <div class="text-3xl font-bold text-blue-900 mt-1.5">{{ formatNumber(totalTasksSum) }}</div>
+        <span class="text-xs text-slate-500 mt-1 block">Nhiệm vụ cụ thể giao các bộ/ngành</span>
       </div>
 
       <div class="bg-emerald-50/80 p-5 rounded-2xl border border-emerald-200 shadow-sm">
-        <span class="text-xs font-bold text-emerald-800 uppercase">Tiến Độ Trung Bình Hợp Nhất</span>
+        <span class="text-xs font-semibold text-emerald-800 block">Tiến độ trung bình hợp nhất</span>
         <div class="text-3xl font-bold text-emerald-700 mt-1.5">{{ avgCompletionRate }}%</div>
         <span class="text-xs font-semibold text-emerald-600 mt-1 block">Tỉ lệ hoàn thành các chỉ tiêu</span>
       </div>
@@ -85,7 +81,7 @@
           </button>
         </div>
 
-        <span class="text-xs text-slate-500 font-bold shrink-0">Tổng cộng {{ totalCount }} văn bản (Trang {{ pageNumber }}/{{ totalPages }})</span>
+        <span class="text-xs text-slate-500 font-bold shrink-0">Tổng cộng {{ formatNumber(totalCount) }} văn bản (Trang {{ pageNumber }}/{{ totalPages }})</span>
       </div>
 
       <!-- Document Cards Grid Content Area -->
@@ -93,7 +89,7 @@
         <LoadingSpinner v-if="isLoading" text="Đang tải danh sách văn bản chỉ đạo..." />
 
         <div v-else-if="filteredDocuments.length === 0" class="p-12 text-center text-slate-500 font-semibold w-full">
-          Chưa có văn bản nào trong hệ thống. Hãy nhấp nút "Thêm Quyết Định" để tạo mới.
+          Chưa có văn bản nào trong hệ thống. Hãy nhấp nút "Thêm quyết định" để tạo mới.
         </div>
 
         <div v-else class="max-h-[calc(100vh-340px)] overflow-y-auto custom-scrollbar p-1">
@@ -110,7 +106,7 @@
                     <span class="px-2.5 py-1 bg-blue-100 text-blue-900 font-bold text-xs rounded-lg group-hover:bg-blue-600 group-hover:text-white transition">
                       {{ doc.documentNumber }}
                     </span>
-                    <span class="px-2 py-0.5 bg-slate-100 text-slate-600 font-semibold text-[11px] rounded">
+                    <span class="px-2 py-0.5 bg-slate-100 text-slate-600 font-semibold text-xs rounded">
                       Giai đoạn {{ doc.startYear }}-{{ doc.endYear }}
                     </span>
                   </div>
@@ -145,10 +141,10 @@
                 <!-- Goals & Tasks Badges -->
                 <div class="flex items-center gap-3 pt-1">
                   <div class="flex items-center gap-1.5 text-xs font-bold text-purple-800 bg-purple-50 border border-purple-100 px-3 py-1.5 rounded-xl">
-                    <span>🎯 {{ doc.totalGoals }} Mục tiêu</span>
+                    <span>🎯 {{ formatNumber(doc.totalGoals) }} mục tiêu</span>
                   </div>
                   <div class="flex items-center gap-1.5 text-xs font-bold text-blue-800 bg-blue-50 border border-blue-100 px-3 py-1.5 rounded-xl">
-                    <span>📋 {{ doc.totalTasks }} Nhiệm vụ</span>
+                    <span>📋 {{ formatNumber(doc.totalTasks) }} nhiệm vụ</span>
                   </div>
                 </div>
               </div>
@@ -177,12 +173,12 @@
                     class="text-xs font-bold text-purple-700 hover:text-purple-900 bg-purple-50 hover:bg-purple-100 border border-purple-200 px-3 py-1.5 rounded-xl transition flex items-center gap-1"
                   >
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
-                    File Đính Kèm
+                    File đính kèm
                   </a>
                   <span v-else class="text-xs text-slate-400 italic">Không có file đính kèm</span>
 
                   <span class="text-xs font-bold text-blue-600 group-hover:translate-x-1 transition flex items-center gap-1">
-                    Chi tiết & Kế hoạch →
+                    Chi tiết & kế hoạch →
                   </span>
                 </div>
               </div>
@@ -194,7 +190,7 @@
       <!-- Attached Server Pagination Controls -->
       <div v-if="totalPages > 1" class="flex flex-col sm:flex-row items-center justify-between bg-slate-50/70 p-4 border-t border-slate-200/80 w-full gap-3 text-xs text-slate-600 font-semibold">
         <span>
-          Hiển thị {{ (pageNumber - 1) * pageSize + 1 }} - {{ Math.min(pageNumber * pageSize, totalCount) }} / {{ totalCount }} văn bản
+          Hiển thị {{ (pageNumber - 1) * pageSize + 1 }} - {{ formatNumber(Math.min(pageNumber * pageSize, totalCount)) }} / {{ formatNumber(totalCount) }} văn bản
         </span>
 
         <div class="flex items-center gap-2">
@@ -234,6 +230,8 @@
 </template>
 
 <script setup>
+import ActionButton from "../components/ActionButton.vue";
+import { formatNumber } from "../shared/formatters";
 import { formatDate } from '../shared/formatters';
 import { fetchWithAuth } from '../services/auth';
 

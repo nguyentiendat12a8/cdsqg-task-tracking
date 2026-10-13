@@ -5,8 +5,8 @@
       <!-- Modal Header -->
       <div class="flex justify-between items-start border-b border-slate-100 pb-3 gap-3 shrink-0">
         <div class="min-w-0 flex-1">
-          <span class="text-xs font-bold text-blue-700 uppercase tracking-wider block">Báo Cáo Tiến Độ Thực Hiện</span>
-          <h3 class="text-xs sm:text-sm font-semibold text-slate-700 mt-1 leading-relaxed break-words">{{ taskCode }} - {{ taskTitle }}</h3>
+          <span role="heading" aria-level="2" class="text-xs font-bold text-blue-700 block">Báo cáo tiến độ thực hiện</span>
+          <p class="text-sm font-semibold text-slate-700 mt-1 leading-relaxed break-words">{{ taskCode }} - {{ taskTitle }}</p>
         </div>
         <button @click="close" class="text-slate-400 hover:text-slate-600 text-xl font-bold p-1 cursor-pointer shrink-0">✕</button>
       </div>
@@ -25,8 +25,8 @@
 
           <!-- Select Reporting Agency for General Task / Admin -->
           <div v-if="showAgencySelector" class="space-y-1.5 bg-purple-50/80 p-3.5 rounded-xl border border-purple-200/90 shadow-2xs">
-            <label class="text-sm font-semibold text-purple-950 uppercase flex items-center gap-1.5 flex-wrap">
-              <span>🏛️ Cơ Quan / Đơn Vị Báo Cáo Tiến Độ</span>
+            <label class="text-xs font-semibold text-purple-950 flex items-center gap-1.5 flex-wrap">
+              <span>🏛️ Cơ quan / đơn vị báo cáo tiến độ</span>
               <span class="text-rose-500">*</span>
             </label>
             <SearchableSelect 
@@ -39,31 +39,29 @@
           </div>
 
           <div class="space-y-1 rounded-xl bg-slate-50 border border-slate-200 p-3">
-            <label class="text-sm font-semibold text-slate-700">Năm báo cáo <span class="text-rose-500">*</span></label>
+            <label class="text-xs font-semibold text-slate-700">Năm báo cáo <span class="text-rose-500">*</span></label>
             <SearchableSelect v-model="form.periodYear" :options="yearOptions" :isMulti="false" :clearable="false" placeholder="Chọn năm" />
-            <p class="text-xs text-slate-500">Báo cáo theo năm. Bản sửa thay thế số liệu của cùng năm khi được phê duyệt.</p>
           </div>
 
           <!-- Quantitative vs Qualitative Progress Inputs -->
           <div v-if="evaluationType === 'Quantitative'" class="space-y-1">
-            <label class="text-sm font-semibold text-slate-700 uppercase">TỔNG KẾT QUẢ ĐÃ ĐẠT ĐẾN NĂM BÁO CÁO <span class="text-rose-500">*</span></label>
-            <p class="text-xs text-slate-500">Nhập tổng đã đạt đến năm {{ form.periodYear }}. Ví dụ năm trước đạt 15, đến năm báo cáo đạt 35: nhập 35, không nhập phần tăng thêm 20.</p>
+            <label class="text-xs font-semibold text-slate-700">Tổng kết quả đã đạt đến năm báo cáo <span class="text-rose-500">*</span></label>
             <div class="relative">
-              <input 
-                type="number" 
+              <QuantityInput  
                 step="0.01"
-                v-model.number="form.value" 
+                v-model="form.value" 
                 required 
                 placeholder="Nhập con số thực tế..." 
                 class="ui-single-line ui-control w-full text-base font-bold text-slate-800 bg-slate-50 border border-slate-300 rounded-xl pl-3.5 pr-10 py-2.5 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
               />
               <span v-if="!unitName || unitName === '%'" class="absolute right-3.5 top-3 text-sm font-bold text-slate-400 pointer-events-none">%</span>
             </div>
+            <p class="text-xs text-slate-500">Nhập kết quả thực tế. Mức hoàn thành chỉ tiêu được tính bằng kết quả thực tế chia cho chỉ tiêu của năm báo cáo × 100%.</p>
           </div>
 
           <!-- Status Input (Only shown when task has NO deliverables and is Qualitative) -->
           <div v-if="(!localDeliverables || localDeliverables.length === 0) && evaluationType !== 'Quantitative'" class="space-y-1">
-            <label class="text-sm font-semibold text-slate-700 uppercase block">TRẠNG THÁI THỰC HIỆN NHIỆM VỤ <span class="text-rose-500">*</span></label>
+            <label class="text-xs font-semibold text-slate-700 block">Trạng thái thực hiện nhiệm vụ <span class="text-rose-500">*</span></label>
             <SearchableSelect 
               v-model="form.status" 
               :options="qualitativeStatusOptions" 
@@ -77,25 +75,25 @@
           <div v-if="localDeliverables && localDeliverables.length > 0" class="border border-slate-200 rounded-xl p-3 bg-slate-50/70 space-y-3">
             <div class="flex items-center justify-between gap-2 flex-wrap border-b border-slate-200/80 pb-2">
               <div class="flex items-center gap-2">
-                <span class="text-xs font-bold text-blue-900 uppercase">📋 Cập Nhật Tiến Độ Danh Mục Sản Phẩm Đầu Ra</span>
-                <span class="text-[11px] font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">{{ localDeliverables.length }} Sản phẩm</span>
+                <span class="text-xs font-bold text-blue-900">📋 Cập nhật tiến độ danh mục sản phẩm đầu ra</span>
+                <span class="text-xs font-bold text-blue-700 bg-blue-100 px-2 py-0.5 rounded-full">{{ formatNumber(localDeliverables.length) }} sản phẩm</span>
               </div>
             </div>
 
             <div class="space-y-2.5 max-h-56 overflow-y-auto pr-1 custom-scrollbar">
               <div 
                 v-for="(del, idx) in localDeliverables" 
-                :key="idx"
+                :key="idx" 
                 class="bg-white p-3 rounded-xl border border-slate-200 shadow-2xs space-y-2"
               >
                 <div class="flex items-center justify-between border-b border-slate-100 pb-1.5">
                   <span class="text-xs font-bold text-slate-900">{{ idx + 1 }}. {{ del.title }}</span>
-                  <span v-if="del.dueDate" class="text-[10px] font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">Hạn: {{ formatDate(del.dueDate) }}</span>
+                  <span v-if="del.dueDate" class="text-xs font-bold text-slate-500 bg-slate-100 px-1.5 py-0.5 rounded">Hạn: {{ formatDate(del.dueDate) }}</span>
                 </div>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                   <div>
-                    <label class="text-[10px] font-semibold text-slate-600">Trạng Thái Mốc Sản Phẩm</label>
+                    <label class="text-xs font-semibold text-slate-600">Trạng thái mốc sản phẩm</label>
                     <SearchableSelect 
                       v-model="del.currentStatus" 
                       :options="qualitativeStatusOptions" 
@@ -105,7 +103,7 @@
                   </div>
 
                   <div>
-                    <label class="text-[10px] font-semibold text-slate-600">Số / Ký Hiệu Văn Bản</label>
+                    <label class="text-xs font-semibold text-slate-600">Số / ký hiệu văn bản</label>
                     <input 
                       v-model="del.documentNumber" 
                       placeholder="VD: 45/2026/NĐ-CP" 
@@ -119,37 +117,44 @@
 
           <!-- Evidence Multi-File Picker (IFormFile Array) -->
           <div class="space-y-2">
-            <label class="text-sm font-semibold text-slate-700 uppercase flex items-center justify-between">
-              <span>Văn Bản Minh Chứng (File PDF/Word/Excel)</span>
-              <span v-if="selectedFiles.length > 0" class="text-[11px] text-blue-600 font-semibold">Đã chọn {{ selectedFiles.length }} file</span>
+            <label id="progress-evidence-label" class="text-sm font-semibold text-slate-700 block">
+              Văn bản minh chứng (PDF, Word, Excel)
             </label>
-            
-            <input 
-              type="file" 
+            <input
+              type="file"
               ref="fileInput"
               multiple
-              @change="handleFilesChange" 
+              @change="handleFilesChange"
               accept=".pdf,.doc,.docx,.xls,.xlsx"
-              class="ui-control w-full text-base sm:text-sm text-slate-600 bg-slate-50 border border-slate-300 rounded-xl p-2.5 focus:bg-white file:mr-3 file:py-1 file:px-3 file:rounded-lg file:border-0 file:text-base sm:text-sm file:font-bold file:bg-blue-100 file:text-blue-800 hover:file:bg-blue-200 cursor-pointer"
+              aria-labelledby="progress-evidence-label"
+              class="hidden"
             />
-
+            <div class="flex flex-col sm:flex-row sm:items-center gap-3 rounded-lg border border-slate-300 bg-slate-50 p-3">
+              <button type="button" @click="fileInput?.click()" :disabled="isSubmitting" class="ui-single-line shrink-0 px-4 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 text-sm font-semibold hover:bg-blue-100 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-600 disabled:opacity-50">
+                Chọn tệp minh chứng
+              </button>
+              <span role="status" aria-live="polite" class="text-sm text-slate-600">
+                {{ selectedFiles.length ? `Đã chọn ${selectedFiles.length} tệp` : 'Chưa chọn tệp nào' }}
+              </span>
+            </div>
+            <p class="text-xs text-slate-600">Có thể chọn nhiều tệp và bổ sung minh chứng sau.</p>
             <!-- Selected Files List with Removal Buttons -->
             <div v-if="selectedFiles.length > 0" class="space-y-1.5 pt-1 max-h-36 overflow-y-auto pr-1">
               <div 
                 v-for="(file, index) in selectedFiles" 
                 :key="index"
-                class="flex items-center justify-between bg-slate-50 rounded-lg px-3 py-1.5 border border-slate-200 text-xs text-slate-700 hover:border-slate-300 transition"
+                class="flex items-center justify-between gap-3 bg-slate-50 rounded-lg px-3 py-2 border border-slate-200 text-sm text-slate-700"
               >
-                <div class="flex items-center gap-2 truncate pr-2">
+                <div class="flex flex-wrap items-center gap-2 min-w-0 flex-1">
                   <span class="text-blue-600 font-bold">📄</span>
-                  <span class="truncate font-medium text-slate-800">{{ file.name }}</span>
-                  <span class="text-[10px] text-slate-400 font-mono">({{ (file.size / 1024 / 1024).toFixed(2) }} MB)</span>
+                  <span class="break-all font-medium text-slate-800">{{ file.name }}</span>
+                  <span class="text-xs text-slate-600 whitespace-nowrap">({{ (file.size / 1024 / 1024).toFixed(2) }} MB)</span>
                 </div>
                 <button 
                   type="button" 
                   @click="removeFile(index)" 
                   class="text-slate-400 hover:text-rose-600 font-bold px-1.5 py-0.5 rounded-md hover:bg-rose-50 transition text-sm"
-                  title="Xóa file này khỏi danh sách"
+                  :aria-label="`Xóa tệp ${file.name}`" :disabled="isSubmitting" title="Xóa tệp khỏi danh sách"
                 >
                   ✕
                 </button>
@@ -159,8 +164,8 @@
 
           <!-- Existing Attached Files Section -->
           <div v-if="existingFiles.length > 0" class="space-y-1.5 p-3 bg-purple-50/80 rounded-xl border border-purple-200">
-            <label class="text-[11px] font-semibold text-purple-900 uppercase block">
-              📄 File Minh Chứng Đã Đính Kèm ({{ existingFiles.length }} file)
+            <label class="text-xs font-semibold text-purple-900 block">
+              📄 File minh chứng đã đính kèm ({{ formatNumber(existingFiles.length) }} tệp)
             </label>
             <div class="space-y-1.5">
               <div v-for="(fileUrl, idx) in existingFiles" :key="idx" class="flex items-center justify-between text-xs gap-2 bg-white p-2 rounded-xl border border-purple-100 shadow-2xs">
@@ -178,7 +183,7 @@
                     :href="getFileUrl(fileUrl)" 
                     target="_blank" 
                     download
-                    class="inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-purple-700 hover:text-white bg-purple-100 hover:bg-purple-600 rounded-lg transition-all cursor-pointer"
+                    class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-purple-700 hover:text-white bg-purple-100 hover:bg-purple-600 rounded-lg transition-all cursor-pointer"
                     title="Tải file minh chứng về máy"
                   >
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -190,7 +195,7 @@
                   <button 
                     type="button" 
                     @click="removeExistingFile(idx)" 
-                    class="ui-single-line inline-flex items-center gap-1 px-2.5 py-1 text-[11px] font-bold text-rose-600 hover:text-white bg-rose-50 hover:bg-rose-600 rounded-lg transition-all border border-rose-200 cursor-pointer"
+                    class="ui-single-line inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-rose-600 hover:text-white bg-rose-50 hover:bg-rose-600 rounded-lg transition-all border border-rose-200 cursor-pointer"
                     title="Xóa file đính kèm này"
                   >
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -205,12 +210,12 @@
 
           <!-- Notes Area -->
           <div class="space-y-1">
-            <label class="text-sm font-semibold text-slate-700 uppercase">Nội dung giải trình / Ghi chú</label>
+            <label class="text-xs font-semibold text-slate-700">Nội dung giải trình / ghi chú</label>
             <textarea 
               v-model="form.notes" 
               rows="3" 
               placeholder="Tóm tắt kết quả triển khai hoặc khó khăn vướng mắc..."
-              class="ui-control w-full text-base sm:text-sm text-slate-800 bg-slate-50 border border-slate-300 rounded-xl p-3 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
+              class="ui-control w-full text-base sm:text-xs text-slate-800 bg-slate-50 border border-slate-300 rounded-xl p-3 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
             ></textarea>
           </div>
         </div>
@@ -220,11 +225,11 @@
           <button type="button" @click="close" class="ui-single-line px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Hủy</button>
           <button 
             type="submit" 
-            :disabled="isSubmitting || (hasPendingApproval && !authState.isAdmin.value)"
+            :disabled="isSubmitting || isLoadingExisting || (hasPendingApproval && !authState.isAdmin.value)"
             :class="['px-5 py-2.5 text-xs font-bold text-white rounded-xl shadow-2xs transition flex items-center gap-1.5 cursor-pointer', (isSubmitting || (hasPendingApproval && !authState.isAdmin.value)) ? 'bg-slate-400 cursor-not-allowed opacity-60' : 'bg-blue-600 hover:bg-blue-700']"
           >
             <span v-if="isSubmitting" class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-            {{ isSubmitting ? 'Đang gửi...' : 'Gửi Báo Cáo Tiến Độ' }}
+            {{ isSubmitting ? 'Đang gửi...' : 'Gửi báo cáo tiến độ' }}
           </button>
         </div>
 
@@ -235,8 +240,11 @@
 </template>
 
 <script setup>
+import { formatNumber } from "../shared/formatters";
+import QuantityInput from './QuantityInput.vue';
+import { reportStatusOptions } from '../shared/reportStatuses';
 import { formatDate, formatFileName } from '../shared/formatters';
-import { REPORTING_YEARS } from '../config/reporting';
+import { availableReportingYears, currentReportingYear, isValidReportingYear } from '../config/reporting';
 import { fetchWithAuth } from '../services/auth';
 
 import { ref, computed, watch } from 'vue';
@@ -316,13 +324,9 @@ const reportingAgencyOptions = computed(() => {
 
 const emit = defineEmits(['close', 'submitted']);
 
-const yearOptions = REPORTING_YEARS.map(year => ({ value: year, label: 'Năm ' + year }));
+const yearOptions = availableReportingYears().map(year => ({ value: year, label: 'Năm ' + year }));
 
-const qualitativeStatusOptions = [
-  { value: 'NotStarted', label: 'Chưa thực hiện' },
-  { value: 'Drafting', label: 'Đang thực hiện' },
-  { value: 'Completed', label: 'Đã hoàn thành' }
-];
+const qualitativeStatusOptions = reportStatusOptions;
 
 function getQualitativeStatusLabel(val) {
   if (val === 'Reviewing' || val === 'Submitted' || val === '2' || val === '3') return 'Đang thực hiện';
@@ -334,7 +338,7 @@ function getQualitativeStatusLabel(val) {
 
 const form = ref({
   selectedAgencyId: '',
-  periodYear: 2026,
+  periodYear: currentReportingYear(),
   value: null,
   status: 'Drafting',
   notes: ''
@@ -417,15 +421,20 @@ function getFileUrl(path) {
   return getApiUrl(path.trim());
 }
 
+let progressRequestId = 0;
 async function fetchExistingProgress() {
   if (!props.taskId || !props.isOpen) return;
+  const requestId = ++progressRequestId;
   isLoadingExisting.value = true;
   try {
     const targetAgencyId = form.value.selectedAgencyId || authState.user.value?.agencyId || props.leadAgencyId || '';
     const agencyQuery = targetAgencyId ? `&agencyId=${targetAgencyId}` : '';
     const res = await fetchWithAuth(getApiUrl(`/api/execution/tasks/${props.taskId}/progress?year=${form.value.periodYear}${agencyQuery}`));
+    if (requestId !== progressRequestId || !props.isOpen) return;
+    if (!res.ok) throw new Error('Không tải được báo cáo đã lưu.');
     if (res.ok && res.status !== 204) {
       const text = await res.text();
+      if (requestId !== progressRequestId || !props.isOpen) return;
       if (text && text.trim().length > 0) {
         const data = JSON.parse(text);
         if (data) {
@@ -452,11 +461,11 @@ async function fetchExistingProgress() {
     resetFormFields();
     initialSnapshot.value = captureSnapshot();
   } catch (e) {
+    if (requestId !== progressRequestId || !props.isOpen) return;
     console.error('Failed to fetch existing progress log:', e);
-    resetFormFields();
-    initialSnapshot.value = captureSnapshot();
+    toast.error('Không tải được báo cáo đã lưu. Vui lòng mở lại hoặc chọn lại năm báo cáo.');
   } finally {
-    isLoadingExisting.value = false;
+    if (requestId === progressRequestId) isLoadingExisting.value = false;
   }
 }
 
@@ -503,11 +512,14 @@ watch(() => localDeliverables.value, (newDels) => {
 }, { deep: true, immediate: true });
 
 function close() {
+  progressRequestId++;
+  isLoadingExisting.value = false;
   resetFormFields();
   emit('close');
 }
 
 async function submitProgress() {
+  if (isLoadingExisting.value || isSubmitting.value) return;
   if (props.hasPendingApproval && !authState.isAdmin.value) {
     toast.warning("Nhiệm vụ này đang ở trạng thái Chờ duyệt. Vui lòng chờ Cấp 2 phê duyệt hoặc từ chối trước khi gửi báo cáo mới.");
     return;
@@ -515,6 +527,10 @@ async function submitProgress() {
 
   if (!form.value.periodYear) {
     toast.error("Vui lòng chọn Năm Báo Cáo!");
+    return;
+  }
+  if (!isValidReportingYear(form.value.periodYear)) {
+    toast.error('Năm báo cáo không được lớn hơn năm hiện tại.');
     return;
   }
   if (showAgencySelector.value && !form.value.selectedAgencyId) {

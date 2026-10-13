@@ -55,7 +55,7 @@ try {
     fixture.authState.user.value = { role: 1, username: 'review', fullName: 'Kiểm thử' };
     fixture.authState.token.value = 'fixture-token';
     document.querySelector('#app').style.display = 'none';
-    const root = document.createElement('div'); root.id = 'review-root'; document.body.appendChild(root);
+    const root = document.createElement('div'); root.id = 'review-root'; root.className = 'ui-density-compact'; document.body.appendChild(root);
     window.reviewMode = fixture.ref('dashboard');
     window.reviewType = fixture.ref('Goal');
     const app = fixture.createApp({ render: () => fixture.h(window.reviewMode.value === 'dashboard' ? fixture.Dashboard : fixture.Document, { filterItemType: window.reviewType.value }) });
@@ -65,7 +65,34 @@ try {
     app.mount(root);
   });
   await page.getByRole('button', { name: /Xuất Báo Cáo Excel/ }).waitFor();
-  await page.locator('#review-root').getByText('Khối Các Bộ / Ngành', { exact: false }).click();
+  const highlights = page.locator('#review-root section[aria-label="Các chỉ số điều hành"]');
+  assert.equal(await highlights.locator('dt').count(), 6);
+  assert.deepEqual(await highlights.locator('dd').allTextContents(), ['1', '0', '0', '0', '0', '0']);
+  assert.equal(await page.locator('#review-root .ui-page-title').evaluate(el => getComputedStyle(el).fontSize), '18px');
+  await highlights.screenshot({ path: 'tests/status-highlights-desktop.png' });
+  const provinceTab = page.getByRole('tab', { name: /Địa phương/ });
+  const ministryTab = page.getByRole('tab', { name: /Bộ \/ Ngành/ });
+  assert.equal(await provinceTab.getAttribute('aria-selected'), 'true');
+  await page.locator('#review-root #province-map-search').fill('Đà Nẵng');
+  await ministryTab.click();
+  await page.keyboard.press('ArrowLeft');
+  assert.equal(await provinceTab.getAttribute('aria-selected'), 'true');
+  assert.equal(await page.locator('#review-root #province-map-search').inputValue(), 'Đà Nẵng', 'Map search survives tab switching');
+  await provinceTab.focus();
+  await page.keyboard.press('End');
+  await page.locator('#review-root #agency-panel-others').waitFor({ state: 'visible' });
+  await page.getByRole('tab', { name: /Khối khác/ }).focus();
+  await page.keyboard.press('Home');
+  assert.equal(await page.getByRole('tabpanel').count(), 1, 'Only one block is visible');
+  await page.getByRole('tabpanel').screenshot({ path: 'tests/agency-tabs-desktop.png' });
+  await page.setViewportSize({ width: 390, height: 844 });
+  assert.equal(await page.locator('#review-root .ui-page-title').evaluate(el => getComputedStyle(el).fontSize), '18px');
+  await highlights.screenshot({ path: 'tests/status-highlights-mobile.png' });
+  await page.getByRole('tabpanel').screenshot({ path: 'tests/agency-tabs-mobile.png' });
+  assert.equal(await page.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+  await page.setViewportSize({ width: 1280, height: 720 });
+  await page.getByRole('tab', { name: /Bộ \/ Ngành/ }).click();
+  await page.locator('#review-root').getByRole('button', {name:'Biểu đồ tròn',exact:true}).first().click();
   await page.getByRole('button', { name: 'Xem chi tiết ' + agency.name }).waitFor();
   assert.equal(requests.some(u => /xlsx[._-](?:js|bundle|min|js-style)/i.test(u)), false, 'Opening dashboard must not download Excel');
   await page.getByRole('button', { name: 'Xem chi tiết ' + agency.name }).click();
@@ -91,6 +118,9 @@ try {
 
   await page.evaluate(() => { window.reviewMode.value = 'document'; });
   await page.locator('#review-root table').getByText(goal.title, { exact: true }).waitFor();
+  const textSizes = await page.locator('#review-root').evaluate(root => [...root.querySelectorAll('table th,table td,table td span,button.ui-single-line')].filter(e => e.getClientRects().length).map(e => getComputedStyle(e).fontSize));
+  assert.ok(textSizes.every(size => size === '12px'), 'List text and action buttons share the 12px scale');
+  await page.screenshot({ path: 'tests/typography-list-desktop.png' });
   await page.mouse.move(0, 0);
   for (const close of await page.locator('.Toastify__close-button').all()) await close.click();
   await page.locator('#review-root').getByRole('button', { name: /Thêm Mục Tiêu Mới/ }).click();
@@ -114,7 +144,7 @@ try {
   await page.locator('#review-root table').getByText(goal.title, { exact: true }).waitFor();
   const docDownloadPromise = page.waitForEvent('download');
   exportMultiplePages = true;
-  await page.locator('#review-root').getByRole('button', { name: /Xuất Excel/ }).click();
+  await page.locator('#review-root').getByRole('button', { name: 'Xuất Excel Danh Sách', exact: true }).click();
   const docDownload = await docDownloadPromise;
   const docWb = XLSX.read(await fs.readFile(await docDownload.path()), { type: 'buffer' });
   assert.ok(XLSX.utils.sheet_to_json(docWb.Sheets[docWb.SheetNames[0]], { header: 1 }).flat().includes('Dòng xuất cuối trang hai'), 'Export must include the second server page');
@@ -150,3 +180,5 @@ try {
   assert.deepEqual(warnings, []);
   console.log('Passed: dashboard/detail, drilldown, create modal, XLSX downloads with Vietnamese/merges, lazy Excel, legacy XLS, API failure/retry, no Vue warnings.');
 } finally { await browser.close(); }
+
+
