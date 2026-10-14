@@ -11,3 +11,7 @@ export function isValidReportingYear(year) {
 export function availableReportingYears() {
   return [...new Set([...REPORTING_YEARS, currentReportingYear()])].filter(isValidReportingYear).sort((a, b) => a - b);
 }
+// Viewing a year is independent from permission to submit a report for it.
+export function availableViewingYears() {
+  return [...new Set([...REPORTING_YEARS, currentReportingYear()])].sort((a, b) => a - b);
+}
