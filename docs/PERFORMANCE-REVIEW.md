@@ -17,7 +17,7 @@ Phạm vi: tải trang và module FE, request dashboard/bộ lọc, biểu đồ
 
 ## Cần đo trước khi thay đổi tiếp
 
-- Planning grid còn tải collection baseline/log/execution trước lọc/phân trang. Cần đo SQL và số dòng thực, rồi kiểm tra snapshot nhất quán khi tách truy vấn; không cắt lịch sử vì cần xác định hoàn thành và báo cáo năm.
+- Planning grid đã dùng AsSplitQuery và AsNoTrackingWithIdentityResolution để tránh tích Cartesian giữa baseline/log/execution. Vẫn tải collection trước lọc/phân trang, giữ đầy đủ lịch sử cần tính trạng thái; cần đo SQL/tải thực tế trước khi đưa toàn bộ phân trang xuống DB.
 - Chunk Excel khoảng 870 KB, bản đồ khoảng 504 KB trước gzip. Có thể nghiên cứu worker và tối giản asset; cần hồi quy Excel native/tiếng Việt/validation, địa giới và hai quần đảo trước khi thay thư viện hoặc hình học.
 - Thông báo polling 5 giây. Thay bằng visibility scheduling/SSE cần kiểm tra độ trễ, reconnect, quyền và cập nhật sau thao tác; hiện giữ tần suất.
 - Index DB/caching/response compression: cần EXPLAIN ANALYZE, tải thực tế và hợp đồng invalidation trước khi migration/cấu hình; không thêm index hoặc cache theo phỏng đoán.

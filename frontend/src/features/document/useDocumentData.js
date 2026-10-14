@@ -6,7 +6,7 @@ import { authState } from '../../services/auth';
 import { getApiUrl } from '../../config/api';
 
 export function useDocumentData({ props, getQueryState }) {
-  const isLoading = ref(false);
+  const isLoading = ref(true);
   const agencies = ref([]);
   const rawItemsList = ref([]);
   const serverTotalCount = ref(0);

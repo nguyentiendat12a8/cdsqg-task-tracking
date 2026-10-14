@@ -5,7 +5,7 @@ import { getApiUrl } from '../../config/api';
 import { authState } from '../../services/auth';
 
 export function useDashboardMetrics({ reportYear, dashboardFilter, selectedAgencyIds, selectedSubAgencyIds, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, isSpecialAgencyCode }) {
-  const isLoading = ref(false);
+  const isLoading = ref(true);
   const metrics = ref({
     totalGoals: 0,
     completedGoals: 0,
@@ -250,7 +250,7 @@ export function useDashboardMetrics({ reportYear, dashboardFilter, selectedAgenc
   let requestController;
   onUnmounted(() => { requestVersion++; requestController?.abort(); });
 
-  async function loadDashboardMetrics() {
+  async function loadDashboardMetrics(agenciesReady = null) {
     const version = ++requestVersion;
     requestController?.abort();
     const controller = requestController = new AbortController();
@@ -276,11 +276,18 @@ export function useDashboardMetrics({ reportYear, dashboardFilter, selectedAgenc
       return response.json();
     }
     try {
-      const mostAgency = agencies.value.find(a => a.name?.toLowerCase().includes('khoa học và công nghệ') || a.code === 'AG-77c4bef6');
+      async function fetchMostMetrics() {
+        // Only this lookup depends on the agency directory. Main statistics
+        // can start immediately while that directory is loading.
+        await agenciesReady;
+        if (controller.signal.aborted) return null;
+        const mostAgency = agencies.value.find(a => a.name?.toLowerCase().includes('khoa học và công nghệ') || a.code === 'AG-77c4bef6');
+        return fetchMetrics({ parentAgencyId: mostAgency?.id || '3e6c7022-b1b8-42ae-bbeb-0acdd30735f4' });
+      }
       const [main, sub, most] = await Promise.all([
         fetchMetrics({ agencyIds: ids }),
         !authState.isAdmin.value && userId ? fetchMetrics({ parentAgencyId: userId }) : null,
-        authState.isAdmin.value ? fetchMetrics({ parentAgencyId: mostAgency?.id || '3e6c7022-b1b8-42ae-bbeb-0acdd30735f4' }) : null
+        authState.isAdmin.value ? fetchMostMetrics() : null
       ]);
       if (version !== requestVersion) return;
       const performance = data => [...(data?.ministriesPerformance || []), ...(data?.provincesPerformance || []), ...(data?.othersPerformance || [])];

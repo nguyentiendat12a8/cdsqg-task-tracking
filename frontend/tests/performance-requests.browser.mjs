@@ -34,6 +34,7 @@ try {
       return () => null;
     } });
     app.mount(root);
+    if (!metrics.isLoading.value) throw new Error('Initial dashboard must show loading before agency lookup');
     const oldMetrics = metrics.loadDashboardMetrics();
     legal.legalFilterDocumentType.value = 'Luật';
     const oldLegal = legal.loadLegalDashboardStats();
@@ -51,6 +52,6 @@ try {
   assert.equal(result.type, 'Thông tư');
   assert.equal(result.error, '');
   assert.equal(result.loading, false);
-  assert.ok(result.aborted >= 6, 'Superseded and unmounted requests are cancelled');
+  assert.ok(result.aborted >= 4, 'Superseded and unmounted main/legal requests are cancelled; dependent requests may be prevented before dispatch');
   console.log('Passed cancellation, latest year/filter result, loading state and unmount cleanup. Fetch mocked.');
 } finally { await browser.close(); }

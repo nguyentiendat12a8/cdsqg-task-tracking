@@ -597,8 +597,8 @@ watch(reportYear, () => { closeDrilldownForYear(); loadDashboardMetrics(); });
 function closeDrilldownForYear() { selectedDrilldownAgency.value = null; }
 
 onMounted(async () => {
-  await loadAgencies();
-  await Promise.all([loadDashboardMetrics(), loadLegalDashboardStats()]);
+  const agenciesReady = loadAgencies();
+  await Promise.all([agenciesReady, loadDashboardMetrics(agenciesReady), loadLegalDashboardStats()]);
 });
 </script>
 

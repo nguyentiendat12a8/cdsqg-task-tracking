@@ -57,13 +57,15 @@ namespace Cdsqg.Application.Services
                 dynamicYears.Add(y);
             }
 
-            var agenciesMap = await _context.Agencies.ToDictionaryAsync(a => a.Id);
+            var agenciesMap = await _context.Agencies.AsNoTracking().ToDictionaryAsync(a => a.Id);
             var query = _context.GoalTaskItems
                 .Include(i => i.LeadAgency)
                 .Include(i => i.Unit)
                 .Include(i => i.Baselines)
                 .Include(i => i.ProgressLogs)
                 .Include(i => i.AgencyExecutions)
+                .AsNoTrackingWithIdentityResolution()
+                .AsSplitQuery()
                 .AsQueryable();
 
             var items = await query.Where(i => i.DocumentId == doc.Id).ToListAsync();
