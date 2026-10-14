@@ -52,6 +52,31 @@ public class AnnualDashboardPostgresTests
                 Assert.Equal(year>=2027 ? 1 : 0, stats.GetProperty("completedGoals").GetInt32());
                 Assert.Equal(year>=2027 ? 1 : 0, stats.GetProperty("completedTasks").GetInt32());
             }
+            // A historical execution recorded under a different agency does
+            // not establish ownership of this ministry's specific goal.
+            var province = new Agency { Code = "AN_GIANG_TEST", Name = "An Giang", Type = AgencyTypeEnum.Province, IsActive = true };
+            var all = new Agency { Code = "ALL_AGENCIES", Type = AgencyTypeEnum.Special, IsActive = true };
+            var general = new GoalTaskItem { Code = "MT_GENERAL", DocumentId = doc.Id, LeadAgencyId = all.Id,
+                ItemType = ItemTypeEnum.Goal, EvaluationType = EvaluationTypeEnum.Quantitative, IsGeneralTask = true };
+            db.AddRange(province, all, general, new AgencyTaskExecution { GoalTaskId = goal.Id, AgencyId = province.Id });
+            await db.SaveChangesAsync();
+            var provinceResponse = Assert.IsType<OkObjectResult>(await dashboard.GetAgencyItems(province.Id, reportYear: 2026));
+            var provinceRows = System.Text.Json.JsonSerializer.SerializeToElement(provinceResponse.Value,
+                new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
+            Assert.DoesNotContain(provinceRows.EnumerateArray(), row => row.GetProperty("code").GetString() == goal.Code);
+            Assert.Contains(provinceRows.EnumerateArray(), row => row.GetProperty("code").GetString() == general.Code);
+            var provinceMetrics = Assert.IsType<OkObjectResult>(await dashboard.GetDashboardMetrics(reportYear: 2026));
+            var provinceStats = System.Text.Json.JsonSerializer.SerializeToElement(provinceMetrics.Value,
+                new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
+            var provinceSummary = provinceStats.GetProperty("provincesPerformance").EnumerateArray()
+                .Single(row => row.GetProperty("agencyId").GetGuid() == province.Id);
+            Assert.Equal(1, provinceSummary.GetProperty("totalGoals").GetInt32());
+            goal.AssignedAgencyId = province.Id;
+            await db.SaveChangesAsync();
+            var assignedResponse = Assert.IsType<OkObjectResult>(await dashboard.GetAgencyItems(province.Id, reportYear: 2026));
+            var assignedRows = System.Text.Json.JsonSerializer.SerializeToElement(assignedResponse.Value,
+                new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
+            Assert.Contains(assignedRows.EnumerateArray(), row => row.GetProperty("code").GetString() == goal.Code);
             Assert.IsType<BadRequestObjectResult>(await dashboard.GetDashboardMetrics(reportYear: 10000));
         }
         finally

@@ -179,7 +179,7 @@ namespace Cdsqg.Api.Controllers
                         query = query.Where(i => 
                             allowedAgencyIds.Contains(i.LeadAgencyId) || 
                             (i.AssignedAgencyId.HasValue && allowedAgencyIds.Contains(i.AssignedAgencyId.Value)) || 
-                            (i.AgencyExecutions != null && i.AgencyExecutions.Any(e => allowedAgencyIds.Contains(e.AgencyId) || (e.AssignedAgencyId.HasValue && allowedAgencyIds.Contains(e.AssignedAgencyId.Value)))) ||
+                            (i.AgencyExecutions != null && i.AgencyExecutions.Any(e => e.AssignedAgencyId.HasValue && allowedAgencyIds.Contains(e.AssignedAgencyId.Value))) ||
                             (anySpecialAllSelected) ||
                             (anyMinistrySelected && (
                                 i.LeadAgencyId == allAgenciesId ||
@@ -302,7 +302,7 @@ namespace Cdsqg.Api.Controllers
                         ? items.Where(i => 
                             childIds.Contains(i.LeadAgencyId) || 
                             (i.AssignedAgencyId.HasValue && childIds.Contains(i.AssignedAgencyId.Value)) ||
-                            (i.AgencyExecutions != null && i.AgencyExecutions.Any(e => childIds.Contains(e.AgencyId) || (e.AssignedAgencyId.HasValue && childIds.Contains(e.AssignedAgencyId.Value)))) ||
+                            (i.AgencyExecutions != null && i.AgencyExecutions.Any(e => e.AssignedAgencyId.HasValue && childIds.Contains(e.AssignedAgencyId.Value))) ||
                             (isMinistryOrProvince && (
                                 i.LeadAgencyId == allAgenciesId || 
                                 (i.LeadAgency != null && i.LeadAgency.Code == "ALL_AGENCIES") ||
@@ -311,7 +311,7 @@ namespace Cdsqg.Api.Controllers
                                 (i.IsGeneralTask && (i.LeadAgency == null || i.LeadAgency.Code == "ALL_AGENCIES"))
                             ))
                           ).ToList()
-                        : items.Where(i => childIds.Contains(i.LeadAgencyId) || (i.AssignedAgencyId.HasValue && childIds.Contains(i.AssignedAgencyId.Value)) || (i.AgencyExecutions != null && i.AgencyExecutions.Any(e => childIds.Contains(e.AgencyId) || (e.AssignedAgencyId.HasValue && childIds.Contains(e.AssignedAgencyId.Value))))).ToList();
+                        : items.Where(i => childIds.Contains(i.LeadAgencyId) || (i.AssignedAgencyId.HasValue && childIds.Contains(i.AssignedAgencyId.Value)) || (i.AgencyExecutions != null && i.AgencyExecutions.Any(e => e.AssignedAgencyId.HasValue && childIds.Contains(e.AssignedAgencyId.Value)))).ToList();
 
                     int aNotStarted = 0, aInProgOnTime = 0, aInProgOverdue = 0, aCompOnTime = 0, aCompOverdue = 0, aExpSoon = 0;
                     int aGNotStarted = 0, aGInProgOnTime = 0, aGInProgOverdue = 0, aGCompOnTime = 0, aGCompOverdue = 0, aGExpSoon = 0;
@@ -776,7 +776,7 @@ namespace Cdsqg.Api.Controllers
                         ? baseItems.Where(i =>
                             childIds.Contains(i.LeadAgencyId) ||
                             (i.AssignedAgencyId.HasValue && childIds.Contains(i.AssignedAgencyId.Value)) ||
-                            (i.AgencyExecutions != null && i.AgencyExecutions.Any(e => childIds.Contains(e.AgencyId) || (e.AssignedAgencyId.HasValue && childIds.Contains(e.AssignedAgencyId.Value)))) ||
+                            (i.AgencyExecutions != null && i.AgencyExecutions.Any(e => e.AssignedAgencyId.HasValue && childIds.Contains(e.AssignedAgencyId.Value))) ||
                             (isMinistryOrProvince && (
                                 i.LeadAgencyId == allAgenciesId ||
                                 (i.LeadAgency != null && i.LeadAgency.Code == "ALL_AGENCIES") ||
@@ -785,7 +785,7 @@ namespace Cdsqg.Api.Controllers
                                 (i.IsGeneralTask && (i.LeadAgency == null || i.LeadAgency.Code == "ALL_AGENCIES"))
                             ))
                         ).ToList()
-                        : baseItems.Where(i => childIds.Contains(i.LeadAgencyId) || (i.AssignedAgencyId.HasValue && childIds.Contains(i.AssignedAgencyId.Value)) || (i.AgencyExecutions != null && i.AgencyExecutions.Any(e => childIds.Contains(e.AgencyId) || (e.AssignedAgencyId.HasValue && childIds.Contains(e.AssignedAgencyId.Value))))).ToList();
+                        : baseItems.Where(i => childIds.Contains(i.LeadAgencyId) || (i.AssignedAgencyId.HasValue && childIds.Contains(i.AssignedAgencyId.Value)) || (i.AgencyExecutions != null && i.AgencyExecutions.Any(e => e.AssignedAgencyId.HasValue && childIds.Contains(e.AssignedAgencyId.Value)))).ToList();
                 }
                 else
                 {
