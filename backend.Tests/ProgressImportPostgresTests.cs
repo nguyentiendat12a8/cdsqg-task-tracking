@@ -57,6 +57,48 @@ public class ProgressImportPostgresTests
             }
             db.ProgressLogs.RemoveRange(db.ProgressLogs.Where(p => p.GoalTaskId == demoTask.Id));
             await db.SaveChangesAsync();
+            var group = new Agency { Code = "ALL_AGENCIES", Type = AgencyTypeEnum.Special };
+            var provinceGroup = new Agency { Code = "ALL_PROVINCES", Type = AgencyTypeEnum.Special };
+            var province = new Agency { Code = "GROUP_PROVINCE", Type = AgencyTypeEnum.Province };
+            var inactive = new Agency { Code = "GROUP_INACTIVE", Type = AgencyTypeEnum.Province, IsActive = false };
+            var other = new Agency { Code = "GROUP_OTHER", Type = AgencyTypeEnum.Other };
+            var child = new Agency { Code = "GROUP_CHILD", ParentId = agency.Id };
+            var groupTask = new GoalTaskItem { Code = "NV_GROUP", DocumentId = document.Id, LeadAgencyId = group.Id,
+                IsGeneralTask = true, EvaluationType = EvaluationTypeEnum.Qualitative,
+                Deliverables = new() { new() { Id = "gp", Title = "Sản phẩm nhóm" } } };
+            db.AddRange(group, provinceGroup, province, inactive, other, child, groupTask); await db.SaveChangesAsync();
+            var groupDto = new SubmitProgressRequestDto { AgencyId = group.Id, UserRole = "Admin", CreatedBy = "Admin thực hiện",
+                PeriodYear = ReportingPeriod.CurrentYear, Deliverables = new() { new() { Id = "gp", Title = "Sản phẩm nhóm", CurrentStatus = "Completed" } } };
+            var groupResult = await service.SubmitProgressAsync(groupTask.Id, groupDto);
+            Assert.Equal(3, groupResult.ReportCount);
+            Assert.Equal(3, await db.ProgressLogs.CountAsync(p => p.GoalTaskId == groupTask.Id));
+            Assert.DoesNotContain(group.Id, groupResult.ReportingAgencyIds);
+            Assert.DoesNotContain(other.Id, groupResult.ReportingAgencyIds);
+            Assert.DoesNotContain(inactive.Id, groupResult.ReportingAgencyIds);
+            foreach (var id in groupResult.ReportingAgencyIds)
+            {
+                var row = await service.GetProgressLogAsync(groupTask.Id, ReportingPeriod.CurrentYear, id);
+                Assert.Equal("CompletedOnTime", row!.CalculatedStatus);
+                Assert.Equal("Completed", row.Deliverables![0].CurrentStatus);
+            }
+            groupDto.AgencyId = provinceGroup.Id;
+            var provinceResult = await service.SubmitProgressAsync(groupTask.Id, groupDto);
+            Assert.Equal(new[] { province.Id }, provinceResult.ReportingAgencyIds);
+            groupDto.UserRole = "AgencyUser";
+            await Assert.ThrowsAsync<InvalidOperationException>(() => service.SubmitProgressAsync(groupTask.Id, groupDto));
+            groupDto.UserRole = "Admin";
+            await Assert.ThrowsAsync<InvalidOperationException>(() => service.SubmitProgressAsync(demoTask.Id, groupDto));
+            groupDto.AgencyId = group.Id;
+            var previousGroupReports = await db.ProgressLogs.CountAsync(p => p.GoalTaskId == groupTask.Id);
+            // The only interpolated value is a generated Guid from this fixture.
+            var rejectionConstraintSql = $"ALTER TABLE \"ProgressLogs\" ADD CONSTRAINT group_test_reject CHECK (\"AgencyId\" <> '{province.Id}'::uuid) NOT VALID";
+            await db.Database.ExecuteSqlRawAsync(rejectionConstraintSql);
+            await Assert.ThrowsAsync<DbUpdateException>(() => service.SubmitProgressAsync(groupTask.Id, groupDto));
+            db.ChangeTracker.Clear();
+            Assert.Equal(previousGroupReports, await db.ProgressLogs.CountAsync(p => p.GoalTaskId == groupTask.Id));
+            await db.Database.ExecuteSqlRawAsync("ALTER TABLE \"ProgressLogs\" DROP CONSTRAINT group_test_reject");
+            db.ProgressLogs.RemoveRange(db.ProgressLogs.Where(p => p.GoalTaskId == groupTask.Id));
+            await db.SaveChangesAsync();
             var futureError = await Assert.ThrowsAsync<InvalidOperationException>(() => service.SubmitProgressAsync(goal.Id, new() { PeriodYear = ReportingPeriod.CurrentYear + 1, Value = 10, CreatedBy = "Admin", AgencyId = agency.Id }));
             Assert.Contains("không được lớn hơn", futureError.Message);
             var futureImport = await service.ImportProgressBulkAsync(new() { UserRole = "Admin", UserAgencyId = agency.Id, CreatedBy = "Admin", Items = new() { new() { Code = goal.Code, Value = 10, PeriodYear = ReportingPeriod.CurrentYear + 1 } } });
@@ -92,9 +134,9 @@ public class ProgressImportPostgresTests
             Assert.Null(ProgressCalculator.LatestApproved(officialItem, agency.Id, (reportYear + 1)));
             Assert.Equal(35.5m, ProgressCalculator.LatestApproved(officialItem, agency.Id)!.QuantitativeValue);
             Assert.Equal(35.5m, (await service.GetProgressLogAsync(goal.Id, reportYear, agency.Id))!.ActualValue);
-            var scope = new Agency { Code = "ALL_AGENCIES", Name = "Các bộ, ngành, địa phương" };
+            var scope = group;
             var general = new GoalTaskItem { Code = "MT_GENERAL", DocumentId = document.Id, LeadAgencyId = scope.Id, IsGeneralTask = true, EvaluationType = EvaluationTypeEnum.Quantitative };
-            db.AddRange(scope, general); await db.SaveChangesAsync();
+            db.Add(general); await db.SaveChangesAsync();
             var rejected = await service.ImportProgressBulkAsync(new() { UserRole = "Admin", CreatedBy = "Admin", Items = new() { new() { Code = general.Code, Value = 20000, PeriodYear = 2026 } } });
             Assert.Equal(1, rejected.FailureCount);
             var imported = await service.ImportProgressBulkAsync(new() { UserRole = "Admin", CreatedBy = "Admin", ReportingAgencyId = agency.Id, Items = new() { new() { Code = general.Code, Value = 20000, PeriodYear = 2026 } } });

@@ -30,6 +30,8 @@ namespace Cdsqg.Application.DTOs
 
     public class SubmitProgressResponseDto
     {
+        public int ReportCount { get; set; } = 1;
+        public List<Guid> ReportingAgencyIds { get; set; } = new();
         public Guid ProgressLogId { get; set; }
         public Guid TaskId { get; set; }
         public string TaskCode { get; set; } = string.Empty;

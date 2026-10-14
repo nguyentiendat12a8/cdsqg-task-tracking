@@ -51,6 +51,9 @@ namespace Cdsqg.Application.Services
             }
 
             ReportingPeriod.ValidateYear(dto.PeriodYear);
+            var selectedAgency = dto.AgencyId.HasValue ? await _context.Agencies.FindAsync(dto.AgencyId.Value) : null;
+            if (selectedAgency != null && ReportingAgencyGroups.IsGroup(selectedAgency))
+                return await SubmitAgencyGroupAsync(task, selectedAgency, dto);
             if (dto.Value < 0)
                 throw new InvalidOperationException("Năm báo cáo hoặc giá trị không hợp lệ.");
             if (task.EvaluationType == EvaluationTypeEnum.Quantitative && !dto.Value.HasValue)
@@ -301,6 +304,7 @@ namespace Cdsqg.Application.Services
             return new SubmitProgressResponseDto
             {
                 ProgressLogId = progressLog.Id,
+                ReportingAgencyIds = reportingAgencyId.HasValue ? new() { reportingAgencyId.Value } : new(),
                 TaskId = task.Id,
                 TaskCode = task.Code,
                 TaskTitle = task.Title,
@@ -316,6 +320,45 @@ namespace Cdsqg.Application.Services
                 ApprovalStatus = initialApprovalStatus.ToString(),
                 Message = "Ghi nhận báo cáo tiến độ và lưu file minh chứng thành công."
             };
+        }
+
+        private async Task<SubmitProgressResponseDto> SubmitAgencyGroupAsync(GoalTaskItem task, Agency group, SubmitProgressRequestDto dto)
+        {
+            if (!string.Equals(dto.UserRole, "Admin", StringComparison.OrdinalIgnoreCase))
+                throw new InvalidOperationException("Chỉ Admin được gửi báo cáo cho nhóm cơ quan.");
+            if (!group.IsActive) throw new InvalidOperationException("Nhóm cơ quan đã ngừng hoạt động.");
+            if (task.LeadAgency == null || !ReportingAgencyGroups.IsGroup(task.LeadAgency))
+                throw new InvalidOperationException("Nhiệm vụ giao riêng không được báo cáo theo nhóm cơ quan.");
+            var agencies = await _context.Agencies.AsNoTracking().ToListAsync();
+            var eligible = ReportingAgencyGroups.Members(task.LeadAgency, agencies).Select(a => a.Id).ToHashSet();
+            var members = ReportingAgencyGroups.Members(group, agencies).Where(a => eligible.Contains(a.Id)).ToList();
+            if (members.Count == 0) throw new InvalidOperationException("Nhóm đã chọn không có cơ quan phù hợp với phạm vi được giao.");
+            await using var transaction = await _context.Database.BeginTransactionAsync();
+            var files = dto.ExistingFiles?.ToList() ?? new List<string>();
+            List<Microsoft.AspNetCore.Http.IFormFile> uploads = dto.EvidenceFiles is { Count: > 0 } ? dto.EvidenceFiles : dto.EvidenceFile != null ? new() { dto.EvidenceFile } : new();
+            foreach (var file in uploads)
+                if (file.Length > 0) files.Add(await _fileStorageService.SaveEvidenceFileAsync(file));
+            SubmitProgressResponseDto? result = null;
+            foreach (var member in members)
+            {
+                result = await SubmitProgressAsync(task.Id, new SubmitProgressRequestDto
+                {
+                    AgencyId = member.Id, UserRole = dto.UserRole, CreatedBy = dto.CreatedBy,
+                    PeriodYear = dto.PeriodYear, Value = dto.Value, Status = dto.Status,
+                    SummaryNotes = dto.SummaryNotes, ExistingFiles = files,
+                    Deliverables = dto.Deliverables?.Select(d => new TaskDeliverable
+                    {
+                        Id = d.Id, Title = d.Title, DueDate = d.DueDate, CurrentStatus = d.CurrentStatus,
+                        DocumentNumber = d.DocumentNumber, PromulgationDate = d.PromulgationDate,
+                        AttachmentUrl = d.AttachmentUrl, AttachmentName = d.AttachmentName
+                    }).ToList()
+                });
+            }
+            await transaction.CommitAsync();
+            result!.ReportCount = members.Count;
+            result.ReportingAgencyIds = members.Select(a => a.Id).ToList();
+            result.Message = $"Đã lưu báo cáo cho {members.Count} cơ quan.";
+            return result;
         }
 
         public async Task<GetProgressLogResponseDto?> GetProgressLogAsync(Guid taskId, int year, Guid? agencyId = null)

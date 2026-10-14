@@ -36,6 +36,7 @@
               :clearable="false"
               placeholder="-- Chọn cơ quan / đơn vị báo cáo --"
             />
+            <p v-if="selectedReportingGroup" class="text-xs text-slate-600">Báo cáo sẽ được lưu riêng cho từng cơ quan thuộc nhóm trong phạm vi được giao.</p>
           </div>
 
           <div class="space-y-1 rounded-xl bg-slate-50 border border-slate-200 p-3">
@@ -44,6 +45,9 @@
           </div>
 
           <!-- Quantitative vs Qualitative Progress Inputs -->
+          <LoadingSpinner v-if="isLoadingExisting" text="Đang tải báo cáo của đơn vị đã chọn..." padding="py-6" />
+          <div v-if="existingLoadError" role="alert" class="text-xs text-rose-700">{{ existingLoadError }}</div>
+          <fieldset v-show="!isLoadingExisting" :disabled="isLoadingExisting || !!existingLoadError" class="space-y-4 min-w-0">
           <div v-if="evaluationType === 'Quantitative'" class="space-y-1">
             <label class="text-xs font-semibold text-slate-700">Tổng kết quả đã đạt đến năm báo cáo <span class="text-rose-500">*</span></label>
             <div class="relative">
@@ -218,6 +222,7 @@
               class="ui-control w-full text-base sm:text-xs text-slate-800 bg-slate-50 border border-slate-300 rounded-xl p-3 focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none"
             ></textarea>
           </div>
+          </fieldset>
         </div>
 
         <!-- Fixed Footer Actions -->
@@ -225,7 +230,7 @@
           <button type="button" @click="close" class="ui-single-line px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Hủy</button>
           <button 
             type="submit" 
-            :disabled="isSubmitting || isLoadingExisting || (hasPendingApproval && !authState.isAdmin.value)"
+            :disabled="isSubmitting || isLoadingExisting || !!existingLoadError || (hasPendingApproval && !authState.isAdmin.value)"
             :class="['px-5 py-2.5 text-xs font-bold text-white rounded-xl shadow-2xs transition flex items-center gap-1.5 cursor-pointer', (isSubmitting || (hasPendingApproval && !authState.isAdmin.value)) ? 'bg-slate-400 cursor-not-allowed opacity-60' : 'bg-blue-600 hover:bg-blue-700']"
           >
             <span v-if="isSubmitting" class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
@@ -251,6 +256,7 @@ import { ref, computed, watch } from 'vue';
 import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
 import SearchableSelect from './SearchableSelect.vue';
+import LoadingSpinner from './LoadingSpinner.vue';
 import { getApiUrl } from '../config/api';
 import { authState } from '../services/auth';
 import { parseApiError } from '../utils/errorUtils';
@@ -297,7 +303,9 @@ const isSpecialAgencyCode = (code) => code === 'ALL_AGENCIES' || code === 'ALL_M
 
 const reportingAgencyOptions = computed(() => {
   const agList = internalAgencies.value.length > 0 ? internalAgencies.value : (props.agencies || []);
-  const filtered = agList.filter(a => !isSpecialAgencyCode(a.code));
+  const filtered = agList.filter(a => a.isActive !== false &&
+    !['các doanh nghiệp công nghệ số', 'các doanh nghiệp viễn thông'].includes(String(a.name || '').trim().toLowerCase()) &&
+    (authState.isAdmin.value ? (a.type !== 'Special' && a.type !== 5 || isSpecialAgencyCode(a.code)) : !isSpecialAgencyCode(a.code)));
   
   const leadId = props.leadAgencyId ? String(props.leadAgencyId).toLowerCase() : '';
   const coordIds = (props.coordinatingAgencyIds || []).map(id => String(id).toLowerCase());
@@ -319,6 +327,10 @@ const reportingAgencyOptions = computed(() => {
       label: label
     };
   });
+});
+const selectedReportingGroup = computed(() => {
+  const agencies = internalAgencies.value.length ? internalAgencies.value : props.agencies || [];
+  return isSpecialAgencyCode(agencies.find(a => String(a.id) === String(form.value.selectedAgencyId))?.code);
 });
 
 
@@ -364,6 +376,7 @@ const selectedFiles = ref([]);
 const existingFiles = ref([]);
 const isSubmitting = ref(false);
 const isLoadingExisting = ref(false);
+const existingLoadError = ref('');
 const initialSnapshot = ref(null);
 
 function captureSnapshot() {
@@ -413,6 +426,10 @@ function resetFormFields() {
   existingFiles.value = [];
   selectedFiles.value = [];
   if (fileInput.value) fileInput.value.value = '';
+  localDeliverables.value = (props.deliverables || []).map(d => ({
+    id: d.id || d.Id || '', title: d.title || d.Title || '', dueDate: d.dueDate || d.DueDate || null,
+    currentStatus: 'NotStarted', documentNumber: '', promulgationDate: null
+  }));
 }
 
 
@@ -426,6 +443,7 @@ async function fetchExistingProgress() {
   if (!props.taskId || !props.isOpen) return;
   const requestId = ++progressRequestId;
   isLoadingExisting.value = true;
+  existingLoadError.value = '';
   try {
     const targetAgencyId = form.value.selectedAgencyId || authState.user.value?.agencyId || props.leadAgencyId || '';
     const agencyQuery = targetAgencyId ? `&agencyId=${targetAgencyId}` : '';
@@ -463,6 +481,8 @@ async function fetchExistingProgress() {
   } catch (e) {
     if (requestId !== progressRequestId || !props.isOpen) return;
     console.error('Failed to fetch existing progress log:', e);
+    resetFormFields();
+    existingLoadError.value = 'Không tải được báo cáo của đơn vị đã chọn. Vui lòng chọn lại đơn vị hoặc năm để thử lại.';
     toast.error('Không tải được báo cáo đã lưu. Vui lòng mở lại hoặc chọn lại năm báo cáo.');
   } finally {
     if (requestId === progressRequestId) isLoadingExisting.value = false;
@@ -487,6 +507,7 @@ watch(() => [props.isOpen, props.customBaseline, props.deliverables], async ([ne
       localDeliverables.value = [];
     }
     initialSnapshot.value = captureSnapshot();
+    await fetchExistingProgress();
   }
 }, { immediate: true });
 
@@ -519,7 +540,7 @@ function close() {
 }
 
 async function submitProgress() {
-  if (isLoadingExisting.value || isSubmitting.value) return;
+  if (isLoadingExisting.value || isSubmitting.value || existingLoadError.value) return;
   if (props.hasPendingApproval && !authState.isAdmin.value) {
     toast.warning("Nhiệm vụ này đang ở trạng thái Chờ duyệt. Vui lòng chờ Cấp 2 phê duyệt hoặc từ chối trước khi gửi báo cáo mới.");
     return;
@@ -553,7 +574,7 @@ async function submitProgress() {
 
   // Dirty check: check if any field or file has changed compared to initial state
   const currentSnapshot = captureSnapshot();
-  if (initialSnapshot.value && currentSnapshot === initialSnapshot.value) {
+  if (!selectedReportingGroup.value && initialSnapshot.value && currentSnapshot === initialSnapshot.value) {
     toast.info("Không có thay đổi nào trong báo cáo tiến độ.");
     return;
   }
@@ -618,7 +639,7 @@ async function submitProgress() {
 
     if (response.ok) {
       const data = await response.json();
-      toast.success("Lưu thành công!");
+      toast.success(data.reportCount > 1 ? `Đã lưu báo cáo cho ${formatNumber(data.reportCount)} cơ quan.` : 'Lưu thành công!');
       window.dispatchEvent(new CustomEvent('notification-sent'));
       window.dispatchEvent(new CustomEvent('progress-report-submitted'));
       emit('submitted', data);
