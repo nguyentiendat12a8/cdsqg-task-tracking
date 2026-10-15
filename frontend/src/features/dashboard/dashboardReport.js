@@ -3,7 +3,7 @@ import { loadExcelWriter } from '../../utils/excelRuntime';
 import { appendSummaryWorksheet } from './summaryWorksheet';
 import { appendAgencyWorksheet } from './agencyWorksheet';
 
-export async function exportDashboardReport({ dashboardFilter, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, metrics, filterOutSpecialAgencies, filteredMinistriesPerformance, filteredProvincesPerformance, filteredOthersPerformance, formatDate, formatItemProgressDisplay, isExportingExcel }) {
+export async function exportDashboardReport({ assignmentRole, dashboardFilter, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, metrics, filterOutSpecialAgencies, filteredMinistriesPerformance, filteredProvincesPerformance, filteredOthersPerformance, formatDate, formatItemProgressDisplay, isExportingExcel }) {
   const XLSX = await loadExcelWriter();
   isExportingExcel.value = true;
   const filterType = dashboardFilter.value; // 'goals', 'tasks', or 'all'
@@ -36,6 +36,7 @@ export async function exportDashboardReport({ dashboardFilter, selectedScopes, s
     appendSummaryWorksheet({ XLSX, wb, isGoalsOnly, isTasksOnly, filterNameLabel, timeStr, allFilteredAgencies, metrics });
 
     const filters = {
+      assignmentRole: assignmentRole?.value || 'Lead',
       dashboardFilter: filterType,
       selectedScopes: [...selectedScopes.value],
       selectedSections: [...selectedSections.value],

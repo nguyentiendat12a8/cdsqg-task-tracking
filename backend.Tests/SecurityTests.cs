@@ -108,6 +108,7 @@ public class SecurityTests
         var agencyId = Guid.NewGuid();
         var task = new GoalTaskItem { LeadAgencyId = agencyId };
         db.GoalTaskItems.Add(task);
+        db.AgencyTaskExecutions.Add(new AgencyTaskExecution { GoalTaskId=task.Id, AgencyId=agencyId, IsLeadAssignment=true });
         await db.SaveChangesAsync();
         var dto = new SubmitProgressRequestDto { UserRole = "Admin", AgencyId = Guid.NewGuid(), CreatedBy = "admin" };
         var ctx = Context("Execution", "SubmitProgress", "POST",

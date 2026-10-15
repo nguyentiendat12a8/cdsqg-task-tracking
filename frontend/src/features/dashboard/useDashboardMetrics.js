@@ -4,8 +4,9 @@ import { buildDashboardQuery } from './queries';
 import { getApiUrl } from '../../config/api';
 import { authState } from '../../services/auth';
 
-export function useDashboardMetrics({ dashboardFilter, selectedAgencyIds, selectedSubAgencyIds, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, isSpecialAgencyCode }) {
+export function useDashboardMetrics({ assignmentRole, dashboardFilter, selectedAgencyIds, selectedSubAgencyIds, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, isSpecialAgencyCode }) {
   const isLoading = ref(true);
+  const metricsQuery = ref('');
   const metrics = ref({
     totalGoals: 0,
     completedGoals: 0,
@@ -257,6 +258,7 @@ export function useDashboardMetrics({ dashboardFilter, selectedAgencyIds, select
     isLoading.value = true;
     loadError.value = '';
     const filters = {
+      assignmentRole: assignmentRole?.value || 'Lead',
       dashboardFilter: dashboardFilter.value,
       selectedScopes: selectedScopes.value,
       selectedSections: selectedSections.value,
@@ -268,6 +270,7 @@ export function useDashboardMetrics({ dashboardFilter, selectedAgencyIds, select
     const ids = [...selectedAgencyIds.value, ...selectedSubAgencyIds.value];
     const userId = authState.user.value?.agencyId;
     if (!authState.isAdmin.value && userId && ids.length === 0) ids.push(userId);
+    metricsQuery.value = buildDashboardQuery(filters, { agencyIds: ids }).toString();
     async function fetchMetrics(options) {
       const query = buildDashboardQuery(filters, options);
       const response = await fetchWithAuth(getApiUrl('/api/dashboard/metrics?' + query), { signal: controller.signal });
@@ -306,6 +309,7 @@ export function useDashboardMetrics({ dashboardFilter, selectedAgencyIds, select
 
   return {
   isLoading,
+  metricsQuery,
   loadError,
   metrics,
   activeStatusSummary,

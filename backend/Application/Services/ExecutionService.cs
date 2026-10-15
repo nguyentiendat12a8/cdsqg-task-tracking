@@ -93,6 +93,16 @@ namespace Cdsqg.Application.Services
                 reportingAgencyId = task.LeadAgencyId;
             }
 
+            if (!await _context.AgencyTaskExecutions.AnyAsync(e => e.GoalTaskId == task.Id && e.AgencyId == reportingAgencyId && e.IsLeadAssignment))
+            {
+                // A parent may act for its single delegated child, but the report belongs to that child.
+                var delegated = await _context.AgencyTaskExecutions.Where(e => e.GoalTaskId == task.Id && e.IsLeadAssignment
+                    && _context.Agencies.Any(a => a.Id == e.AgencyId && a.ParentId == reportingAgencyId)).Select(e => e.AgencyId).ToListAsync();
+                if (delegated.Count != 1) throw new InvalidOperationException("Cơ quan chưa được phân giao chủ trì mục tiêu/nhiệm vụ này.");
+                reportingAgencyId = delegated[0];
+                reportingAgencyObj = await _context.Agencies.FindAsync(reportingAgencyId.Value);
+            }
+
             bool isAdminSubmitter = !string.IsNullOrWhiteSpace(dto.UserRole) && (dto.UserRole.ToLower() == "admin" || dto.UserRole == "1");
             var initialApprovalStatus = isAdminSubmitter ? ApprovalStatusEnum.Approved : ApprovalStatusEnum.Pending;
 
@@ -330,7 +340,7 @@ namespace Cdsqg.Application.Services
             if (task.LeadAgency == null || !ReportingAgencyGroups.IsGroup(task.LeadAgency))
                 throw new InvalidOperationException("Nhiệm vụ giao riêng không được báo cáo theo nhóm cơ quan.");
             var agencies = await _context.Agencies.AsNoTracking().ToListAsync();
-            var eligible = ReportingAgencyGroups.Members(task.LeadAgency, agencies).Select(a => a.Id).ToHashSet();
+            var eligible = await _context.AgencyTaskExecutions.Where(e => e.GoalTaskId == task.Id && e.IsLeadAssignment).Select(e => e.AgencyId).ToListAsync();
             var members = ReportingAgencyGroups.Members(group, agencies).Where(a => eligible.Contains(a.Id)).ToList();
             if (members.Count == 0) throw new InvalidOperationException("Nhóm đã chọn không có cơ quan phù hợp với phạm vi được giao.");
             await using var transaction = await _context.Database.BeginTransactionAsync();
@@ -743,37 +753,8 @@ namespace Cdsqg.Application.Services
                     continue;
                 }
 
-                // Permission check
-                bool hasPermission = false;
-                if (isAdmin)
-                {
-                    hasPermission = true;
-                }
-                else if (isLevel2)
-                {
-                    if (task.LeadAgencyId == userAgency!.Id || task.IsGeneralTask || task.LeadAgency?.ParentId == userAgency.Id)
-                    {
-                        hasPermission = true;
-                    }
-                    else if (task.AssignedAgencyId.HasValue)
-                    {
-                        var childAgencyIds = await _context.Agencies
-                            .Where(a => a.ParentId == userAgency.Id)
-                            .Select(a => a.Id)
-                            .ToListAsync();
-                        if (childAgencyIds.Contains(task.AssignedAgencyId.Value))
-                        {
-                            hasPermission = true;
-                        }
-                    }
-                }
-                else if (isLevel3)
-                {
-                    if (task.AssignedAgencyId == userAgency!.Id || task.LeadAgencyId == userAgency.Id)
-                    {
-                        hasPermission = true;
-                    }
-                }
+                // Import uses the same persisted assignment permission as interactive reporting.
+                bool hasPermission = isAdmin || userAgency != null && await AgencyScopePolicy.CanReportAsync(_context, task.Id, userAgency.Id);
 
                 if (!hasPermission)
                 {

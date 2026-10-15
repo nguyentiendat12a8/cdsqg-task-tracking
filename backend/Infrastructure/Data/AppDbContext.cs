@@ -224,6 +224,9 @@ namespace Cdsqg.Infrastructure.Data
             {
                 entity.HasKey(e => e.Id);
                 entity.HasIndex(e => new { e.GoalTaskId, e.AgencyId }).IsUnique();
+                entity.Property(e => e.AssignedAt).HasColumnType("timestamp without time zone");
+                entity.HasIndex(e => new { e.AgencyId, e.IsLeadAssignment, e.GoalTaskId }).HasDatabaseName("IX_Execution_Agency_Lead_Task");
+                entity.HasIndex(e => new { e.AgencyId, e.IsCoordinatingAssignment, e.GoalTaskId }).HasDatabaseName("IX_Execution_Agency_Coordinating_Task");
                 entity.Property(e => e.CalculatedStatus).HasConversion<string>();
                 entity.Property(e => e.LatestQualitativeStatus).HasConversion<string>();
 

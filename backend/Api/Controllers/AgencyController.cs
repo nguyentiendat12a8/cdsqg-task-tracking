@@ -422,6 +422,9 @@ namespace Cdsqg.Api.Controllers
                 return BadRequest(new { error = "Cơ quan / Đơn vị hệ thống cố định không thể xóa." });
             }
 
+            if (await _context.AgencyTaskExecutions.AnyAsync(e => e.AgencyId == id))
+                return BadRequest(new { error = "Cơ quan có phân giao hoặc lịch sử thực hiện; không thể xóa." });
+
             int leadCount = await _context.GoalTaskItems.CountAsync(g => g.LeadAgencyId == id);
             int urgeCount = await _context.TaskUrgeLogs.CountAsync(u => u.LeadAgencyId == id);
             int childAgencyCount = await _context.Agencies.CountAsync(a => a.ParentId == id);

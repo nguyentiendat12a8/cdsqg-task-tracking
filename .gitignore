@@ -55,3 +55,6 @@ scratch/*.dump
 scratch/neon-restore*.json
 tài liệu phát triển/
 
+
+# Generated .NET test output
+**/TestResults/

@@ -1,5 +1,5 @@
 <template>
-  <section class="rounded-2xl border border-slate-200 overflow-hidden bg-white">
+  <section class="province-map-container rounded-2xl border border-slate-200 overflow-hidden bg-white" :class="{ 'fit-height': fitHeight }">
     <div class="p-3 border-b border-slate-200 flex flex-wrap items-center justify-between gap-2">
       <div>
         <h4 class="text-sm font-bold text-slate-900">Bản đồ hoàn thành {{ noun }}</h4>
@@ -12,9 +12,9 @@
       </div>
     </div>
 
-    <div class="flex flex-col">
+    <div class="province-map-body">
       <!-- Cột trái: Bản đồ SVG -->
-      <div class="bg-slate-50 p-3 border-b border-slate-200">
+      <div class="province-map-canvas min-w-0 bg-slate-50 p-3 border-b border-slate-200" data-testid="province-map-canvas">
         <div class="flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-slate-700 mb-2">
           <span v-for="band in bands" :key="band.label" class="flex items-center gap-2">
             <i class="w-3 h-3 rounded-sm border border-slate-300" :style="{ backgroundColor: band.color }"></i>
@@ -22,7 +22,7 @@
           </span>
         </div>
 
-        <svg :viewBox="mapViewBox" class="w-full h-[360px] sm:h-[420px] xl:h-[560px] touch-none select-none cursor-grab active:cursor-grabbing" tabindex="0" aria-label="Bản đồ 34 tỉnh thành Việt Nam" aria-describedby="province-map-help" @pointerdown="startPan" @pointermove="movePan" @pointerup="endPan" @pointercancel="endPan" @click.capture="ignoreDragClick" @keydown="mapKeyboard">
+        <svg :viewBox="mapViewBox" class="w-full touch-none select-none cursor-grab active:cursor-grabbing" :class="compact ? 'h-[320px] sm:h-[360px]' : 'h-[360px] sm:h-[420px] xl:h-[560px]'" tabindex="0" aria-label="Bản đồ 34 tỉnh thành Việt Nam" aria-describedby="province-map-help" @pointerdown="startPan" @pointermove="movePan" @pointerup="endPan" @pointercancel="endPan" @click.capture="ignoreDragClick" @keydown="mapKeyboard">
           <!-- Các tỉnh thành phố trên bản đồ -->
           <path
             v-for="province in provinces"
@@ -177,8 +177,8 @@
       </div>
 
       <!-- Cột phải: Tìm kiếm & Danh sách địa phương -->
-      <div class="p-3 flex flex-col min-w-0">
-          <div class="flex items-center justify-between gap-2">
+      <div class="p-3 flex flex-col min-w-0" data-testid="province-map-directory">
+          <div class="flex flex-wrap items-center justify-between gap-2">
             <h5 class="text-sm font-bold text-slate-800">Danh sách địa phương</h5>
             <button type="button" class="ui-single-line px-3 rounded-lg border border-slate-200 text-xs font-semibold text-blue-600 shrink-0" :aria-expanded="showProvinceList" aria-controls="province-map-list" @click="showProvinceList = !showProvinceList">{{ showProvinceList ? 'Thu gọn' : 'Xem chi tiết' }}</button>
           </div>
@@ -201,7 +201,7 @@
           </p>
         </div>
 
-        <div class="flex-1 max-h-[240px] overflow-y-auto overscroll-contain border border-slate-200 rounded-xl divide-y divide-slate-100 bg-white" aria-label="Danh sách 34 tỉnh thành">
+        <div class="province-map-directory-scroll flex-1 max-h-[240px] overflow-y-auto overscroll-contain border border-slate-200 rounded-xl divide-y divide-slate-100 bg-white" aria-label="Danh sách 34 tỉnh thành">
           <div
             v-for="province in visibleProvinces"
             :key="province.code"
@@ -243,6 +243,8 @@ import geography from './map/provinces.json';
 import { formatPercent } from '../../shared/formatters';
 
 const props = defineProps({
+  fitHeight: { type: Boolean, default: false },
+  compact: { type: Boolean, default: false },
   agencies: { type: Array, default: () => [] },
   filterType: { type: String, default: 'goals' }
 });
@@ -251,7 +253,7 @@ defineEmits(['select-agency']);
 
 const selectedCode = ref(null);
 const search = ref('');
-const showProvinceList = ref(false);
+const showProvinceList = ref(true);
 const initialBounds = geography.viewBox.split(/[ ,]+/).map(Number);
 const zoom = ref(1);
 const mapCenter = ref([initialBounds[0] + initialBounds[2] / 2, initialBounds[1] + initialBounds[3] / 2]);
@@ -412,6 +414,25 @@ const truongSaIslands = [
 </script>
 
 <style scoped>
+.province-map-container { container: province-map / inline-size; }
+.province-map-body { display: flex; flex-direction: column; }
+.province-map-canvas > svg { box-sizing: border-box; padding: 12px; }
+@media (min-width: 1024px) {
+  .fit-height { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+  .fit-height > :first-child { flex-shrink: 0; }
+  .fit-height .province-map-body { flex: 1; min-height: 0; overflow: hidden; }
+  .fit-height .province-map-canvas { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+  .fit-height .province-map-canvas > svg { flex: 1; height: 0; min-height: 0; }
+  .fit-height [data-testid="province-map-directory"] { min-height: 0; overflow: hidden; }
+  .fit-height #province-map-list { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+  .fit-height #province-map-list > :first-child { flex-shrink: 0; }
+  .fit-height .province-map-directory-scroll { max-height: none; min-height: 0; flex: 1; }
+}
+@container province-map (min-width: 560px) {
+  .province-map-body { display: grid; grid-template-columns: minmax(0, 60fr) minmax(0, 40fr); align-items: stretch; }
+  .province-map-canvas { border-bottom: 0; border-right: 1px solid var(--color-slate-200); }
+  .province-map-directory-scroll { max-height: 460px; }
+}
 .province-shape {
   cursor: pointer;
   transition: fill 160ms ease;

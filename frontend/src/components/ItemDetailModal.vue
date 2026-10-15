@@ -32,7 +32,7 @@
         </button>
 
         <button 
-          v-if="isGeneralTaskItem"
+          v-if="isGeneralTaskItem || item?.coordinatingAssignmentAgencyIds?.length"
           @click="switchTab('agencies-matrix')" 
           :class="['px-4 py-2 text-xs font-semibold transition border-b-2 cursor-pointer flex items-center gap-1.5', activeTab === 'agencies-matrix' ? 'border-purple-600 text-purple-700 bg-purple-50/50 rounded-t-lg font-bold' : 'border-transparent text-slate-500 hover:text-slate-800']"
         >
@@ -362,6 +362,8 @@
                 </div>
               </div>
 
+              <button v-if="authState.isAdmin.value" type="button" @click="refreshAssignments" :disabled="isRefreshingAssignments || isLoadingMatrix" class="ui-single-line px-3 text-xs font-semibold rounded-lg border border-blue-200 text-blue-700 bg-blue-50 disabled:opacity-50">{{ isRefreshingAssignments ? 'Đang đồng bộ...' : 'Đồng bộ danh sách đơn vị' }}</button>
+
               <!-- Row 2: Search Input for Agency Name (Full Width on separate row below) -->
               <div class="relative w-full">
                 <input 
@@ -403,6 +405,7 @@
                       <td class="px-3 py-2.5 border-r border-slate-200 text-center text-slate-500 font-bold">{{ idx + 1 }}</td>
                       <td class="px-3.5 py-2.5 border-r border-slate-200 font-bold text-slate-900">
                         <div>{{ row.agencyName }}</div>
+                        <div class="mt-1 text-xs font-normal text-slate-600">{{ [row.isLeadAssignment ? 'Chủ trì' : '', row.isCoordinatingAssignment ? 'Phối hợp' : ''].filter(Boolean).join(' · ') }}</div>
                       </td>
                       <td v-if="item?.itemType === 'Goal'" class="px-3 py-2.5 border-r border-slate-200 text-center">
                         <div class="font-bold text-blue-700 text-sm">{{ row.completionPercentage == null ? 'Chưa có chỉ tiêu / báo cáo' : row.completionPercentage + '%' }}</div>
@@ -524,6 +527,7 @@
 </template>
 
 <script setup>
+import { confirmModal } from '../services/confirm';
 import { formatNumber } from "../shared/formatters";
 import { formatFileName, formatDateRange, formatDate, formatDate as formatDateOnly, formatMeasuredValue } from '../shared/formatters';
 import { getStatusLabel, getStatusBadgeClass } from '../shared/statusPresentation';
@@ -845,6 +849,21 @@ const matrixPendingCount = computed(() => {
   return matrixData.value.agencyExecutions.filter(a => a.approvalStatus === 'Pending' || a.pendingProgressLogId).length;
 });
 
+const isRefreshingAssignments = ref(false);
+async function refreshAssignments() {
+  if (!authState.isAdmin.value || !props.item || isRefreshingAssignments.value) return;
+  const confirmed = await confirmModal({ title: 'Đồng bộ đơn vị được giao', message: 'Cập nhật danh sách nhận giao theo nhóm cơ quan hiện tại. Báo cáo và phê duyệt đã có được giữ nguyên.', confirmText: 'Đồng bộ', cancelText: 'Hủy' });
+  if (!confirmed) return;
+  isRefreshingAssignments.value = true;
+  try {
+    const taskId = props.item.taskId || props.item.id;
+    const response = await fetchWithAuth(getApiUrl(`/api/planning/items/${taskId}/refresh-assignments`), { method: 'POST' });
+    if (!response.ok) { const error = await response.json().catch(() => ({})); throw new Error(error.error || 'Không thể đồng bộ danh sách đơn vị.'); }
+    await loadAgenciesMatrix(); toast.success('Đã cập nhật danh sách phân giao.');
+  } catch (error) { toast.error(error.message); }
+  finally { isRefreshingAssignments.value = false; }
+}
+
 async function loadAgenciesMatrix() {
   if (!props.item) return;
   const taskId = props.item.taskId || props.item.id;
@@ -917,7 +936,9 @@ async function submitRejectProgressLog() {
 
 watch(() => [props.isOpen, props.item, props.initialTab], ([isOpen, item, tab]) => {
   if (isOpen && item) {
-    selectedAgencyFilter.value = '';
+    selectedAgencyFilter.value = item.progressAgencyId || '';
+    availableAgenciesInHistory.value = [];
+    rawReportHistory.value = [];
     activeTab.value = (tab === 'agencies-matrix' ? 'agencies-matrix' : (tab === 'history' ? 'reports' : tab)) || 'info';
     loadHistories();
     if (activeTab.value === 'agencies-matrix' || item.isGeneralTask || item.leadAgencyCode === 'ALL_AGENCIES') {

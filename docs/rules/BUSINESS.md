@@ -2,6 +2,10 @@
 
 ## Báo cáo năm và tiến độ
 
+Trang chủ Admin: hai biểu đồ tròn xếp dọc bên trái; bản đồ và danh sách địa phương bên phải. Biểu đồ đầu dùng `createdMetrics`: tổng số mục tiêu/nhiệm vụ, số giao riêng/giao chung, phân bố sáu trạng thái của phần giao riêng như quy tắc cũ. Biểu đồ dưới thống kê lượt giao theo cơ quan. Không hiển thị khối bốn chỉ số. API `overviewMetrics` vẫn được giữ để tương thích, đếm mỗi mục tiêu/nhiệm vụ một lần; không dùng tổng lượt giao cơ quan để thay số mục tiêu/nhiệm vụ.
+
+Click số trên hai biểu đồ mở danh sách có phân trang, dùng cùng query/filter/trạng thái với thống kê. `metrics?detailMode=items` trả mỗi mục một lần; `detailMode=assignments` trả từng cặp mục–cơ quan thực nhận trong snapshot phân công, không distinct theo mã trên toàn danh sách. Đơn vị chủ trì là nhóm đặc biệt thì có nhiều dòng với cùng mã, mỗi dòng có cơ quan/tiến độ/trạng thái riêng. API chi tiết chỉ dành cho Admin. Khi mở chi tiết một lượt giao, lịch sử báo cáo được lọc theo `ProgressAgencyId` của dòng.
+
 Chỉ báo cáo `PeriodYear`; không tháng/quý, không mục tiêu/nhiệm vụ con. Cơ quan vẫn phân cấp, sản phẩm đầu ra vẫn tồn tại. Số nhập là **tổng đã đạt đến năm báo cáo**, cả mã legacy Cumulative và LatestValue. Năm trước 15, năm nay tổng 35: nhập 35; không cộng thành 50. Chỉ tiêu năm nay 50 →70%.
 
 Chọn bản approved mới nhất của đúng cơ quan/năm; màn hình tổng hiện tại chọn năm mới nhất rồi revision mới nhất trong năm. Sửa năm trước không thay đổi tổng năm sau. Pending/rejected không đổi kết quả chính thức; preview dùng cùng calculator nhưng ghi rõ trạng thái. Không tự chuyển đổi raw lịch sử từ increment sang total.
@@ -45,3 +49,11 @@ Phân biệt ba đối tượng: phạm vi/cơ quan được giao (`LeadAgencyId
 15/10/2026 (điều chỉnh theo yêu cầu người dùng): Trung tâm báo cáo có lại Năm báo cáo để thống kê cơ quan hoàn thành chỉ tiêu của năm được chọn; metrics, grid và Excel dùng cùng reportYear. Trang chủ vẫn dùng báo cáo approved mới nhất, không giới hạn năm báo cáo. Giữ Từ năm/Đến năm để lọc thời hạn ở cả hai màn hình. Quy tắc này thay thế phạm vi bỏ Năm báo cáo trên trung tâm báo cáo ở ghi chú trước.
 
 15/10/2026 (phạm vi Năm báo cáo): Chỉ hiện và gửi reportYear khi bộ lọc đã áp dụng chọn duy nhất Goal (Chỉ mục tiêu). Chỉ nhiệm vụ hoặc Tất cả không gửi năm, dùng kết quả approved mới nhất và Excel không ghi Năm báo cáo. Giữ Từ năm/Đến năm ở mọi chế độ. Quy tắc này giới hạn lại ghi chú khôi phục Năm báo cáo trước đó.
+
+15/10/2026 — Phân giao theo cơ quan:
+- Một GoalTaskItem gốc; AgencyTaskExecution có khóa duy nhất (GoalTaskId, AgencyId), lưu IsLeadAssignment/IsCoordinatingAssignment độc lập và nguồn qua nhóm cho từng vai trò. Một cơ quan có thể có cả hai vai trò, danh sách vẫn chỉ một mục gốc. Không tạo mục tiêu/nhiệm vụ con trong GoalTaskItems.
+- AgencyAssignments mở rộng nhóm bằng ReportingAgencyGroups khi tạo/sửa phân giao; chốt các cơ quan nhận giao tại thời điểm ghi. Sửa tên/chỉ tiêu không tự cập nhật thành viên nhóm. API refresh-assignments có Authorize Admin và guard trực tiếp; Admin đồng bộ có xác nhận từ tab Tiến độ các đơn vị. Bỏ phân giao chỉ tắt vai trò, không xóa lịch sử/ID/báo cáo/phê duyệt.
+- Migration 20261015120000_PersistAgencyAssignments backfill chủ trì/phối hợp (trực tiếp và qua 5 nhóm đã có ánh xạ), giữ execution ID/cache và toàn bộ ProgressLog. Nhóm chưa có ánh xạ thành viên không tự gán tất cả cơ quan.
+- Lọc chủ trì hoặc phối hợp dùng cùng assignmentRole=Lead/Coordinating trên list, metrics, drilldown, grid và Excel. Phối hợp không cấp thêm quyền gửi báo cáo chủ trì. Trạng thái chính thức luôn từ ProgressLog approved theo đúng cơ quan qua ProgressCalculator, không dùng cache của mục gốc hay cơ quan khác.
+- SQL lọc phân giao bằng EXISTS trước Include báo cáo; index bắt đầu AgencyId cho từng vai trò. Danh sách sắp mã/tên, không tìm chữ/lọc trạng thái dẫn xuất, dùng COUNT/LIMIT/OFFSET tại DB. Lọc/sắp trạng thái hay tiến độ vẫn tính trên tập khớp cơ quan trước khi phân trang; không có truy vấn riêng từng dòng.
+- Reset riêng tiến độ giữ bản ghi phân giao; xóa cơ quan có execution bị chặn để bảo toàn lịch sử. GET không tạo/cập nhật phân giao. Tab ma trận hiển thị cả cơ quan chưa gửi báo cáo và nhãn vai trò; đơn vị chưa báo cáo là NotReported.

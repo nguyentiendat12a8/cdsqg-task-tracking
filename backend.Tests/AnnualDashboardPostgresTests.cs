@@ -35,6 +35,7 @@ public class AnnualDashboardPostgresTests
             foreach (var (year, state) in new[] { (2026,"Drafting"), (2027,"Completed") })
                 db.Add(new ProgressLog { GoalTaskId=task.Id, AgencyId=agency.Id, PeriodYear=year, LogDate=new(year,10,1), ApprovalStatus=ApprovalStatusEnum.Approved, Deliverables=new() { new() { Id="p", Title="Product", CurrentStatus=state } } });
             await db.SaveChangesAsync();
+            await AssignmentTestData.PrepareAsync(db);
             var planning = new PlanningService(db);
             var dashboard = new DashboardController(db);
             foreach (var (year, percentage, productsPercentage) in new[] { (2026,60m,25m), (2027,100m,100m), (2028,(decimal?)100m,100m) })
@@ -60,6 +61,7 @@ public class AnnualDashboardPostgresTests
                 ItemType = ItemTypeEnum.Goal, EvaluationType = EvaluationTypeEnum.Quantitative, IsGeneralTask = true };
             db.AddRange(province, all, general, new AgencyTaskExecution { GoalTaskId = goal.Id, AgencyId = province.Id });
             await db.SaveChangesAsync();
+            await AssignmentTestData.PrepareAsync(db);
             var provinceResponse = Assert.IsType<OkObjectResult>(await dashboard.GetAgencyItems(province.Id, reportYear: 2026));
             var provinceRows = System.Text.Json.JsonSerializer.SerializeToElement(provinceResponse.Value,
                 new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });
@@ -71,8 +73,13 @@ public class AnnualDashboardPostgresTests
             var provinceSummary = provinceStats.GetProperty("provincesPerformance").EnumerateArray()
                 .Single(row => row.GetProperty("agencyId").GetGuid() == province.Id);
             Assert.Equal(1, provinceSummary.GetProperty("totalGoals").GetInt32());
+            var overview = provinceStats.GetProperty("overviewMetrics");
+            Assert.Equal(2, overview.GetProperty("totalGoals").GetInt32());
+            Assert.Equal(2, overview.GetProperty("goalStatusSummary").EnumerateObject().Sum(p => p.Value.GetInt32()));
+            Assert.Equal(1, overview.GetProperty("taskStatusSummary").EnumerateObject().Sum(p => p.Value.GetInt32()));
             goal.AssignedAgencyId = province.Id;
             await db.SaveChangesAsync();
+            await AssignmentTestData.PrepareAsync(db);
             var assignedResponse = Assert.IsType<OkObjectResult>(await dashboard.GetAgencyItems(province.Id, reportYear: 2026));
             var assignedRows = System.Text.Json.JsonSerializer.SerializeToElement(assignedResponse.Value,
                 new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase });

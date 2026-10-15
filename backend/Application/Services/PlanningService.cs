@@ -12,7 +12,7 @@ namespace Cdsqg.Application.Services
 {
     public interface IPlanningService
     {
-        Task<PlanningGridResponseDto> GetDocumentPlanningGridAsync(Guid documentId, Guid? agencyId = null, int? reportYear = null);
+        Task<PlanningGridResponseDto> GetDocumentPlanningGridAsync(Guid documentId, Guid? agencyId = null, int? reportYear = null, DocumentItemsQueryDto? filterQuery = null, bool paginate = false);
         Task<PagedResultDto<PlanningGridItemDto>> GetDocumentItemsPagedAsync(Guid documentId, DocumentItemsQueryDto queryDto);
         Task<GoalTaskItem> CreateGoalTaskItemAsync(CreateGoalTaskItemRequestDto dto);
         Task<bool> UpdateTaskCustomBaselineAsync(Guid taskId, UpdateCustomBaselineDto dto);
@@ -28,7 +28,7 @@ namespace Cdsqg.Application.Services
             _context = context;
         }
 
-        public async Task<PlanningGridResponseDto> GetDocumentPlanningGridAsync(Guid documentId, Guid? agencyId = null, int? reportYear = null)
+        public async Task<PlanningGridResponseDto> GetDocumentPlanningGridAsync(Guid documentId, Guid? agencyId = null, int? reportYear = null, DocumentItemsQueryDto? filterQuery = null, bool paginate = false)
         {
             var doc = await _context.Documents
                 .FirstOrDefaultAsync(d => d.Id == documentId)
@@ -58,6 +58,7 @@ namespace Cdsqg.Application.Services
             }
 
             var agenciesMap = await _context.Agencies.AsNoTracking().ToDictionaryAsync(a => a.Id);
+            if (filterQuery?.SelectedAgencyIds?.Count > 0) filterQuery.SelectedAgencyIds = AgencyAssignments.ExpandSelection(filterQuery.SelectedAgencyIds, agenciesMap.Values.ToList());
             var query = _context.GoalTaskItems
                 .Include(i => i.LeadAgency)
                 .Include(i => i.Unit)
@@ -68,7 +69,25 @@ namespace Cdsqg.Application.Services
                 .AsSplitQuery()
                 .AsQueryable();
 
-            var items = await query.Where(i => i.DocumentId == doc.Id).ToListAsync();
+            query = query.Where(i => i.DocumentId == doc.Id);
+            if (filterQuery?.SelectedAgencyIds?.Count > 0)
+                query = AgencyAssignments.Filter(query, filterQuery.SelectedAgencyIds, filterQuery.AssignmentRole);
+            if (filterQuery?.AgencyId.HasValue == true && !string.Equals(filterQuery.UserRole, "Admin", StringComparison.OrdinalIgnoreCase))
+            {
+                var view = await AgencyScopePolicy.ResolveViewScopeAsync(_context, filterQuery.AgencyId.Value);
+                query = AgencyAssignments.Filter(query, view.AgencyIds.ToList(), filterQuery.AssignmentRole);
+            }
+            if (AgencyAssignments.Coordinating(filterQuery?.AssignmentRole)) query = query.Where(i => i.AgencyExecutions.Any(e => e.IsCoordinatingAssignment));
+            if (!string.IsNullOrWhiteSpace(filterQuery?.ItemType) && Enum.TryParse<ItemTypeEnum>(filterQuery.ItemType, true, out var kind)) query = query.Where(i => i.ItemType == kind);
+            int? pagedTotalCount = null;
+            if (paginate && filterQuery != null && DocumentItemQuery.CanPageInDatabase(filterQuery))
+            {
+                query = DocumentItemQuery.ApplyDatabase(query, filterQuery);
+                pagedTotalCount = await query.CountAsync();
+                var sqlPageSize = Math.Clamp(filterQuery.PageSize, 1, 1000);
+                query = query.Skip((Math.Max(1, filterQuery.PageNumber) - 1) * sqlPageSize).Take(sqlPageSize);
+            }
+            var items = await query.ToListAsync();
             if (!items.Any())
             {
                 items = await query.ToListAsync();
@@ -112,15 +131,24 @@ namespace Cdsqg.Application.Services
                     }
                 }
 
-                var latestLog = ProgressCalculator.AnnualReport(item, agencyId, reportYear);
-                var agencyDeliverables = reportYear.HasValue ? ProgressCalculator.AnnualDeliverables(item, latestLog) : GetDeliverablesForAgency(item, agencyId);
-
-                var progress = item.IsGeneralTask && !agencyId.HasValue
-                    ? ProgressCalculator.EvaluateOverall(item, agenciesMap.Values, ProgressCalculator.AnnualEvaluationDate(reportYear), reportYear)
-                    : ProgressCalculator.Evaluate(item, latestLog, agencyDeliverables, agencyId, reportYear, ProgressCalculator.AnnualEvaluationDate(reportYear));
+                var role = filterQuery?.AssignmentRole ?? "Lead";
+                var contextIds = filterQuery?.SelectedAgencyIds?.Count > 0
+                    ? item.AgencyExecutions.Where(e => AgencyAssignments.HasRole(e, role) && filterQuery.SelectedAgencyIds.Contains(e.AgencyId)).Select(e => e.AgencyId).Distinct().ToList()
+                    : agencyId.HasValue ? new List<Guid> { agencyId.Value } : AgencyAssignments.Coordinating(role) ? item.AgencyExecutions.Where(e => e.IsCoordinatingAssignment).Select(e => e.AgencyId).Distinct().ToList() : new List<Guid>();
+                Guid? contextId = contextIds.Count == 1 ? contextIds[0] : agencyId;
+                var latestLog = ProgressCalculator.AnnualReport(item, contextId, reportYear);
+                var agencyDeliverables = reportYear.HasValue ? ProgressCalculator.AnnualDeliverables(item, latestLog) : GetDeliverablesForAgency(item, contextId);
+                var progress = contextIds.Count > 0 ? ProgressCalculator.EvaluateRecipients(item, contextIds, reportYear, ProgressCalculator.AnnualEvaluationDate(reportYear))
+                    : item.IsGeneralTask || item.AgencyExecutions.Any(e => e.IsLeadAssignment && e.IsLeadGroupAssignment) ? ProgressCalculator.EvaluateOverall(item, agenciesMap.Values, ProgressCalculator.AnnualEvaluationDate(reportYear), reportYear)
+                    : ProgressCalculator.Evaluate(item, latestLog, agencyDeliverables, contextId, reportYear, ProgressCalculator.AnnualEvaluationDate(reportYear));
 
                 return new PlanningGridItemDto
                 {
+                    LeadAssignmentAgencyIds = item.AgencyExecutions.Where(e => e.IsLeadAssignment).Select(e => e.AgencyId).ToList(),
+                    CoordinatingAssignmentAgencyIds = item.AgencyExecutions.Where(e => e.IsCoordinatingAssignment).Select(e => e.AgencyId).ToList(),
+                    ProgressAgencyId = contextId,
+                    ProgressAgencyName = contextId.HasValue && agenciesMap.TryGetValue(contextId.Value, out var contextAgency) ? ProvinceCatalog.DisplayName(contextAgency) : null,
+                    AssignmentKind = contextId.HasValue ? (AgencyAssignments.Coordinating(role) ? item.AgencyExecutions.FirstOrDefault(e => e.AgencyId == contextId)?.IsCoordinatingGroupAssignment : item.AgencyExecutions.FirstOrDefault(e => e.AgencyId == contextId)?.IsLeadGroupAssignment) == true ? "Group" : "Direct" : null,
                     TaskId = item.Id,
                     ItemType = item.ItemType.ToString(),
                     Code = safeCode,
@@ -155,7 +183,7 @@ namespace Cdsqg.Application.Services
                     LatestProgressStatus = latestLog?.QualitativeStatus?.ToString(),
                     LastUpdated = latestLog?.LogDate ?? item.LastUpdated ?? item.CreatedAt,
                     CreatedAt = item.CreatedAt,
-                    HasPendingApproval = item.ProgressLogs != null && item.ProgressLogs.Any(l => l.ApprovalStatus == ApprovalStatusEnum.Pending && (!reportYear.HasValue || l.PeriodYear == reportYear)),
+                    HasPendingApproval = item.ProgressLogs != null && item.ProgressLogs.Any(l => l.ApprovalStatus == ApprovalStatusEnum.Pending && (!contextId.HasValue || l.AgencyId == contextId) && (!reportYear.HasValue || l.PeriodYear == reportYear)),
                     CalculatedStatus = progress.Status.ToString(),
                     CalculatedAlert = progress.Alert.ToString(),
                     CustomBaseline = item.CustomBaseline ?? new Dictionary<string, string>(),
@@ -168,6 +196,7 @@ namespace Cdsqg.Application.Services
 
             return new PlanningGridResponseDto
             {
+                PagedTotalCount = pagedTotalCount,
                 DocumentId = doc.Id,
                 DocumentNumber = doc.DocumentNumber,
                 DocumentName = doc.Name,
@@ -181,12 +210,14 @@ namespace Cdsqg.Application.Services
 
         public async Task<PagedResultDto<PlanningGridItemDto>> GetDocumentItemsPagedAsync(Guid documentId, DocumentItemsQueryDto queryDto)
         {
+            queryDto.PageNumber = Math.Max(1, queryDto.PageNumber);
+            queryDto.PageSize = queryDto.PageSize > 0 ? Math.Min(1000, queryDto.PageSize) : 10;
             // Admin's account agency must not scope the official progress of
             // assignments performed by other agencies. Agency filters below
             // select rows; they do not change the reporting owner.
             var progressAgencyId = string.Equals(queryDto.UserRole, "Admin", StringComparison.OrdinalIgnoreCase)
                 ? (Guid?)null : queryDto.AgencyId;
-            var gridResponse = await GetDocumentPlanningGridAsync(documentId, progressAgencyId);
+            var gridResponse = await GetDocumentPlanningGridAsync(documentId, progressAgencyId, filterQuery: queryDto, paginate: true);
             var list = gridResponse.Items ?? new List<PlanningGridItemDto>();
 
             // 1. Scoping for non-admin user accounts
@@ -196,12 +227,12 @@ namespace Cdsqg.Application.Services
                 list = list.Where(scope.CanView).ToList();
             }
 
-            list = DocumentItemQuery.Apply(list, queryDto);
+            if (!gridResponse.PagedTotalCount.HasValue) list = DocumentItemQuery.Apply(list, queryDto);
 
-            int totalCount = list.Count;
+            int totalCount = gridResponse.PagedTotalCount ?? list.Count;
             int pageNum = queryDto.PageNumber > 0 ? queryDto.PageNumber : 1;
             int pageSize = queryDto.PageSize > 0 ? queryDto.PageSize : 10;
-            var pagedItems = list.Skip((pageNum - 1) * pageSize).Take(pageSize).ToList();
+            var pagedItems = gridResponse.PagedTotalCount.HasValue ? list : list.Skip((pageNum - 1) * pageSize).Take(pageSize).ToList();
 
             return new PagedResultDto<PlanningGridItemDto>
             {
@@ -328,6 +359,7 @@ namespace Cdsqg.Application.Services
             };
 
             _context.GoalTaskItems.Add(item);
+            await AgencyAssignments.SyncAsync(_context, item);
             await _context.SaveChangesAsync();
             return item;
         }

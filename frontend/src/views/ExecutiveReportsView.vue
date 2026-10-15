@@ -1,6 +1,6 @@
 <template>
   <div class="w-full space-y-4 font-sans">
-    
+
     <!-- Header Bar -->
     <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col md:flex-row md:items-center justify-between gap-3 w-full">
       <div>
@@ -17,9 +17,8 @@
       </div>
 
       <div class="flex flex-wrap items-center gap-2">
-      <ReportYearSelect v-if="isGoalOnlyReport" />
-      <ActionButton kind="export" 
-        @click="exportCurrentReportToExcel" 
+      <ActionButton kind="export"
+        @click="exportCurrentReportToExcel"
         :disabled="isLoading"
       >Xuất file Excel</ActionButton>
       </div>
@@ -27,7 +26,7 @@
 
     <!-- REPORT TYPE SELECTOR TABS -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 w-full">
-      <button 
+      <button
         @click="activeReportType = 'summary'"
         :class="[
           'p-3 rounded-2xl border text-left transition space-y-0.5 cursor-pointer',
@@ -38,7 +37,7 @@
         <div class="text-xs font-bold truncate">📊 Tiến độ các bộ, ngành và địa phương</div>
       </button>
 
-      <button 
+      <button
         @click="activeReportType = 'urgent'"
         :class="[
           'p-3 rounded-2xl border text-left transition space-y-0.5 cursor-pointer',
@@ -49,7 +48,7 @@
         <div class="text-xs font-bold truncate">⚠️ Cảnh báo sắp hết hạn và quá hạn</div>
       </button>
 
-      <button 
+      <button
         @click="activeReportType = 'governance'"
         :class="[
           'p-3 rounded-2xl border text-left transition space-y-0.5 cursor-pointer',
@@ -60,7 +59,7 @@
         <div class="text-xs font-bold truncate">🏛️ Thống kê đôn đốc và tuân thủ báo cáo</div>
       </button>
 
-      <button 
+      <button
         @click="activeReportType = 'domain'"
         :class="[
           'p-3 rounded-2xl border text-left transition space-y-0.5 cursor-pointer',
@@ -76,22 +75,17 @@
     <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 w-full">
       <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto flex-1">
         <div class="relative flex-1 min-w-[200px] max-w-md">
-          <input 
-            :value="filterDraft.searchQuery" 
+          <input
+            :value="filterDraft.searchQuery"
             @input="filterDraft.searchQuery = $event.target.value"
-            placeholder="Tìm theo mã, tên mục tiêu / nhiệm vụ..." 
-            class="ui-single-line ui-toolbar-control w-full font-medium pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none" 
+            placeholder="Tìm theo mã, tên mục tiêu / nhiệm vụ..."
+            class="ui-single-line ui-toolbar-control w-full font-medium pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
           />
           <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
         </div>
 
-        <!-- Quick Item Type Select Dropdown -->
-        <div class="w-full sm:w-64 shrink-0">
-          <SearchableSelect v-model="quickItemType" :options="[{ value: 'all', label: 'Tất cả (mục tiêu & nhiệm vụ)' }, { value: 'Goal', label: 'Chỉ mục tiêu' }, { value: 'Task', label: 'Chỉ nhiệm vụ' }]" :isMulti="false" :clearable="false" label="Loại đối tượng" label-class="sr-only" @change="onQuickItemTypeChange" />
-        </div>
-
         <!-- OverlayPanel Advanced Filter Popover -->
-        <OverlayPanel 
+        <OverlayPanel
           title="Bộ lọc báo cáo nâng cao"
           buttonText="Lọc nâng cao"
           :activeCount="activeFilterCount"
@@ -102,62 +96,63 @@
           <div class="space-y-3">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
-                <SearchableSelect 
-                  v-model="filterDraft.selectedItemTypes" 
-                  :options="itemTypeOptions" 
-                  :isMulti="true" 
-                  label="Loại đối tượng" 
-                  placeholder="Tất cả loại đối tượng"
+                <SearchableSelect
+                  v-model="filterDraft.selectedItemTypes[0]"
+                  :options="itemTypeOptions"
+                  :isMulti="false"
+                  :clearable="false"
+                  label="Loại đối tượng"
+                  placeholder="Chọn mục tiêu hoặc nhiệm vụ"
                 />
               </div>
 
               <div>
-                <SearchableSelect 
-                  v-model="filterDraft.selectedScopes" 
-                  :options="reportScopeOptions" 
-                  :isMulti="true" 
-                  label="Phạm vi" 
+                <SearchableSelect
+                  v-model="filterDraft.selectedScopes"
+                  :options="reportScopeOptions"
+                  :isMulti="true"
+                  label="Phạm vi"
                   placeholder="Tất cả phạm vi"
                 />
               </div>
             </div>
 
             <div>
-              <SearchableSelect 
-                v-model="filterDraft.selectedAgencyIds" 
-                :options="leadAgencyOptions" 
-                :isMulti="true" 
-                label="Cơ quan chủ trì" 
+              <SearchableSelect
+                v-model="filterDraft.selectedAgencyIds"
+                :options="leadAgencyOptions"
+                :isMulti="true"
+                label="Cơ quan chủ trì"
                 placeholder="Tất cả cơ quan chủ trì"
               />
             </div>
 
             <div>
-              <SearchableSelect 
-                v-model="filterDraft.selectedSubAgencyIds" 
-                :options="subAgencyOptions" 
-                :isMulti="true" 
-                label="Đơn vị trực thuộc" 
+              <SearchableSelect
+                v-model="filterDraft.selectedSubAgencyIds"
+                :options="subAgencyOptions"
+                :isMulti="true"
+                label="Đơn vị trực thuộc"
                 placeholder="Tất cả đơn vị trực thuộc"
               />
             </div>
 
             <div>
-              <SearchableSelect 
-                v-model="filterDraft.selectedSections" 
-                :options="sectionOptions" 
-                :isMulti="true" 
-                label="Mục (Phụ lục)" 
+              <SearchableSelect
+                v-model="filterDraft.selectedSections"
+                :options="sectionOptions"
+                :isMulti="true"
+                label="Mục (Phụ lục)"
                 placeholder="Tất cả mục"
               />
             </div>
 
             <div>
-              <SearchableSelect 
-                v-model="filterDraft.selectedGroups" 
-                :options="groupOptions" 
-                :isMulti="true" 
-                label="Nhóm trọng tâm" 
+              <SearchableSelect
+                v-model="filterDraft.selectedGroups"
+                :options="groupOptions"
+                :isMulti="true"
+                label="Nhóm trọng tâm"
                 placeholder="Tất cả nhóm"
               />
             </div>
@@ -171,25 +166,31 @@
                 </label>
               </div>
               <div class="flex items-center gap-2">
-                <SearchableSelect 
-                  v-model="filterDraft.fromYear" 
-                  :options="yearOptions" 
-                  :isMulti="false" 
-                  placeholder="Từ năm" 
+                <SearchableSelect
+                  v-model="filterDraft.fromYear"
+                  :options="yearOptions"
+                  :isMulti="false"
+                  placeholder="Từ năm"
                   class="w-full"
                 />
                 <span class="text-xs font-bold text-slate-400 shrink-0">➔</span>
-                <SearchableSelect 
-                  v-model="filterDraft.toYear" 
-                  :options="yearOptions" 
-                  :isMulti="false" 
-                  placeholder="Đến năm" 
+                <SearchableSelect
+                  v-model="filterDraft.toYear"
+                  :options="yearOptions"
+                  :isMulti="false"
+                  placeholder="Đến năm"
                   class="w-full"
                 />
               </div>
             </div>
           </div>
         </OverlayPanel>
+
+        <!-- Quick Item Type Select Dropdown -->
+        <div class="w-36 shrink-0">
+          <SearchableSelect v-model="quickItemType" :options="itemTypeOptions" :isMulti="false" :clearable="false" label="Loại đối tượng" label-class="sr-only" @change="onQuickItemTypeChange" />
+        </div>
+        <ReportYearSelect v-if="isGoalOnlyReport" />
       </div>
 
     </div>
@@ -198,7 +199,7 @@
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden w-full">
       <LoadingSpinner v-if="isLoading" text="Đang tải dữ liệu báo cáo từ máy chủ..." />
       <template v-else>
-      
+
       <!-- BÁO CÁO 1: TỔNG HỢP TIẾN ĐỘ THEO BỘ / ĐỊA PHƯƠNG -->
       <div v-if="activeReportType === 'summary'" class="overflow-x-auto max-h-[560px] overflow-y-auto custom-scrollbar">
         <table class="w-full text-left text-xs text-slate-700 border-collapse">
@@ -395,20 +396,20 @@
         </div>
 
         <div class="flex items-center gap-2">
-          <button 
-            @click="changePage(currentPage - 1)" 
+          <button
+            @click="changePage(currentPage - 1)"
             :disabled="currentPage <= 1"
             class="ui-single-line px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl disabled:opacity-40 font-bold transition shadow-2xs cursor-pointer disabled:cursor-not-allowed"
           >
             ‹ Trang trước
           </button>
-          
+
           <span class="px-3 py-1.5 bg-blue-50 text-blue-800 border border-blue-200 rounded-xl font-bold">
             Trang {{ currentPage }} / {{ currentActiveTotalPages }}
           </span>
 
-          <button 
-            @click="changePage(currentPage + 1)" 
+          <button
+            @click="changePage(currentPage + 1)"
             :disabled="currentPage >= currentActiveTotalPages"
             class="px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl disabled:opacity-40 font-bold transition shadow-2xs cursor-pointer disabled:cursor-not-allowed"
           >
@@ -449,10 +450,11 @@ const metrics = ref({});
 
 const filterDraft = ref({
   searchQuery: '',
+  assignmentRole: 'Lead',
   selectedAgencyIds: [],
   selectedSubAgencyIds: [],
   selectedScopes: [],
-  selectedItemTypes: [],
+  selectedItemTypes: ['Goal'],
   selectedSections: [],
   selectedGroups: [],
   fromYear: null,
@@ -462,10 +464,11 @@ const filterDraft = ref({
 
 const appliedFilters = ref({
   searchQuery: '',
+  assignmentRole: 'Lead',
   selectedAgencyIds: [],
   selectedSubAgencyIds: [],
   selectedScopes: [],
-  selectedItemTypes: [],
+  selectedItemTypes: ['Goal'],
   selectedSections: [],
   selectedGroups: [],
   fromYear: null,
@@ -544,14 +547,10 @@ function getPct(val, total) {
 
 
 
-const quickItemType = ref('all');
+const quickItemType = ref('Goal');
 
 function onQuickItemTypeChange() {
-  if (quickItemType.value === 'all') {
-    filterDraft.value.selectedItemTypes = [];
-  } else {
-    filterDraft.value.selectedItemTypes = [quickItemType.value];
-  }
+  filterDraft.value.selectedItemTypes = [quickItemType.value === 'Task' ? 'Task' : 'Goal'];
   execFilterSearch();
 }
 
@@ -562,11 +561,8 @@ let reportFetchRequestId = 0;
 function execFilterSearch() {
   if (reportSearchTimer) clearTimeout(reportSearchTimer);
   reportSearchRequestId++;
-  if (filterDraft.value.selectedItemTypes?.length === 1) {
-    quickItemType.value = filterDraft.value.selectedItemTypes[0];
-  } else if (!filterDraft.value.selectedItemTypes?.length) {
-    quickItemType.value = 'all';
-  }
+  quickItemType.value = filterDraft.value.selectedItemTypes?.[0] === 'Task' ? 'Task' : 'Goal';
+  filterDraft.value.selectedItemTypes = [quickItemType.value];
   appliedFilters.value = JSON.parse(JSON.stringify(filterDraft.value));
   currentPage.value = 1;
   loadReportData();
@@ -586,13 +582,14 @@ watch(() => filterDraft.value.searchQuery, (newVal) => {
 function resetReportFilters() {
   if (reportSearchTimer) clearTimeout(reportSearchTimer);
   reportSearchRequestId++;
-  quickItemType.value = 'all';
+  quickItemType.value = 'Goal';
   filterDraft.value = {
     searchQuery: '',
+  assignmentRole: 'Lead',
     selectedAgencyIds: [],
     selectedSubAgencyIds: [],
     selectedScopes: [],
-    selectedItemTypes: [],
+    selectedItemTypes: ['Goal'],
     selectedSections: [],
     selectedGroups: [],
     fromYear: null,
@@ -623,15 +620,11 @@ function passesCommonFilters(i) {
     const itemCoordIds = (i.coordinatingAgencyIds || []).map(id => String(id).toLowerCase());
 
     const isParentAgency = !userAgency || !userAgency.parentId;
-    const isGeneral = isParentAgency && (i.isGeneralTask || isSpecialAgencyCode(i.leadAgencyCode) || ['00000000-0000-0000-0000-000000009999', '00000000-0000-0000-0000-000000009998', '00000000-0000-0000-0000-000000009997', '00000000-0000-0000-0000-000000009996', '00000000-0000-0000-0000-000000009995'].includes(itemLeadId) || (i.leadAgencyName && (i.leadAgencyName.toLowerCase().includes('các bộ, ngành') || i.leadAgencyName.toLowerCase().includes('các địa phương'))));
-    const isLead = scopedAgencyIds.includes(itemLeadId);
-    const isAssigned = itemAssignedId && scopedAgencyIds.includes(itemAssignedId);
-    const isCoord = itemCoordIds.some(id => scopedAgencyIds.includes(id));
+    const assignedIds = [...(i.leadAssignmentAgencyIds || []), ...(i.coordinatingAssignmentAgencyIds || [])].map(id => String(id).toLowerCase());
+    if (!assignedIds.some(id => scopedAgencyIds.includes(id))) return false;
 
-    if (!isGeneral && !isLead && !isAssigned && !isCoord) return false;
   }
 
-  if (appliedFilters.value.selectedAgencyIds?.length > 0 && !appliedFilters.value.selectedAgencyIds.includes(i.leadAgencyId)) return false;
   if (appliedFilters.value.selectedSubAgencyIds?.length > 0 && !appliedFilters.value.selectedSubAgencyIds.includes(i.assignedAgencyId)) return false;
   if (appliedFilters.value.selectedScopes?.length > 0) {
     const isGeneral = i.isGeneralTask || isSpecialAgencyCode(i.leadAgencyCode) || ['00000000-0000-0000-0000-000000009999', '00000000-0000-0000-0000-000000009998', '00000000-0000-0000-0000-000000009997', '00000000-0000-0000-0000-000000009996', '00000000-0000-0000-0000-000000009995'].includes(i.leadAgencyId);
@@ -666,7 +659,7 @@ function passesCommonFilters(i) {
 
   const q = (appliedFilters.value.searchQuery || '').trim().toLowerCase();
   if (q) {
-    const match = (i.title && i.title.toLowerCase().includes(q)) || 
+    const match = (i.title && i.title.toLowerCase().includes(q)) ||
                   (i.code && i.code.toLowerCase().includes(q)) ||
                   (i.leadAgencyName && i.leadAgencyName.toLowerCase().includes(q));
     if (!match) return false;
@@ -828,6 +821,7 @@ async function loadReportData() {
     }
 
     const params = new URLSearchParams();
+    params.set('assignmentRole', appliedFilters.value.assignmentRole || 'Lead');
     if (selectedYear !== null) params.set('reportYear', String(selectedYear));
     if (appliedFilters.value.selectedAgencyIds && appliedFilters.value.selectedAgencyIds.length > 0) {
       appliedFilters.value.selectedAgencyIds.forEach(id => params.append('agencyId', id));
@@ -858,7 +852,11 @@ async function loadReportData() {
     }
 
     const docId = '12660000-0000-0000-0000-000000001266';
-    const gridRes = await fetchWithAuth(getApiUrl(`/api/planning/documents/${docId}/grid${selectedYear !== null ? '?reportYear=' + selectedYear : ''}`));
+    const gridParams = new URLSearchParams();
+    gridParams.set('assignmentRole', appliedFilters.value.assignmentRole || 'Lead');
+    if (selectedYear !== null) gridParams.set('reportYear', selectedYear);
+    if (appliedFilters.value.selectedAgencyIds?.length) gridParams.set('selectedAgencyIds', appliedFilters.value.selectedAgencyIds.join(','));
+    const gridRes = await fetchWithAuth(getApiUrl(`/api/planning/documents/${docId}/grid?${gridParams}`));
     if (gridRes.ok) {
       const data = await gridRes.json();
       if (currentId !== reportFetchRequestId) return;

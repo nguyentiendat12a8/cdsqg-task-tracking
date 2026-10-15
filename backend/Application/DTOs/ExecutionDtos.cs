@@ -103,6 +103,9 @@ namespace Cdsqg.Application.DTOs
 
     public class AgencyExecutionItemDto
     {
+        public bool IsLeadAssignment { get; set; }
+        public bool IsCoordinatingAssignment { get; set; }
+        public bool IsGroupAssignment { get; set; }
         public Guid AgencyId { get; set; }
         public string AgencyName { get; set; } = string.Empty;
         public string AgencyCode { get; set; } = string.Empty;

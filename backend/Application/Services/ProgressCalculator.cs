@@ -128,16 +128,18 @@ public static class ProgressCalculator
 
     public static Result EvaluateOverall(GoalTaskItem item, IEnumerable<Agency> agencies, DateTime? evaluatedAt = null, int? reportYear = null)
     {
-        if (!item.IsGeneralTask) return Evaluate(item, year: reportYear, evaluatedAt: evaluatedAt);
-        var code = item.LeadAgency?.Code ?? "ALL_AGENCIES";
-        var eligible = agencies.Where(a => a.IsActive && a.ParentId == null
-            && !a.Code.StartsWith("ALL_", StringComparison.OrdinalIgnoreCase)
-            && a.Type is AgencyTypeEnum.Ministry or AgencyTypeEnum.Province
-            && (!code.StartsWith("ALL_MINISTRIES") || a.Type == AgencyTypeEnum.Ministry)
-            && (!code.StartsWith("ALL_PROVINCES") || a.Type == AgencyTypeEnum.Province)).ToList();
-        var year = reportYear ?? item.ProgressLogs.Where(l => l.ApprovalStatus == ApprovalStatusEnum.Approved && eligible.Any(a => a.Id == l.AgencyId))
+        if (!item.IsGeneralTask && !item.AgencyExecutions.Any(e => e.IsLeadGroupAssignment && e.IsLeadAssignment)) return Evaluate(item, year: reportYear, evaluatedAt: evaluatedAt);
+        var activeAgencyIds = agencies.Select(a => a.Id).ToHashSet();
+        var ids = item.AgencyExecutions.Where(e => e.IsLeadAssignment && activeAgencyIds.Contains(e.AgencyId)).Select(e => e.AgencyId).Distinct().ToList();
+        return EvaluateRecipients(item, ids, reportYear, evaluatedAt, aggregate: true);
+    }
+
+    public static Result EvaluateRecipients(GoalTaskItem item, IReadOnlyCollection<Guid> ids, int? reportYear = null, DateTime? evaluatedAt = null, bool aggregate = false)
+    {
+        if (ids.Count == 1 && !aggregate) return Evaluate(item, agencyId: ids.First(), year: reportYear, evaluatedAt: evaluatedAt);
+        var year = reportYear ?? item.ProgressLogs.Where(l => l.ApprovalStatus == ApprovalStatusEnum.Approved && l.AgencyId.HasValue && ids.Contains(l.AgencyId.Value))
             .Select(l => (int?)l.PeriodYear).Max() ?? (evaluatedAt ?? DateTime.UtcNow).Year;
-        var results = eligible.Select(a => Evaluate(item, agencyId: a.Id, year: year, evaluatedAt: evaluatedAt)).ToList();
+        var results = ids.Select(id => Evaluate(item, agencyId: id, year: year, evaluatedAt: evaluatedAt)).ToList();
         var (target, custom) = ResolveBaseline(item, year);
         if (results.Count == 0) return new(year, null, target, custom, null, ExecutionStatusEnum.NotStarted, AlertStatusEnum.Red);
         var allComplete = results.All(r => r.Status is ExecutionStatusEnum.CompletedOnTime or ExecutionStatusEnum.CompletedOverdue);

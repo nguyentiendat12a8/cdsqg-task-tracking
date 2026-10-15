@@ -9,12 +9,8 @@ public sealed record AgencyViewScope(HashSet<Guid> AgencyIds, bool IsParentAgenc
 {
     public bool CanView(PlanningGridItemDto item)
     {
-        var code = item.LeadAgencyCode;
-        var general = IsParentAgency && (item.IsGeneralTask || code?.StartsWith("ALL_", StringComparison.OrdinalIgnoreCase) == true)
-            && (code == null || code.StartsWith("ALL_", StringComparison.OrdinalIgnoreCase));
-        return general || AgencyIds.Contains(item.LeadAgencyId)
-            || item.AssignedAgencyId.HasValue && AgencyIds.Contains(item.AssignedAgencyId.Value)
-            || item.CoordinatingAgencyIds?.Any(AgencyIds.Contains) == true;
+        return item.LeadAssignmentAgencyIds.Any(AgencyIds.Contains) || item.CoordinatingAssignmentAgencyIds.Any(AgencyIds.Contains);
+
     }
 }
 public static class AgencyScopePolicy
@@ -28,8 +24,6 @@ public static class AgencyScopePolicy
         return new(ids, isParent);
     }
     public static Task<bool> CanReportAsync(AppDbContext db, Guid taskId, Guid agencyId)
-        => db.GoalTaskItems.AnyAsync(t => t.Id == taskId &&
-            (t.LeadAgencyId == agencyId || t.AssignedAgencyId == agencyId
-             || (t.IsGeneralTask && db.Agencies.Any(a => a.Id == agencyId && a.ParentId == null))
-             || db.Agencies.Any(a => a.ParentId == agencyId && (a.Id == t.LeadAgencyId || a.Id == t.AssignedAgencyId))));
+        => db.AgencyTaskExecutions.AnyAsync(e => e.GoalTaskId == taskId && e.IsLeadAssignment
+            && (e.AgencyId == agencyId || db.Agencies.Any(a => a.Id == e.AgencyId && a.ParentId == agencyId)));
 }

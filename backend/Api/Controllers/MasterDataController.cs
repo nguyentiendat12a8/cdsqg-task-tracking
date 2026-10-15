@@ -1,3 +1,4 @@
+using Cdsqg.Core.Enums;
 using System;
 using System.Linq;
 using System.Threading.Tasks;
@@ -86,7 +87,16 @@ namespace Cdsqg.Api.Controllers
                 _context.ProgressLogs.RemoveRange(_context.ProgressLogs);
                 _context.TaskUrgeLogs.RemoveRange(_context.TaskUrgeLogs);
                 _context.Notifications.RemoveRange(_context.Notifications);
-                _context.AgencyTaskExecutions.RemoveRange(_context.AgencyTaskExecutions);
+                foreach (var execution in await _context.AgencyTaskExecutions.ToListAsync())
+                {
+                    execution.LatestProgressValue = null; execution.LatestQualitativeStatus = null;
+                    execution.CompletionPercentage = 0; execution.CalculatedStatus = ExecutionStatusEnum.NotStarted;
+                    execution.ApprovalStatus = ApprovalStatusEnum.Approved; execution.RejectionReason = null;
+                    execution.LastReportedAt = null; execution.LastReportedBy = null;
+                    execution.SummaryNotes = null; execution.Deliverables = new(); execution.AttachmentFileUrls = new();
+                    _context.Entry(execution).Property(e => e.Deliverables).IsModified = true;
+                    _context.Entry(execution).Property(e => e.AttachmentFileUrls).IsModified = true;
+                }
 
                 var items = await _context.GoalTaskItems.ToListAsync();
                 foreach (var item in items)

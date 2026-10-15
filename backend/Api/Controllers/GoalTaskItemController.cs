@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -148,6 +149,7 @@ namespace Cdsqg.Api.Controllers
                 };
 
                 _context.GoalTaskItems.Add(newItem);
+                await AgencyAssignments.SyncAsync(_context, newItem);
 
                 // Add annual baseline targets if provided
                 if (dto.YearlyTargets != null && dto.YearlyTargets.Count > 0)
@@ -202,6 +204,24 @@ namespace Cdsqg.Api.Controllers
         /// POST /api/planning/items/{id}/assign
         /// Giao nhiệm vụ cho đơn vị trực thuộc (Cấp 3).
         /// </summary>
+        [Authorize(Roles = nameof(UserRoleEnum.Admin))]
+        [HttpPost("{id:guid}/refresh-assignments")]
+        public async Task<IActionResult> RefreshAssignments(Guid id)
+        {
+            // Defense in depth alongside ApiPermissionFilter and the authorization attribute.
+            if (User?.Identity?.IsAuthenticated != true) return Unauthorized();
+            if (!User.IsInRole(nameof(UserRoleEnum.Admin))) return Forbid();
+            var item = await _context.GoalTaskItems.FirstOrDefaultAsync(i => i.Id == id);
+            if (item == null) return NotFound();
+            try
+            {
+                await AgencyAssignments.SyncAsync(_context, item);
+                await _context.SaveChangesAsync();
+                return Ok(new { message = "Đã đồng bộ danh sách phân giao; giữ nguyên báo cáo và phê duyệt." });
+            }
+            catch (InvalidOperationException error) { return BadRequest(new { error = error.Message }); }
+        }
+
         [HttpPost("{id:guid}/assign")]
         public async Task<IActionResult> AssignItem(Guid id, [FromBody] AssignGoalTaskItemRequestDto dto)
         {
@@ -231,6 +251,7 @@ namespace Cdsqg.Api.Controllers
                     item.AssignedAgencyId = null;
                 }
 
+                await AgencyAssignments.SyncAsync(_context, item, refreshCoordination: false);
                 await _context.SaveChangesAsync();
                 return Ok(new { success = true, message = "Đã giao cho đơn vị trực thuộc thành công." });
             }
@@ -364,6 +385,8 @@ namespace Cdsqg.Api.Controllers
                 bool isSpecialGeneralAgency = leadAgency != null && (leadAgency.Code.StartsWith("ALL_") || leadAgency.Code == "ALL_AGENCIES" || leadAgency.Code == "ALL_MINISTRIES" || leadAgency.Code == "ALL_PROVINCES" || leadAgency.Code == "ALL_PROVINCES_UBND" || leadAgency.Code == "ALL_MINISTRIES_DIRECT");
                 bool isGeneral = isSpecialGeneralAgency || (dto.IsGeneralTask && leadAgency == null);
 
+                var refreshLead = item.LeadAgencyId != dto.LeadAgencyId || item.AssignedAgencyId != dto.AssignedAgencyId;
+                var refreshCoordination = !item.CoordinatingAgencyIds.ToHashSet().SetEquals(dto.CoordinatingAgencyIds ?? new());
                 item.Title = dto.Title.Trim();
                 item.Section = dto.Section;
                 item.Group = dto.Group;
@@ -386,6 +409,7 @@ namespace Cdsqg.Api.Controllers
                     if (targetUnit != null) item.UnitId = targetUnit.Id;
                 }
 
+                if (refreshLead || refreshCoordination) await AgencyAssignments.SyncAsync(_context, item, refreshLead, refreshCoordination);
                 await _context.SaveChangesAsync();
 
                 return Ok(new { success = true, message = $"Cập nhật thành công {item.Code}: {item.Title}" });

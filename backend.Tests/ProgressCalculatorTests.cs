@@ -147,6 +147,8 @@ public class ProgressCalculatorTests
         var item = Item(); item.IsGeneralTask = true;
         var first = new Agency { Id = item.LeadAgencyId, Type = AgencyTypeEnum.Ministry, Code = "FIRST" };
         var second = new Agency { Type = AgencyTypeEnum.Province, Code = "SECOND" };
+        item.AgencyExecutions.Add(new() { AgencyId=first.Id, IsLeadAssignment=true });
+        item.AgencyExecutions.Add(new() { AgencyId=second.Id, IsLeadAssignment=true });
         item.ProgressLogs.Add(Log(item, 2026, 100));
         var partial = ProgressCalculator.EvaluateOverall(item, new[] { first, second }, Now);
         Assert.Equal(50m, partial.Percentage);
@@ -205,6 +207,8 @@ public class ProgressCalculatorTests
         var second = new Agency { Type = AgencyTypeEnum.Province, IsActive = true, Code = "SECOND" };
         var excluded = new Agency { Type = AgencyTypeEnum.Other, IsActive = true, Code = "OTHER" };
         var item = Item(); item.IsGeneralTask = true;
+        item.AgencyExecutions.Add(new() { AgencyId=first.Id, IsLeadAssignment=true });
+        item.AgencyExecutions.Add(new() { AgencyId=second.Id, IsLeadAssignment=true });
         var firstLog = Log(item, 2026, 100); firstLog.AgencyId = first.Id;
         var secondLog = Log(item, 2027, 100); secondLog.AgencyId = second.Id;
         item.ProgressLogs.Add(firstLog); item.ProgressLogs.Add(secondLog);

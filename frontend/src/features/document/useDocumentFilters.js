@@ -7,6 +7,7 @@ import { GOAL_SECTIONS, GOAL_GROUPS, TASK_SECTIONS, TASK_GROUPS } from '../../co
 export function useDocumentFilters({ props, userAgencyId, agencies, rawItemsList, serverTotalCount, serverTotalPages, isGeneralTaskOrAllAgencies, loadData }) {
   const filterDraft = ref({
     searchQuery: '',
+    assignmentRole: 'Lead',
     selectedAgencyIds: [],
     selectedSubAgencyIds: [],
     selectedScopes: [],
@@ -32,6 +33,7 @@ export function useDocumentFilters({ props, userAgencyId, agencies, rawItemsList
 
   const appliedFilters = ref({
     searchQuery: '',
+    assignmentRole: 'Lead',
     selectedAgencyIds: [],
     selectedSubAgencyIds: [],
     selectedScopes: [],
@@ -94,6 +96,7 @@ export function useDocumentFilters({ props, userAgencyId, agencies, rawItemsList
     docDetailSearchRequestId++;
     filterDraft.value = {
       searchQuery: '',
+    assignmentRole: 'Lead',
       selectedAgencyIds: [],
       selectedSubAgencyIds: [],
       selectedScopes: [],

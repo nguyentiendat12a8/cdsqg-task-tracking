@@ -20,6 +20,7 @@
       :isExportingExcel="isExportingExcel"
       :isLoading="isLoading"
       :exportDashboardExcelReport="exportDashboardExcelReport"
+      v-model:assignmentRole="assignmentRole"
       v-model:dashboardFilter="dashboardFilter"
       v-model:selectedScopes="selectedScopes"
       v-model:selectedAgencyIds="selectedAgencyIds"
@@ -40,8 +41,8 @@
     <!-- Main Dashboard Container -->
     <div v-else class="space-y-3.5 w-full">
 
-      <!-- 2 Biểu đồ Thống kê (Chia đôi màn hình 50%-50% trên Desktop, 1 hàng trên màn hình nhỏ) -->
-      <LeadershipHighlights v-if="!isSubAgencyUser" :summary="activeStatusSummary" />
+      <div v-if="!isSubAgencyUser" class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-stretch" data-testid="admin-overview-layout">
+      <div class="min-w-0 space-y-3.5" data-testid="admin-overview-left">
 
       <DashboardSummary
       :dashboardFilter="dashboardFilter"
@@ -52,8 +53,13 @@
       :activeCreatedStatusSummary="activeCreatedStatusSummary"
       :activeCreatedTotals="activeCreatedTotals"
       :createdDonutStats="createdDonutStats"
-      v-if="!isSubAgencyUser"
+      @select-statistic="summarySelection = $event"
     />
+      </div>
+      <div class="relative min-w-0">
+      <ProvinceProgressMap :agencies="filteredProvincesPerformance" :filterType="dashboardFilter" fit-height @select-agency="drilldownAgency" class="min-w-0 lg:absolute lg:inset-0" data-testid="province-map-panel" />
+      </div>
+      </div>
 
     <!-- Sub-Agency Dedicated Progress Dashboard Section (When logged in as Sub-Agency / Child Unit) -->
     <div v-if="isSubAgencyUser" class="space-y-4 w-full">
@@ -194,20 +200,9 @@
         </div>
       <!-- Section 1: Khối Bộ / Ngành -->
       <div v-if="visitedAgencyBlocks.has('ministries')" v-show="activeAgencyBlock === 'ministries'" id="agency-panel-ministries" role="tabpanel" aria-labelledby="agency-tab-ministries" tabindex="0" class="p-4 sm:p-5 space-y-4">
-        <div
-          class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3"
-        >
-          <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
-            <span>🏢 Khối các bộ, ngành Trung ương</span>
-          </h3>
-          <div class="flex items-center gap-2">
-            <span class="text-xs font-bold text-blue-600 bg-blue-50 px-3 py-1 rounded-xl border border-blue-200/60">
-              {{ filteredMinistriesPerformance?.length ?? 0 }} bộ, ngành
-            </span>
-          </div>
-        </div>
 
-        <div class="space-y-4 pt-1">
+
+        <div class="rounded-2xl border border-slate-200 bg-white p-3 space-y-3">
           <div class="flex flex-wrap gap-2" role="group" aria-label="Chọn loại biểu đồ">
             <button v-for="tab in agencyChartTabs" :key="tab.value" type="button" :aria-pressed="agencyChartViews.ministries === tab.value" @click="agencyChartViews.ministries = tab.value" :class="['ui-single-line px-4 text-sm font-semibold rounded-lg border transition', agencyChartViews.ministries === tab.value ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50']">{{ tab.label }}</button>
           </div>
@@ -236,24 +231,13 @@
 
       <!-- Section 2: Khối Địa Phương -->
       <div v-if="visitedAgencyBlocks.has('provinces')" v-show="activeAgencyBlock === 'provinces'" id="agency-panel-provinces" role="tabpanel" aria-labelledby="agency-tab-provinces" tabindex="0" class="p-4 sm:p-5 space-y-4">
-        <div
-          class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3"
-        >
-          <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
-            <span>🏛️ Khối các tỉnh, thành phố</span>
-          </h3>
-          <div class="flex items-center gap-2">
-            <span class="text-xs font-bold text-emerald-600 bg-emerald-50 px-3 py-1 rounded-xl border border-emerald-200/60">
-              {{ filteredProvincesPerformance?.length ?? 0 }} địa phương
-            </span>
-          </div>
-        </div>
+
 
         <div class="rounded-2xl border border-slate-200 bg-white p-3 space-y-3" data-testid="province-visualization-block">
           <div class="flex flex-wrap gap-2" role="group" aria-label="Chọn loại biểu đồ">
             <button v-for="tab in provinceChartTabs" :key="tab.value" type="button" :aria-pressed="agencyChartViews.provinces === tab.value" @click="agencyChartViews.provinces = tab.value" :class="['ui-single-line px-4 text-sm font-semibold rounded-lg border transition', agencyChartViews.provinces === tab.value ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50']">{{ tab.label }}</button>
           </div>
-          <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,65fr)_minmax(0,35fr)] gap-3 items-start">
+          <div class="grid grid-cols-1 gap-3 items-start">
           <div class="min-w-0 space-y-3" data-testid="province-chart-panel">
           <AllAgenciesProgressChart v-if="agencyChartViews.provinces === 'bar'" :ministriesData="filteredProvincesPerformance" :filterType="dashboardFilter" @select-agency="drilldownAgency" />
           <div v-if="agencyChartViews.provinces === 'pie' && filteredProvincesPerformance?.length" class="space-y-3">
@@ -276,27 +260,15 @@
             Không có dữ liệu địa phương.
           </div>
           </div>
-          <ProvinceProgressMap :agencies="filteredProvincesPerformance" :filterType="dashboardFilter" @select-agency="drilldownAgency" class="min-w-0" data-testid="province-map-panel" />
           </div>
         </div>
       </div>
 
       <!-- Section 3: Khối Các Cơ Quan / Đơn Vị Khác (Hiển thị khi có dữ liệu được gán chủ trì) -->
       <div v-if="visitedAgencyBlocks.has('others')" v-show="activeAgencyBlock === 'others'" id="agency-panel-others" role="tabpanel" aria-labelledby="agency-tab-others" tabindex="0" class="p-4 sm:p-5 space-y-4">
-        <div
-          class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-100 pb-3"
-        >
-          <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
-            <span>🏢 Khối các đơn vị khác</span>
-          </h3>
-          <div class="flex items-center gap-2">
-            <span class="text-xs font-bold text-purple-600 bg-purple-50 px-3 py-1 rounded-xl border border-purple-200/60">
-              {{ filteredOthersPerformance?.length ?? 0 }} cơ quan, đơn vị
-            </span>
-          </div>
-        </div>
 
-        <div class="space-y-4 pt-1">
+
+        <div class="rounded-2xl border border-slate-200 bg-white p-3 space-y-3">
           <div class="flex flex-wrap gap-2" role="group" aria-label="Chọn loại biểu đồ">
             <button v-for="tab in agencyChartTabs" :key="tab.value" type="button" :aria-pressed="agencyChartViews.others === tab.value" @click="agencyChartViews.others = tab.value" :class="['ui-single-line px-4 text-sm font-semibold rounded-lg border transition', agencyChartViews.others === tab.value ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50']">{{ tab.label }}</button>
           </div>
@@ -389,6 +361,7 @@
 
 
 
+    <SummaryStatusDialog v-if="summarySelection" :selection="summarySelection" :query="metricsQuery" :item-type="dashboardFilter === 'goals' ? 'Goal' : 'Task'" @close="summarySelection = null" @select-item="selectedDetailItem = $event" />
     <!-- Item Detail Modal -->
     <ItemDetailModal v-if="selectedDetailItem != null"
       :isOpen="selectedDetailItem != null"
@@ -409,8 +382,9 @@
 import { formatNumber } from "../shared/formatters";
 import AgencyProgressCard from '../features/dashboard/AgencyProgressCard.vue';
 import DashboardHeader from '../features/dashboard/DashboardHeader.vue';
-import LeadershipHighlights from '../features/dashboard/LeadershipHighlights.vue';
 import DashboardSummary from '../features/dashboard/DashboardSummary.vue';
+const SummaryStatusDialog = defineAsyncComponent(() => import('../features/dashboard/SummaryStatusDialog.vue'));
+const summarySelection = ref(null);
 const AgencyDrilldownDialog = defineAsyncComponent(() => import('../features/dashboard/AgencyDrilldownDialog.vue'));
 import { defineAsyncComponent, ref, computed, onMounted } from 'vue';
 import { authState } from '../services/auth';
@@ -426,12 +400,12 @@ import AllAgenciesProgressChart from '../components/AllAgenciesProgressChart.vue
 const ProvinceProgressMap = defineAsyncComponent(() => import('../features/dashboard/ProvinceProgressMap.vue'));
 const provinceChartTabs = [{ value: 'bar', label: 'Biểu đồ cột' }, { value: 'pie', label: 'Biểu đồ tròn' }];
 const agencyChartViews = ref({ ministries: 'bar', provinces: 'bar', others: 'bar', subAgencies: 'bar' });
-const activeAgencyBlock = ref('provinces');
-const visitedAgencyBlocks = ref(new Set(['provinces']));
+const activeAgencyBlock = ref('ministries');
+const visitedAgencyBlocks = ref(new Set(['ministries']));
 const agencyBlockTabs = computed(() => [
-  { value: 'provinces', label: 'Địa phương', count: filteredProvincesPerformance.value?.length || 0 },
-  { value: 'ministries', label: 'Bộ / Ngành', count: filteredMinistriesPerformance.value?.length || 0 },
-  { value: 'others', label: 'Khối khác', count: filteredOthersPerformance.value?.length || 0 }
+  { value: 'ministries', label: 'Khối các bộ, ngành Trung ương', count: filteredMinistriesPerformance.value?.length || 0 },
+  { value: 'provinces', label: 'Khối các tỉnh, thành phố', count: filteredProvincesPerformance.value?.length || 0 },
+  { value: 'others', label: 'Khối các đơn vị khác', count: filteredOthersPerformance.value?.length || 0 }
 ]);
 function selectAgencyBlock(value) {
   visitedAgencyBlocks.value.add(value);
@@ -455,6 +429,7 @@ import { useLegalDashboard } from '../features/dashboard/useLegalDashboard';
 
 const agencies = ref([]);
 const {
+  assignmentRole,
   dashboardFilter,
   setDashboardFilter,
   dashboardTitleText,
@@ -485,6 +460,7 @@ const {
   isLoading,
   loadError,
   metrics,
+  metricsQuery,
   activeStatusSummary,
   activeStatusTotal,
   overallDonutStats,
@@ -522,7 +498,7 @@ const {
   getPct,
   loadAgencies,
   loadDashboardMetrics
-} = useDashboardMetrics({ dashboardFilter, selectedAgencyIds, selectedSubAgencyIds, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, isSpecialAgencyCode });
+} = useDashboardMetrics({ assignmentRole, dashboardFilter, selectedAgencyIds, selectedSubAgencyIds, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, isSpecialAgencyCode });
 
 const {
   selectedDrilldownAgency,
@@ -543,7 +519,7 @@ const {
   loadSubAgencies,
   switchDrilldownTab,
   drilldownAgency
-} = useAgencyDrilldown({ dashboardFilter, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, metrics });
+} = useAgencyDrilldown({ assignmentRole, dashboardFilter, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, metrics });
 
 const {
   legalStats,
@@ -576,7 +552,7 @@ async function exportDashboardExcelReport() {
   isExportingExcel.value = true;
   try {
     const { exportDashboardReport } = await import('../features/dashboard/dashboardReport');
-    await exportDashboardReport({ dashboardFilter, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, metrics, filterOutSpecialAgencies, filteredMinistriesPerformance, filteredProvincesPerformance, filteredOthersPerformance, formatDate, formatItemProgressDisplay, isExportingExcel });
+    await exportDashboardReport({ assignmentRole, dashboardFilter, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, metrics, filterOutSpecialAgencies, filteredMinistriesPerformance, filteredProvincesPerformance, filteredOthersPerformance, formatDate, formatItemProgressDisplay, isExportingExcel });
   } catch (error) {
     toast.error('Không thể tải chức năng xuất Excel. Vui lòng thử lại.');
   } finally { isExportingExcel.value = false; }

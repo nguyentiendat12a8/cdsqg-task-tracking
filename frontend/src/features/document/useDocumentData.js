@@ -21,6 +21,7 @@ export function useDocumentData({ props, getQueryState }) {
     const userRole = userRoleStr.value;
       const params = new URLSearchParams();
       params.append('itemType', props.filterItemType || 'Task');
+      params.set('assignmentRole', appliedFilters.value.assignmentRole || 'Lead');
       params.append('pageNumber', String(currentPage.value));
       params.append('pageSize', String(pageSize.value));
       params.append('sortBy', sortBy.value);

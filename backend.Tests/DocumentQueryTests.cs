@@ -12,8 +12,8 @@ public class DocumentQueryTests
         var ministries = Guid.Parse("00000000-0000-0000-0000-000000009998");
         var alternate = Guid.Parse("00000000-0000-0000-0000-000000009995");
         var items = new List<PlanningGridItemDto> {
-            new() { Code = "MT-02", Title = "Z", ItemType = "Goal", LeadAgencyId = alternate },
-            new() { Code = "MT-01", Title = "A", ItemType = "Goal", LeadAgencyId = ministries },
+            new() { Code = "MT-02", Title = "Z", ItemType = "Goal", LeadAgencyId = alternate, LeadAssignmentAgencyIds = new() { ministries } },
+            new() { Code = "MT-01", Title = "A", ItemType = "Goal", LeadAgencyId = ministries, LeadAssignmentAgencyIds = new() { ministries } },
             new() { Code = "NV-01", ItemType = "Task", LeadAgencyId = Guid.NewGuid() }
         };
         var result = DocumentItemQuery.Apply(items, new() {
@@ -28,7 +28,7 @@ public class DocumentQueryTests
         var child = Guid.NewGuid(); var other = Guid.NewGuid();
         var scope = new AgencyViewScope(new() { child }, false);
         Assert.False(scope.CanView(new() { IsGeneralTask = true, LeadAgencyId = other, LeadAgencyCode = "ALL_AGENCIES" }));
-        Assert.True(scope.CanView(new() { LeadAgencyId = other, AssignedAgencyId = child }));
+        Assert.True(scope.CanView(new() { LeadAgencyId = other, AssignedAgencyId = child, LeadAssignmentAgencyIds = new() { child } }));
         Assert.False(scope.CanView(new() { LeadAgencyId = other }));
     }
 

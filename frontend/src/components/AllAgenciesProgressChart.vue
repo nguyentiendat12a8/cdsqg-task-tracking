@@ -1,27 +1,7 @@
 <template>
-  <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden transition-all duration-300">
+  <div class="min-w-0">
     <!-- Chart body -->
-    <div class="p-4 sm:p-5 space-y-4 bg-slate-50/20">
-      <!-- Summary badges -->
-      <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white p-3 rounded-xl border border-slate-200/70 shadow-2xs">
-        <!-- Summary Stats -->
-        <div class="flex items-center gap-3 flex-wrap text-xs font-bold">
-          <span class="text-slate-600 bg-slate-100 px-2.5 py-1 rounded-lg">
-            🏢 Tổng {{ formatNumber(sortedAgencies.length) }} đơn vị
-          </span>
-          <span class="text-blue-800 bg-blue-50 px-2.5 py-1 rounded-lg border border-blue-200/60">
-            📌 {{ formatNumber(grandTotalItems) }} {{ filterNoun }}
-          </span>
-          <span class="text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200/60">
-            ✅ {{ formatNumber(grandTotalCompleted) }} Đã hoàn thành
-          </span>
-          <span class="text-rose-800 bg-rose-50 px-2.5 py-1 rounded-lg border border-rose-200/60" v-if="grandTotalOverdue > 0">
-            ⚠️ {{ formatNumber(grandTotalOverdue) }} Quá hạn
-          </span>
-        </div>
-
-      </div>
-
+    <div class="space-y-4">
       <!-- Chart Container -->
       <div v-if="sortedAgencies.length > 0" class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs space-y-3">
         <!-- Static Fixed Legend Header Bar -->
@@ -144,30 +124,6 @@ const sortedAgencies = computed(() => {
     if (cB !== cA) return cB - cA;
     return (a.name || '').localeCompare(b.name || '', 'vi');
   });
-});
-
-const grandTotalItems = computed(() => {
-  return sortedAgencies.value.reduce((acc, ag) => {
-    if (props.filterType === 'goals') return acc + (ag.totalGoals ?? ag.totalItems ?? 0);
-    if (props.filterType === 'tasks') return acc + (ag.totalTasks ?? ag.totalItems ?? 0);
-    return acc + (ag.totalItems ?? 0);
-  }, 0);
-});
-
-const grandTotalCompleted = computed(() => {
-  return sortedAgencies.value.reduce((acc, ag) => {
-    if (props.filterType === 'goals') return acc + (ag.goalCompletedOnTime || 0) + (ag.goalCompletedOverdue || 0);
-    if (props.filterType === 'tasks') return acc + (ag.taskCompletedOnTime || 0) + (ag.taskCompletedOverdue || 0);
-    return acc + (ag.completedOnTime || 0) + (ag.completedOverdue || 0);
-  }, 0);
-});
-
-const grandTotalOverdue = computed(() => {
-  return sortedAgencies.value.reduce((acc, ag) => {
-    if (props.filterType === 'goals') return acc + (ag.goalInProgressOverdue || 0);
-    if (props.filterType === 'tasks') return acc + (ag.taskInProgressOverdue || 0);
-    return acc + (ag.inProgressOverdue || 0);
-  }, 0);
 });
 
 // Dynamic Chart Width based on number of agencies for horizontal scroll view

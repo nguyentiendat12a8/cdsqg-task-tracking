@@ -47,7 +47,7 @@ public class PostgresIntegrationTests
                 }
                 db.TaskUrgeLogs.Add(new() { GoalTaskId = item.Id });
                 db.Notifications.Add(new() { LinkUrl = "/document-detail?taskId=" + item.Id });
-                db.AgencyTaskExecutions.Add(new() { GoalTaskId = item.Id, AgencyId = agency.Id, CompletionPercentage = 99 });
+                await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO \"AgencyTaskExecutions\" (\"Id\",\"GoalTaskId\",\"AgencyId\",\"CalculatedStatus\",\"ApprovalStatus\",\"CompletionPercentage\",\"Deliverables\",\"AttachmentFileUrls\",\"CreatedAt\",\"UpdatedAt\") VALUES ({Guid.NewGuid()},{item.Id},{agency.Id},'NotStarted',1,99,'[]'::jsonb,'[]'::jsonb,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)");
             }
             await db.SaveChangesAsync();
             if (legacySchema)
@@ -106,7 +106,7 @@ public class PostgresIntegrationTests
             await db.Database.ExecuteSqlRawAsync(baseline);
             await db.Database.MigrateAsync();
             await db.Database.MigrateAsync();
-            Assert.Equal(3, (await db.Database.GetAppliedMigrationsAsync()).Count());
+            Assert.Equal(4, (await db.Database.GetAppliedMigrationsAsync()).Count());
             Assert.False(db.Database.HasPendingModelChanges());
             var hasher = new PasswordHasher();
             var user = new User { Username = "recovery", Email = "review@example.test", PasswordHash = hasher.HashPassword("OldPassword123!") };

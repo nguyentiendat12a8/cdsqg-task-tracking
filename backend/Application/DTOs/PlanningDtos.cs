@@ -6,6 +6,8 @@ namespace Cdsqg.Application.DTOs
 {
     public class PlanningGridResponseDto
     {
+        [System.Text.Json.Serialization.JsonIgnore]
+        public int? PagedTotalCount { get; set; }
         public Guid DocumentId { get; set; }
         public string DocumentNumber { get; set; } = string.Empty;
         public string DocumentName { get; set; } = string.Empty;
@@ -16,8 +18,13 @@ namespace Cdsqg.Application.DTOs
         public List<PlanningGridItemDto> Items { get; set; } = new List<PlanningGridItemDto>();
     }
 
-    public class PlanningGridItemDto
+    public class PlanningGridItemDto : IPlanningFilterItem
     {
+        public List<Guid> LeadAssignmentAgencyIds { get; set; } = new();
+        public List<Guid> CoordinatingAssignmentAgencyIds { get; set; } = new();
+        public Guid? ProgressAgencyId { get; set; }
+        public string? ProgressAgencyName { get; set; }
+        public string? AssignmentKind { get; set; }
         public Guid TaskId { get; set; }
         public string ItemType { get; set; } = "Task"; // Goal (1A) or Task (1B)
         public string Code { get; set; } = string.Empty;

@@ -16,6 +16,15 @@ namespace Cdsqg.Core.Entities
         public Guid GoalTaskId { get; set; }
         public GoalTaskItem? GoalTaskItem { get; set; }
 
+        // Assignment roles are independent from report/cache state. Both false means withdrawn.
+        public bool IsLeadAssignment { get; set; }
+        public bool IsCoordinatingAssignment { get; set; }
+        public bool IsLeadGroupAssignment { get; set; }
+        public bool IsCoordinatingGroupAssignment { get; set; }
+        [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+        public bool IsGroupAssignment => IsLeadGroupAssignment || IsCoordinatingGroupAssignment;
+        public DateTime? AssignedAt { get; set; }
+
         public Guid AgencyId { get; set; }
         public Agency? Agency { get; set; }
 

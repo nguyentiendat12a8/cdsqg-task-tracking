@@ -23,11 +23,9 @@ try {
     return route.fulfill({ contentType: 'application/json', body: JSON.stringify(data) });
   });
   await page.goto(process.env.FRONTEND_TEST_URL || 'http://127.0.0.1:5202');
-  await page.getByText('🏢 Khối Các Bộ / Ngành Trung Ương', { exact: true }).waitFor();
+  await page.getByRole('tab', {name:'Bộ / Ngành'}).click();
   assert.equal(requests.some(u => /xlsx\.(?:bundle|min)/.test(u)), false);
-  const pending = page.waitForEvent('download');
-  await page.getByRole('button', { name: /Xuất Báo Cáo Excel/ }).click();
-  const download = await pending;
+  const [download] = await Promise.all([page.waitForEvent('download', {timeout:10000}), page.getByRole('button', {name:/Xuất Báo Cáo Excel/i}).click()]).catch(async error => { console.error('Export diagnostics', errors, await page.locator('.Toastify').allTextContents(), requests.filter(u=>u.includes('/api/')).slice(-8)); throw error; });
   const wb = XLSX.read(await fs.readFile(await download.path()), { type: 'buffer', cellStyles: true });
   assert.equal(wb.SheetNames.length, 2);
   assert.ok(wb.Sheets[wb.SheetNames[0]].A1.s?.fgColor);

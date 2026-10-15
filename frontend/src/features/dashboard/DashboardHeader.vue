@@ -148,6 +148,7 @@
 </template>
 
 <script setup>
+const assignmentRole = defineModel('assignmentRole', { default: 'Lead' });
 import ActionButton from "../../components/ActionButton.vue";
 import SearchableSelect from '../../components/SearchableSelect.vue';
 import OverlayPanel from '../../components/OverlayPanel.vue';

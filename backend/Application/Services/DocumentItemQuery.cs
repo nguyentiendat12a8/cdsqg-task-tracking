@@ -1,9 +1,44 @@
 using Cdsqg.Application.DTOs;
+using Cdsqg.Core.Entities;
 namespace Cdsqg.Application.Services;
 
 // Single source for document listing and export: filter/sort before pagination.
 public static class DocumentItemQuery
 {
+    // Derived status/progress filters evaluate the matching set; simple list sorts page in SQL.
+    public static bool CanPageInDatabase(DocumentItemsQueryDto dto) => string.IsNullOrWhiteSpace(dto.Search)
+        && dto.SelectedStatuses?.Count is not > 0 && (dto.SortBy.ToLowerInvariant() is "code" or "title");
+
+    public static IQueryable<GoalTaskItem> ApplyDatabase(IQueryable<GoalTaskItem> query, DocumentItemsQueryDto dto)
+    {
+        query = ApplyCommon(query, dto);
+        bool asc = !string.Equals(dto.SortOrder, "desc", StringComparison.OrdinalIgnoreCase);
+        return dto.SortBy.Equals("title", StringComparison.OrdinalIgnoreCase)
+            ? asc ? query.OrderBy(i => i.Title).ThenBy(i => i.Id) : query.OrderByDescending(i => i.Title).ThenBy(i => i.Id)
+            : asc ? query.OrderBy(i => i.Code.ToLower()).ThenBy(i => i.Id) : query.OrderByDescending(i => i.Code.ToLower()).ThenBy(i => i.Id);
+    }
+
+    private static IQueryable<T> ApplyCommon<T>(IQueryable<T> query, DocumentItemsQueryDto dto) where T : IPlanningFilterItem
+    {
+        if (dto.SelectedSubAgencyIds?.Count > 0) query = query.Where(i => i.AssignedAgencyId.HasValue && dto.SelectedSubAgencyIds.Contains(i.AssignedAgencyId.Value));
+        if (dto.SelectedSections?.Count > 0) query = query.Where(i => i.Section != null && dto.SelectedSections.Contains(i.Section));
+        if (dto.SelectedGroups?.Count > 0) query = query.Where(i => i.Group != null && dto.SelectedGroups.Contains(i.Group));
+        if (dto.SelectedScopes?.Count > 0)
+        {
+            bool general = dto.SelectedScopes.Contains("general"), specific = dto.SelectedScopes.Contains("specific");
+            query = query.Where(i => general && i.IsGeneralTask || specific && !i.IsGeneralTask);
+        }
+        if (dto.FromYear.HasValue || dto.ToYear.HasValue)
+        {
+            int from = dto.FromYear ?? 1900, to = dto.ToYear ?? 9999;
+            query = query.Where(i => i.IsOngoing && dto.OnlyOngoing || !i.IsOngoing &&
+                (i.DueDate.HasValue ? i.DueDate.Value.Year : i.StartDate.HasValue ? i.StartDate.Value.Year : 2026) >= from
+                && (i.DueDate.HasValue ? i.DueDate.Value.Year : i.StartDate.HasValue ? i.StartDate.Value.Year : 2026) <= to);
+        }
+        else if (dto.OnlyOngoing) query = query.Where(i => i.IsOngoing);
+        return query;
+    }
+
     public static List<PlanningGridItemDto> Apply(List<PlanningGridItemDto> list, DocumentItemsQueryDto queryDto)
     {
             // 2. ItemType filter (Goal vs Task)
@@ -36,84 +71,11 @@ public static class DocumentItemQuery
             // 4. Filters
             if (queryDto.SelectedAgencyIds != null && queryDto.SelectedAgencyIds.Count > 0)
             {
-                var expandedAgencyIds = new HashSet<Guid>(queryDto.SelectedAgencyIds);
-                var ministriesGuid1 = Guid.Parse("00000000-0000-0000-0000-000000009998");
-                var ministriesGuid2 = Guid.Parse("00000000-0000-0000-0000-000000009995");
-                var provincesGuid1  = Guid.Parse("00000000-0000-0000-0000-000000009997");
-                var provincesGuid2  = Guid.Parse("00000000-0000-0000-0000-000000009996");
-
-                if (expandedAgencyIds.Contains(ministriesGuid1) || expandedAgencyIds.Contains(ministriesGuid2))
-                {
-                    expandedAgencyIds.Add(ministriesGuid1);
-                    expandedAgencyIds.Add(ministriesGuid2);
-                }
-                if (expandedAgencyIds.Contains(provincesGuid1) || expandedAgencyIds.Contains(provincesGuid2))
-                {
-                    expandedAgencyIds.Add(provincesGuid1);
-                    expandedAgencyIds.Add(provincesGuid2);
-                }
-
-                list = list.Where(i => expandedAgencyIds.Contains(i.LeadAgencyId)).ToList();
+                var ids = queryDto.SelectedAgencyIds.ToHashSet();
+                list = list.Where(i => (AgencyAssignments.Coordinating(queryDto.AssignmentRole) ? i.CoordinatingAssignmentAgencyIds : i.LeadAssignmentAgencyIds).Any(ids.Contains)).ToList();
             }
 
-            if (queryDto.SelectedSubAgencyIds != null && queryDto.SelectedSubAgencyIds.Count > 0)
-            {
-                list = list.Where(i => i.AssignedAgencyId.HasValue && queryDto.SelectedSubAgencyIds.Contains(i.AssignedAgencyId.Value)).ToList();
-            }
-
-            if (queryDto.SelectedSections != null && queryDto.SelectedSections.Count > 0)
-            {
-                list = list.Where(i => queryDto.SelectedSections.Contains(i.Section)).ToList();
-            }
-
-            if (queryDto.SelectedGroups != null && queryDto.SelectedGroups.Count > 0)
-            {
-                list = list.Where(i => queryDto.SelectedGroups.Contains(i.Group)).ToList();
-            }
-
-            bool wantOngoing = queryDto.OnlyOngoing;
-            bool hasYearFilter = queryDto.FromYear.HasValue || queryDto.ToYear.HasValue;
-
-            if (wantOngoing && hasYearFilter)
-            {
-                int fYr = queryDto.FromYear ?? 2026;
-                int tYr = queryDto.ToYear ?? 2030;
-                list = list.Where(i =>
-                {
-                    if (i.IsOngoing) return true;
-                    int targetYear = i.DueDate.HasValue ? i.DueDate.Value.Year : (i.StartDate.HasValue ? i.StartDate.Value.Year : 2026);
-                    if (queryDto.FromYear.HasValue && targetYear < fYr) return false;
-                    if (queryDto.ToYear.HasValue && targetYear > tYr) return false;
-                    return true;
-                }).ToList();
-            }
-            else if (wantOngoing)
-            {
-                list = list.Where(i => i.IsOngoing).ToList();
-            }
-            else if (hasYearFilter)
-            {
-                int fYr = queryDto.FromYear ?? 2026;
-                int tYr = queryDto.ToYear ?? 2030;
-                list = list.Where(i =>
-                {
-                    if (i.IsOngoing) return false;
-                    int targetYear = i.DueDate.HasValue ? i.DueDate.Value.Year : (i.StartDate.HasValue ? i.StartDate.Value.Year : 2026);
-                    if (queryDto.FromYear.HasValue && targetYear < fYr) return false;
-                    if (queryDto.ToYear.HasValue && targetYear > tYr) return false;
-                    return true;
-                }).ToList();
-            }
-
-            if (queryDto.SelectedScopes != null && queryDto.SelectedScopes.Count > 0)
-            {
-                list = list.Where(i =>
-                {
-                    if (queryDto.SelectedScopes.Contains("general") && i.IsGeneralTask) return true;
-                    if (queryDto.SelectedScopes.Contains("specific") && !i.IsGeneralTask) return true;
-                    return false;
-                }).ToList();
-            }
+            list = ApplyCommon(list.AsQueryable(), queryDto).ToList();
 
             if (queryDto.SelectedStatuses != null && queryDto.SelectedStatuses.Count > 0)
             {

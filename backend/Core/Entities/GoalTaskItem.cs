@@ -9,7 +9,7 @@ namespace Cdsqg.Core.Entities
     /// Module 2 & 3: Goals & Tasks under Decision 1266
     /// Supports Sub-tasks hierarchy, General vs Specific scope, and Date ranges.
     /// </summary>
-    public class GoalTaskItem
+    public class GoalTaskItem : IPlanningFilterItem
     {
         public Guid Id { get; set; } = Guid.NewGuid();
 

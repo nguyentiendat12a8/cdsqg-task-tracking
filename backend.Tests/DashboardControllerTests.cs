@@ -108,6 +108,7 @@ namespace Cdsqg.Tests
             });
 
             context.SaveChanges();
+            AssignmentTestData.PrepareAsync(context).GetAwaiter().GetResult();
         }
 
         private DashboardResponseDto GetResponseDto(IActionResult actionResult)
@@ -267,6 +268,7 @@ namespace Cdsqg.Tests
                 DueDate = new DateTime(2030, 12, 31)
             });
             context.SaveChanges();
+            await AssignmentTestData.PrepareAsync(context);
 
             var controller = new DashboardController(context);
             var result = await controller.GetDashboardMetrics(agencyId: new[] { subAgencyId });
@@ -292,6 +294,7 @@ namespace Cdsqg.Tests
             };
             context.Agencies.Add(specialAg);
             context.SaveChanges();
+            await AssignmentTestData.PrepareAsync(context);
 
             var controller = new DashboardController(context);
             var result = await controller.GetDashboardMetrics(agencyId: new[] { specialAgId });

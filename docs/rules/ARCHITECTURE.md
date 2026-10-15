@@ -6,6 +6,7 @@ BE quyết định giá trị/tỷ lệ/trạng thái, baseline, phạm vi cơ q
 
 | Quy tắc | Nguồn hiện có phải dùng | Ghi chú |
 | --- | --- | --- |
+| Phân giao, vai trò chủ trì/phối hợp | `backend/Application/Services/AgencyAssignments.cs` | Sync khi ghi; Filter/Matches dùng cùng snapshot khi đọc |
 | Baseline, tiến độ, thời hạn, cảnh báo | `backend/Application/Services/ProgressCalculator.cs` | Evaluate, EvaluateOverall, ResolveBaseline, LatestApproved |
 | Submit/import tiến độ | `backend/Application/Services/ExecutionService.cs` | import đi qua submit; không công thức riêng |
 | Danh sách/lọc server | `backend/Application/Services/PlanningService.cs` | dùng DocumentItemQuery và AgencyScopePolicy |
@@ -54,3 +55,11 @@ Dashboard địa phương: ProvinceCatalog (BE) là danh mục cố định 34 t
 15/10/2026 (điều chỉnh theo yêu cầu người dùng): Trung tâm báo cáo có lại Năm báo cáo để thống kê cơ quan hoàn thành chỉ tiêu của năm được chọn; metrics, grid và Excel dùng cùng reportYear. Trang chủ vẫn dùng báo cáo approved mới nhất, không giới hạn năm báo cáo. Giữ Từ năm/Đến năm để lọc thời hạn ở cả hai màn hình. Quy tắc này thay thế phạm vi bỏ Năm báo cáo trên trung tâm báo cáo ở ghi chú trước.
 
 15/10/2026 (phạm vi Năm báo cáo): Chỉ hiện và gửi reportYear khi bộ lọc đã áp dụng chọn duy nhất Goal (Chỉ mục tiêu). Chỉ nhiệm vụ hoặc Tất cả không gửi năm, dùng kết quả approved mới nhất và Excel không ghi Năm báo cáo. Giữ Từ năm/Đến năm ở mọi chế độ. Quy tắc này giới hạn lại ghi chú khôi phục Năm báo cáo trước đó.
+
+15/10/2026 — Phân giao theo cơ quan:
+- Một GoalTaskItem gốc; AgencyTaskExecution có khóa duy nhất (GoalTaskId, AgencyId), lưu IsLeadAssignment/IsCoordinatingAssignment độc lập và nguồn qua nhóm cho từng vai trò. Một cơ quan có thể có cả hai vai trò, danh sách vẫn chỉ một mục gốc. Không tạo mục tiêu/nhiệm vụ con trong GoalTaskItems.
+- AgencyAssignments mở rộng nhóm bằng ReportingAgencyGroups khi tạo/sửa phân giao; chốt các cơ quan nhận giao tại thời điểm ghi. Sửa tên/chỉ tiêu không tự cập nhật thành viên nhóm. API refresh-assignments có Authorize Admin và guard trực tiếp; Admin đồng bộ có xác nhận từ tab Tiến độ các đơn vị. Bỏ phân giao chỉ tắt vai trò, không xóa lịch sử/ID/báo cáo/phê duyệt.
+- Migration 20261015120000_PersistAgencyAssignments backfill chủ trì/phối hợp (trực tiếp và qua 5 nhóm đã có ánh xạ), giữ execution ID/cache và toàn bộ ProgressLog. Nhóm chưa có ánh xạ thành viên không tự gán tất cả cơ quan.
+- Lọc chủ trì hoặc phối hợp dùng cùng assignmentRole=Lead/Coordinating trên list, metrics, drilldown, grid và Excel. Phối hợp không cấp thêm quyền gửi báo cáo chủ trì. Trạng thái chính thức luôn từ ProgressLog approved theo đúng cơ quan qua ProgressCalculator, không dùng cache của mục gốc hay cơ quan khác.
+- SQL lọc phân giao bằng EXISTS trước Include báo cáo; index bắt đầu AgencyId cho từng vai trò. Danh sách sắp mã/tên, không tìm chữ/lọc trạng thái dẫn xuất, dùng COUNT/LIMIT/OFFSET tại DB. Lọc/sắp trạng thái hay tiến độ vẫn tính trên tập khớp cơ quan trước khi phân trang; không có truy vấn riêng từng dòng.
+- Reset riêng tiến độ giữ bản ghi phân giao; xóa cơ quan có execution bị chặn để bảo toàn lịch sử. GET không tạo/cập nhật phân giao. Tab ma trận hiển thị cả cơ quan chưa gửi báo cáo và nhãn vai trò; đơn vị chưa báo cáo là NotReported.

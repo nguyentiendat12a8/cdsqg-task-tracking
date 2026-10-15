@@ -67,6 +67,7 @@ namespace Cdsqg.Application.DTOs
         public string? Search { get; set; }
         public Guid? AgencyId { get; set; }
         public string? UserRole { get; set; }
+        public string AssignmentRole { get; set; } = "Lead";
         public List<Guid>? SelectedAgencyIds { get; set; }
         public List<Guid>? SelectedSubAgencyIds { get; set; }
         public List<string>? SelectedScopes { get; set; }

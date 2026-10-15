@@ -125,9 +125,16 @@ namespace Cdsqg.Infrastructure.Data.Migrations
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp without time zone");
 
+                    b.Property<bool>("IsLeadAssignment").HasColumnType("boolean");
+                    b.Property<bool>("IsCoordinatingAssignment").HasColumnType("boolean");
+                    b.Property<bool>("IsLeadGroupAssignment").HasColumnType("boolean");
+                    b.Property<bool>("IsCoordinatingGroupAssignment").HasColumnType("boolean");
+                    b.Property<DateTime?>("AssignedAt").HasColumnType("timestamp without time zone");
+
                     b.HasKey("Id");
 
-                    b.HasIndex("AgencyId");
+                    b.HasIndex("AgencyId", "IsLeadAssignment", "GoalTaskId").HasDatabaseName("IX_Execution_Agency_Lead_Task");
+                    b.HasIndex("AgencyId", "IsCoordinatingAssignment", "GoalTaskId").HasDatabaseName("IX_Execution_Agency_Coordinating_Task");
 
                     b.HasIndex("AssignedAgencyId");
 

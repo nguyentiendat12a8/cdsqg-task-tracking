@@ -7,3 +7,5 @@ export function isGeneralTaskItem(item) {
   const name = String(item.leadAgencyName || '').toLowerCase();
   return ['các bộ, ngành', 'các địa phương', 'ubnd tỉnh, thành phố'].some(part => name.includes(part));
 }
+
+export const assignmentRoleOptions = Object.freeze([{ value: 'Lead', label: 'Chủ trì' }, { value: 'Coordinating', label: 'Phối hợp' }]);

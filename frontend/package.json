@@ -10,6 +10,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "test:refactor": "node tests/refactor.browser.mjs",
+    "test:assignments": "node tests/agency-assignments.browser.mjs",
     "test:export-lists": "node tests/export-lists.browser.mjs",
     "test:annual": "node tests/annual.browser.mjs",
     "test:progress-excel": "node tests/progress-excel.browser.mjs",

@@ -567,16 +567,8 @@ function canUpdateProgress(item) {
   const userAgencyId = authState.user.value?.agencyId ? String(authState.user.value.agencyId).toLowerCase() : '';
   if (!userAgencyId) return false;
 
-  const userAgency = agencies.value.find(a => String(a.id).toLowerCase() === userAgencyId);
-  const isParentAgency = !userAgency || !userAgency.parentId;
+  return (item.leadAssignmentAgencyIds || []).some(id => String(id).toLowerCase() === userAgencyId);
 
-  // Trường hợp đặc biệt: Cơ quan chủ trì là "Các bộ, ngành, địa phương" (Nhiệm vụ chung)
-  // thì chỉ áp dụng cho đơn vị cha (ParentId == null)
-  if (isParentAgency && isGeneralTaskOrAllAgencies(item)) return true;
-
-  const isLead = item.leadAgencyId && String(item.leadAgencyId).toLowerCase() === userAgencyId;
-  const isAssigned = item.assignedAgencyId && String(item.assignedAgencyId).toLowerCase() === userAgencyId;
-  return isLead || isAssigned;
 }
 
 function isCoordinatingOnly(item) {
@@ -585,16 +577,10 @@ function isCoordinatingOnly(item) {
   const userAgencyId = authState.user.value?.agencyId ? String(authState.user.value.agencyId).toLowerCase() : '';
   if (!userAgencyId) return false;
 
-  const userAgency = agencies.value.find(a => String(a.id).toLowerCase() === userAgencyId);
-  const isParentAgency = !userAgency || !userAgency.parentId;
+  const leads = item.leadAssignmentAgencyIds || [];
+  const coordination = item.coordinatingAssignmentAgencyIds || [];
+  return !leads.some(id => String(id).toLowerCase() === userAgencyId) && coordination.some(id => String(id).toLowerCase() === userAgencyId);
 
-  // Nếu là nhiệm vụ chung và là đơn vị cha -> Có quyền cập nhật
-  if (isParentAgency && isGeneralTaskOrAllAgencies(item)) return false;
-
-  const isLead = item.leadAgencyId && String(item.leadAgencyId).toLowerCase() === userAgencyId;
-  const isAssigned = item.assignedAgencyId && String(item.assignedAgencyId).toLowerCase() === userAgencyId;
-  const isCoord = item.coordinatingAgencyIds && item.coordinatingAgencyIds.some(id => String(id).toLowerCase() === userAgencyId);
-  return !isLead && !isAssigned && isCoord;
 }
 
 function openProgressModal(item) {

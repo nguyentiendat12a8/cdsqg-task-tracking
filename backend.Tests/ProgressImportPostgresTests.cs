@@ -30,12 +30,14 @@ public class ProgressImportPostgresTests
             var task = new GoalTaskItem { Code = "NV_IMPORT", DocumentId = document.Id, LeadAgencyId = agency.Id, EvaluationType = EvaluationTypeEnum.Qualitative };
             db.AddRange(agency, document, goal, task);
             await db.SaveChangesAsync();
+            await AssignmentTestData.PrepareAsync(db);
             var service = new ExecutionService(db, null!);
             var adminAgency = new Agency { Code = "ADMIN_ACTOR", Name = "Cơ quan của người quản trị" };
             var demoTask = new GoalTaskItem { Code = "NV_ADMIN_IMPORT", DocumentId = document.Id, LeadAgencyId = agency.Id,
                 ItemType = ItemTypeEnum.Task, EvaluationType = EvaluationTypeEnum.Qualitative,
                 Deliverables = new() { new() { Id = "demo_product", Title = "Sản phẩm demo" } } };
             db.AddRange(adminAgency, demoTask); await db.SaveChangesAsync();
+            await AssignmentTestData.PrepareAsync(db);
             foreach (var state in new[] { "Drafting", "Completed" })
             {
                 var adminImported = await service.ImportProgressBulkAsync(new() { UserRole = "Admin", CreatedBy = "Admin demo", UserAgencyId = adminAgency.Id,
@@ -57,6 +59,7 @@ public class ProgressImportPostgresTests
             }
             db.ProgressLogs.RemoveRange(db.ProgressLogs.Where(p => p.GoalTaskId == demoTask.Id));
             await db.SaveChangesAsync();
+            await AssignmentTestData.PrepareAsync(db);
             var group = new Agency { Code = "ALL_AGENCIES", Type = AgencyTypeEnum.Special };
             var provinceGroup = new Agency { Code = "ALL_PROVINCES", Type = AgencyTypeEnum.Special };
             var province = new Agency { Code = "GROUP_PROVINCE", Type = AgencyTypeEnum.Province };
@@ -67,6 +70,7 @@ public class ProgressImportPostgresTests
                 IsGeneralTask = true, EvaluationType = EvaluationTypeEnum.Qualitative,
                 Deliverables = new() { new() { Id = "gp", Title = "Sản phẩm nhóm" } } };
             db.AddRange(group, provinceGroup, province, inactive, other, child, groupTask); await db.SaveChangesAsync();
+            await AssignmentTestData.PrepareAsync(db);
             var groupDto = new SubmitProgressRequestDto { AgencyId = group.Id, UserRole = "Admin", CreatedBy = "Admin thực hiện",
                 PeriodYear = ReportingPeriod.CurrentYear, Deliverables = new() { new() { Id = "gp", Title = "Sản phẩm nhóm", CurrentStatus = "Completed" } } };
             var groupResult = await service.SubmitProgressAsync(groupTask.Id, groupDto);
@@ -99,6 +103,7 @@ public class ProgressImportPostgresTests
             await db.Database.ExecuteSqlRawAsync("ALTER TABLE \"ProgressLogs\" DROP CONSTRAINT group_test_reject");
             db.ProgressLogs.RemoveRange(db.ProgressLogs.Where(p => p.GoalTaskId == groupTask.Id));
             await db.SaveChangesAsync();
+            await AssignmentTestData.PrepareAsync(db);
             var futureError = await Assert.ThrowsAsync<InvalidOperationException>(() => service.SubmitProgressAsync(goal.Id, new() { PeriodYear = ReportingPeriod.CurrentYear + 1, Value = 10, CreatedBy = "Admin", AgencyId = agency.Id }));
             Assert.Contains("không được lớn hơn", futureError.Message);
             var futureImport = await service.ImportProgressBulkAsync(new() { UserRole = "Admin", UserAgencyId = agency.Id, CreatedBy = "Admin", Items = new() { new() { Code = goal.Code, Value = 10, PeriodYear = ReportingPeriod.CurrentYear + 1 } } });
@@ -137,6 +142,7 @@ public class ProgressImportPostgresTests
             var scope = group;
             var general = new GoalTaskItem { Code = "MT_GENERAL", DocumentId = document.Id, LeadAgencyId = scope.Id, IsGeneralTask = true, EvaluationType = EvaluationTypeEnum.Quantitative };
             db.Add(general); await db.SaveChangesAsync();
+            await AssignmentTestData.PrepareAsync(db);
             var rejected = await service.ImportProgressBulkAsync(new() { UserRole = "Admin", CreatedBy = "Admin", Items = new() { new() { Code = general.Code, Value = 20000, PeriodYear = 2026 } } });
             Assert.Equal(1, rejected.FailureCount);
             var imported = await service.ImportProgressBulkAsync(new() { UserRole = "Admin", CreatedBy = "Admin", ReportingAgencyId = agency.Id, Items = new() { new() { Code = general.Code, Value = 20000, PeriodYear = 2026 } } });
@@ -149,6 +155,7 @@ public class ProgressImportPostgresTests
             var productTask = new GoalTaskItem { Code = "NV_PRODUCTS", DocumentId = document.Id, LeadAgencyId = agency.Id, EvaluationType = EvaluationTypeEnum.Qualitative,
                 Deliverables = new() { new() { Id = "p1", Title = "Sản phẩm 1", DocumentNumber = "KEEP" }, new() { Id = "p2", Title = "Sản phẩm 2" } } };
             db.Add(productTask); await db.SaveChangesAsync();
+            await AssignmentTestData.PrepareAsync(db);
             var invalidProducts = await service.ImportProgressBulkAsync(new() { UserRole = "Admin", CreatedBy = "Admin", Items = new() { new() { Code = productTask.Code, PeriodYear = 2026, Deliverables = new() { new() { Id = "p1", CurrentStatus = "Completed" } } } } });
             Assert.Equal(1, invalidProducts.FailureCount);
             var productsResult = await service.ImportProgressBulkAsync(new() { UserRole = "Admin", CreatedBy = "Admin", Items = new() { new() { Code = productTask.Code, PeriodYear = 2026, Deliverables = new() { new() { Id = "p1", Title = "Tampered", CurrentStatus = "Completed" }, new() { Id = "p2", CurrentStatus = "Drafting" } } } } });

@@ -35,11 +35,26 @@ namespace Cdsqg.Api.Controllers
             [FromQuery] int? toYear = null,
             [FromQuery] bool? isOngoing = null,
             [FromQuery] string? itemType = null,
-            [FromQuery] string? scope = null)
+            [FromQuery] string? scope = null,
+            [FromQuery] string assignmentRole = "Lead",
+            [FromQuery] string? detailMode = null,
+            [FromQuery] string? detailStatus = null,
+            [FromQuery] string detailScope = "specific",
+            [FromQuery] int pageNumber = 1,
+            [FromQuery] int pageSize = 20,
+            [FromQuery] string? search = null)
         {
             try
             {
                 if (reportYear.HasValue && reportYear.Value is < 1900 or > 9999) return BadRequest("Năm báo cáo không hợp lệ.");
+                if (detailMode != null && detailMode is not ("items" or "assignments")) return BadRequest("Loại danh sách không hợp lệ.");
+                if (detailMode != null && ControllerContext.HttpContext != null && !User.IsInRole("Admin")) return Forbid();
+                ExecutionStatusEnum? requestedStatus = null;
+                if (!string.IsNullOrWhiteSpace(detailStatus))
+                {
+                    if (!Enum.TryParse<ExecutionStatusEnum>(detailStatus, true, out var parsedStatus) || !Enum.IsDefined(parsedStatus)) return BadRequest("Trạng thái không hợp lệ.");
+                    requestedStatus = parsedStatus;
+                }
                 var query = _context.GoalTaskItems
                     .Include(i => i.LeadAgency)
                     .Include(i => i.Unit)
@@ -115,86 +130,20 @@ namespace Cdsqg.Api.Controllers
                 var allAgenciesEntity = allAgencies.FirstOrDefault(a => a.Code == "ALL_AGENCIES");
                 Guid allAgenciesId = allAgenciesEntity?.Id ?? Guid.Parse("00000000-0000-0000-0000-000000009999");
 
-                // Scope to specific agency + child agencies if agencyId supplied
                 HashSet<Guid>? allowedAgencyIds = null;
-                bool isAgencyFilterActive = false;
-                bool anyMinistrySelected = false;
-                bool anyProvinceSelected = false;
-                bool anySpecialAllSelected = false;
-
-                if (agencyId != null && agencyId.Length > 0)
+                bool isAgencyFilterActive = agencyId?.Any(id => id != Guid.Empty) == true;
+                if (isAgencyFilterActive)
                 {
-                    var validAgencyIds = agencyId.Where(id => id != Guid.Empty).ToList();
-                    if (validAgencyIds.Count > 0)
-                    {
-                        isAgencyFilterActive = true;
-                        allowedAgencyIds = new HashSet<Guid>();
-
-                        foreach (var agId in validAgencyIds)
-                        {
-                            var childs = GetAgencyAndChildIds(agId, agencyChildren);
-                            foreach (var c in childs) allowedAgencyIds.Add(c);
-
-                            var selectedAg = allAgencies.FirstOrDefault(a => a.Id == agId);
-                            if (selectedAg != null)
-                            {
-                                if (IsMinistryAgency(selectedAg, allAgencies) || selectedAg.Code == "ALL_MINISTRIES" || selectedAg.Code == "ALL_MINISTRIES_DIRECT")
-                                    anyMinistrySelected = true;
-                                if (IsProvinceAgency(selectedAg, allAgencies) || selectedAg.Code == "ALL_PROVINCES" || selectedAg.Code == "ALL_PROVINCES_UBND")
-                                    anyProvinceSelected = true;
-                                if (selectedAg.Code == "ALL_AGENCIES" || (selectedAg.Name != null && selectedAg.Name.Contains("Các bộ, ngành, địa phương")))
-                                    anySpecialAllSelected = true;
-
-                                if (selectedAg.Type == AgencyTypeEnum.Special || selectedAg.Code == "ALL_AGENCIES" || selectedAg.Code == "ALL_MINISTRIES" || selectedAg.Code == "ALL_PROVINCES" || selectedAg.Code == "ALL_PROVINCES_UBND" || selectedAg.Code == "ALL_MINISTRIES_DIRECT" || (selectedAg.Name != null && (selectedAg.Name.StartsWith("Các bộ, ngành") || selectedAg.Name.StartsWith("Các địa phương") || selectedAg.Name.Contains("UBND tỉnh, thành phố trực thuộc trung ương"))))
-                                {
-                                    if (selectedAg.Code == "ALL_MINISTRIES" || selectedAg.Code == "ALL_MINISTRIES_DIRECT" || (selectedAg.Name != null && selectedAg.Name.StartsWith("Các bộ, ngành") && !selectedAg.Name.Contains("địa phương")))
-                                    {
-                                        anyMinistrySelected = true;
-                                        var ministryIds = allAgencies.Where(a => IsMinistryAgency(a, allAgencies)).Select(a => a.Id);
-                                        foreach (var mId in ministryIds)
-                                        {
-                                            var cList = GetAgencyAndChildIds(mId, agencyChildren);
-                                            foreach (var c in cList) allowedAgencyIds.Add(c);
-                                        }
-                                    }
-                                    else if (selectedAg.Code == "ALL_PROVINCES" || selectedAg.Code == "ALL_PROVINCES_UBND" || (selectedAg.Name != null && (selectedAg.Name.StartsWith("Các địa phương") || selectedAg.Name.Contains("UBND tỉnh"))))
-                                    {
-                                        anyProvinceSelected = true;
-                                        var provinceIds = allAgencies.Where(a => IsProvinceAgency(a, allAgencies)).Select(a => a.Id);
-                                        foreach (var pId in provinceIds)
-                                        {
-                                            var cList = GetAgencyAndChildIds(pId, agencyChildren);
-                                            foreach (var c in cList) allowedAgencyIds.Add(c);
-                                        }
-                                    }
-                                    else if (selectedAg.Code == "ALL_AGENCIES" || (selectedAg.Name != null && selectedAg.Name.Contains("Các bộ, ngành, địa phương")))
-                                    {
-                                        anySpecialAllSelected = true;
-                                        foreach (var a in allAgencies) allowedAgencyIds.Add(a.Id);
-                                    }
-                                }
-                            }
-                        }
-
-                        query = query.Where(i => 
-                            allowedAgencyIds.Contains(i.LeadAgencyId) || 
-                            (i.AssignedAgencyId.HasValue && allowedAgencyIds.Contains(i.AssignedAgencyId.Value)) || 
-                            (i.AgencyExecutions != null && i.AgencyExecutions.Any(e => e.AssignedAgencyId.HasValue && allowedAgencyIds.Contains(e.AssignedAgencyId.Value))) ||
-                            (anySpecialAllSelected) ||
-                            (anyMinistrySelected && (
-                                i.LeadAgencyId == allAgenciesId ||
-                                (i.LeadAgency != null && (i.LeadAgency.Code == "ALL_AGENCIES" || i.LeadAgency.Code == "ALL_MINISTRIES" || i.LeadAgency.Code == "ALL_MINISTRIES_DIRECT")) ||
-                                (i.IsGeneralTask && (i.LeadAgency == null || i.LeadAgency.Code == "ALL_AGENCIES"))
-                            )) ||
-                            (anyProvinceSelected && (
-                                i.LeadAgencyId == allAgenciesId ||
-                                (i.LeadAgency != null && (i.LeadAgency.Code == "ALL_AGENCIES" || i.LeadAgency.Code == "ALL_PROVINCES" || i.LeadAgency.Code == "ALL_PROVINCES_UBND")) ||
-                                (i.IsGeneralTask && (i.LeadAgency == null || i.LeadAgency.Code == "ALL_AGENCIES"))
-                            ))
-                        );
-                    }
+                    allowedAgencyIds = AgencyAssignments.ExpandSelection(agencyId!, allAgencies).ToHashSet();
+                    query = AgencyAssignments.Filter(query, allowedAgencyIds, assignmentRole);
+                }
+                if (parentAgencyId.HasValue && parentAgencyId != Guid.Empty)
+                {
+                    var childIds = allAgencies.Where(a => a.ParentId == parentAgencyId).Select(a => a.Id).ToList();
+                    query = AgencyAssignments.Filter(query, childIds, assignmentRole);
                 }
 
+                if (AgencyAssignments.Coordinating(assignmentRole)) query = query.Where(i => i.AgencyExecutions.Any(e => e.IsCoordinatingAssignment));
                 var baseItems = await query.ToListAsync();
 
                 int totalGoals = baseItems.Count(i => i.ItemType == ItemTypeEnum.Goal);
@@ -222,71 +171,53 @@ namespace Cdsqg.Api.Controllers
                 var provincesPerformance = new List<AgencyStatusSummaryDto>();
                 var othersPerformance = new List<AgencyStatusSummaryDto>();
 
-                // Build performance map grouped by Ministry vs Province vs Other
-                IEnumerable<Agency> targetAgencies;
-                if (parentAgencyId.HasValue && parentAgencyId.Value != Guid.Empty)
-                {
-                    targetAgencies = allAgencies.Where(a => a.ParentId == parentAgencyId.Value);
-                }
-                else if (isAgencyFilterActive && allowedAgencyIds != null)
-                {
-                    var selectedSet = agencyId!.Where(id => id != Guid.Empty).ToHashSet();
-                    var targetList = new List<Agency>();
+                var itemsByAgency = items.SelectMany(item => item.AgencyExecutions.Where(e => AgencyAssignments.HasRole(e, assignmentRole)).Select(e => (e.AgencyId, Item: item)))
+                    .ToLookup(pair => pair.AgencyId, pair => pair.Item);
+                IEnumerable<Agency> targetAgencies = parentAgencyId.HasValue && parentAgencyId != Guid.Empty
+                    ? allAgencies.Where(a => a.ParentId == parentAgencyId)
+                    : isAgencyFilterActive && allowedAgencyIds != null ? allAgencies.Where(a => agencyId!.Contains(a.Id) || allowedAgencyIds.Contains(a.Id) && !a.ParentId.HasValue)
+                    : allAgencies.Where(a => !a.ParentId.HasValue);
+                targetAgencies = targetAgencies.Where(a => !ReportingAgencyGroups.IsGroup(a) && (a.IsActive || itemsByAgency.Contains(a.Id)));
 
-                    foreach (var id in selectedSet)
+                // Drilldown shares the exact filtered item/recipient sets and calculator
+                // with the counters below. Group assignments remain separate rows.
+                if (detailMode != null)
+                {
+                    DashboardAgencyItemDto DetailRow(GoalTaskItem item, Agency? recipient)
                     {
-                        var ag = allAgencies.FirstOrDefault(a => a.Id == id);
-                        if (ag == null) continue;
-
-                        bool isSpecial = ag.Type == AgencyTypeEnum.Special ||
-                                         ag.Code == "ALL_AGENCIES" || ag.Code == "ALL_MINISTRIES" || ag.Code == "ALL_PROVINCES" || ag.Code == "ALL_PROVINCES_UBND" || ag.Code == "ALL_MINISTRIES_DIRECT" ||
-                                         (ag.Name != null && (ag.Name.StartsWith("Các bộ, ngành") || ag.Name.StartsWith("Các địa phương") || ag.Name.Contains("UBND tỉnh, thành phố trực thuộc trung ương")));
-
-                        if (isSpecial)
-                        {
-                            if (ag.Code == "ALL_MINISTRIES" || ag.Code == "ALL_MINISTRIES_DIRECT" || (ag.Name != null && ag.Name.StartsWith("Các bộ, ngành") && !ag.Name.Contains("địa phương")))
-                            {
-                                var ministries = allAgencies.Where(a => !a.ParentId.HasValue && IsMinistryAgency(a, allAgencies));
-                                foreach (var m in ministries) if (!targetList.Any(t => t.Id == m.Id)) targetList.Add(m);
-                            }
-                            else if (ag.Code == "ALL_PROVINCES" || ag.Code == "ALL_PROVINCES_UBND" || (ag.Name != null && (ag.Name.StartsWith("Các địa phương") || ag.Name.Contains("UBND tỉnh"))))
-                            {
-                                var provinces = allAgencies.Where(a => !a.ParentId.HasValue && IsProvinceAgency(a, allAgencies));
-                                foreach (var p in provinces) if (!targetList.Any(t => t.Id == p.Id)) targetList.Add(p);
-                            }
-                            else if (ag.Code == "ALL_AGENCIES" || (ag.Name != null && ag.Name.Contains("Các bộ, ngành, địa phương")))
-                            {
-                                var topAgencies = allAgencies.Where(a => !a.ParentId.HasValue && a.Type != AgencyTypeEnum.Internal && a.Type != AgencyTypeEnum.Special);
-                                foreach (var ta in topAgencies) if (!targetList.Any(t => t.Id == ta.Id)) targetList.Add(ta);
-                            }
-                        }
-                        else
-                        {
-                            if (!targetList.Any(t => t.Id == ag.Id)) targetList.Add(ag);
-                        }
+                        var recipients = recipient != null ? new List<Guid> { recipient.Id }
+                            : allowedAgencyIds == null ? new List<Guid>() : item.AgencyExecutions.Where(e => AgencyAssignments.HasRole(e, assignmentRole) && allowedAgencyIds.Contains(e.AgencyId)).Select(e => e.AgencyId).Distinct().ToList();
+                        var report = ProgressCalculator.AnnualReport(item, recipient?.Id, reportYear);
+                        var progress = recipients.Count > 0 ? ProgressCalculator.EvaluateRecipients(item, recipients, reportYear, ProgressCalculator.AnnualEvaluationDate(reportYear))
+                            : IsGeneralItem(item) ? ProgressCalculator.EvaluateOverall(item, allAgencies, ProgressCalculator.AnnualEvaluationDate(reportYear), reportYear)
+                            : ProgressCalculator.Evaluate(item, report, year: reportYear, evaluatedAt: ProgressCalculator.AnnualEvaluationDate(reportYear));
+                        return new DashboardAgencyItemDto {
+                            Id = item.Id, Code = item.Code, Title = item.Title, ItemType = item.ItemType.ToString(),
+                            IsGeneralTask = IsGeneralItem(item), LeadAgencyId = recipient?.Id ?? item.LeadAgencyId,
+                            LeadAgencyName = recipient != null ? ProvinceCatalog.DisplayName(recipient) : item.LeadAgency?.Name ?? "—",
+                            Category = item.Category, Section = item.Section, Group = item.Group,
+                            AssignedAgencyId = item.AssignedAgencyId,
+                            CoordinatingAgencyIds = item.CoordinatingAgencyIds,
+                            CoordinatingAgencyNames = allAgencies.Where(a => item.CoordinatingAgencyIds.Contains(a.Id)).Select(ProvinceCatalog.DisplayName).ToList(),
+                            ProgressAgencyId = recipient?.Id, ProgressAgencyName = recipient == null ? null : ProvinceCatalog.DisplayName(recipient),
+                            UnitName = item.Unit?.Name, EvaluationType = item.EvaluationType.ToString(),
+                            LatestProgressPercent = (double?)progress.Percentage, LatestProgressValue = (double?)progress.ActualValue,
+                            CalculatedStatus = progress.Status.ToString(), Status = progress.Status.ToString(),
+                            StartDate = item.StartDate, DueDate = item.DueDate, IsOngoing = item.IsOngoing,
+                            Deliverables = ProgressCalculator.AnnualDeliverables(item, report)
+                        };
                     }
-
-                    targetAgencies = targetList;
-                }
-                else
-                {
-                    targetAgencies = allAgencies.Where(a => !a.ParentId.HasValue && a.Type != AgencyTypeEnum.Internal);
-                }
-
-                // Exclude special agencies and pseudo-agencies from standalone performance card lists ONLY when not specifically filtered
-                if (!isAgencyFilterActive)
-                {
-                    targetAgencies = targetAgencies.Where(a => 
-                        a.Type != AgencyTypeEnum.Special && 
-                        (parentAgencyId.HasValue || a.ParentId.HasValue || a.Type != AgencyTypeEnum.Internal) &&
-                        a.Id != allAgenciesId && 
-                        a.Code != "ALL_AGENCIES" && 
-                        a.Code != "ALL_MINISTRIES" && 
-                        a.Code != "ALL_PROVINCES" && 
-                        a.Code != "ALL_PROVINCES_UBND" && 
-                        a.Code != "ALL_MINISTRIES_DIRECT" &&
-                        !(a.Name != null && (a.Name.StartsWith("Các bộ, ngành") || a.Name.StartsWith("Các địa phương") || a.Name.Contains("UBND tỉnh, thành phố trực thuộc trung ương")))
-                    );
+                    IEnumerable<DashboardAgencyItemDto> rows = detailMode == "assignments"
+                        ? targetAgencies.SelectMany(a => itemsByAgency[a.Id].DistinctBy(i => i.Id).Select(i => DetailRow(i, a)))
+                        : items.Where(i => detailScope == "all" || (detailScope == "general" ? IsGeneralItem(i) : !IsGeneralItem(i))).Select(i => DetailRow(i, null));
+                    if (requestedStatus.HasValue) rows = rows.Where(r => r.CalculatedStatus == requestedStatus.Value.ToString());
+                    if (!string.IsNullOrWhiteSpace(search)) rows = rows.Where(r => new[] { r.Code, r.Title, r.LeadAgencyName }.Any(t => t?.Contains(search.Trim(), StringComparison.OrdinalIgnoreCase) == true));
+                    var detailRows = rows.OrderBy(r => r.Code).ThenBy(r => r.LeadAgencyName).ThenBy(r => r.Id).ToList();
+                    pageNumber = Math.Max(1, pageNumber); pageSize = Math.Clamp(pageSize, 1, 100);
+                    return Ok(new PagedResultDto<DashboardAgencyItemDto> {
+                        Items = detailRows.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList(),
+                        TotalCount = detailRows.Count, PageNumber = pageNumber, PageSize = pageSize
+                    });
                 }
 
                 var agencySummaries = new Dictionary<Guid, AgencyStatusSummaryDto>();
@@ -294,24 +225,7 @@ namespace Cdsqg.Api.Controllers
                 {
                     var childIds = GetAgencyAndChildIds(agency.Id, agencyChildren);
                     
-                    bool includeGeneral = !agency.ParentId.HasValue && (!parentAgencyId.HasValue || parentAgencyId.Value == Guid.Empty);
-
-                    bool isMinistryOrProvince = IsMinistryAgency(agency, allAgencies) || IsProvinceAgency(agency, allAgencies);
-
-                    var agencyItems = includeGeneral
-                        ? items.Where(i => 
-                            childIds.Contains(i.LeadAgencyId) || 
-                            (i.AssignedAgencyId.HasValue && childIds.Contains(i.AssignedAgencyId.Value)) ||
-                            (i.AgencyExecutions != null && i.AgencyExecutions.Any(e => e.AssignedAgencyId.HasValue && childIds.Contains(e.AssignedAgencyId.Value))) ||
-                            (isMinistryOrProvince && (
-                                i.LeadAgencyId == allAgenciesId || 
-                                (i.LeadAgency != null && i.LeadAgency.Code == "ALL_AGENCIES") ||
-                                (i.LeadAgency != null && (i.LeadAgency.Code == "ALL_MINISTRIES" || i.LeadAgency.Code == "ALL_MINISTRIES_DIRECT") && IsMinistryAgency(agency, allAgencies)) ||
-                                (i.LeadAgency != null && (i.LeadAgency.Code == "ALL_PROVINCES" || i.LeadAgency.Code == "ALL_PROVINCES_UBND") && IsProvinceAgency(agency, allAgencies)) ||
-                                (i.IsGeneralTask && (i.LeadAgency == null || i.LeadAgency.Code == "ALL_AGENCIES"))
-                            ))
-                          ).ToList()
-                        : items.Where(i => childIds.Contains(i.LeadAgencyId) || (i.AssignedAgencyId.HasValue && childIds.Contains(i.AssignedAgencyId.Value)) || (i.AgencyExecutions != null && i.AgencyExecutions.Any(e => e.AssignedAgencyId.HasValue && childIds.Contains(e.AssignedAgencyId.Value)))).ToList();
+                    var agencyItems = itemsByAgency[agency.Id].DistinctBy(i => i.Id).ToList();
 
                     int aNotStarted = 0, aInProgOnTime = 0, aInProgOverdue = 0, aCompOnTime = 0, aCompOverdue = 0, aExpSoon = 0;
                     int aGNotStarted = 0, aGInProgOnTime = 0, aGInProgOverdue = 0, aGCompOnTime = 0, aGCompOverdue = 0, aGExpSoon = 0;
@@ -322,9 +236,7 @@ namespace Cdsqg.Api.Controllers
 
                     foreach (var item in agencyItems)
                     {
-                        var latestLog = ProgressCalculator.AnnualReport(item, agency.Id, reportYear);
-                        var agencyDeliverables = reportYear.HasValue ? ProgressCalculator.AnnualDeliverables(item, latestLog) : PlanningService.GetDeliverablesForAgency(item, agency.Id);
-                        var status = ProgressCalculator.Evaluate(item, latestLog, agencyDeliverables, agency.Id, reportYear, ProgressCalculator.AnnualEvaluationDate(reportYear)).Status;
+                        var status = ProgressCalculator.EvaluateRecipients(item, new[] { agency.Id }, reportYear, ProgressCalculator.AnnualEvaluationDate(reportYear)).Status;
                         bool isGoal = item.ItemType == ItemTypeEnum.Goal;
 
                         switch (status)
@@ -437,20 +349,6 @@ namespace Cdsqg.Api.Controllers
                     }
                 }
 
-                if (isAgencyFilterActive)
-                {
-                    if (anyMinistrySelected && !anyProvinceSelected && !anySpecialAllSelected)
-                    {
-                        provincesPerformance.Clear();
-                        othersPerformance.Clear();
-                    }
-                    else if (anyProvinceSelected && !anyMinistrySelected && !anySpecialAllSelected)
-                    {
-                        ministriesPerformance.Clear();
-                        othersPerformance.Clear();
-                    }
-                }
-
                 ministriesPerformance = ministriesPerformance
                     .OrderByDescending(m => m.TotalItems)
                     .ThenBy(m => m.Name)
@@ -492,14 +390,20 @@ namespace Cdsqg.Api.Controllers
 
                 int cgNotStarted = 0, cgInProgOnTime = 0, cgInProgOverdue = 0, cgCompOnTime = 0, cgCompOverdue = 0, cgExpSoon = 0;
                 int ctNotStarted = 0, ctInProgOnTime = 0, ctInProgOverdue = 0, ctCompOnTime = 0, ctCompOverdue = 0, ctExpSoon = 0;
+                var overviewGoals = Enum.GetValues<ExecutionStatusEnum>().ToDictionary(s => char.ToLowerInvariant(s.ToString()[0]) + s.ToString().Substring(1), _ => 0);
+                var overviewTasks = overviewGoals.ToDictionary(p => p.Key, _ => 0);
 
                 foreach (var item in baseItems)
                 {
-                    if (IsGeneralItem(item)) continue;
-
                     var latestLog = ProgressCalculator.AnnualReport(item, null, reportYear);
-                    var status = ProgressCalculator.Evaluate(item, latestLog, year: reportYear, evaluatedAt: ProgressCalculator.AnnualEvaluationDate(reportYear)).Status;
+                    var selectedRecipients = allowedAgencyIds == null ? new List<Guid>() : item.AgencyExecutions.Where(e => AgencyAssignments.HasRole(e, assignmentRole) && allowedAgencyIds.Contains(e.AgencyId)).Select(e => e.AgencyId).Distinct().ToList();
+                    var status = selectedRecipients.Count > 0 ? ProgressCalculator.EvaluateRecipients(item, selectedRecipients, reportYear, ProgressCalculator.AnnualEvaluationDate(reportYear)).Status
+                        : IsGeneralItem(item) ? ProgressCalculator.EvaluateOverall(item, allAgencies, ProgressCalculator.AnnualEvaluationDate(reportYear), reportYear).Status
+                        : ProgressCalculator.Evaluate(item, latestLog, year: reportYear, evaluatedAt: ProgressCalculator.AnnualEvaluationDate(reportYear)).Status;
                     bool isGoal = item.ItemType == ItemTypeEnum.Goal;
+                    var statusKey = char.ToLowerInvariant(status.ToString()[0]) + status.ToString().Substring(1);
+                    (isGoal ? overviewGoals : overviewTasks)[statusKey]++;
+                    if (IsGeneralItem(item)) continue;
 
                     switch (status)
                     {
@@ -597,6 +501,11 @@ namespace Cdsqg.Api.Controllers
                     totalTasks,
                     completedTasks,
                     createdMetrics,
+                    overviewMetrics = new {
+                        totalGoals = goalsTotal, totalTasks = tasksTotal,
+                        goalStatusSummary = overviewGoals, taskStatusSummary = overviewTasks,
+                        statusSummary = overviewGoals.ToDictionary(p => p.Key, p => p.Value + overviewTasks[p.Key])
+                    },
                     statusSummary = new
                     {
                         notStarted,
@@ -647,7 +556,8 @@ namespace Cdsqg.Api.Controllers
             [FromQuery] string? itemType = null,
             [FromQuery] string? scope = null,
             [FromQuery] string? q = null,
-            [FromQuery] string? status = null)
+            [FromQuery] string? status = null,
+            [FromQuery] string assignmentRole = "Lead")
         {
             try
             {
@@ -727,6 +637,9 @@ namespace Cdsqg.Api.Controllers
                 var allAgenciesEntity = allAgencies.FirstOrDefault(a => a.Code == "ALL_AGENCIES");
                 Guid allAgenciesId = allAgenciesEntity?.Id ?? Guid.Parse("00000000-0000-0000-0000-000000009999");
 
+                var scopedIds = agencyId == Guid.Empty ? null : AgencyAssignments.ExpandSelection(new[] { agencyId }, allAgencies);
+                if (scopedIds != null) query = AgencyAssignments.Filter(query, scopedIds, assignmentRole);
+                if (AgencyAssignments.Coordinating(assignmentRole)) query = query.Where(i => i.AgencyExecutions.Any(e => e.IsCoordinatingAssignment));
                 var baseItems = await query.ToListAsync();
 
                 if (!string.IsNullOrWhiteSpace(itemType) && !itemType.Equals("all", StringComparison.OrdinalIgnoreCase))
@@ -737,68 +650,18 @@ namespace Cdsqg.Api.Controllers
                     }
                 }
 
-                List<GoalTaskItem> agencyItems;
-                if (agencyId != Guid.Empty)
-                {
-                    var currentAg = allAgencies.FirstOrDefault(a => a.Id == agencyId);
-                    bool includeGeneral = currentAg == null || !currentAg.ParentId.HasValue;
-                    var childIds = GetAgencyAndChildIds(agencyId, agencyChildren);
-
-                    if (currentAg != null && (currentAg.Type == AgencyTypeEnum.Special || currentAg.Code == "ALL_AGENCIES" || currentAg.Code == "ALL_MINISTRIES" || currentAg.Code == "ALL_PROVINCES" || currentAg.Code == "ALL_PROVINCES_UBND" || currentAg.Code == "ALL_MINISTRIES_DIRECT"))
-                    {
-                        if (currentAg.Code == "ALL_MINISTRIES" || currentAg.Code == "ALL_MINISTRIES_DIRECT")
-                        {
-                            var ministryIds = allAgencies.Where(a => IsMinistryAgency(a, allAgencies)).Select(a => a.Id);
-                            foreach (var mId in ministryIds)
-                            {
-                                var cList = GetAgencyAndChildIds(mId, agencyChildren);
-                                foreach (var c in cList) if (!childIds.Contains(c)) childIds.Add(c);
-                            }
-                        }
-                        else if (currentAg.Code == "ALL_PROVINCES" || currentAg.Code == "ALL_PROVINCES_UBND")
-                        {
-                            var provinceIds = allAgencies.Where(a => IsProvinceAgency(a, allAgencies)).Select(a => a.Id);
-                            foreach (var pId in provinceIds)
-                            {
-                                var cList = GetAgencyAndChildIds(pId, agencyChildren);
-                                foreach (var c in cList) if (!childIds.Contains(c)) childIds.Add(c);
-                            }
-                        }
-                        else if (currentAg.Code == "ALL_AGENCIES")
-                        {
-                            foreach (var a in allAgencies) if (!childIds.Contains(a.Id)) childIds.Add(a.Id);
-                        }
-                    }
-
-                    bool isMinistryOrProvince = currentAg != null && (IsMinistryAgency(currentAg, allAgencies) || IsProvinceAgency(currentAg, allAgencies) || currentAg.Type == AgencyTypeEnum.Special || currentAg.Code == "ALL_AGENCIES" || currentAg.Code == "ALL_MINISTRIES" || currentAg.Code == "ALL_PROVINCES" || currentAg.Code == "ALL_PROVINCES_UBND" || currentAg.Code == "ALL_MINISTRIES_DIRECT");
-
-                    agencyItems = includeGeneral
-                        ? baseItems.Where(i =>
-                            childIds.Contains(i.LeadAgencyId) ||
-                            (i.AssignedAgencyId.HasValue && childIds.Contains(i.AssignedAgencyId.Value)) ||
-                            (i.AgencyExecutions != null && i.AgencyExecutions.Any(e => e.AssignedAgencyId.HasValue && childIds.Contains(e.AssignedAgencyId.Value))) ||
-                            (isMinistryOrProvince && (
-                                i.LeadAgencyId == allAgenciesId ||
-                                (i.LeadAgency != null && i.LeadAgency.Code == "ALL_AGENCIES") ||
-                                (currentAg != null && i.LeadAgency != null && (i.LeadAgency.Code == "ALL_MINISTRIES" || i.LeadAgency.Code == "ALL_MINISTRIES_DIRECT") && IsMinistryAgency(currentAg, allAgencies)) ||
-                                (currentAg != null && i.LeadAgency != null && (i.LeadAgency.Code == "ALL_PROVINCES" || i.LeadAgency.Code == "ALL_PROVINCES_UBND") && IsProvinceAgency(currentAg, allAgencies)) ||
-                                (i.IsGeneralTask && (i.LeadAgency == null || i.LeadAgency.Code == "ALL_AGENCIES"))
-                            ))
-                        ).ToList()
-                        : baseItems.Where(i => childIds.Contains(i.LeadAgencyId) || (i.AssignedAgencyId.HasValue && childIds.Contains(i.AssignedAgencyId.Value)) || (i.AgencyExecutions != null && i.AgencyExecutions.Any(e => e.AssignedAgencyId.HasValue && childIds.Contains(e.AssignedAgencyId.Value)))).ToList();
-                }
-                else
-                {
-                    agencyItems = baseItems;
-                }
+                var agencyItems = baseItems;
 
                 var resultList = agencyItems.Select(item =>
                 {
-                    var latestLog = ProgressCalculator.AnnualReport(item, agencyId, reportYear);
-                    var agencyDeliverables = reportYear.HasValue ? ProgressCalculator.AnnualDeliverables(item, latestLog) : PlanningService.GetDeliverablesForAgency(item, agencyId);
-                    var progress = item.IsGeneralTask && agencyId == Guid.Empty
-                        ? ProgressCalculator.EvaluateOverall(item, allAgencies, ProgressCalculator.AnnualEvaluationDate(reportYear), reportYear)
-                        : ProgressCalculator.Evaluate(item, latestLog, agencyDeliverables, agencyId, reportYear, ProgressCalculator.AnnualEvaluationDate(reportYear));
+                    var contextIds = scopedIds == null ? AgencyAssignments.Coordinating(assignmentRole) ? item.AgencyExecutions.Where(e => e.IsCoordinatingAssignment).Select(e => e.AgencyId).Distinct().ToList() : new List<Guid>() : item.AgencyExecutions.Where(e => AgencyAssignments.HasRole(e, assignmentRole) && scopedIds.Contains(e.AgencyId)).Select(e => e.AgencyId).Distinct().ToList();
+                    if (contextIds.Contains(agencyId)) contextIds = new() { agencyId };
+                    Guid? contextId = contextIds.Count == 1 ? contextIds[0] : null;
+                    var latestLog = ProgressCalculator.AnnualReport(item, contextId, reportYear);
+                    var agencyDeliverables = reportYear.HasValue ? ProgressCalculator.AnnualDeliverables(item, latestLog) : PlanningService.GetDeliverablesForAgency(item, contextId);
+                    var progress = contextIds.Count > 0 ? ProgressCalculator.EvaluateRecipients(item, contextIds, reportYear, ProgressCalculator.AnnualEvaluationDate(reportYear))
+                        : item.IsGeneralTask || item.AgencyExecutions.Any(e => e.IsLeadAssignment && e.IsLeadGroupAssignment) ? ProgressCalculator.EvaluateOverall(item, allAgencies, ProgressCalculator.AnnualEvaluationDate(reportYear), reportYear)
+                        : ProgressCalculator.Evaluate(item, latestLog, agencyDeliverables, contextId, reportYear, ProgressCalculator.AnnualEvaluationDate(reportYear));
                     var execStatus = progress.Status;
                     double? latestPercent = (double?)progress.Percentage;
                     double? latestValue = (double?)progress.ActualValue;
@@ -813,6 +676,11 @@ namespace Cdsqg.Api.Controllers
 
                     return new DashboardAgencyItemDto
                     {
+                        LeadAssignmentAgencyIds = item.AgencyExecutions.Where(e => e.IsLeadAssignment).Select(e => e.AgencyId).ToList(),
+                        CoordinatingAssignmentAgencyIds = item.AgencyExecutions.Where(e => e.IsCoordinatingAssignment).Select(e => e.AgencyId).ToList(),
+                        ProgressAgencyId = contextId,
+                        ProgressAgencyName = contextId.HasValue ? allAgencies.FirstOrDefault(a => a.Id == contextId)?.Name : null,
+                        AssignmentKind = contextId.HasValue ? (AgencyAssignments.Coordinating(assignmentRole) ? item.AgencyExecutions.FirstOrDefault(e => e.AgencyId == contextId)?.IsCoordinatingGroupAssignment : item.AgencyExecutions.FirstOrDefault(e => e.AgencyId == contextId)?.IsLeadGroupAssignment) == true ? "Group" : "Direct" : null,
                         Id = item.Id,
                         Code = item.Code,
                         Title = item.Title,
@@ -956,6 +824,11 @@ namespace Cdsqg.Api.Controllers
 
     public class DashboardAgencyItemDto
     {
+        public List<Guid> LeadAssignmentAgencyIds { get; set; } = new();
+        public List<Guid> CoordinatingAssignmentAgencyIds { get; set; } = new();
+        public Guid? ProgressAgencyId { get; set; }
+        public string? ProgressAgencyName { get; set; }
+        public string? AssignmentKind { get; set; }
         public Guid Id { get; set; }
         public string Code { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;

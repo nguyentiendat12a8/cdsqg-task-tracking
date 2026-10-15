@@ -24,6 +24,7 @@ export function useDashboardFilters({ agencies, loadDashboardMetrics }) {
     return 'Nhiệm Vụ';
   });
 
+  const assignmentRole = ref('Lead');
   const selectedAgencyIds = ref([]);
   const selectedSubAgencyIds = ref([]);
   const selectedScopes = ref([]);
@@ -57,6 +58,7 @@ export function useDashboardFilters({ agencies, loadDashboardMetrics }) {
   });
 
   function resetDashboardFilters() {
+    assignmentRole.value = 'Lead';
     selectedAgencyIds.value = [];
     selectedSubAgencyIds.value = [];
     selectedScopes.value = [];
@@ -102,6 +104,7 @@ export function useDashboardFilters({ agencies, loadDashboardMetrics }) {
   const groupOptions = computed(() => [...GOAL_GROUPS, ...TASK_GROUPS]);
 
   return {
+  assignmentRole,
   dashboardFilter,
   setDashboardFilter,
   dashboardTitleText,

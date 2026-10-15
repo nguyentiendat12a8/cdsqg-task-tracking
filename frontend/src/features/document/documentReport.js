@@ -26,15 +26,17 @@ export function createDocumentReportActions({ props, userRoleStr, currentUserAge
       "Cơ Quan Chủ Trì",
       "Giao Đơn Vị Trực Thuộc",
       "Cơ Quan Phối Hợp",
+      "Đơn Vị Theo Dõi Tiến Độ",
+      "Hình Thức Giao",
       "Thời Gian Thực Hiện",
       ...(isGoal ? ["Tiến Độ Hiện Tại"] : []),
       "Trạng Thái"
     ];
 
     const minColWidths = isGoal ? {
-      0: 8, 1: 15, 2: 50, 3: 30, 4: 28, 5: 25, 6: 22, 7: 18, 8: 22
+      0: 8, 1: 15, 2: 50, 3: 30, 4: 28, 5: 25, 6: 28, 7: 20, 8: 22, 9: 18, 10: 22
     } : {
-      0: 8, 1: 15, 2: 50, 3: 30, 4: 28, 5: 25, 6: 22, 7: 22
+      0: 8, 1: 15, 2: 50, 3: 30, 4: 28, 5: 25, 6: 28, 7: 20, 8: 22, 9: 22
     };
 
     const rows = (await loadExportItems()).map((item, idx) => {
@@ -52,7 +54,9 @@ export function createDocumentReportActions({ props, userRoleStr, currentUserAge
         item.title || '',
         item.leadAgencyName || '',
         item.assignedAgencyName || '—',
-        item.cooperatingAgencies || '',
+        Array.isArray(item.coordinatingAgencyNames) ? item.coordinatingAgencyNames.join(', ') : item.cooperatingAgencies || '',
+        item.progressAgencyName || '—',
+        item.assignmentKind === 'Group' ? 'Giao qua nhóm' : item.assignmentKind === 'Direct' ? 'Giao trực tiếp' : '—',
         dateStr
       ];
       if (isGoal) {

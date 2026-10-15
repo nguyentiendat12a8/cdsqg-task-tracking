@@ -34,11 +34,11 @@
     <template #popper>
       <div 
         ref="panelRef"
-        class="bg-slate-100 rounded-2xl shadow-2xl shadow-slate-900/30 border-2 border-slate-300 font-sans p-4 space-y-3.5 z-50 text-slate-800"
+        class="bg-slate-100 rounded-2xl shadow-2xl shadow-slate-900/30 border-2 border-slate-300 font-sans p-4 space-y-3.5 z-50 text-slate-800 flex flex-col max-w-full max-h-[calc(100dvh-2rem)]"
         :class="panelWidthClass"
       >
         <!-- Panel Header -->
-        <div class="flex items-center justify-between border-b border-slate-200 pb-2.5">
+        <div class="flex shrink-0 items-center justify-between border-b border-slate-200 pb-2.5">
           <div class="flex items-center gap-2">
             <div class="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -61,12 +61,12 @@
         </div>
 
         <!-- Filter Form Fields Slot -->
-        <div class="space-y-3 max-h-[70vh] overflow-y-auto custom-scrollbar px-0.5">
+        <div class="space-y-3 min-h-0 max-h-[70vh] overflow-y-auto custom-scrollbar px-0.5">
           <slot></slot>
         </div>
 
         <!-- Panel Footer / Actions -->
-        <div class="flex items-center justify-between gap-2 border-t border-slate-200 pt-3">
+        <div class="flex shrink-0 items-center justify-between gap-2 border-t border-slate-200 pt-3">
           <button 
             type="button" 
             @click="handleReset" 
@@ -182,6 +182,17 @@ onUnmounted(() => {
   display: none !important;
   visibility: hidden !important;
   opacity: 0 !important;
+}
+@media (max-width: 639px) {
+  .v-popper-clean-overlay.v-popper__popper {
+    position: fixed !important;
+    top: 1rem !important;
+    bottom: auto !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    max-width: calc(100vw - 2rem);
+    max-height: calc(100dvh - 2rem);
+  }
 }
 </style>
 

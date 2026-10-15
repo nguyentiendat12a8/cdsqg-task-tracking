@@ -23,12 +23,14 @@ namespace Cdsqg.Api.Controllers
         /// Trả về toàn bộ Goals (1A) & Tasks (1B) thuộc Quyết định để Vue frontend render bảng chỉ tiêu động (2026-2030)
         /// </summary>
         [HttpGet("documents/{id:guid}/grid")]
-        public async Task<IActionResult> GetDocumentPlanningGrid(Guid id, [FromQuery] Guid? agencyId = null, [FromQuery] int? reportYear = null)
+        public async Task<IActionResult> GetDocumentPlanningGrid(Guid id, [FromQuery] Guid? agencyId = null, [FromQuery] int? reportYear = null, [FromQuery] string? selectedAgencyIds = null, [FromQuery] string assignmentRole = "Lead", [FromQuery] Guid? userAgencyId = null, [FromQuery] string? userRole = null)
         {
             try
             {
                 if (reportYear.HasValue && reportYear.Value is < 1900 or > 9999) return BadRequest("Năm báo cáo không hợp lệ.");
-                var gridData = await _planningService.GetDocumentPlanningGridAsync(id, agencyId, reportYear);
+                var filter = new DocumentItemsQueryDto { AgencyId = userAgencyId, UserRole = userRole, AssignmentRole = assignmentRole,
+                    SelectedAgencyIds = selectedAgencyIds?.Split(',').Select(value => Guid.TryParse(value, out var parsed) ? parsed : Guid.Empty).Where(value => value != Guid.Empty).Distinct().ToList() };
+                var gridData = await _planningService.GetDocumentPlanningGridAsync(id, agencyId ?? (userRole == "Admin" ? null : userAgencyId), reportYear, filter);
                 return Ok(gridData);
             }
             catch (KeyNotFoundException ex)
