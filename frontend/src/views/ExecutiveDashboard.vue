@@ -412,7 +412,7 @@ import DashboardHeader from '../features/dashboard/DashboardHeader.vue';
 import LeadershipHighlights from '../features/dashboard/LeadershipHighlights.vue';
 import DashboardSummary from '../features/dashboard/DashboardSummary.vue';
 const AgencyDrilldownDialog = defineAsyncComponent(() => import('../features/dashboard/AgencyDrilldownDialog.vue'));
-import { defineAsyncComponent, ref, computed, onMounted, watch } from 'vue';
+import { defineAsyncComponent, ref, computed, onMounted } from 'vue';
 import { authState } from '../services/auth';
 import { toast } from 'vue3-toastify';
 
@@ -448,7 +448,6 @@ function handleAgencyTabKey(event, index) {
 }
 const agencyChartTabs = [{ value: 'bar', label: 'Biểu đồ cột' }, { value: 'pie', label: 'Biểu đồ tròn' }];
 import { getStatusBadgeClass, getStatusLabel, formatDate, formatItemProgressDisplay } from '../features/dashboard/presentation';
-import { reportYear } from '../shared/reportYear';
 import { useDashboardFilters } from '../features/dashboard/useDashboardFilters';
 import { useDashboardMetrics } from '../features/dashboard/useDashboardMetrics';
 import { useAgencyDrilldown } from '../features/dashboard/useAgencyDrilldown';
@@ -523,7 +522,7 @@ const {
   getPct,
   loadAgencies,
   loadDashboardMetrics
-} = useDashboardMetrics({ reportYear, dashboardFilter, selectedAgencyIds, selectedSubAgencyIds, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, isSpecialAgencyCode });
+} = useDashboardMetrics({ dashboardFilter, selectedAgencyIds, selectedSubAgencyIds, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, isSpecialAgencyCode });
 
 const {
   selectedDrilldownAgency,
@@ -544,7 +543,7 @@ const {
   loadSubAgencies,
   switchDrilldownTab,
   drilldownAgency
-} = useAgencyDrilldown({ reportYear, dashboardFilter, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, metrics });
+} = useAgencyDrilldown({ dashboardFilter, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, metrics });
 
 const {
   legalStats,
@@ -577,7 +576,7 @@ async function exportDashboardExcelReport() {
   isExportingExcel.value = true;
   try {
     const { exportDashboardReport } = await import('../features/dashboard/dashboardReport');
-    await exportDashboardReport({ reportYear, dashboardFilter, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, metrics, filterOutSpecialAgencies, filteredMinistriesPerformance, filteredProvincesPerformance, filteredOthersPerformance, formatDate, formatItemProgressDisplay, isExportingExcel });
+    await exportDashboardReport({ dashboardFilter, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, metrics, filterOutSpecialAgencies, filteredMinistriesPerformance, filteredProvincesPerformance, filteredOthersPerformance, formatDate, formatItemProgressDisplay, isExportingExcel });
   } catch (error) {
     toast.error('Không thể tải chức năng xuất Excel. Vui lòng thử lại.');
   } finally { isExportingExcel.value = false; }
@@ -592,9 +591,6 @@ async function exportLegalStatsExcelReport() {
     toast.error('Không thể tải chức năng xuất Excel. Vui lòng thử lại.');
   } finally { isExportingLegalExcel.value = false; }
 }
-
-watch(reportYear, () => { closeDrilldownForYear(); loadDashboardMetrics(); });
-function closeDrilldownForYear() { selectedDrilldownAgency.value = null; }
 
 onMounted(async () => {
   const agenciesReady = loadAgencies();

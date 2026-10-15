@@ -38,31 +38,35 @@ try {
     app.use(f.FloatingVue);app.directive('accessible-dialog',f.accessibleDialog);app.directive('accessible-data',f.accessibleData);app.mount(root);
   });
   const root=page.locator('#year-root');
-  const yearSelect=root.getByRole('combobox',{name:'Năm báo cáo',exact:true});
-  await yearSelect.waitFor();
+  assert.equal(await root.getByRole('combobox',{name:'Năm báo cáo',exact:true}).count(),0);
+  await root.getByRole('button',{name:/Xuất báo cáo Excel/i}).waitFor();
   await page.waitForTimeout(500);
-  assert.ok(requests.some(url=>url.pathname==='/api/dashboard/metrics' && url.searchParams.get('reportYear')===String(currentYear)));
-  await yearSelect.click();await page.getByRole('option',{name:'Năm 2027',exact:true}).click();
-  await page.waitForTimeout(500);
-  assert.ok(requests.some(url=>url.pathname==='/api/dashboard/metrics' && url.searchParams.get('reportYear')==='2027'));
-  let [download]=await Promise.all([page.waitForEvent('download', {timeout:30000}),root.getByRole('button',{name:/^Xuất báo cáo Excel$/i}).click()]);
+  const query = await page.evaluate(async()=>{
+    const {buildDashboardQuery}=await import('/src/features/dashboard/queries.js');
+    return buildDashboardQuery({reportYear:2027,dashboardFilter:'goals',fromYear:2026,toYear:2030,selectedScopes:['specific']}).toString();
+  });
+  const params = new URLSearchParams(query);
+  assert.equal(params.has('reportYear'),false); assert.equal(params.get('fromYear'),'2026'); assert.equal(params.get('toYear'),'2030'); assert.equal(params.get('scope'),'specific');
+  let [download]=await Promise.all([page.waitForEvent('download',{timeout:30000}),root.getByRole('button',{name:/^Xuất báo cáo Excel$/i}).click()]);
   let wb=XLSX.read(await fs.readFile(await download.path()),{type:'buffer'});
-  assert.ok(JSON.stringify(wb.Sheets).includes('Năm báo cáo: 2027'));
-  assert.ok(requests.some(url=>url.pathname==='/api/dashboard/agency-items' && url.searchParams.get('reportYear')==='2027'));
+  assert.equal(JSON.stringify(wb.Sheets).includes('Năm báo cáo:'),false);
+  assert.ok(requests.some(url=>url.pathname==='/api/dashboard/agency-items'));
   await page.locator('.Toastify__close-button').evaluateAll(buttons=>buttons.forEach(button=>button.click()));
   await page.evaluate(()=>window.yearPage.value='reports');
-  await yearSelect.waitFor();await page.waitForTimeout(500);
-  assert.ok(requests.some(url=>url.pathname.endsWith('/grid') && url.searchParams.get('reportYear')==='2027'));
-  await yearSelect.click();await page.getByRole('option',{name:`Năm ${currentYear}`,exact:true}).click();
-  await page.waitForTimeout(500);
-  await page.waitForRequest(request=>new URL(request.url()).pathname.endsWith('/grid') && new URL(request.url()).searchParams.get('reportYear')===String(currentYear), {timeout:5000}).catch(()=>{});
-  assert.ok(requests.some(url=>url.pathname.endsWith('/grid') && url.searchParams.get('reportYear')===String(currentYear)), JSON.stringify({errors,requests:requests.slice(-8).map(String)}));
-  [download]=await Promise.all([page.waitForEvent('download', {timeout:30000}),root.getByRole('button',{name:/^Xuất file Excel$/i}).click()]);
+  await root.getByRole('button',{name:/^Xuất file Excel$/i}).waitFor();await page.waitForTimeout(500);
+  assert.equal(await root.getByRole('combobox',{name:'Năm báo cáo',exact:true}).count(),0);
+  assert.ok(requests.some(url=>url.pathname.endsWith('/grid')));
+  [download]=await Promise.all([page.waitForEvent('download',{timeout:30000}),root.getByRole('button',{name:/^Xuất file Excel$/i}).click()]);
   wb=XLSX.read(await fs.readFile(await download.path()),{type:'buffer'});
-  assert.ok(JSON.stringify(wb.Sheets).includes(`Năm báo cáo: ${currentYear}`));
-  await page.setViewportSize({width:390,height:844});
-  assert.equal(await yearSelect.evaluate(el=>Math.round(el.getBoundingClientRect().height)),36);
-  await page.screenshot({path:'tests/report-year-mobile.png'});
+  assert.equal(JSON.stringify(wb.Sheets).includes('Năm báo cáo:'),false);
+  for (const url of requests) assert.equal(url.searchParams.has('reportYear'),false,url.toString());
+  for (const mode of ['dashboard','reports']) {
+    await page.evaluate(mode=>window.yearPage.value=mode,mode);
+    await page.setViewportSize({width:390,height:844});
+    await root.getByRole('button',{name:/Lọc nâng cao/i}).click();
+    await page.getByText('Từ năm',{exact:true}).last().waitFor(); await page.getByText('Đến năm',{exact:true}).last().waitFor();
+    assert.equal(await root.getByRole('combobox',{name:'Năm báo cáo',exact:true}).count(),0);
+  }
   assert.deepEqual(errors,[]);
-  console.log('Passed current year default, shared page selection, metrics/grid/agency query year, exports, 36px mobile control. API mocked.');
+  console.log('Passed: no report year selector/queries/Excel label; deadline From/To year filters preserved; desktop/mobile. API mocked.');
 } finally { await browser.close(); }

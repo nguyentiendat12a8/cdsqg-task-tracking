@@ -1,6 +1,5 @@
 export function buildDashboardQuery(filters, { agencyIds = [], parentAgencyId, includeItemType = true } = {}) {
   const params = new URLSearchParams();
-  if (filters.reportYear) params.set('reportYear', filters.reportYear);
   if (includeItemType && filters.dashboardFilter && filters.dashboardFilter !== 'all') {
     params.set('itemType', filters.dashboardFilter === 'goals' ? 'Goal' : 'Task');
   }

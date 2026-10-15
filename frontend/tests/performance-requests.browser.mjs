@@ -14,7 +14,7 @@ try {
     window.fetch = (url, options = {}) => {
       if (!String(url).includes('/dashboard/metrics') && !String(url).includes('/legaldocuments/dashboard-stats')) return originalFetch(url, options);
       const query = new URL(url, location.href).searchParams;
-      const marker = query.get('reportYear') || query.get('documentType');
+      const marker = query.get('fromYear') || query.get('documentType');
       return new Promise((resolve, reject) => {
         const cancel = () => { clearTimeout(timer); aborted++; reject(new DOMException('Aborted', 'AbortError')); };
         const timer = setTimeout(() => {
@@ -29,7 +29,7 @@ try {
     let metrics, legal;
     const year = ref(2026), agencies = ref([]);
     const app = createApp({ setup() {
-      metrics = useDashboardMetrics({ reportYear:year, agencies, dashboardFilter:ref('goals'), selectedAgencyIds:ref([]), selectedSubAgencyIds:ref([]), selectedScopes:ref([]), selectedSections:ref([]), selectedGroups:ref([]), fromYear:ref(null), toYear:ref(null), isOngoingOnly:ref(false), isSpecialAgencyCode:()=>false });
+      metrics = useDashboardMetrics({ agencies, dashboardFilter:ref('goals'), selectedAgencyIds:ref([]), selectedSubAgencyIds:ref([]), selectedScopes:ref([]), selectedSections:ref([]), selectedGroups:ref([]), fromYear:year, toYear:ref(null), isOngoingOnly:ref(false), isSpecialAgencyCode:()=>false });
       legal = useLegalDashboard({ agencies, isSpecialAgencyCode:()=>false });
       return () => null;
     } });
@@ -53,5 +53,5 @@ try {
   assert.equal(result.error, '');
   assert.equal(result.loading, false);
   assert.ok(result.aborted >= 4, 'Superseded and unmounted main/legal requests are cancelled; dependent requests may be prevented before dispatch');
-  console.log('Passed cancellation, latest year/filter result, loading state and unmount cleanup. Fetch mocked.');
+  console.log('Passed cancellation, latest deadline/filter result, loading state and unmount cleanup. Fetch mocked.');
 } finally { await browser.close(); }

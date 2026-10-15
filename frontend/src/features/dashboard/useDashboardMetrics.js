@@ -4,7 +4,7 @@ import { buildDashboardQuery } from './queries';
 import { getApiUrl } from '../../config/api';
 import { authState } from '../../services/auth';
 
-export function useDashboardMetrics({ reportYear, dashboardFilter, selectedAgencyIds, selectedSubAgencyIds, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, isSpecialAgencyCode }) {
+export function useDashboardMetrics({ dashboardFilter, selectedAgencyIds, selectedSubAgencyIds, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, isSpecialAgencyCode }) {
   const isLoading = ref(true);
   const metrics = ref({
     totalGoals: 0,
@@ -257,7 +257,6 @@ export function useDashboardMetrics({ reportYear, dashboardFilter, selectedAgenc
     isLoading.value = true;
     loadError.value = '';
     const filters = {
-      reportYear: reportYear?.value,
       dashboardFilter: dashboardFilter.value,
       selectedScopes: selectedScopes.value,
       selectedSections: selectedSections.value,

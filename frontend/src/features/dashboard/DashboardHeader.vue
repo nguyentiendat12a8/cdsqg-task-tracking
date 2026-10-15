@@ -13,7 +13,6 @@
 
       <!-- Action Buttons & Advanced Filter Popover -->
       <div class="flex flex-wrap items-center gap-2 min-w-0">
-        <ReportYearSelect />
         <!-- Segmented Tab Filter: Mục tiêu | Nhiệm vụ -->
         <div class="inline-flex p-1 bg-slate-100 rounded-xl border border-slate-200/90 shrink-0 h-9 items-center">
           <button
@@ -150,7 +149,6 @@
 
 <script setup>
 import ActionButton from "../../components/ActionButton.vue";
-import ReportYearSelect from '../../components/ReportYearSelect.vue';
 import SearchableSelect from '../../components/SearchableSelect.vue';
 import OverlayPanel from '../../components/OverlayPanel.vue';
 
