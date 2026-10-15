@@ -17,6 +17,7 @@
       </div>
 
       <div class="flex flex-wrap items-center gap-2">
+      <ReportYearSelect v-if="isGoalOnlyReport" />
       <ActionButton kind="export" 
         @click="exportCurrentReportToExcel" 
         :disabled="isLoading"
@@ -427,6 +428,8 @@ import ActionButton from "../components/ActionButton.vue";
 import { formatNumber } from "../shared/formatters";
 import { formatDate, formatDateRange, formatFileName as getFileName } from '../shared/formatters';
 import { getStatusLabel } from '../shared/statusPresentation';
+import ReportYearSelect from '../components/ReportYearSelect.vue';
+import { reportYear } from '../shared/reportYear';
 import { fetchWithAuth } from '../services/auth';
 
 import { ref, computed, onMounted, watch } from 'vue';
@@ -469,6 +472,8 @@ const appliedFilters = ref({
   toYear: null,
   onlyOngoing: false
 });
+
+const isGoalOnlyReport = computed(() => appliedFilters.value.selectedItemTypes?.length === 1 && appliedFilters.value.selectedItemTypes[0] === 'Goal');
 
 const reportScopeOptions = computed(() => [
   { value: 'general', label: 'Phạm vi chung (tất cả đơn vị)' },
@@ -802,12 +807,15 @@ const paginatedDomainSummaries = computed(() => {
 });
 
 
+watch(reportYear, () => { if (isGoalOnlyReport.value) { currentPage.value = 1; loadReportData(); } });
+
 watch(activeReportType, () => {
   currentPage.value = 1;
 });
 
 async function loadReportData() {
   const currentId = ++reportFetchRequestId;
+  const selectedYear = isGoalOnlyReport.value ? reportYear.value : null;
   isLoading.value = true;
   allItems.value = [];
   metrics.value = {};
@@ -820,6 +828,7 @@ async function loadReportData() {
     }
 
     const params = new URLSearchParams();
+    if (selectedYear !== null) params.set('reportYear', String(selectedYear));
     if (appliedFilters.value.selectedAgencyIds && appliedFilters.value.selectedAgencyIds.length > 0) {
       appliedFilters.value.selectedAgencyIds.forEach(id => params.append('agencyId', id));
     } else if (!authState.isAdmin.value && authState.user.value?.agencyId) {
@@ -849,7 +858,7 @@ async function loadReportData() {
     }
 
     const docId = '12660000-0000-0000-0000-000000001266';
-    const gridRes = await fetchWithAuth(getApiUrl(`/api/planning/documents/${docId}/grid`));
+    const gridRes = await fetchWithAuth(getApiUrl(`/api/planning/documents/${docId}/grid${selectedYear !== null ? '?reportYear=' + selectedYear : ''}`));
     if (gridRes.ok) {
       const data = await gridRes.json();
       if (currentId !== reportFetchRequestId) return;
@@ -878,7 +887,7 @@ function exportCurrentReportToExcel() {
   let minColWidths = {};
 
   const now = new Date();
-  const timeStr = `${now.toLocaleDateString('vi-VN')} ${now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
+  const timeStr = `${isGoalOnlyReport.value ? 'Năm báo cáo: ' + reportYear.value + ' | ' : ''}${now.toLocaleDateString('vi-VN')} ${now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
 
   if (activeReportType.value === 'summary') {
     title = "BÁO CÁO TỔNG HỢP TIẾN ĐỘ THEO CƠ QUAN / ĐƠN VỊ - QUYẾT ĐỊNH 1266/QĐ-TTg";

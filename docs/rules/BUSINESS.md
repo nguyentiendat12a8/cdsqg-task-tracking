@@ -41,3 +41,7 @@ Tham khảo chi tiết hiện hành: `ANNUAL-PROGRESS.md`, `CUMULATIVE-PROGRESS-
 ## Danh tính báo cáo tiến độ
 
 Phân biệt ba đối tượng: phạm vi/cơ quan được giao (`LeadAgencyId` của mục tiêu), cơ quan thực hiện báo cáo (`AgencyId` của ProgressLog), người thao tác (`CreatedBy` từ danh tính đã xác thực). Không dùng tên cơ quan thay cho người báo cáo hoặc ghép tên cơ quan vào CreatedBy trong API lịch sử. Import của Admin cho mục tiêu chung phải chọn cơ quan cụ thể; không lưu báo cáo vào cơ quan nhóm ALL_*. Lịch sử hiển thị riêng cả ba. Bản cũ không ghi người thao tác thì không tự suy đoán để sửa audit. Form nạp báo cáo theo đúng task/cơ quan/năm và bỏ qua phản hồi tải đã cũ.
+
+15/10/2026 (điều chỉnh theo yêu cầu người dùng): Trung tâm báo cáo có lại Năm báo cáo để thống kê cơ quan hoàn thành chỉ tiêu của năm được chọn; metrics, grid và Excel dùng cùng reportYear. Trang chủ vẫn dùng báo cáo approved mới nhất, không giới hạn năm báo cáo. Giữ Từ năm/Đến năm để lọc thời hạn ở cả hai màn hình. Quy tắc này thay thế phạm vi bỏ Năm báo cáo trên trung tâm báo cáo ở ghi chú trước.
+
+15/10/2026 (phạm vi Năm báo cáo): Chỉ hiện và gửi reportYear khi bộ lọc đã áp dụng chọn duy nhất Goal (Chỉ mục tiêu). Chỉ nhiệm vụ hoặc Tất cả không gửi năm, dùng kết quả approved mới nhất và Excel không ghi Năm báo cáo. Giữ Từ năm/Đến năm ở mọi chế độ. Quy tắc này giới hạn lại ghi chú khôi phục Năm báo cáo trước đó.

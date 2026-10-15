@@ -55,11 +55,31 @@ try {
   await page.evaluate(()=>window.yearPage.value='reports');
   await root.getByRole('button',{name:/^Xuất file Excel$/i}).waitFor();await page.waitForTimeout(500);
   assert.equal(await root.getByRole('combobox',{name:'Năm báo cáo',exact:true}).count(),0);
-  assert.ok(requests.some(url=>url.pathname.endsWith('/grid')));
+  await root.getByRole('combobox',{name:'Loại đối tượng',exact:true}).click();
+  await page.getByRole('option',{name:'Chỉ mục tiêu',exact:true}).click();
+  const yearSelect=root.getByRole('combobox',{name:'Năm báo cáo',exact:true});
+  await yearSelect.waitFor();
+  await yearSelect.click(); await page.getByRole('option',{name:'Năm 2027',exact:true}).click();
+  await page.waitForTimeout(500);
+  assert.ok(requests.some(url=>url.pathname.endsWith('/grid') && url.searchParams.get('reportYear')==='2027'));
+  assert.ok(requests.some(url=>url.pathname==='/api/dashboard/metrics' && url.searchParams.get('reportYear')==='2027'));
+  [download]=await Promise.all([page.waitForEvent('download',{timeout:30000}),root.getByRole('button',{name:/^Xuất file Excel$/i}).click()]);
+  wb=XLSX.read(await fs.readFile(await download.path()),{type:'buffer'});
+  assert.ok(JSON.stringify(wb.Sheets).includes('Năm báo cáo: 2027'));
+  for (const url of requests.filter(url=>url.pathname==='/api/dashboard/agency-items')) assert.equal(url.searchParams.has('reportYear'),false,url.toString());
+  await page.locator('.Toastify__close-button').evaluateAll(buttons=>buttons.forEach(button=>button.click()));
+  const taskStart=requests.length;
+  await root.getByRole('combobox',{name:'Loại đối tượng',exact:true}).click();
+  await page.getByRole('option',{name:'Chỉ nhiệm vụ',exact:true}).click();
+  await page.waitForTimeout(500);
+  assert.equal(await yearSelect.count(),0);
   [download]=await Promise.all([page.waitForEvent('download',{timeout:30000}),root.getByRole('button',{name:/^Xuất file Excel$/i}).click()]);
   wb=XLSX.read(await fs.readFile(await download.path()),{type:'buffer'});
   assert.equal(JSON.stringify(wb.Sheets).includes('Năm báo cáo:'),false);
-  for (const url of requests) assert.equal(url.searchParams.has('reportYear'),false,url.toString());
+  const taskRequests=requests.slice(taskStart);
+  assert.ok(taskRequests.some(url=>url.pathname.endsWith('/grid')));
+  assert.ok(taskRequests.some(url=>url.pathname==='/api/dashboard/metrics' && url.searchParams.get('itemType')==='Task'));
+  for (const url of taskRequests) assert.equal(url.searchParams.has('reportYear'),false,url.toString());
   for (const mode of ['dashboard','reports']) {
     await page.evaluate(mode=>window.yearPage.value=mode,mode);
     await page.setViewportSize({width:390,height:844});
@@ -68,5 +88,5 @@ try {
     assert.equal(await root.getByRole('combobox',{name:'Năm báo cáo',exact:true}).count(),0);
   }
   assert.deepEqual(errors,[]);
-  console.log('Passed: no report year selector/queries/Excel label; deadline From/To year filters preserved; desktop/mobile. API mocked.');
+  console.log('Passed: dashboard latest approved; goals year selector/metrics/grid/Excel; tasks and mixed mode without year; deadline From/To year filters preserved; desktop/mobile. API mocked.');
 } finally { await browser.close(); }
