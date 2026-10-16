@@ -97,7 +97,8 @@ namespace Cdsqg.Application.Services
             int tCount = 1;
 
             var itemsMap = items.ToDictionary(i => i.Id);
-            var rootItems = items
+            // SQL-paged rows already have the requested order; do not reorder a page by update time.
+            var rootItems = pagedTotalCount.HasValue ? items : items
                 .OrderByDescending(i => i.LastUpdated ?? i.CreatedAt)
                 .ThenByDescending(i => i.CreatedAt)
                 .ToList();
