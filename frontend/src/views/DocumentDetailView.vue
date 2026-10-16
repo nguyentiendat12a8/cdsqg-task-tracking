@@ -8,7 +8,7 @@
       <div class="p-4 sm:p-5 border-b border-slate-200/80 bg-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div>
           <h2 class="text-sm sm:text-base font-bold text-slate-800">
-            {{ filterItemType === 'Goal' ? '🎯 Danh sách mục tiêu' : '📋 Danh sách nhiệm vụ' }}
+            {{ filterItemType === 'Goal' ? (activeSubTab === 'grid' ? '🎯 Danh sách thiết lập kế hoạch mục tiêu' : '🎯 Danh sách mục tiêu') : '📋 Danh sách nhiệm vụ' }}
           </h2>
         </div>
 

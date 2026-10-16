@@ -312,34 +312,15 @@
         </table>
       </div>
 
-      <!-- Attached Pagination Controls -->
-      <div v-if="totalGridItems > 0" class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50/70 p-4 border-t border-slate-200/80 text-xs text-slate-600 font-semibold w-full">
-        <div>
-          Hiển thị <span class="font-bold text-slate-900">{{ formatNumber(gridPageStart) }} - {{ formatNumber(gridPageEnd) }}</span> trên tổng số <span class="font-bold text-slate-900">{{ formatNumber(totalGridItems) }}</span> {{ activeSubTab === 'goals' ? 'Mục tiêu' : 'Nhiệm vụ' }}
-        </div>
-
-        <div class="flex items-center gap-2">
-          <button 
-            @click="gridCurrentPage--" 
-            :disabled="gridCurrentPage <= 1"
-            class="ui-single-line px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg disabled:opacity-40 disabled:hover:bg-white font-bold transition shadow-2xs"
-          >
-            ‹ Trang trước
-          </button>
-          
-          <span class="px-3 py-1.5 bg-blue-50 text-blue-800 border border-blue-200 rounded-lg font-bold shadow-2xs">
-            Trang {{ gridCurrentPage }} / {{ totalGridPages }}
-          </span>
-
-          <button 
-            @click="gridCurrentPage++" 
-            :disabled="gridCurrentPage >= totalGridPages"
-            class="px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg disabled:opacity-40 disabled:hover:bg-white font-bold transition shadow-2xs"
-          >
-            Trang sau ›
-          </button>
-        </div>
-      </div>
+      <DocumentPagination
+        :changePage="changeGridPage"
+        :pageSizeOptions="gridPageSizeOptions"
+        :totalCount="totalGridItems"
+        :totalPages="totalGridPages"
+        :filterItemType="activeSubTab === 'goals' ? 'Goal' : 'Task'"
+        v-model:pageSize="gridPageSize"
+        v-model:currentPage="gridCurrentPage"
+      />
     </div>
 
   </div>
@@ -348,6 +329,7 @@
 <script setup>
 import { formatNumber } from "../shared/formatters";
 import QuantityInput from './QuantityInput.vue';
+import DocumentPagination from '../features/document/DocumentPagination.vue';
 import { fetchWithAuth } from '../services/auth';
 
 import { ref, computed, watch, onMounted } from 'vue';
@@ -494,6 +476,11 @@ const activeFilterCount = computed(() => {
 // Pagination States
 const gridCurrentPage = ref(1);
 const gridPageSize = ref(10);
+const gridPageSizeOptions = [10, 25, 50, 100].map(value => ({ value, label: String(value) }));
+function changeGridPage(page) {
+  gridCurrentPage.value = Math.max(1, Math.min(page, totalGridPages.value));
+}
+watch(gridPageSize, () => { gridCurrentPage.value = 1; });
 
 function loadSavedFilters() {
   try {
@@ -779,8 +766,7 @@ const paginatedGridList = computed(() => {
   return activeGridList.value.slice(start, start + gridPageSize.value);
 });
 
-const gridPageStart = computed(() => totalGridItems.value === 0 ? 0 : (gridCurrentPage.value - 1) * gridPageSize.value + 1);
-const gridPageEnd = computed(() => Math.min(gridCurrentPage.value * gridPageSize.value, totalGridItems.value));
+watch(totalGridPages, () => changeGridPage(gridCurrentPage.value));
 
 function isQuantitative(item) {
   if (item.itemType === 'Task' || item.itemType === 2 || item.itemType === '2') {
