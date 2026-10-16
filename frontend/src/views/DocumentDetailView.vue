@@ -30,7 +30,7 @@
             <span class="text-amber-700">⏳</span>
             <span>Duyệt báo cáo tiến độ</span>
             <span v-if="globalPendingLogs?.length > 0" class="ml-1 px-2 py-0.5 bg-amber-600 text-white rounded-full text-xs font-bold animate-pulse">
-              {{ formatNumber(globalPendingLogs.length) }}
+              {{ formatQuantity(globalPendingLogs.length) }}
             </span>
           </button>
 
@@ -426,7 +426,8 @@ import { getApiUrl } from '../config/api';
 
 const props = defineProps({
   filterItemType: { type: String, default: 'Task' },
-  subTab: { type: String, default: 'list' }
+  subTab: { type: String, default: 'list' },
+  approvalRequest: { type: Object, default: null }
 });
 
 import { useDocumentFilters } from '../features/document/useDocumentFilters';
@@ -814,6 +815,10 @@ function handleOpenPendingApprovalsModalEvent() {
     isPendingApprovalsModalOpen.value = true;
   }
 }
+
+watch(() => props.approvalRequest, request => {
+  if (request?.itemType === props.filterItemType) handleOpenPendingApprovalsModalEvent();
+}, { immediate: true });
 
 onMounted(() => {
   loadData();

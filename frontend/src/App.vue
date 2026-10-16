@@ -41,6 +41,7 @@
           <!-- Mục tiêu QĐ 1266 (Goals View) -->
           <DocumentDetailView 
             v-else-if="['goals', 'goals-list', 'goals-grid'].includes(currentTab)" 
+            :approvalRequest="pendingApprovalRequest"
             filterItemType="Goal"
             :subTab="currentTab === 'goals-grid' ? 'grid' : 'list'"
           />
@@ -48,6 +49,7 @@
           <!-- Nhiệm vụ QĐ 1266 (Tasks View) -->
           <DocumentDetailView 
             v-else-if="['tasks', 'tasks-list', 'tasks-grid'].includes(currentTab)" 
+            :approvalRequest="pendingApprovalRequest"
             filterItemType="Task"
             subTab="list"
           />
@@ -105,6 +107,7 @@ import { getApiUrl } from './config/api';
 const mobileMenuOpen = ref(false);
 const isResetRoute = ref(window.location.hash.startsWith('#reset-password'));
 const currentTab = ref('dashboard');
+const pendingApprovalRequest = ref(null);
 
 function handleLogout() {
   logout();
@@ -179,9 +182,7 @@ async function handleOpenNotificationDetail(event) {
     const isGoal = notifMsg.includes('MT-') || notifTitle.includes('MT-');
     currentTab.value = isGoal ? 'goals' : 'tasks';
 
-    setTimeout(() => {
-      window.dispatchEvent(new CustomEvent('open-pending-approvals-modal'));
-    }, 150);
+    pendingApprovalRequest.value = { itemType: isGoal ? 'Goal' : 'Task' };
     return;
   }
 
