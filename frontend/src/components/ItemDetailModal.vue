@@ -275,14 +275,14 @@
                         <span>📎</span>
                         <span class="truncate">{{ formatFileName(fileUrl) }}</span>
                       </a>
-                      <a 
-                        :href="getApiUrl(fileUrl)" 
-                        target="_blank" 
-                        download
-                        class="text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-600 hover:text-white px-2 py-0.5 rounded transition cursor-pointer shrink-0 ml-1"
+                      <button 
+                        type="button"
+                        class="text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-600 hover:text-white px-2 py-0.5 rounded transition cursor-pointer shrink-0 ml-1 border-0"
+                        title="Tải tệp đính kèm về máy"
+                        @click.prevent="downloadEvidence(fileUrl)"
                       >
                         Tải về
-                      </a>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -946,6 +946,26 @@ watch(() => [props.isOpen, props.item, props.initialTab], ([isOpen, item, tab]) 
     }
   }
 }, { immediate: true });
+
+async function downloadEvidence(fileUrl) {
+  if (!fileUrl) return;
+  const fileName = formatFileName(fileUrl);
+  try {
+    const res = await fetchWithAuth(getApiUrl(fileUrl));
+    if (!res.ok) throw new Error('Không thể tải file');
+    const blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = fileName;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+  } catch {
+    window.open(getApiUrl(fileUrl), '_blank');
+  }
+}
 
 function close() {
   emit('close');

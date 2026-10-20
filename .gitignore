@@ -58,3 +58,6 @@ tài liệu phát triển/
 
 # Generated .NET test output
 **/TestResults/
+
+# Private AI uploads; never serve or commit original files
+backend/App_Data/

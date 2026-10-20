@@ -157,6 +157,16 @@
           <span v-if="!isCollapsed" class="truncate">Báo cáo</span>
         </button>
 
+        <div v-if="authState.isAdmin.value">
+          <button @click="handleAiClick" aria-label="Quản trị dữ liệu AI" :aria-expanded="isAiOpen && !isCollapsed" aria-controls="ai-submenu" :title="isCollapsed ? 'Quản trị dữ liệu AI' : ''" :class="['w-full flex items-center justify-between py-3 rounded-xl font-bold text-xs transition whitespace-nowrap cursor-pointer', isCollapsed ? 'justify-center px-0 w-12 h-12 mx-auto' : 'px-3', isAiRoute(activeTab) ? 'bg-blue-600 text-white' : 'text-slate-400 hover:bg-slate-800 hover:text-slate-200']">
+            <div class="flex items-center gap-3 min-w-0"><svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3h6v4H9zM5 9h14v12H5zM9 13h.01M15 13h.01M9 17h6M3 12H1m22 0h-2"/></svg><span v-if="!isCollapsed" class="truncate">Quản trị dữ liệu AI</span></div>
+            <svg v-if="!isCollapsed" class="w-4 h-4 shrink-0 transition-transform" :class="{'rotate-180':isAiOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M19 9l-7 7-7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" /></svg>
+          </button>
+          <div v-if="isAiOpen && !isCollapsed" id="ai-submenu" class="pl-9 pr-2 py-1.5 space-y-1">
+            <button v-for="item in AI_MENU" :key="item.route" @click="selectTab(item.route)" :aria-current="aiMenuRoute(activeTab)===item.route?'page':undefined" :class="['w-full text-left py-2 px-3 rounded-lg text-xs font-semibold transition whitespace-nowrap cursor-pointer',aiMenuRoute(activeTab)===item.route?'text-blue-400 bg-slate-800':'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50']">{{ item.label }}</button>
+          </div>
+        </div>
+
         <!-- Văn bản QPPL -->
         <button 
           @click="selectTab('legal-documents')"
@@ -253,6 +263,7 @@
 <script setup>
 import { ref, computed, watch, onUnmounted } from 'vue';
 import { authState } from '../services/auth';
+import { AI_MENU, isAiRoute, aiMenuRoute } from '../shared/aiNavigation';
 
 const props = defineProps({
   activeTab: { type: String, default: 'dashboard' },
@@ -265,6 +276,7 @@ const isManualCollapsed = ref(true);
 const isHovered = ref(false);
 let hoverTimer = null;
 
+const isAiOpen = ref(isAiRoute(props.activeTab));
 const isGoalsOpen = ref(props.activeTab.startsWith('goals'));
 const isSettingsOpen = ref(['agencies', 'units', 'users', 'import-history'].includes(props.activeTab));
 
@@ -273,6 +285,7 @@ const isCollapsed = computed(() => {
 });
 
 watch(() => props.activeTab, (newTab) => {
+  if (isAiRoute(newTab)) isAiOpen.value = true;
   if (newTab.startsWith('goals')) isGoalsOpen.value = true;
   if (['agencies', 'units', 'users', 'import-history'].includes(newTab)) isSettingsOpen.value = true;
 }, { immediate: true });
@@ -297,6 +310,10 @@ function onMouseLeave() {
   }, 150);
 }
 
+function handleAiClick() {
+  isAiOpen.value = !isAiOpen.value;
+}
+
 function handleGoalsClick() {
   isGoalsOpen.value = !isGoalsOpen.value;
 }
@@ -315,3 +332,4 @@ function selectTab(tab) {
 }
 onUnmounted(() => clearTimeout(hoverTimer));
 </script>
+

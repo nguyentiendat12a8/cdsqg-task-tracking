@@ -9,6 +9,15 @@ namespace Cdsqg.Application.Services;
 /// <summary>Annual business rules. Stored percentages/statuses are caches, never the source of truth.</summary>
 public static class ProgressCalculator
 {
+    public static bool IsLowerBetter(GoalTaskItem item) => item.Unit?.Code.Equals("RANK", StringComparison.OrdinalIgnoreCase)==true
+        || item.Unit?.Name.Trim().ToLowerInvariant() is "hạng" or "thứ hạng" or "rank"
+        // Legacy EGDI goals may use the numeric SL dictionary while storing actual ranks.
+        || item.ItemType==ItemTypeEnum.Goal && item.Code is ("MT-12" or "MT-25")
+           && item.Unit?.Code.Equals("SL",StringComparison.OrdinalIgnoreCase)==true
+           && item.Title.Contains("chính phủ",StringComparison.OrdinalIgnoreCase)
+           && item.Title.Contains("Liên hợp quốc",StringComparison.OrdinalIgnoreCase);
+    private static bool Reaches(GoalTaskItem item, decimal? actual, decimal? target)
+        => target>0 && actual.HasValue && (IsLowerBetter(item) ? actual>0 && actual<=target : actual>=target);
     public static void ValidateAnnualBaselines(Dictionary<string, string>? baselines)
     {
         if (baselines == null) return;
@@ -56,7 +65,7 @@ public static class ProgressCalculator
         if (item.EvaluationType == EvaluationTypeEnum.Quantitative)
         {
             var target = ResolveBaseline(item, FinalTargetYear(item, report.PeriodYear)).Target;
-            return target > 0 && report.QuantitativeValue >= target;
+            return Reaches(item, report.QuantitativeValue, target);
         }
         return item.Deliverables.Count > 0
             ? report.Deliverables is { Count: > 0 } products && products.Count == item.Deliverables.Count && item.Deliverables.All(d => products.Any(p => p.Id == d.Id && p.CurrentStatus?.ToLowerInvariant() is "completed" or "4"))
@@ -97,7 +106,9 @@ public static class ProgressCalculator
         var products = deliverables is { Count: > 0 } ? deliverables
             : report?.Deliverables is { Count: > 0 } ? report.Deliverables : year.HasValue ? AnnualDeliverables(item, report) : item.Deliverables;
         decimal? percentage = item.EvaluationType == EvaluationTypeEnum.Quantitative
-            ? (actual.HasValue && target > 0 ? Math.Round(actual.Value / target.Value * 100m, 2) : null)
+            ? (actual.HasValue && target > 0 ? IsLowerBetter(item)
+                ? actual>0 ? Math.Round(target.Value / actual.Value * 100m, 2) : 0m
+                : Math.Round(actual.Value / target.Value * 100m, 2) : null)
             : products.Count > 0 ? DeliverablePercentage(products) : report?.QualitativeStatus switch
             {
                 TextStatusEnum.Completed => 100m,
@@ -106,7 +117,7 @@ public static class ProgressCalculator
                 _ => 0m
             };
         var completed = report != null && (item.EvaluationType == EvaluationTypeEnum.Quantitative
-            ? target > 0 && actual >= target
+            ? Reaches(item, actual, target)
             : products.Count > 0 ? products.All(d => d.CurrentStatus?.ToLowerInvariant() is "completed" or "4")
                 : report.QualitativeStatus == TextStatusEnum.Completed);
         if (!completed && percentage >= 100m) percentage = 99.99m;
@@ -191,3 +202,4 @@ public static class ProgressCalculator
         foreach (var execution in item.AgencyExecutions) RefreshExecution(item, execution);
     }
 }
+

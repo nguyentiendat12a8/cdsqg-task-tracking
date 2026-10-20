@@ -1,0 +1,10 @@
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+const context=vm.createContext({});vm.runInContext(fs.readFileSync('integrations/google-alerts/Code.gs','utf8'),context);
+assert.equal(context.officialUrl('https://www.google.com/url?url=https%3A%2F%2Fwww.nso.gov.vn%2Fbao-cao&q=ignored'),'https://www.nso.gov.vn/bao-cao');
+assert.equal(context.officialUrl('https://www.nso.gov.vn.evil.test/report'),null);
+assert.equal(context.officialUrl('http://www.nso.gov.vn/report'),null);
+assert.equal(context.officialUrl('https://user@www.nso.gov.vn/report'),null);
+assert.equal(context.plainText('<b>Báo cáo</b> &amp; số liệu'),'Báo cáo & số liệu');
+console.log('Google Alerts parser checks passed.');

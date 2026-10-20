@@ -84,6 +84,9 @@ public class SecurityTests
     [InlineData("User", "CreateUser", "POST")]
     [InlineData("User", "GetUsers", "GET")]
     [InlineData("MasterData", "ResetProgressData", "DELETE")]
+    [InlineData("AiAlerts", "Create", "POST")]
+    [InlineData("AiAlerts", "Scan", "POST")]
+    [InlineData("AiAlerts", "List", "GET")]
     [InlineData("Execution", "ApproveProgress", "POST")]
     [InlineData("LegalDocument", "ClearAllLegalDocuments", "DELETE")]
     public async Task AgencyCannotUseAdminActions(string controller, string action, string method)

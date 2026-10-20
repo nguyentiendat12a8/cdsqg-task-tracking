@@ -13,6 +13,7 @@ Version cài thực tế theo lockfile/assets; bảng dưới là dependency đ�
 | Toast | vue3-toastify; lỗi field phải có inline text |
 | Select/ngày/modal | component hiện có; chưa đưa thêm UI kit |
 | Excel | xlsx-js-style 1.2 qua excelRuntime; writer XLSX và reader legacy riêng |
+| PDF có lớp chữ / AI | PdfPig 0.1.16; DOCX đọc XML giới hạn bằng thư viện .NET có sẵn; không OCR |
 | BE | .NET 9 / ASP.NET Core, EF Core 9.0.2, Npgsql provider 9.0.3 |
 | Auth / API docs | JwtBearer 9.0.2, IdentityModel 8.5, Swashbuckle 7.2 |
 | Test | xUnit, PostgreSQL integration, Playwright scripts hiện có |

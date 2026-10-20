@@ -13,6 +13,7 @@ using System;
 using System.Linq;
 using System.Text;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.DataProtection;
 using System.Security.Claims;
 using Cdsqg.Api.Security;
 using Microsoft.AspNetCore.RateLimiting;
@@ -98,6 +99,27 @@ builder.Services.AddScoped<IPlanningService, PlanningService>();
 builder.Services.AddScoped<IExecutionService, ExecutionService>();
 builder.Services.AddScoped<IRecoveryEmailSender, SmtpRecoveryEmailSender>();
 builder.Services.AddScoped<PasswordRecoveryService>();
+var aiProtectionDirectory = builder.Configuration["AiData:ProtectionKeyDirectory"];
+if (string.IsNullOrWhiteSpace(aiProtectionDirectory)) aiProtectionDirectory = System.IO.Path.Combine(builder.Environment.ContentRootPath, "App_Data", "ai-keys");
+builder.Services.AddDataProtection().SetApplicationName("CDSQG.AiCredentials").PersistKeysToFileSystem(new System.IO.DirectoryInfo(aiProtectionDirectory));
+builder.Services.AddScoped<Cdsqg.Application.AI.AiSettingsStore>();
+builder.Services.Configure<Cdsqg.Application.AI.AiDataOptions>(builder.Configuration.GetSection("AiData"));
+builder.Services.AddHttpClient("ai-provider", client => client.Timeout = TimeSpan.FromSeconds(90)).ConfigurePrimaryHttpMessageHandler(Cdsqg.Application.AI.AiSourceReader.CreatePublicHandler);
+builder.Services.AddScoped<Cdsqg.Application.AI.IAiSourceReader, Cdsqg.Application.AI.AiSourceReader>();
+builder.Services.AddScoped<Cdsqg.Application.AI.IAiMetricExtractor, Cdsqg.Application.AI.AiMetricExtractor>();
+builder.Services.AddScoped<Cdsqg.Application.AI.AiCollectionService>();
+builder.Services.AddScoped<Cdsqg.Application.AI.AiReviewService>();
+// Internet discovery is paused. Only inbox items and explicit uploads are processed.
+builder.Services.AddHostedService<Cdsqg.Application.AI.AiInboxWorker>();
+builder.Services.AddScoped<Cdsqg.Application.AI.AiInboxService>();
+builder.Services.AddHttpClient("ai-alert-feed",client=>client.Timeout=TimeSpan.FromSeconds(30)).ConfigurePrimaryHttpMessageHandler(Cdsqg.Application.AI.AiSourceReader.CreatePublicHandler);
+builder.Services.AddScoped<Cdsqg.Application.AI.IAiAlertFeedReader,Cdsqg.Application.AI.AiAlertFeedReader>();
+builder.Services.AddScoped<Cdsqg.Application.AI.AiAlertService>();
+builder.Services.AddHostedService<Cdsqg.Application.AI.AiAlertWorker>();
+// Prevent AiInboxWorker OperationCanceledException on shutdown from stopping the entire host
+builder.Services.Configure<HostOptions>(o =>
+    o.BackgroundServiceExceptionBehavior = BackgroundServiceExceptionBehavior.Ignore);
+
 builder.Services.AddRateLimiter(options => {
     options.RejectionStatusCode = 429;
     options.AddPolicy("password-recovery", http => RateLimitPartition.GetFixedWindowLimiter(

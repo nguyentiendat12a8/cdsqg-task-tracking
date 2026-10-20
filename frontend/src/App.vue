@@ -56,6 +56,7 @@
 
           <!-- Báo cáo - Xuất Excel (Executive Reports Center) -->
           <ExecutiveReportsView v-else-if="currentTab === 'reports'" />
+          <AiDataView v-else-if="isAiDataRoute(currentTab) && authState.isAdmin.value" :section="aiSectionFor(currentTab).key" :initial-tab="currentTab==='ai-review'?'review':currentTab==='ai-alerts'?'sources':'files'" @navigate="switchTab" />
 
           <!-- Văn bản Quy Phạm Pháp Luật (VB QPPL) -->
           <LegalDocumentsView v-else-if="currentTab === 'legal-documents'" />
@@ -64,6 +65,7 @@
           <AgencyPlansView v-else-if="currentTab === 'agency-plans'" />
 
           <!-- Thiết lập chung (Submenus) -->
+          <AiSettingsView v-else-if="currentTab === 'ai-settings' && authState.isAdmin.value" />
           <MasterDataView v-else-if="['settings', 'master-data'].includes(currentTab)" />
           <AgencyManagement v-else-if="currentTab === 'agencies'" />
           <UnitManagement v-else-if="currentTab === 'units'" />
@@ -92,6 +94,8 @@ function loadView(loader) {
 }
 const ExecutiveDashboard = loadView(() => import('./views/ExecutiveDashboard.vue'));
 const DocumentDetailView = loadView(() => import('./views/DocumentDetailView.vue'));
+const AiSettingsView = loadView(() => import('./views/AiSettingsView.vue'));
+const AiDataView = loadView(() => import('./views/AiDataView.vue'));
 const ExecutiveReportsView = loadView(() => import('./views/ExecutiveReportsView.vue'));
 const LegalDocumentsView = loadView(() => import('./views/LegalDocumentsView.vue'));
 const AgencyPlansView = loadView(() => import('./views/AgencyPlansView.vue'));
@@ -103,6 +107,7 @@ const ImportHistoryAudit = loadView(() => import('./components/ImportHistoryAudi
 import ConfirmModal from './components/ConfirmModal.vue';
 import { authState, logout } from './services/auth';
 import { getApiUrl } from './config/api';
+import { AI_MENU, isAiDataRoute, aiSectionFor } from './shared/aiNavigation';
 
 const mobileMenuOpen = ref(false);
 const isResetRoute = ref(window.location.hash.startsWith('#reset-password'));
@@ -125,7 +130,7 @@ function parseHashRoute() {
   const rawPath = hash.replace(/^#\/?/, '');
   const [route] = rawPath.split('?');
 
-  const adminOnlyTabs = ['reports', 'agencies', 'units', 'users', 'goals-grid', 'master-data', 'settings'];
+  const adminOnlyTabs = ['reports', 'agencies', 'units', 'users', 'goals-grid', 'master-data', 'settings', 'ai-settings', 'ai-alerts', 'ai-review', ...AI_MENU.map(item => item.route)];
   if (!authState.isAdmin.value && adminOnlyTabs.includes(route)) {
     if (route === 'goals-grid') currentTab.value = 'goals-list';
     else if (['agencies', 'units', 'users', 'settings', 'master-data'].includes(route)) currentTab.value = 'import-history';
@@ -133,7 +138,7 @@ function parseHashRoute() {
     return;
   }
 
-  if (['goals', 'goals-list', 'goals-grid', 'tasks', 'tasks-list', 'tasks-grid', 'reports', 'legal-documents', 'agency-plans', 'agencies', 'units', 'users', 'import-history', 'settings', 'master-data'].includes(route)) {
+  if (['goals', 'goals-list', 'goals-grid', 'tasks', 'tasks-list', 'tasks-grid', 'reports', 'legal-documents', 'agency-plans', 'agencies', 'units', 'users', 'import-history', 'settings', 'master-data', 'ai-settings', 'ai-alerts', 'ai-review', ...AI_MENU.map(item => item.route)].includes(route)) {
     currentTab.value = route;
   } else {
     currentTab.value = 'dashboard';
@@ -150,7 +155,7 @@ function syncHashRoute() {
 
 function switchTab(tabName) {
   mobileMenuOpen.value = false;
-  const adminOnlyTabs = ['reports', 'agencies', 'units', 'users', 'goals-grid', 'master-data', 'settings'];
+  const adminOnlyTabs = ['reports', 'agencies', 'units', 'users', 'goals-grid', 'master-data', 'settings', 'ai-settings', 'ai-alerts', 'ai-review', ...AI_MENU.map(item => item.route)];
   if (!authState.isAdmin.value && adminOnlyTabs.includes(tabName)) {
     if (tabName === 'goals-grid') currentTab.value = 'goals-list';
     else if (['agencies', 'units', 'users', 'settings', 'master-data'].includes(tabName)) currentTab.value = 'import-history';

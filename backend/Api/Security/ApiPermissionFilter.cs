@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Cdsqg.Application.DTOs;
 using Cdsqg.Core.Enums;
 using Cdsqg.Infrastructure.Data;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
@@ -13,8 +14,16 @@ public sealed class ApiPermissionFilter(AppDbContext db) : IAsyncActionFilter
 {
     public async Task OnActionExecutionAsync(ActionExecutingContext context, ActionExecutionDelegate next)
     {
+        var endpoint = context.HttpContext.GetEndpoint();
+        if (endpoint?.Metadata?.GetMetadata<IAllowAnonymous>() != null
+            || context.ActionDescriptor.EndpointMetadata.OfType<IAllowAnonymous>().Any())
+        {
+            await next();
+            return;
+        }
+
         var controller = context.RouteData.Values["controller"]?.ToString();
-        if (controller == "Auth") { await next(); return; }
+        if (controller is "Auth" or "AiAlertsBridge") { await next(); return; }
         var user = context.HttpContext.User;
         if (user.Identity?.IsAuthenticated != true) { context.Result = new UnauthorizedResult(); return; }
         var admin = user.IsInRole(nameof(UserRoleEnum.Admin));
@@ -42,7 +51,7 @@ public sealed class ApiPermissionFilter(AppDbContext db) : IAsyncActionFilter
         bool write = !HttpMethods.IsGet(context.HttpContext.Request.Method)
             && !HttpMethods.IsHead(context.HttpContext.Request.Method);
         // User records and maintenance endpoints are private to administrators.
-        if (!admin && (controller is "User" or "MasterData")) { context.Result = new ForbidResult(); return; }
+        if (!admin && (controller is "User" or "MasterData" or "AiData" or "AiInbox" or "AiProvider" or "AiAlerts")) { context.Result = new ForbidResult(); return; }
         if (controller == "Notification" && action == "MarkAsRead" && args.TryGetValue("id", out var nid))
         {
             var notification = await db.Notifications.AsNoTracking().FirstOrDefaultAsync(n => n.Id == (Guid)nid!);
@@ -91,4 +100,3 @@ public sealed class ApiPermissionFilter(AppDbContext db) : IAsyncActionFilter
     private Task<bool> CanReportAsync(Guid taskId, Guid agencyId)
         => Cdsqg.Application.Services.AgencyScopePolicy.CanReportAsync(db, taskId, agencyId);
 }
-
