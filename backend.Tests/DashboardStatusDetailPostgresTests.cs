@@ -27,7 +27,7 @@ public class DashboardStatusDetailPostgresTests
             var ministries=Enumerable.Range(1,17).Select(n=>new Agency {Code=$"M{n:D2}",Name=$"Bộ {n:D2}",Type=AgencyTypeEnum.Ministry}).ToList();
             var group=new Agency {Code="ALL_MINISTRIES_DIRECT",Name="Các bộ, ngành",Type=AgencyTypeEnum.Special};
             var doc=new Document {DocumentNumber="DETAIL_TEST",StartYear=2026,EndYear=2030};
-            var shared=new GoalTaskItem {Code="MT-1",Title="Mục tiêu giao chung",DocumentId=doc.Id,LeadAgencyId=group.Id,
+            var shared=new GoalTaskItem {Group="Phát triển nhân lực",Code="MT-1",Title="Mục tiêu giao chung",DocumentId=doc.Id,LeadAgencyId=group.Id,
                 ItemType=ItemTypeEnum.Goal,IsGeneralTask=true,DueDate=new(2030,12,31)};
             var specific=new GoalTaskItem {Code="MT-2",Title="Mục tiêu giao riêng",DocumentId=doc.Id,LeadAgencyId=ministries[0].Id,
                 ItemType=ItemTypeEnum.Goal,DueDate=new(2030,12,31)};
@@ -44,7 +44,7 @@ public class DashboardStatusDetailPostgresTests
             var groupRows=expanded.Items.Where(r=>r.Code=="MT-1").ToList();
             Assert.Equal(17,groupRows.Count); Assert.Equal(17,groupRows.Select(r=>r.ProgressAgencyId).Distinct().Count());
             Assert.All(groupRows,r=>Assert.StartsWith("Bộ ",r.LeadAgencyName));
-            Assert.Equal("CompletedOnTime",groupRows.Single(r=>r.ProgressAgencyId==ministries[0].Id).CalculatedStatus);
+            Assert.Equal("Completed",groupRows.Single(r=>r.ProgressAgencyId==ministries[0].Id).CalculatedStatus);
             Assert.Equal(20d,groupRows.Single(r=>r.ProgressAgencyId==ministries[1].Id).LatestProgressPercent);
             Assert.Equal(16,(await Read("assignments","NotStarted")).TotalCount);
             Assert.Equal(1,(await Read("items","NotStarted")).TotalCount);
@@ -56,6 +56,23 @@ public class DashboardStatusDetailPostgresTests
             var metrics=System.Text.Json.JsonSerializer.SerializeToElement(Assert.IsType<OkObjectResult>(await controller.GetDashboardMetrics(reportYear:2026,itemType:"Goal")).Value);
             Assert.Equal((await Read("assignments","NotStarted")).TotalCount,metrics.GetProperty("goalStatusSummary").GetProperty("notStarted").GetInt32());
             Assert.Equal((await Read("items","NotStarted")).TotalCount,metrics.GetProperty("createdMetrics").GetProperty("goalStatusSummary").GetProperty("notStarted").GetInt32());
+            var grouped=metrics.GetProperty("groupStatistics").EnumerateArray().ToList();
+            var human=grouped.Single(g=>g.GetProperty("group").GetString()=="Phát triển nhân lực");
+            Assert.Equal("Goal",human.GetProperty("itemType").GetString());
+            Assert.Equal(1,human.GetProperty("total").GetInt32()); // Seventeen recipients still count as one shared item.
+            Assert.Equal(1,human.GetProperty("inProgress").GetInt32());
+            Assert.Equal(0m,human.GetProperty("completionRate").GetDecimal());
+            Assert.Equal(1,grouped.Single(g=>g.GetProperty("group").GetString()=="Chưa phân nhóm").GetProperty("notStarted").GetInt32());
+            var scoped=System.Text.Json.JsonSerializer.SerializeToElement(Assert.IsType<OkObjectResult>(await controller.GetDashboardMetrics(documentId:doc.Id,agencyId:new[]{ministries[0].Id},reportYear:2026)).Value);
+            Assert.Equal(1,scoped.GetProperty("groupStatistics").EnumerateArray().Single(g=>g.GetProperty("group").GetString()=="Phát triển nhân lực").GetProperty("completed").GetInt32());
+            var states = metrics.GetProperty("goalStatusSummary");
+            Assert.Equal(new[] { "completed", "inProgress", "notStarted" }, states.EnumerateObject().Select(p => p.Name).OrderBy(n => n));
+            Assert.Equal(expanded.TotalCount, states.EnumerateObject().Sum(p => p.Value.GetInt32()));
+            foreach (var state in ExecutionStatuses.All)
+            {
+                var key = char.ToLowerInvariant(state.ToString()[0]) + state.ToString()[1..];
+                Assert.Equal((await Read("assignments",state.ToString())).TotalCount, states.GetProperty(key).GetInt32());
+            }
             controller.ControllerContext=new ControllerContext { HttpContext=new Microsoft.AspNetCore.Http.DefaultHttpContext() };
             Assert.IsType<ForbidResult>(await controller.GetDashboardMetrics(detailMode:"assignments"));
         }

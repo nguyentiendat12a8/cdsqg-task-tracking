@@ -2,16 +2,28 @@
   <div class="w-full space-y-4 font-sans">
 
     <!-- Header Bar -->
-    <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col md:flex-row md:items-center justify-between gap-3 w-full">
+    <div class="ui-screen-heading bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col md:flex-row md:items-center justify-between gap-3 w-full">
       <div>
         <div class="flex items-center gap-2.5">
           <span class="p-2 bg-blue-600 text-white rounded-xl shadow-sm">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           </span>
           <div>
-            <h2 class="text-sm sm:text-base font-bold text-slate-800">
-              Trung tâm báo cáo và xuất dữ liệu Excel
-            </h2>
+            <div class="flex flex-wrap items-center gap-2">
+              <h2 class="text-sm sm:text-base font-bold text-slate-800">
+                Trung tâm báo cáo và xuất dữ liệu Excel
+              </h2>
+              <span 
+                class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold border"
+                :class="activeDocument.code === '2629' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-blue-50 text-blue-800 border-blue-200'"
+              >
+                <span class="w-1.5 h-1.5 rounded-full" :class="activeDocument.code === '2629' ? 'bg-emerald-500' : 'bg-blue-500'"></span>
+                {{ activeDocument.documentNumber }} ({{ activeDocument.shortTitle }})
+              </span>
+            </div>
+            <p class="text-xs text-slate-500 font-medium mt-0.5">
+              Phạm vi tổng hợp: <span class="font-bold text-slate-700">{{ activeDocument.title }}</span>
+            </p>
           </div>
         </div>
       </div>
@@ -209,11 +221,8 @@
               <th class="p-3 bg-slate-100 sticky top-0 z-10 text-xs sm:text-sm font-semibold min-w-[250px]">Tên cơ quan / địa phương</th>
               <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center min-w-[110px]">Tổng mục tiêu</th>
               <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center min-w-[110px]">Tổng nhiệm vụ</th>
-              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center text-blue-700 min-w-[150px]">Hoàn thành (đúng hạn)</th>
-              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center text-orange-700 min-w-[150px]">Hoàn thành (quá hạn)</th>
-              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center min-w-[120px]">Đang thực hiện (trong hạn)</th>
-              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center text-amber-700 min-w-[110px]">Sắp hết hạn</th>
-              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center text-rose-700 min-w-[110px]">Đang thực hiện (quá hạn)</th>
+              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center text-emerald-700 min-w-[150px]">Đã hoàn thành</th>
+              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center min-w-[120px]">Đang thực hiện</th>
               <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center min-w-[110px]">Chưa thực hiện</th>
               <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center min-w-[130px]">Tỷ lệ hoàn thành</th>
             </tr>
@@ -224,18 +233,15 @@
               <td class="p-3 font-bold text-sm text-slate-900 leading-relaxed min-w-[250px]">{{ ag.name }}</td>
               <td class="p-3 text-center font-bold text-slate-900">{{ formatNumber(ag.totalGoals) }}</td>
               <td class="p-3 text-center font-bold text-slate-900">{{ formatNumber(ag.totalTasks) }}</td>
-              <td class="p-3 text-center font-bold text-blue-700">{{ formatNumber(ag.completedOnTime ?? 0) }}</td>
-              <td class="p-3 text-center font-bold text-orange-700">{{ formatNumber(ag.completedOverdue ?? 0) }}</td>
-              <td class="p-3 text-center font-bold text-blue-700">{{ formatNumber(ag.inProgressOnTime) }}</td>
-              <td class="p-3 text-center font-bold text-amber-700">{{ formatNumber(ag.expiringSoon) }}</td>
-              <td class="p-3 text-center font-bold text-rose-700 bg-rose-50/30">{{ formatNumber(ag.inProgressOverdue) }}</td>
+              <td class="p-3 text-center font-bold text-emerald-700">{{ formatNumber(ag.completed ?? 0) }}</td>
+              <td class="p-3 text-center font-bold text-blue-700">{{ formatNumber(ag.inProgress) }}</td>
               <td class="p-3 text-center font-bold text-slate-600">{{ formatNumber(ag.notStarted ?? 0) }}</td>
               <td class="p-3 text-center font-bold text-blue-800">
-                {{ getPct(ag.completedOnTime + ag.completedOverdue, ag.totalItems) }}%
+                {{ getPct(ag.completed, ag.totalItems) }}%
               </td>
             </tr>
             <tr v-if="filteredAgencySummaries.length === 0">
-              <td colspan="11" class="p-8 text-center text-slate-400 italic font-medium">Không tìm thấy bản ghi nào phù hợp với bộ lọc.</td>
+              <td colspan="8" class="p-8 text-center text-slate-400 italic font-medium">Không tìm thấy bản ghi nào phù hợp với bộ lọc.</td>
             </tr>
           </tbody>
         </table>
@@ -278,8 +284,8 @@
               <td class="p-3 font-bold text-sm text-slate-900 leading-relaxed min-w-[220px]">{{ item.leadAgencyName }}</td>
               <td class="p-3 font-semibold text-slate-600">{{ formatDate(item.dueDate) }}</td>
               <td class="p-3 text-center">
-                <span :class="['px-2.5 py-1 rounded-full text-xs font-bold', item.calculatedStatus === 'ExpiringSoon' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-rose-100 text-rose-900 border border-rose-300']">
-                  {{ item.calculatedStatus === 'ExpiringSoon' ? '⏰ Sắp hết hạn' : '🚨 Quá hạn thực hiện' }}
+                <span :class="['px-2.5 py-1 rounded-full text-xs font-bold', item.deadlineStatus === 'ExpiringSoon' ? 'bg-amber-100 text-amber-900 border border-amber-300' : 'bg-rose-100 text-rose-900 border border-rose-300']">
+                  {{ item.deadlineStatus === 'ExpiringSoon' ? '⏰ Sắp hết hạn' : '🚨 Quá hạn thực hiện' }}
                 </span>
               </td>
             </tr>
@@ -344,11 +350,8 @@
               <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center w-12">STT</th>
               <th class="p-3 bg-purple-100 sticky top-0 z-10 text-xs sm:text-sm font-semibold min-w-[220px]">Lĩnh vực / trụ cột chiến lược</th>
               <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center min-w-[100px]">Tổng số</th>
-              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center text-blue-900 min-w-[150px]">Hoàn thành (đúng hạn)</th>
-              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center text-orange-900 min-w-[150px]">Hoàn thành (quá hạn)</th>
-              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center text-blue-900 min-w-[110px]">Đang thực hiện (trong hạn)</th>
-              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center text-amber-900 min-w-[100px]">Sắp hết hạn</th>
-              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center text-rose-900 min-w-[100px]">Đang thực hiện (quá hạn)</th>
+              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center text-emerald-900 min-w-[150px]">Đã hoàn thành</th>
+              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center text-blue-900 min-w-[110px]">Đang thực hiện</th>
               <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center text-slate-600 min-w-[100px]">Chưa thực hiện</th>
               <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center min-w-[150px]">Tỷ lệ hoàn thành (%)</th>
             </tr>
@@ -361,11 +364,8 @@
                 <span>{{ dom.domainName }}</span>
               </td>
               <td class="p-3 text-center font-bold text-slate-900">{{ formatNumber(dom.totalItems) }}</td>
-              <td class="p-3 text-center font-bold text-blue-700">{{ formatNumber(dom.completedOnTime ?? 0) }}</td>
-              <td class="p-3 text-center font-bold text-orange-700">{{ formatNumber(dom.completedOverdue ?? 0) }}</td>
-              <td class="p-3 text-center font-bold text-blue-700">{{ formatNumber(dom.inProgressOnTime) }}</td>
-              <td class="p-3 text-center font-bold text-amber-700">{{ formatNumber(dom.expiringSoon) }}</td>
-              <td class="p-3 text-center font-bold text-rose-700 bg-rose-50/30">{{ formatNumber(dom.inProgressOverdue) }}</td>
+              <td class="p-3 text-center font-bold text-emerald-700">{{ formatNumber(dom.completed ?? 0) }}</td>
+              <td class="p-3 text-center font-bold text-blue-700">{{ formatNumber(dom.inProgress) }}</td>
               <td class="p-3 text-center font-bold text-slate-500">{{ formatNumber(dom.notStarted) }}</td>
               <td class="p-3 text-center font-bold text-slate-900">
                 <div class="flex items-center justify-center gap-2">
@@ -377,7 +377,7 @@
               </td>
             </tr>
             <tr v-if="filteredDomainSummaries.length === 0">
-              <td colspan="10" class="p-8 text-center text-slate-400 italic font-medium">Không tìm thấy bản ghi nào phù hợp với bộ lọc.</td>
+              <td colspan="7" class="p-8 text-center text-slate-400 italic font-medium">Không tìm thấy bản ghi nào phù hợp với bộ lọc.</td>
             </tr>
           </tbody>
         </table>
@@ -434,6 +434,7 @@ import { reportYear } from '../shared/reportYear';
 import { fetchWithAuth } from '../services/auth';
 
 import { ref, computed, onMounted, watch } from 'vue';
+import { activeDocument, activeDocumentId } from '../services/documentContext';
 import SearchableSelect from '../components/SearchableSelect.vue';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
 import OverlayPanel from '../components/OverlayPanel.vue';
@@ -528,10 +529,33 @@ const subAgencyOptions = computed(() => {
     }));
 });
 
-const yearOptions = computed(() => [2026, 2027, 2028, 2029, 2030].map(y => ({ value: y, label: String(y) })));
+const yearOptions = computed(() => {
+  const start = activeDocument.value?.startYear || 2025;
+  const end = activeDocument.value?.endYear || 2030;
+  const years = [];
+  for (let y = Math.min(start, 2025); y <= Math.max(end, 2030); y++) {
+    years.push(y);
+  }
+  return years.map(y => ({ value: y, label: String(y) }));
+});
 
-const sectionOptions = computed(() => [...GOAL_SECTIONS, ...TASK_SECTIONS]);
-const groupOptions = computed(() => [...GOAL_GROUPS, ...TASK_GROUPS]);
+const sectionOptions = computed(() => {
+  const secs = new Set();
+  allItems.value.forEach(i => {
+    if (i.section && i.section.trim()) secs.add(i.section.trim());
+  });
+  if (secs.size === 0) return [...GOAL_SECTIONS, ...TASK_SECTIONS];
+  return Array.from(secs).sort().map(s => ({ value: s, label: s }));
+});
+
+const groupOptions = computed(() => {
+  const grps = new Set();
+  allItems.value.forEach(i => {
+    if (i.group && i.group.trim()) grps.add(i.group.trim());
+  });
+  if (grps.size === 0) return [...GOAL_GROUPS, ...TASK_GROUPS];
+  return Array.from(grps).sort().map(g => ({ value: g, label: g }));
+});
 
 const itemTypeOptions = ref([
   { value: 'Goal', label: '🎯 Chỉ mục tiêu' },
@@ -679,16 +703,16 @@ const filteredAgencySummaries = computed(() => {
 });
 
 const urgentItems = computed(() => {
-  return allItems.value.filter(i => (i.calculatedStatus === 'ExpiringSoon' || i.calculatedStatus === 'InProgressOverdue') && passesCommonFilters(i));
+  return allItems.value.filter(i => (i.deadlineStatus === 'ExpiringSoon' || i.deadlineStatus === 'Overdue') && passesCommonFilters(i));
 });
 
 const filteredGovernanceSummaries = computed(() => {
   return filteredAgencySummaries.value.map(ag => {
     const totalItems = ag.totalItems || 0;
-    const totalReportsSubmitted = (ag.completedOnTime || 0) + (ag.completedOverdue || 0) + (ag.inProgressOnTime || 0) + (ag.inProgressOverdue || 0);
-    const onTimeReports = (ag.completedOnTime || 0) + (ag.inProgressOnTime || 0);
-    const lateOrPendingReports = (ag.inProgressOverdue || 0) + (ag.expiringSoon || 0) + (ag.notStarted || 0);
-    const urgedCount = (ag.inProgressOverdue || 0) + (ag.expiringSoon || 0);
+    const totalReportsSubmitted = ag.reportedCount || 0;
+    const onTimeReports = ag.onTimeReports || 0;
+    const lateOrPendingReports = (ag.totalItems || 0) - onTimeReports;
+    const urgedCount = ag.warningCount || 0;
 
     const complianceRate = totalItems > 0 ? Math.round((onTimeReports / totalItems) * 100) : 100;
 
@@ -729,11 +753,8 @@ const filteredDomainSummaries = computed(() => {
       domainMap[dName] = {
         domainName: dName,
         totalItems: 0,
-        completedOnTime: 0,
-        completedOverdue: 0,
-        inProgressOnTime: 0,
-        inProgressOverdue: 0,
-        expiringSoon: 0,
+        completed: 0,
+        inProgress: 0,
         notStarted: 0
       };
     }
@@ -742,16 +763,13 @@ const filteredDomainSummaries = computed(() => {
     d.totalItems++;
 
     const st = item.calculatedStatus;
-    if (st === 'CompletedOnTime') d.completedOnTime++;
-    else if (st === 'CompletedOverdue') d.completedOverdue++;
-    else if (st === 'InProgressOnTime') d.inProgressOnTime++;
-    else if (st === 'InProgressOverdue') d.inProgressOverdue++;
-    else if (st === 'ExpiringSoon') d.expiringSoon++;
+    if (st === 'Completed') d.completed++;
+    else if (st === 'InProgress') d.inProgress++;
     else d.notStarted++;
   });
 
   return Object.values(domainMap).map(d => {
-    const totalComp = d.completedOnTime + d.completedOverdue;
+    const totalComp = d.completed;
     const completionRate = d.totalItems > 0 ? Math.round((totalComp / d.totalItems) * 100) : 0;
     return {
       ...d,
@@ -808,6 +826,7 @@ watch(activeReportType, () => {
 
 async function loadReportData() {
   const currentId = ++reportFetchRequestId;
+  const docId = activeDocumentId.value;
   const selectedYear = isGoalOnlyReport.value ? reportYear.value : null;
   isLoading.value = true;
   allItems.value = [];
@@ -821,6 +840,7 @@ async function loadReportData() {
     }
 
     const params = new URLSearchParams();
+    if (docId) params.set('documentId', docId);
     params.set('assignmentRole', appliedFilters.value.assignmentRole || 'Lead');
     if (selectedYear !== null) params.set('reportYear', String(selectedYear));
     if (appliedFilters.value.selectedAgencyIds && appliedFilters.value.selectedAgencyIds.length > 0) {
@@ -851,7 +871,6 @@ async function loadReportData() {
       metrics.value = mData;
     }
 
-    const docId = '12660000-0000-0000-0000-000000001266';
     const gridParams = new URLSearchParams();
     gridParams.set('assignmentRole', appliedFilters.value.assignmentRole || 'Lead');
     if (selectedYear !== null) gridParams.set('reportYear', selectedYear);
@@ -872,6 +891,15 @@ async function loadReportData() {
   }
 }
 
+watch(activeDocumentId, () => {
+  currentPage.value = 1;
+  filterDraft.value.selectedSections = [];
+  filterDraft.value.selectedGroups = [];
+  appliedFilters.value.selectedSections = [];
+  appliedFilters.value.selectedGroups = [];
+  loadReportData();
+});
+
 function exportCurrentReportToExcel() {
   let title = '';
   let subtitle = '';
@@ -888,7 +916,7 @@ function exportCurrentReportToExcel() {
   const timeStr = `${isGoalOnlyReport.value ? 'Năm báo cáo: ' + reportYear.value + ' | ' : ''}${now.toLocaleDateString('vi-VN')} ${now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
 
   if (activeReportType.value === 'summary') {
-    title = "BÁO CÁO TỔNG HỢP TIẾN ĐỘ THEO CƠ QUAN / ĐƠN VỊ - QUYẾT ĐỊNH 1266/QĐ-TTg";
+    title = `BÁO CÁO TỔNG HỢP TIẾN ĐỘ THEO CƠ QUAN / ĐƠN VỊ - ${activeDocument.value.name.toUpperCase()}`;
     subtitle = `Thời gian xuất báo cáo: ${timeStr} | Tổng số cơ quan / địa phương: ${filteredAgencySummaries.value.length}`;
     kpiTitle = "1. CHỈ SỐ TỔNG QUAN HỆ THỐNG CƠ QUAN / ĐƠN VỊ";
     kpiSection = [
@@ -900,34 +928,31 @@ function exportCurrentReportToExcel() {
     tableTitle = "2. DANH SÁCH BỘ, NGÀNH, ĐỊA PHƯƠNG VÀ TIẾN ĐỘ THỰC HIỆN";
     fileName = "Bao_Cao_Tong_Hop_Tien_Do_Co_Quan";
     sheetName = "Tổng hợp tiến độ";
-    headers = ["STT", "Tên cơ quan / địa phương", "Tổng hạng mục", "Mục tiêu", "Nhiệm vụ", "Hoàn thành (đúng hạn)", "Hoàn thành (quá hạn)", "Đang thực hiện (trong hạn)", "Sắp hết hạn", "Đang thực hiện (quá hạn)", "Chưa thực hiện", "Tỷ lệ hoàn thành (%)"];
-    minColWidths = { 0: 8, 1: 38, 2: 15, 3: 12, 4: 12, 5: 24, 6: 24, 7: 26, 8: 18, 9: 26, 10: 18, 11: 22 };
+    headers = ["STT", "Tên cơ quan / địa phương", "Tổng hạng mục", "Mục tiêu", "Nhiệm vụ", "Đã hoàn thành", "Đang thực hiện", "Chưa thực hiện", "Tỷ lệ hoàn thành (%)"];
+    minColWidths = { 0: 8, 1: 38, 2: 15, 3: 12, 4: 12, 5: 22, 6: 22, 7: 20, 8: 22 };
 
     rows = filteredAgencySummaries.value.map((ag, idx) => {
-      const pct = getPct(ag.completedOnTime + ag.completedOverdue, ag.totalItems);
+      const pct = getPct(ag.completed, ag.totalItems);
       return [
         idx + 1,
         ag.name || '',
         ag.totalItems || 0,
         ag.totalGoals || 0,
         ag.totalTasks || 0,
-        ag.completedOnTime || 0,
-        ag.completedOverdue || 0,
-        ag.inProgressOnTime || 0,
-        ag.expiringSoon || 0,
-        ag.inProgressOverdue || 0,
+        ag.completed || 0,
+        ag.inProgress || 0,
         ag.notStarted || 0,
         `${pct}%`
       ];
     });
   } else if (activeReportType.value === 'urgent') {
-    title = "BÁO CÁO NHIỆM VỤ CẦN GỬI THÔNG BÁO (SẮP HẾT HẠN & QUÁ HẠN) - QUYẾT ĐỊNH 1266/QĐ-TTg";
+    title = `BÁO CÁO NHIỆM VỤ CẦN GỬI THÔNG BÁO (SẮP HẾT HẠN & QUÁ HẠN) - ${activeDocument.value.name.toUpperCase()}`;
     subtitle = `Thời gian xuất báo cáo: ${timeStr} | Tổng số nhiệm vụ cần chú ý: ${urgentItems.value.length}`;
     kpiTitle = "1. CHỈ SỐ CẢNH BÁO TIẾN ĐỘ THỰC HIỆN";
     kpiSection = [
       ["Tổng số nhiệm vụ cần gửi thông báo", urgentItems.value.length],
-      ["Số lượng nhiệm vụ đang thực hiện quá hạn", urgentItems.value.filter(i => i.calculatedStatus === 'InProgressOverdue').length],
-      ["Số lượng nhiệm vụ sắp tới hạn", urgentItems.value.filter(i => i.calculatedStatus === 'ExpiringSoon').length]
+      ["Số lượng nhiệm vụ quá hạn chưa hoàn thành", urgentItems.value.filter(i => i.deadlineStatus === 'Overdue').length],
+      ["Số lượng nhiệm vụ sắp tới hạn", urgentItems.value.filter(i => i.deadlineStatus === 'ExpiringSoon').length]
     ];
     tableTitle = "2. DANH SÁCH CHI TIẾT NHIỆM VỤ CẦN GỬI THÔNG BÁO";
     fileName = "Bao_Cao_Nhiem_Vu_Can_Gui_Thong_Bao";
@@ -943,10 +968,10 @@ function exportCurrentReportToExcel() {
       i.leadAgencyName || '',
       i.assignedAgencyName || '—',
       formatDate(i.dueDate),
-      getStatusLabel(i.calculatedStatus)
+      i.deadlineStatus === 'ExpiringSoon' ? 'Sắp hết hạn' : 'Quá hạn thực hiện'
     ]);
   } else if (activeReportType.value === 'governance') {
-    title = "BÁO CÁO THỐNG KÊ ĐÔN ĐỐC VÀ TÍNH TUÂN THỦ BÁO CÁO - QUYẾT ĐỊNH 1266/QĐ-TTg";
+    title = `BÁO CÁO THỐNG KÊ ĐÔN ĐỐC VÀ TÍNH TUÂN THỦ BÁO CÁO - ${activeDocument.value.name.toUpperCase()}`;
     subtitle = `Thời gian xuất báo cáo: ${timeStr} | Tổng số cơ quan / địa phương: ${filteredGovernanceSummaries.value.length}`;
     kpiTitle = "1. CHỈ SỐ TỔNG QUAN TÍNH TUÂN THỦ BÁO CÁO";
     kpiSection = [
@@ -972,7 +997,7 @@ function exportCurrentReportToExcel() {
       ag.complianceBadgeText
     ]);
   } else if (activeReportType.value === 'domain') {
-    title = "BÁO CÁO THỐNG KÊ TIẾN ĐỘ THEO LĨNH VỰC VÀ TRỤ CỘT CHIẾN LƯỢC - QUYẾT ĐỊNH 1266/QĐ-TTg";
+    title = `BÁO CÁO THỐNG KÊ TIẾN ĐỘ THEO LĨNH VỰC VÀ TRỤ CỘT CHIẾN LƯỢC - ${activeDocument.value.name.toUpperCase()}`;
     subtitle = `Thời gian xuất báo cáo: ${timeStr} | Tổng số lĩnh vực / trụ cột: ${filteredDomainSummaries.value.length}`;
     kpiTitle = "1. CHỈ SỐ TỔNG QUAN TIẾN ĐỘ THEO TRỤ CỘT CHIẾN LƯỢC";
     kpiSection = [
@@ -983,18 +1008,15 @@ function exportCurrentReportToExcel() {
     tableTitle = "2. DANH SÁCH CHI TIẾT TIẾN ĐỘ THEO LĨNH VỰC VÀ TRỤ CỘT CHIẾN LƯỢC";
     fileName = "Bao_Cao_Tien_Do_Theo_Linh_Vuc_Tru_Cot";
     sheetName = "Tiến độ theo lĩnh vực";
-    headers = ["STT", "Lĩnh vực / trụ cột chiến lược", "Tổng hạng mục", "Hoàn thành (đúng hạn)", "Hoàn thành (quá hạn)", "Đang thực hiện (trong hạn)", "Sắp hết hạn", "Đang thực hiện (quá hạn)", "Chưa thực hiện", "Tỷ lệ hoàn thành (%)"];
-    minColWidths = { 0: 8, 1: 45, 2: 15, 3: 24, 4: 24, 5: 26, 6: 18, 7: 26, 8: 18, 9: 22 };
+    headers = ["STT", "Lĩnh vực / trụ cột chiến lược", "Tổng hạng mục", "Đã hoàn thành", "Đang thực hiện", "Chưa thực hiện", "Tỷ lệ hoàn thành (%)"];
+    minColWidths = { 0: 8, 1: 45, 2: 15, 3: 22, 4: 22, 5: 20, 6: 22 };
 
     rows = filteredDomainSummaries.value.map((dom, idx) => [
       idx + 1,
       dom.domainName,
       dom.totalItems,
-      dom.completedOnTime,
-      dom.completedOverdue,
-      dom.inProgressOnTime,
-      dom.expiringSoon,
-      dom.inProgressOverdue,
+      dom.completed,
+      dom.inProgress,
       dom.notStarted,
       `${dom.completionRate}%`
     ]);

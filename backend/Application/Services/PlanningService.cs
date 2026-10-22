@@ -121,6 +121,11 @@ namespace Cdsqg.Application.Services
                 var yearlyTargets = new Dictionary<int, object?>();
                 foreach (var year in dynamicYears)
                 {
+                    if (!PlanningYears.Contains(item, year))
+                    {
+                        yearlyTargets[year] = null;
+                        continue;
+                    }
                     var baseline = item.Baselines.FirstOrDefault(b => b.Year == year);
                     if (item.EvaluationType == EvaluationTypeEnum.Quantitative)
                     {
@@ -164,6 +169,7 @@ namespace Cdsqg.Application.Services
                     LeadAgencyId = item.LeadAgencyId,
                     LeadAgencyCode = item.LeadAgency?.Code ?? string.Empty,
                     LeadAgencyName = item.LeadAgency?.Name ?? string.Empty,
+                    LeadAgencyDisplayText = item.LeadAgencyDisplayText,
                     AssignedAgencyId = item.AssignedAgencyId,
                     AssignedAgencyCode = item.AssignedAgencyId.HasValue && agenciesMap.ContainsKey(item.AssignedAgencyId.Value)
                         ? agenciesMap[item.AssignedAgencyId.Value].Code
@@ -174,6 +180,9 @@ namespace Cdsqg.Application.Services
                     CoordinatingAgencyIds = item.CoordinatingAgencyIds,
                     CoordinatingAgencyCodes = coordAgencies.Select(a => a.Code).ToList(),
                     CoordinatingAgencyNames = coordAgencies.Select(a => a.Name).ToList(),
+                    CoordinatingAgenciesDisplayText = item.CoordinatingAgenciesDisplayText,
+                    ResultTarget = item.ResultTarget,
+                    YearlyAllocations = GoalResultPlan.AnnualAllocations(item),
                     UnitId = item.UnitId,
                     EvaluationType = item.EvaluationType.ToString(),
                     UnitName = item.Unit?.Name ?? "%",
@@ -186,6 +195,7 @@ namespace Cdsqg.Application.Services
                     CreatedAt = item.CreatedAt,
                     HasPendingApproval = item.ProgressLogs != null && item.ProgressLogs.Any(l => l.ApprovalStatus == ApprovalStatusEnum.Pending && (!contextId.HasValue || l.AgencyId == contextId) && (!reportYear.HasValue || l.PeriodYear == reportYear)),
                     CalculatedStatus = progress.Status.ToString(),
+                    DeadlineStatus = progress.DeadlineStatus,
                     CalculatedAlert = progress.Alert.ToString(),
                     CustomBaseline = item.CustomBaseline ?? new Dictionary<string, string>(),
                     Deliverables = agencyDeliverables ?? new List<TaskDeliverable>(),
@@ -350,15 +360,17 @@ namespace Cdsqg.Application.Services
                 IsOngoing = dto.IsOngoing,
                 IsGeneralTask = dto.IsGeneralTask,
                 StartDate = dto.IsOngoing ? (dto.StartDate ?? new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)) : dto.StartDate,
-                DueDate = dto.IsOngoing ? (dto.DueDate ?? new DateTime(2030, 12, 31, 23, 59, 59, DateTimeKind.Utc)) : dto.DueDate,
+                DueDate = dto.IsOngoing ? (dto.DueDate ?? new DateTime(2030, 12, 31, 0, 0, 0, DateTimeKind.Utc)) : dto.DueDate,
                 LeadAgencyId = dto.LeadAgencyId,
                 CoordinatingAgencyIds = dto.CoordinatingAgencyIds ?? new List<Guid>(),
+                ResultTarget = dto.ResultTarget,
                 UnitId = unitIdToAssign,
                 EvaluationType = evalType,
                 CalculationMethod = calcMethod,
                 CreatedAt = DateTime.UtcNow
             };
 
+            GoalResultPlan.Validate(item);
             _context.GoalTaskItems.Add(item);
             await AgencyAssignments.SyncAsync(_context, item);
             await _context.SaveChangesAsync();
@@ -376,6 +388,7 @@ namespace Cdsqg.Application.Services
             }
 
             ProgressCalculator.ValidateAnnualBaselines(dto.Milestones);
+            PlanningYears.ValidateTargets(task, dto.Milestones?.Keys.Select(int.Parse) ?? Enumerable.Empty<int>());
             task.CustomBaseline = dto.Milestones ?? new Dictionary<string, string>();
             await ProgressCalculator.RefreshCachesAsync(_context, task);
             await _context.SaveChangesAsync();
@@ -394,6 +407,8 @@ namespace Cdsqg.Application.Services
             {
                 throw new KeyNotFoundException($"Không tìm thấy Nhiệm vụ/Mục tiêu với ID: {taskId}");
             }
+
+            PlanningYears.ValidateTargets(task, new[] { dto.Year });
 
             var baseline = task.Baselines.FirstOrDefault(b => b.Year == dto.Year);
             if (baseline == null)

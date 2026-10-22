@@ -28,14 +28,27 @@ public static class DocumentItemQuery
             bool general = dto.SelectedScopes.Contains("general"), specific = dto.SelectedScopes.Contains("specific");
             query = query.Where(i => general && i.IsGeneralTask || specific && !i.IsGeneralTask);
         }
-        if (dto.FromYear.HasValue || dto.ToYear.HasValue)
+        var reportFrom = dto.ReportFromYear ?? dto.FromYear;
+        var reportTo = dto.ReportToYear ?? dto.ToYear;
+        if (reportFrom.HasValue || reportTo.HasValue)
         {
-            int from = dto.FromYear ?? 1900, to = dto.ToYear ?? 9999;
+            int from = reportFrom ?? 1900, to = reportTo ?? 9999;
             query = query.Where(i => i.IsOngoing && dto.OnlyOngoing || !i.IsOngoing &&
                 (i.DueDate.HasValue ? i.DueDate.Value.Year : i.StartDate.HasValue ? i.StartDate.Value.Year : 2026) >= from
                 && (i.DueDate.HasValue ? i.DueDate.Value.Year : i.StartDate.HasValue ? i.StartDate.Value.Year : 2026) <= to);
         }
         else if (dto.OnlyOngoing) query = query.Where(i => i.IsOngoing);
+
+        if (dto.ExecutionFrom.HasValue)
+        {
+            var from = dto.ExecutionFrom.Value.Date;
+            query = query.Where(i => i.DueDate.HasValue && i.DueDate.Value >= from);
+        }
+        if (dto.ExecutionTo.HasValue)
+        {
+            var toExclusive = dto.ExecutionTo.Value.Date.AddDays(1);
+            query = query.Where(i => i.DueDate.HasValue && i.DueDate.Value < toExclusive);
+        }
         return query;
     }
 
@@ -79,22 +92,27 @@ public static class DocumentItemQuery
 
             if (queryDto.SelectedStatuses != null && queryDto.SelectedStatuses.Count > 0)
             {
-                list = list.Where(i => queryDto.SelectedStatuses.Contains(i.CalculatedStatus)).ToList();
+                bool filterOverdue = queryDto.SelectedStatuses.Any(s => string.Equals(s, "Overdue", StringComparison.OrdinalIgnoreCase));
+                var statuses = queryDto.SelectedStatuses
+                    .Where(s => !string.Equals(s, "Overdue", StringComparison.OrdinalIgnoreCase))
+                    .Select(ExecutionStatuses.Normalize)
+                    .ToHashSet();
+
+                list = list.Where(i =>
+                    (filterOverdue && string.Equals(i.DeadlineStatus, "Overdue", StringComparison.OrdinalIgnoreCase)) ||
+                    (statuses.Count > 0 && statuses.Contains(ExecutionStatuses.Normalize(i.CalculatedStatus)))
+                ).ToList();
             }
 
             // 5. Column Sorting
             bool isAsc = string.Equals(queryDto.SortOrder, "asc", StringComparison.OrdinalIgnoreCase);
             string sortByKey = (queryDto.SortBy ?? "code").ToLower();
 
-            int GetStatusRank(string? status) => status switch
+            int GetStatusRank(string? status) => ExecutionStatuses.Normalize(status ?? "NotStarted") switch
             {
-                "NotStarted" => 1,
-                "InProgressOnTime" => 2,
-                "InProgressOverdue" => 3,
-                "ExpiringSoon" => 4,
-                "CompletedOnTime" => 5,
-                "CompletedOverdue" => 6,
-                _ => 0
+                "InProgress" => 2,
+                "Completed" => 3,
+                _ => 1
             };
 
             switch (sortByKey)

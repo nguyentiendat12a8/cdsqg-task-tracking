@@ -28,6 +28,7 @@ namespace Cdsqg.Api.Controllers
         public async Task<IActionResult> GetDashboardMetrics(
             [FromQuery] Guid[]? agencyId = null,
             [FromQuery] Guid? parentAgencyId = null,
+            [FromQuery] Guid? documentId = null,
             [FromQuery] string[]? section = null,
             [FromQuery] string[]? group = null,
             [FromQuery] int? reportYear = null,
@@ -42,18 +43,23 @@ namespace Cdsqg.Api.Controllers
             [FromQuery] string detailScope = "specific",
             [FromQuery] int pageNumber = 1,
             [FromQuery] int pageSize = 20,
-            [FromQuery] string? search = null)
+            [FromQuery] string? search = null,
+            [FromQuery] int? reportFromYear = null, [FromQuery] int? reportToYear = null,
+            [FromQuery] DateTime? executionFrom = null, [FromQuery] DateTime? executionTo = null)
         {
             try
             {
                 if (reportYear.HasValue && reportYear.Value is < 1900 or > 9999) return BadRequest("Năm báo cáo không hợp lệ.");
+                var timeFilter = new DashboardTimeFilter(reportFromYear, reportToYear, executionFrom, executionTo);
+                if (timeFilter.ValidationError() is { } timeError) return BadRequest(timeError);
+                if (reportYear.HasValue && (reportYear < reportFromYear || reportYear > reportToYear)) return BadRequest("Năm báo cáo nằm ngoài khoảng đã chọn.");
                 if (detailMode != null && detailMode is not ("items" or "assignments")) return BadRequest("Loại danh sách không hợp lệ.");
                 if (detailMode != null && ControllerContext.HttpContext != null && !User.IsInRole("Admin")) return Forbid();
                 ExecutionStatusEnum? requestedStatus = null;
                 if (!string.IsNullOrWhiteSpace(detailStatus))
                 {
                     if (!Enum.TryParse<ExecutionStatusEnum>(detailStatus, true, out var parsedStatus) || !Enum.IsDefined(parsedStatus)) return BadRequest("Trạng thái không hợp lệ.");
-                    requestedStatus = parsedStatus;
+                    requestedStatus = ExecutionStatuses.Normalize(parsedStatus);
                 }
                 var query = _context.GoalTaskItems
                     .Include(i => i.LeadAgency)
@@ -64,6 +70,11 @@ namespace Cdsqg.Api.Controllers
                     .AsNoTracking()
                     .AsSplitQuery()
                     .AsQueryable();
+
+                if (documentId.HasValue && documentId.Value != Guid.Empty)
+                {
+                    query = query.Where(i => i.DocumentId == documentId.Value);
+                }
 
                 if (!string.IsNullOrWhiteSpace(scope) && !scope.Equals("all", StringComparison.OrdinalIgnoreCase))
                 {
@@ -144,7 +155,9 @@ namespace Cdsqg.Api.Controllers
                 }
 
                 if (AgencyAssignments.Coordinating(assignmentRole)) query = query.Where(i => i.AgencyExecutions.Any(e => e.IsCoordinatingAssignment));
+                query = timeFilter.ApplyExecutionWindow(query);
                 var baseItems = await query.ToListAsync();
+                timeFilter.RestrictReports(baseItems);
 
                 int totalGoals = baseItems.Count(i => i.ItemType == ItemTypeEnum.Goal);
                 int totalTasks = baseItems.Count(i => i.ItemType == ItemTypeEnum.Task);
@@ -158,14 +171,6 @@ namespace Cdsqg.Api.Controllers
                         items = baseItems.Where(i => i.ItemType == parsedItemType).ToList();
                     }
                 }
-
-                // 6 Execution Status counters for ALL, GOALS, and TASKS
-                int notStarted = 0, inProgressOnTime = 0, inProgressOverdue = 0, completedOnTime = 0, completedOverdue = 0, expiringSoon = 0;
-                int gNotStarted = 0, gInProgressOnTime = 0, gInProgressOverdue = 0, gCompletedOnTime = 0, gCompletedOverdue = 0, gExpiringSoon = 0;
-                int tNotStarted = 0, tInProgressOnTime = 0, tInProgressOverdue = 0, tCompletedOnTime = 0, tCompletedOverdue = 0, tExpiringSoon = 0;
-
-                int completedGoals = 0;
-                int completedTasks = 0;
 
                 var ministriesPerformance = new List<AgencyStatusSummaryDto>();
                 var provincesPerformance = new List<AgencyStatusSummaryDto>();
@@ -188,9 +193,9 @@ namespace Cdsqg.Api.Controllers
                         var recipients = recipient != null ? new List<Guid> { recipient.Id }
                             : allowedAgencyIds == null ? new List<Guid>() : item.AgencyExecutions.Where(e => AgencyAssignments.HasRole(e, assignmentRole) && allowedAgencyIds.Contains(e.AgencyId)).Select(e => e.AgencyId).Distinct().ToList();
                         var report = ProgressCalculator.AnnualReport(item, recipient?.Id, reportYear);
-                        var progress = recipients.Count > 0 ? ProgressCalculator.EvaluateRecipients(item, recipients, reportYear, ProgressCalculator.AnnualEvaluationDate(reportYear))
-                            : IsGeneralItem(item) ? ProgressCalculator.EvaluateOverall(item, allAgencies, ProgressCalculator.AnnualEvaluationDate(reportYear), reportYear)
-                            : ProgressCalculator.Evaluate(item, report, year: reportYear, evaluatedAt: ProgressCalculator.AnnualEvaluationDate(reportYear));
+                        var progress = recipients.Count > 0 ? ProgressCalculator.EvaluateRecipients(item, recipients, reportYear, ProgressCalculator.AnnualEvaluationDate(reportYear ?? reportToYear))
+                            : IsGeneralItem(item) ? ProgressCalculator.EvaluateOverall(item, allAgencies, ProgressCalculator.AnnualEvaluationDate(reportYear ?? reportToYear), reportYear)
+                            : ProgressCalculator.Evaluate(item, report, year: reportYear, evaluatedAt: ProgressCalculator.AnnualEvaluationDate(reportYear ?? reportToYear));
                         return new DashboardAgencyItemDto {
                             Id = item.Id, Code = item.Code, Title = item.Title, ItemType = item.ItemType.ToString(),
                             IsGeneralTask = IsGeneralItem(item), LeadAgencyId = recipient?.Id ?? item.LeadAgencyId,
@@ -202,7 +207,8 @@ namespace Cdsqg.Api.Controllers
                             ProgressAgencyId = recipient?.Id, ProgressAgencyName = recipient == null ? null : ProvinceCatalog.DisplayName(recipient),
                             UnitName = item.Unit?.Name, EvaluationType = item.EvaluationType.ToString(),
                             LatestProgressPercent = (double?)progress.Percentage, LatestProgressValue = (double?)progress.ActualValue,
-                            CalculatedStatus = progress.Status.ToString(), Status = progress.Status.ToString(),
+                            CalculatedStatus = progress.Status.ToString(),
+                            DeadlineStatus = progress.DeadlineStatus, Status = progress.Status.ToString(),
                             StartDate = item.StartDate, DueDate = item.DueDate, IsOngoing = item.IsOngoing,
                             Deliverables = ProgressCalculator.AnnualDeliverables(item, report)
                         };
@@ -227,78 +233,21 @@ namespace Cdsqg.Api.Controllers
                     
                     var agencyItems = itemsByAgency[agency.Id].DistinctBy(i => i.Id).ToList();
 
-                    int aNotStarted = 0, aInProgOnTime = 0, aInProgOverdue = 0, aCompOnTime = 0, aCompOverdue = 0, aExpSoon = 0;
-                    int aGNotStarted = 0, aGInProgOnTime = 0, aGInProgOverdue = 0, aGCompOnTime = 0, aGCompOverdue = 0, aGExpSoon = 0;
-                    int aTNotStarted = 0, aTInProgOnTime = 0, aTInProgOverdue = 0, aTCompOnTime = 0, aTCompOverdue = 0, aTExpSoon = 0;
-
-                    int aGoals = agencyItems.Count(i => i.ItemType == ItemTypeEnum.Goal);
-                    int aTasks = agencyItems.Count(i => i.ItemType == ItemTypeEnum.Task);
-
+                    var goalCounts = new ExecutionStatusCounts();
+                    var taskCounts = new ExecutionStatusCounts();
                     foreach (var item in agencyItems)
                     {
-                        var status = ProgressCalculator.EvaluateRecipients(item, new[] { agency.Id }, reportYear, ProgressCalculator.AnnualEvaluationDate(reportYear)).Status;
-                        bool isGoal = item.ItemType == ItemTypeEnum.Goal;
-
-                        switch (status)
-                        {
-                            case ExecutionStatusEnum.NotStarted:
-                                aNotStarted++;
-                                if (isGoal) aGNotStarted++; else aTNotStarted++;
-                                break;
-                            case ExecutionStatusEnum.InProgressOnTime:
-                                aInProgOnTime++;
-                                if (isGoal) aGInProgOnTime++; else aTInProgOnTime++;
-                                break;
-                            case ExecutionStatusEnum.InProgressOverdue:
-                                aInProgOverdue++;
-                                if (isGoal) aGInProgOverdue++; else aTInProgOverdue++;
-                                break;
-                            case ExecutionStatusEnum.CompletedOnTime:
-                                aCompOnTime++;
-                                if (isGoal) aGCompOnTime++; else aTCompOnTime++;
-                                break;
-                            case ExecutionStatusEnum.CompletedOverdue:
-                                aCompOverdue++;
-                                if (isGoal) aGCompOverdue++; else aTCompOverdue++;
-                                break;
-                            case ExecutionStatusEnum.ExpiringSoon:
-                                aExpSoon++;
-                                if (isGoal) aGExpSoon++; else aTExpSoon++;
-                                break;
-                        }
+                        var result = ProgressCalculator.EvaluateRecipients(item, new[] { agency.Id }, reportYear, ProgressCalculator.AnnualEvaluationDate(reportYear ?? reportToYear));
+                        (item.ItemType == ItemTypeEnum.Goal ? goalCounts : taskCounts).Add(result);
                     }
-
                     var summaryDto = new AgencyStatusSummaryDto
                     {
-                        AgencyId = agency.Id,
-                        Code = agency.Code,
-                        Name = ProvinceCatalog.DisplayName(agency),
-                        Type = agency.Type.ToString(),
-                        HasChildAgencies = agencyChildren[agency.Id].Any(),
-                        ContactPersons = agency.ContactPersons ?? new List<AgencyContactPerson>(),
+                        AgencyId = agency.Id, Code = agency.Code, Name = ProvinceCatalog.DisplayName(agency), Type = agency.Type.ToString(),
+                        HasChildAgencies = agencyChildren[agency.Id].Any(), ContactPersons = agency.ContactPersons ?? new List<AgencyContactPerson>(),
                         TotalItems = agencyItems.Count,
-                        TotalGoals = aGoals,
-                        TotalTasks = aTasks,
-                        NotStarted = aNotStarted,
-                        InProgressOnTime = aInProgOnTime,
-                        InProgressOverdue = aInProgOverdue,
-                        CompletedOnTime = aCompOnTime,
-                        CompletedOverdue = aCompOverdue,
-                        ExpiringSoon = aExpSoon,
-
-                        GoalNotStarted = aGNotStarted,
-                        GoalInProgressOnTime = aGInProgOnTime,
-                        GoalInProgressOverdue = aGInProgOverdue,
-                        GoalCompletedOnTime = aGCompOnTime,
-                        GoalCompletedOverdue = aGCompOverdue,
-                        GoalExpiringSoon = aGExpSoon,
-
-                        TaskNotStarted = aTNotStarted,
-                        TaskInProgressOnTime = aTInProgOnTime,
-                        TaskInProgressOverdue = aTInProgOverdue,
-                        TaskCompletedOnTime = aTCompOnTime,
-                        TaskCompletedOverdue = aTCompOverdue,
-                        TaskExpiringSoon = aTExpSoon
+                        TotalGoals = agencyItems.Count(i => i.ItemType == ItemTypeEnum.Goal),
+                        TotalTasks = agencyItems.Count(i => i.ItemType == ItemTypeEnum.Task),
+                        Goals = goalCounts, Tasks = taskCounts
                     };
 
                     agencySummaries[agency.Id] = summaryDto;
@@ -388,151 +337,53 @@ namespace Cdsqg.Api.Controllers
                 int tasksGeneral = baseItems.Count(i => i.ItemType == ItemTypeEnum.Task && IsGeneralItem(i));
                 int tasksSpecific = tasksTotal - tasksGeneral;
 
-                int cgNotStarted = 0, cgInProgOnTime = 0, cgInProgOverdue = 0, cgCompOnTime = 0, cgCompOverdue = 0, cgExpSoon = 0;
-                int ctNotStarted = 0, ctInProgOnTime = 0, ctInProgOverdue = 0, ctCompOnTime = 0, ctCompOverdue = 0, ctExpSoon = 0;
-                var overviewGoals = Enum.GetValues<ExecutionStatusEnum>().ToDictionary(s => char.ToLowerInvariant(s.ToString()[0]) + s.ToString().Substring(1), _ => 0);
-                var overviewTasks = overviewGoals.ToDictionary(p => p.Key, _ => 0);
+                var createdGoals = new ExecutionStatusCounts();
+                var createdTasks = new ExecutionStatusCounts();
+                var overviewGoals = new ExecutionStatusCounts();
+                var overviewTasks = new ExecutionStatusCounts();
+                var groupCounts = new Dictionary<(ItemTypeEnum Type, string Name), ExecutionStatusCounts>();
 
                 foreach (var item in baseItems)
                 {
                     var latestLog = ProgressCalculator.AnnualReport(item, null, reportYear);
                     var selectedRecipients = allowedAgencyIds == null ? new List<Guid>() : item.AgencyExecutions.Where(e => AgencyAssignments.HasRole(e, assignmentRole) && allowedAgencyIds.Contains(e.AgencyId)).Select(e => e.AgencyId).Distinct().ToList();
-                    var status = selectedRecipients.Count > 0 ? ProgressCalculator.EvaluateRecipients(item, selectedRecipients, reportYear, ProgressCalculator.AnnualEvaluationDate(reportYear)).Status
-                        : IsGeneralItem(item) ? ProgressCalculator.EvaluateOverall(item, allAgencies, ProgressCalculator.AnnualEvaluationDate(reportYear), reportYear).Status
-                        : ProgressCalculator.Evaluate(item, latestLog, year: reportYear, evaluatedAt: ProgressCalculator.AnnualEvaluationDate(reportYear)).Status;
+                    var result = selectedRecipients.Count > 0 ? ProgressCalculator.EvaluateRecipients(item, selectedRecipients, reportYear, ProgressCalculator.AnnualEvaluationDate(reportYear ?? reportToYear))
+                        : IsGeneralItem(item) ? ProgressCalculator.EvaluateOverall(item, allAgencies, ProgressCalculator.AnnualEvaluationDate(reportYear ?? reportToYear), reportYear)
+                        : ProgressCalculator.Evaluate(item, latestLog, year: reportYear, evaluatedAt: ProgressCalculator.AnnualEvaluationDate(reportYear ?? reportToYear));
                     bool isGoal = item.ItemType == ItemTypeEnum.Goal;
-                    var statusKey = char.ToLowerInvariant(status.ToString()[0]) + status.ToString().Substring(1);
-                    (isGoal ? overviewGoals : overviewTasks)[statusKey]++;
-                    if (IsGeneralItem(item)) continue;
-
-                    switch (status)
-                    {
-                        case ExecutionStatusEnum.NotStarted:
-                            if (isGoal) cgNotStarted++; else ctNotStarted++;
-                            break;
-                        case ExecutionStatusEnum.InProgressOnTime:
-                            if (isGoal) cgInProgOnTime++; else ctInProgOnTime++;
-                            break;
-                        case ExecutionStatusEnum.InProgressOverdue:
-                            if (isGoal) cgInProgOverdue++; else ctInProgOverdue++;
-                            break;
-                        case ExecutionStatusEnum.CompletedOnTime:
-                            if (isGoal) cgCompOnTime++; else ctCompOnTime++;
-                            break;
-                        case ExecutionStatusEnum.CompletedOverdue:
-                            if (isGoal) cgCompOverdue++; else ctCompOverdue++;
-                            break;
-                        case ExecutionStatusEnum.ExpiringSoon:
-                            if (isGoal) cgExpSoon++; else ctExpSoon++;
-                            break;
-                    }
+                    (isGoal ? overviewGoals : overviewTasks).Add(result);
+                    var groupKey = (item.ItemType, item.Group?.Trim() ?? "");
+                    if (!groupCounts.TryGetValue(groupKey, out var counts)) groupCounts[groupKey] = counts = new ExecutionStatusCounts();
+                    counts.Add(result);
+                    if (!IsGeneralItem(item)) (isGoal ? createdGoals : createdTasks).Add(result);
                 }
 
-                var createdMetrics = new
-                {
-                    totalGoals = goalsTotal,
-                    goalsGeneral,
-                    goalsSpecific,
-                    totalTasks = tasksTotal,
-                    tasksGeneral,
-                    tasksSpecific,
-                    statusSummary = new
-                    {
-                        notStarted = cgNotStarted + ctNotStarted,
-                        inProgressOnTime = cgInProgOnTime + ctInProgOnTime,
-                        inProgressOverdue = cgInProgOverdue + ctInProgOverdue,
-                        completedOnTime = cgCompOnTime + ctCompOnTime,
-                        completedOverdue = cgCompOverdue + ctCompOverdue,
-                        expiringSoon = cgExpSoon + ctExpSoon
-                    },
-                    goalStatusSummary = new
-                    {
-                        notStarted = cgNotStarted,
-                        inProgressOnTime = cgInProgOnTime,
-                        inProgressOverdue = cgInProgOverdue,
-                        completedOnTime = cgCompOnTime,
-                        completedOverdue = cgCompOverdue,
-                        expiringSoon = cgExpSoon
-                    },
-                    taskStatusSummary = new
-                    {
-                        notStarted = ctNotStarted,
-                        inProgressOnTime = ctInProgOnTime,
-                        inProgressOverdue = ctInProgOverdue,
-                        completedOnTime = ctCompOnTime,
-                        completedOverdue = ctCompOverdue,
-                        expiringSoon = ctExpSoon
-                    }
+                var createdMetrics = new {
+                    totalGoals = goalsTotal, goalsGeneral, goalsSpecific,
+                    totalTasks = tasksTotal, tasksGeneral, tasksSpecific,
+                    statusSummary = ExecutionStatusCounts.Sum(new[] { createdGoals, createdTasks }).States,
+                    goalStatusSummary = createdGoals.States, taskStatusSummary = createdTasks.States
                 };
 
-                // Global Status counts aggregated across all target agencies so that General Tasks/Goals assigned to ALL_AGENCIES
-                // are counted for every agency assigned to them.
-                totalGoals = baseItems.Count(i => i.ItemType == ItemTypeEnum.Goal);
-                totalTasks = baseItems.Count(i => i.ItemType == ItemTypeEnum.Task);
-
-                gNotStarted = agencySummaries.Values.Sum(s => s.GoalNotStarted);
-                gInProgressOnTime = agencySummaries.Values.Sum(s => s.GoalInProgressOnTime);
-                gInProgressOverdue = agencySummaries.Values.Sum(s => s.GoalInProgressOverdue);
-                gCompletedOnTime = agencySummaries.Values.Sum(s => s.GoalCompletedOnTime);
-                gCompletedOverdue = agencySummaries.Values.Sum(s => s.GoalCompletedOverdue);
-                gExpiringSoon = agencySummaries.Values.Sum(s => s.GoalExpiringSoon);
-
-                tNotStarted = agencySummaries.Values.Sum(s => s.TaskNotStarted);
-                tInProgressOnTime = agencySummaries.Values.Sum(s => s.TaskInProgressOnTime);
-                tInProgressOverdue = agencySummaries.Values.Sum(s => s.TaskInProgressOverdue);
-                tCompletedOnTime = agencySummaries.Values.Sum(s => s.TaskCompletedOnTime);
-                tCompletedOverdue = agencySummaries.Values.Sum(s => s.TaskCompletedOverdue);
-                tExpiringSoon = agencySummaries.Values.Sum(s => s.TaskExpiringSoon);
-
-                completedGoals = gCompletedOnTime + gCompletedOverdue;
-                completedTasks = tCompletedOnTime + tCompletedOverdue;
-
-                notStarted = gNotStarted + tNotStarted;
-                inProgressOnTime = gInProgressOnTime + tInProgressOnTime;
-                inProgressOverdue = gInProgressOverdue + tInProgressOverdue;
-                completedOnTime = gCompletedOnTime + tCompletedOnTime;
-                completedOverdue = gCompletedOverdue + tCompletedOverdue;
-                expiringSoon = gExpiringSoon + tExpiringSoon;
-
-                return Ok(new
-                {
-                    totalGoals,
-                    completedGoals,
-                    totalTasks,
-                    completedTasks,
+                var goalsSummary = ExecutionStatusCounts.Sum(agencySummaries.Values.Select(s => s.Goals));
+                var tasksSummary = ExecutionStatusCounts.Sum(agencySummaries.Values.Select(s => s.Tasks));
+                return Ok(new {
+                    totalGoals = baseItems.Count(i => i.ItemType == ItemTypeEnum.Goal), completedGoals = goalsSummary.Completed,
+                    totalTasks = baseItems.Count(i => i.ItemType == ItemTypeEnum.Task), completedTasks = tasksSummary.Completed,
                     createdMetrics,
+                    groupStatistics = groupCounts.OrderBy(g => g.Key.Type).ThenBy(g => g.Key.Name).Select(g => new {
+                        itemType = g.Key.Type.ToString(), group = g.Key.Name.Length == 0 ? "Chưa phân nhóm" : g.Key.Name,
+                        total = g.Value.NotStarted + g.Value.InProgress + g.Value.Completed,
+                        notStarted = g.Value.NotStarted, inProgress = g.Value.InProgress, completed = g.Value.Completed,
+                        completionRate = ExecutionStatusCounts.CompletionRate(g.Value.Completed, g.Value.NotStarted + g.Value.InProgress + g.Value.Completed)
+                    }).ToList(),
                     overviewMetrics = new {
                         totalGoals = goalsTotal, totalTasks = tasksTotal,
-                        goalStatusSummary = overviewGoals, taskStatusSummary = overviewTasks,
-                        statusSummary = overviewGoals.ToDictionary(p => p.Key, p => p.Value + overviewTasks[p.Key])
+                        goalStatusSummary = overviewGoals.States, taskStatusSummary = overviewTasks.States,
+                        statusSummary = ExecutionStatusCounts.Sum(new[] { overviewGoals, overviewTasks }).States
                     },
-                    statusSummary = new
-                    {
-                        notStarted,
-                        inProgressOnTime,
-                        inProgressOverdue,
-                        completedOnTime,
-                        completedOverdue,
-                        expiringSoon
-                    },
-                    goalStatusSummary = new
-                    {
-                        notStarted = gNotStarted,
-                        inProgressOnTime = gInProgressOnTime,
-                        inProgressOverdue = gInProgressOverdue,
-                        completedOnTime = gCompletedOnTime,
-                        completedOverdue = gCompletedOverdue,
-                        expiringSoon = gExpiringSoon
-                    },
-                    taskStatusSummary = new
-                    {
-                        notStarted = tNotStarted,
-                        inProgressOnTime = tInProgressOnTime,
-                        inProgressOverdue = tInProgressOverdue,
-                        completedOnTime = tCompletedOnTime,
-                        completedOverdue = tCompletedOverdue,
-                        expiringSoon = tExpiringSoon
-                    },
+                    statusSummary = ExecutionStatusCounts.Sum(new[] { goalsSummary, tasksSummary }).States,
+                    goalStatusSummary = goalsSummary.States, taskStatusSummary = tasksSummary.States,
                     ministriesPerformance = ministriesPerformance.OrderByDescending(m => m.TotalItems).ToList(),
                     provincesPerformance = provincesPerformance.OrderByDescending(p => p.TotalItems).ToList(),
                     othersPerformance = othersPerformance.OrderByDescending(o => o.TotalItems).ToList()
@@ -557,11 +408,17 @@ namespace Cdsqg.Api.Controllers
             [FromQuery] string? scope = null,
             [FromQuery] string? q = null,
             [FromQuery] string? status = null,
-            [FromQuery] string assignmentRole = "Lead")
+            [FromQuery] string assignmentRole = "Lead",
+            [FromQuery] int? reportFromYear = null, [FromQuery] int? reportToYear = null,
+            [FromQuery] DateTime? executionFrom = null, [FromQuery] DateTime? executionTo = null,
+            [FromQuery] Guid? documentId = null)
         {
             try
             {
                 if (reportYear.HasValue && reportYear.Value is < 1900 or > 9999) return BadRequest("Năm báo cáo không hợp lệ.");
+                var timeFilter = new DashboardTimeFilter(reportFromYear, reportToYear, executionFrom, executionTo);
+                if (timeFilter.ValidationError() is { } timeError) return BadRequest(timeError);
+                if (reportYear.HasValue && (reportYear < reportFromYear || reportYear > reportToYear)) return BadRequest("Năm báo cáo nằm ngoài khoảng đã chọn.");
                 var query = _context.GoalTaskItems
                     .Include(i => i.LeadAgency)
                     .Include(i => i.Unit)
@@ -571,6 +428,8 @@ namespace Cdsqg.Api.Controllers
                     .AsNoTracking()
                     .AsSplitQuery()
                     .AsQueryable();
+
+                if (documentId.HasValue) query = query.Where(i => i.DocumentId == documentId.Value);
 
                 if (!string.IsNullOrWhiteSpace(scope) && !scope.Equals("all", StringComparison.OrdinalIgnoreCase))
                 {
@@ -640,7 +499,9 @@ namespace Cdsqg.Api.Controllers
                 var scopedIds = agencyId == Guid.Empty ? null : AgencyAssignments.ExpandSelection(new[] { agencyId }, allAgencies);
                 if (scopedIds != null) query = AgencyAssignments.Filter(query, scopedIds, assignmentRole);
                 if (AgencyAssignments.Coordinating(assignmentRole)) query = query.Where(i => i.AgencyExecutions.Any(e => e.IsCoordinatingAssignment));
+                query = timeFilter.ApplyExecutionWindow(query);
                 var baseItems = await query.ToListAsync();
+                timeFilter.RestrictReports(baseItems);
 
                 if (!string.IsNullOrWhiteSpace(itemType) && !itemType.Equals("all", StringComparison.OrdinalIgnoreCase))
                 {
@@ -659,9 +520,9 @@ namespace Cdsqg.Api.Controllers
                     Guid? contextId = contextIds.Count == 1 ? contextIds[0] : null;
                     var latestLog = ProgressCalculator.AnnualReport(item, contextId, reportYear);
                     var agencyDeliverables = reportYear.HasValue ? ProgressCalculator.AnnualDeliverables(item, latestLog) : PlanningService.GetDeliverablesForAgency(item, contextId);
-                    var progress = contextIds.Count > 0 ? ProgressCalculator.EvaluateRecipients(item, contextIds, reportYear, ProgressCalculator.AnnualEvaluationDate(reportYear))
-                        : item.IsGeneralTask || item.AgencyExecutions.Any(e => e.IsLeadAssignment && e.IsLeadGroupAssignment) ? ProgressCalculator.EvaluateOverall(item, allAgencies, ProgressCalculator.AnnualEvaluationDate(reportYear), reportYear)
-                        : ProgressCalculator.Evaluate(item, latestLog, agencyDeliverables, contextId, reportYear, ProgressCalculator.AnnualEvaluationDate(reportYear));
+                    var progress = contextIds.Count > 0 ? ProgressCalculator.EvaluateRecipients(item, contextIds, reportYear, ProgressCalculator.AnnualEvaluationDate(reportYear ?? reportToYear))
+                        : item.IsGeneralTask || item.AgencyExecutions.Any(e => e.IsLeadAssignment && e.IsLeadGroupAssignment) ? ProgressCalculator.EvaluateOverall(item, allAgencies, ProgressCalculator.AnnualEvaluationDate(reportYear ?? reportToYear), reportYear)
+                        : ProgressCalculator.Evaluate(item, latestLog, agencyDeliverables, contextId, reportYear, ProgressCalculator.AnnualEvaluationDate(reportYear ?? reportToYear));
                     var execStatus = progress.Status;
                     double? latestPercent = (double?)progress.Percentage;
                     double? latestValue = (double?)progress.ActualValue;
@@ -708,6 +569,7 @@ namespace Cdsqg.Api.Controllers
                         LatestProgressDate = latestLog?.LogDate,
                         Status = execStatus.ToString(),
                         CalculatedStatus = execStatus.ToString(),
+                        DeadlineStatus = progress.DeadlineStatus,
                         Deliverables = agencyDeliverables
                     };
                 }).ToList();
@@ -856,6 +718,7 @@ namespace Cdsqg.Api.Controllers
         public DateTime? LatestProgressDate { get; set; }
         public string Status { get; set; } = "NotStarted";
         public string CalculatedStatus { get; set; } = "NotStarted";
+        public string DeadlineStatus { get; set; } = "OnTime";
         public List<TaskDeliverable> Deliverables { get; set; } = new List<TaskDeliverable>();
     }
 
@@ -870,30 +733,27 @@ namespace Cdsqg.Api.Controllers
         public int TotalItems { get; set; }
         public int TotalGoals { get; set; }
         public int TotalTasks { get; set; }
-        public int NotStarted { get; set; }
-        public int InProgressOnTime { get; set; }
-        public int InProgressOverdue { get; set; }
-        public int CompletedOnTime { get; set; }
-        public int CompletedOverdue { get; set; }
-        public int ExpiringSoon { get; set; }
-
-        public int GoalNotStarted { get; set; }
-        public int GoalInProgressOnTime { get; set; }
-        public int GoalInProgressOverdue { get; set; }
-        public int GoalCompletedOnTime { get; set; }
-        public int GoalCompletedOverdue { get; set; }
-        public int GoalExpiringSoon { get; set; }
-
-        public int TaskNotStarted { get; set; }
-        public int TaskInProgressOnTime { get; set; }
-        public int TaskInProgressOverdue { get; set; }
-        public int TaskCompletedOnTime { get; set; }
-        public int TaskCompletedOverdue { get; set; }
-        public int TaskExpiringSoon { get; set; }
-        // Share-count completion rate, distinct from the progress percentage of one item.
-        public decimal? GoalCompletionRate => CompletionRate(GoalCompletedOnTime + GoalCompletedOverdue, TotalGoals);
-        public decimal? TaskCompletionRate => CompletionRate(TaskCompletedOnTime + TaskCompletedOverdue, TotalTasks);
-        public decimal? CompletionRateOverall => CompletionRate(CompletedOnTime + CompletedOverdue, TotalItems);
-        private static decimal? CompletionRate(int completed, int total) => total > 0 ? Math.Round(completed * 100m / total, 2) : null;
+        [System.Text.Json.Serialization.JsonIgnore]
+        public ExecutionStatusCounts Goals { get; set; } = new();
+        [System.Text.Json.Serialization.JsonIgnore]
+        public ExecutionStatusCounts Tasks { get; set; } = new();
+        public int NotStarted => Goals.NotStarted + Tasks.NotStarted;
+        public int InProgress => Goals.InProgress + Tasks.InProgress;
+        public int Completed => Goals.Completed + Tasks.Completed;
+        public int ExpiringSoon => Goals.ExpiringSoon + Tasks.ExpiringSoon;
+        public int Overdue => Goals.Overdue + Tasks.Overdue;
+        public int OnTimeReports => Goals.OnTimeReports + Tasks.OnTimeReports;
+        public int ReportedCount => Goals.ReportedCount + Tasks.ReportedCount;
+        public int WarningCount => Goals.WarningCount + Tasks.WarningCount;
+        public int GoalNotStarted => Goals.NotStarted;
+        public int GoalInProgress => Goals.InProgress;
+        public int GoalCompleted => Goals.Completed;
+        public int TaskNotStarted => Tasks.NotStarted;
+        public int TaskInProgress => Tasks.InProgress;
+        public int TaskCompleted => Tasks.Completed;
+        public decimal? GoalCompletionRate => CompletionRate(GoalCompleted, TotalGoals);
+        public decimal? TaskCompletionRate => CompletionRate(TaskCompleted, TotalTasks);
+        public decimal? CompletionRateOverall => CompletionRate(Completed, TotalItems);
+        private static decimal? CompletionRate(int completed, int total) => ExecutionStatusCounts.CompletionRate(completed, total);
     }
 }

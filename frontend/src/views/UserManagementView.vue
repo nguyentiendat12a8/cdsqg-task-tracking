@@ -2,7 +2,7 @@
   <div class="w-full space-y-6 font-sans">
     
     <!-- Top Header Bar -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 w-full">
+    <div class="ui-screen-heading flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 w-full">
       <div class="flex items-center gap-3">
         <span class="p-2.5 bg-blue-600 text-white rounded-xl shadow-sm font-bold">
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
@@ -138,13 +138,13 @@
 
               <td class="px-4 py-3 text-center whitespace-nowrap">
                 <div class="inline-flex items-center justify-center gap-1.5 whitespace-nowrap">
-                  <button @click="openResetModal(u)" class="ui-single-line px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold text-xs rounded-lg transition border border-amber-200 cursor-pointer" title="Đặt lại mật khẩu">
-                    🔑 Mật khẩu
+                  <button @click="openResetModal(u)" class="ui-action ui-action-warning ui-single-line px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold text-xs rounded-lg transition border border-amber-200 cursor-pointer" title="Đặt lại mật khẩu" aria-label="Đặt lại mật khẩu">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.724 5.747L10.5 17.25H7.5v3h-3v-3l7.003-7.003A6 6 0 1121.75 8.25z"/></svg><span>Mật khẩu</span>
                   </button>
-                  <button @click="openEditModal(u)" class="p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition inline-flex items-center cursor-pointer" title="Sửa thông tin">
+                  <button @click="openEditModal(u)" class="ui-action ui-action-primary p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition inline-flex items-center cursor-pointer" title="Sửa thông tin" aria-label="Sửa thông tin">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                   </button>
-                  <button v-if="u.username !== 'admin'" @click="deleteUser(u)" class="p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg transition inline-flex items-center cursor-pointer" title="Xóa tài khoản">
+                  <button v-if="u.username !== 'admin'" @click="deleteUser(u)" class="ui-action ui-action-danger p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg transition inline-flex items-center cursor-pointer" title="Xóa tài khoản" aria-label="Xóa tài khoản">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                   </button>
                 </div>

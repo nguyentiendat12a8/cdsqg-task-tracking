@@ -1,3 +1,4 @@
+import { initializeAgencyDisplayNames, useAgencyDisplayNames } from './useAgencyDisplayNames';
 import { fetchWithAuth } from '../../services/auth';
 import { ref, computed, watch } from 'vue';
 import { toast } from 'vue3-toastify';
@@ -14,6 +15,7 @@ export function useEditItem({ planningGridRef, agencies, loadData, hasProgress }
 
   const editForm = ref({
     title: '',
+    resultTarget: null,
     section: '',
     group: '',
     isOngoing: false,
@@ -23,10 +25,14 @@ export function useEditItem({ planningGridRef, agencies, loadData, hasProgress }
     startDate: '',
     dueDate: '',
     leadAgencyId: '',
+    leadAgencyDisplayText: '',
     assignedAgencyId: '',
     coordinatingAgencyIds: [],
+    coordinatingAgenciesDisplayText: '',
     deliverables: []
   });
+
+  useAgencyDisplayNames(editForm, agencies);
 
   watch(() => editForm.value.isOngoing, (val) => {
     if (val) {
@@ -60,7 +66,7 @@ export function useEditItem({ planningGridRef, agencies, loadData, hasProgress }
     }
 
     if (hasProgress(item)) {
-      toast.warning("Chỉ được phép chỉnh sửa Mục tiêu / Nhiệm vụ khi ở trạng thái Chưa bắt đầu.");
+      toast.warning("Chỉ được phép chỉnh sửa Mục tiêu / Nhiệm vụ khi ở trạng thái Chưa thực hiện.");
       return;
     }
 
@@ -93,6 +99,7 @@ export function useEditItem({ planningGridRef, agencies, loadData, hasProgress }
       section: item.section || '',
       group: item.group || '',
       unitName: item.unitName || '%',
+      resultTarget: item.resultTarget ?? null,
       isOngoing: !!item.isOngoing,
       isGeneralTask: !!item.isGeneralTask,
       startYear: sYear,
@@ -100,11 +107,14 @@ export function useEditItem({ planningGridRef, agencies, loadData, hasProgress }
       startDate: sDate,
       dueDate: dDate,
       leadAgencyId: item.leadAgencyId || agencies.value[0]?.id || '',
+      leadAgencyDisplayText: item.leadAgencyDisplayText || '',
       assignedAgencyId: item.assignedAgencyId || '',
       coordinatingAgencyIds: item.coordinatingAgencyIds ? [...item.coordinatingAgencyIds] : [],
+      coordinatingAgenciesDisplayText: item.coordinatingAgenciesDisplayText || '',
       deliverables: item.deliverables ? JSON.parse(JSON.stringify(item.deliverables)) : []
     };
 
+    initializeAgencyDisplayNames(editForm.value, agencies.value);
     isEditModalOpen.value = true;
   }
 
@@ -115,6 +125,7 @@ export function useEditItem({ planningGridRef, agencies, loadData, hasProgress }
     const defaultDueDate = editForm.value.dueDate || '2030-12-31';
     editForm.value.deliverables.push({
       title: '',
+    resultTarget: null,
       dueDate: defaultDueDate,
       currentStatus: 'NotStarted'
     });
@@ -191,13 +202,16 @@ export function useEditItem({ planningGridRef, agencies, loadData, hasProgress }
         section: editForm.value.section,
         group: editForm.value.group,
         unitName: editForm.value.unitName || '%',
+        resultTarget: isGoal && editForm.value.resultTarget != null && editForm.value.resultTarget !== '' ? Number(editForm.value.resultTarget) : null,
         isOngoing: editForm.value.isOngoing,
         isGeneralTask: editForm.value.isGeneralTask,
         startDate: startDateIso,
         dueDate: dueDateIso,
         leadAgencyId: editForm.value.leadAgencyId,
+        leadAgencyDisplayText: editForm.value.leadAgencyDisplayText?.trim() || null,
         assignedAgencyId: editForm.value.assignedAgencyId || null,
         coordinatingAgencyIds: editForm.value.coordinatingAgencyIds || [],
+        coordinatingAgenciesDisplayText: editForm.value.coordinatingAgenciesDisplayText?.trim() || null,
         deliverables: editForm.value.deliverables || []
       };
 

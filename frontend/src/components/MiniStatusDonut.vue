@@ -9,12 +9,13 @@
       class="bg-white rounded-full flex flex-col items-center justify-center font-bold text-slate-800 shadow-inner"
       :style="{ width: `${innerSize}px`, height: `${innerSize}px` }"
     >
-      <span class="font-bold text-slate-900 leading-none" :style="{ fontSize: `${fontSize}px` }">{{ formatNumber(total) }}</span>
+      <slot name="center"><span class="font-bold text-slate-900 leading-none" :style="{ fontSize: `${fontSize}px` }">{{ formatNumber(total) }}</span></slot>
     </div>
   </div>
 </template>
 
 <script setup>
+import { executionStatusSeries } from '../shared/statusPresentation';
 import { themeColor } from "../shared/themeColors";
 import { formatNumber } from "../shared/formatters";
 import { computed } from 'vue';
@@ -46,21 +47,7 @@ const conicGradient = computed(() => {
     return 'conic-gradient(#e2e8f0 0% 100%)';
   }
 
-  // Exact colors matching application standard status legend:
-  // 1. Đang t/h quá hạn (Red: #ef4444)
-  // 2. Đang t/h trong hạn (Blue: #3b82f6)
-  // 3. Sắp tới hạn (Amber: #f59e0b)
-  // 4. Đã h/t quá hạn (Teal: #14b8a6)
-  // 5. Đã h/t trong hạn (Emerald Green: #10b981)
-  // 6. Chưa thực hiện (Slate Gray: #94a3b8)
-  const segments = [
-    { count: props.stats.inProgressOverdue || 0, color: themeColor('rose-500') }, 
-    { count: props.stats.inProgressOnTime || 0, color: themeColor('blue-500') },  
-    { count: props.stats.expiringSoon || 0, color: themeColor('amber-500') },      
-    { count: props.stats.completedOverdue || 0, color: themeColor('teal-500') },  
-    { count: props.stats.completedOnTime || 0, color: themeColor('emerald-500') },   
-    { count: props.stats.notStarted || 0, color: themeColor('slate-400') }         
-  ];
+  const segments = executionStatusSeries.map(status => ({ count: props.stats[status.key] || 0, color: themeColor(status.color) }));
 
   let accumulatedPct = 0;
   const stops = [];
@@ -80,7 +67,6 @@ const conicGradient = computed(() => {
 });
 
 const tooltipText = computed(() => {
-  const s = props.stats;
-  return `Tổng: ${total.value} hạng mục\n• Đang t/h quá hạn: ${s.inProgressOverdue || 0}\n• Đang t/h trong hạn: ${s.inProgressOnTime || 0}\n• Sắp tới hạn: ${s.expiringSoon || 0}\n• Đã h/t quá hạn: ${s.completedOverdue || 0}\n• Đã h/t trong hạn: ${s.completedOnTime || 0}\n• Chưa thực hiện: ${s.notStarted || 0}`;
+  return `Tổng: ${total.value} hạng mục\n` + executionStatusSeries.map(status => `• ${status.label}: ${props.stats[status.key] || 0}`).join('\n');
 });
 </script>

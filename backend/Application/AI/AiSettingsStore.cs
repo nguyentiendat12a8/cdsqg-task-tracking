@@ -59,7 +59,7 @@ public sealed class AiSettingsStore(AppDbContext db,IDataProtectionProvider prot
         using var request=new HttpRequestMessage(HttpMethod.Post,options.BaseUrl+"/chat/completions"){Content=JsonContent.Create(body)};
         request.Headers.Authorization=new("Bearer",options.ApiKey);
         using var response=await clients.CreateClient("ai-provider").SendAsync(request,ct);
-        if(!response.IsSuccessStatusCode)throw new InvalidOperationException($"Nhà cung cấp trả HTTP {(int)response.StatusCode}. Kiểm tra URL, model, API key/quota hoặc hỗ trợ JSON Schema.");
+        if(!response.IsSuccessStatusCode)throw await AiProviderRequest.FailureAsync(response,options.Model,ct);
         using var data=JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct));
         var choice=data.RootElement.GetProperty("choices")[0];
         if(choice.GetProperty("finish_reason").GetString()!="stop")throw new InvalidOperationException("Kết nối có phản hồi nhưng bài kiểm tra chưa hoàn tất; kiểm tra model/ngân sách output.");

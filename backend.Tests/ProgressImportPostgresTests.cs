@@ -48,14 +48,14 @@ public class ProgressImportPostgresTests
                 Assert.NotNull(recorded);
                 Assert.Equal(agency.Id, recorded!.AgencyId);
                 Assert.Equal("Admin demo", recorded.CreatedBy);
-                Assert.Equal(state == "Completed" ? ExecutionStatusEnum.CompletedOnTime : ExecutionStatusEnum.InProgressOnTime,
+                Assert.Equal(state == "Completed" ? ExecutionStatusEnum.Completed : ExecutionStatusEnum.InProgress,
                     ProgressCalculator.Evaluate(demoTask, year: ReportingPeriod.CurrentYear).Status);
                 var adminList = await new PlanningService(db).GetDocumentItemsPagedAsync(document.Id,
                     new() { UserRole = "Admin", AgencyId = adminAgency.Id });
-                Assert.Equal(state == "Completed" ? "CompletedOnTime" : "InProgressOnTime",
+                Assert.Equal(state == "Completed" ? "Completed" : "InProgress",
                     adminList.Items.Single(i => i.Code == demoTask.Code).CalculatedStatus);
                 var adminHistory = await service.GetTaskProgressHistoryAsync(demoTask.Id);
-                Assert.Equal(state == "Completed" ? "CompletedOnTime" : "InProgressOnTime", adminHistory[0].CalculatedStatus);
+                Assert.Equal(state == "Completed" ? "Completed" : "InProgress", adminHistory[0].CalculatedStatus);
             }
             db.ProgressLogs.RemoveRange(db.ProgressLogs.Where(p => p.GoalTaskId == demoTask.Id));
             await db.SaveChangesAsync();
@@ -82,7 +82,7 @@ public class ProgressImportPostgresTests
             foreach (var id in groupResult.ReportingAgencyIds)
             {
                 var row = await service.GetProgressLogAsync(groupTask.Id, ReportingPeriod.CurrentYear, id);
-                Assert.Equal("CompletedOnTime", row!.CalculatedStatus);
+                Assert.Equal("Completed", row!.CalculatedStatus);
                 Assert.Equal("Completed", row.Deliverables![0].CurrentStatus);
             }
             groupDto.AgencyId = provinceGroup.Id;

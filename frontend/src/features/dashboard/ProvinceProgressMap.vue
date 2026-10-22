@@ -4,18 +4,21 @@
       <div>
         <h4 class="text-sm font-bold text-slate-900">Bản đồ hoàn thành {{ noun }}</h4>
       </div>
-      <div class="flex items-center gap-1" role="group" aria-label="Điều khiển bản đồ">
-        <button type="button" class="ui-single-line w-9 rounded-lg border border-slate-200 font-bold disabled:opacity-40" aria-label="Thu nhỏ bản đồ" :disabled="zoom <= 1" @click="changeZoom(-1)">−</button>
-        <span class="text-xs tabular-nums w-10 text-center" aria-live="polite">{{ Math.round(zoom * 100) }}%</span>
-        <button type="button" class="ui-single-line w-9 rounded-lg border border-slate-200 font-bold disabled:opacity-40" aria-label="Phóng to bản đồ" :disabled="zoom >= 4" @click="changeZoom(1)">+</button>
-        <button type="button" class="ui-single-line px-2 rounded-lg border border-slate-200 text-xs" aria-label="Đặt lại bản đồ" @click="resetMap">Đặt lại</button>
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="flex items-center gap-1" role="group" aria-label="Điều khiển bản đồ">
+          <button type="button" class="ui-single-line w-9 rounded-lg border border-slate-200 font-bold disabled:opacity-40" aria-label="Thu nhỏ bản đồ" :disabled="zoom <= 1" @click="changeZoom(-1)">−</button>
+          <span class="text-xs tabular-nums w-10 text-center" aria-live="polite">{{ Math.round(zoom * 100) }}%</span>
+          <button type="button" class="ui-single-line w-9 rounded-lg border border-slate-200 font-bold disabled:opacity-40" aria-label="Phóng to bản đồ" :disabled="zoom >= 4" @click="changeZoom(1)">+</button>
+          <button type="button" class="ui-single-line px-2 rounded-lg border border-slate-200 text-xs" aria-label="Đặt lại bản đồ" @click="resetMap">Đặt lại</button>
+        </div>
+        <slot name="type-switch" />
       </div>
     </div>
 
     <div class="province-map-body">
       <!-- Cột trái: Bản đồ SVG -->
       <div class="province-map-canvas min-w-0 bg-slate-50 p-3 border-b border-slate-200" data-testid="province-map-canvas">
-        <div class="flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-slate-700 mb-2">
+        <div class="map-legend flex flex-wrap gap-x-3 gap-y-1.5 text-xs text-slate-800 mb-2 rounded-lg border border-sky-200 bg-white px-2 py-2">
           <span v-for="band in bands" :key="band.label" class="flex items-center gap-2">
             <i class="w-3 h-3 rounded-sm border border-slate-300" :style="{ backgroundColor: band.color }"></i>
             {{ band.label }}
@@ -180,9 +183,8 @@
       <div class="p-3 flex flex-col min-w-0" data-testid="province-map-directory">
           <div class="flex flex-wrap items-center justify-between gap-2">
             <h5 class="text-sm font-bold text-slate-800">Danh sách địa phương</h5>
-            <button type="button" class="ui-single-line px-3 rounded-lg border border-slate-200 text-xs font-semibold text-blue-600 shrink-0" :aria-expanded="showProvinceList" aria-controls="province-map-list" @click="showProvinceList = !showProvinceList">{{ showProvinceList ? 'Thu gọn' : 'Xem chi tiết' }}</button>
           </div>
-        <div v-show="showProvinceList" id="province-map-list" class="mt-3">
+        <div id="province-map-list" class="mt-3">
         <div class="space-y-3 mb-4">
           <div class="relative">
             <input
@@ -253,7 +255,6 @@ defineEmits(['select-agency']);
 
 const selectedCode = ref(null);
 const search = ref('');
-const showProvinceList = ref(true);
 const initialBounds = geography.viewBox.split(/[ ,]+/).map(Number);
 const zoom = ref(1);
 const mapCenter = ref([initialBounds[0] + initialBounds[2] / 2, initialBounds[1] + initialBounds[3] / 2]);
@@ -416,6 +417,7 @@ const truongSaIslands = [
 <style scoped>
 .province-map-container { container: province-map / inline-size; }
 .province-map-body { display: flex; flex-direction: column; }
+.province-map-canvas { background:white; }
 .province-map-canvas > svg { box-sizing: border-box; padding: 12px; }
 @media (min-width: 1024px) {
   .fit-height { display: flex; flex-direction: column; height: 100%; min-height: 0; }

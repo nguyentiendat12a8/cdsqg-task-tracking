@@ -16,6 +16,10 @@ export function useDocumentFilters({ props, userAgencyId, agencies, rawItemsList
     selectedGroups: [],
     fromYear: null,
     toYear: null,
+    reportFromYear: null,
+    reportToYear: null,
+    executionFrom: '',
+    executionTo: '',
     onlyOngoing: false
   });
 
@@ -26,7 +30,9 @@ export function useDocumentFilters({ props, userAgencyId, agencies, rawItemsList
     if (filterDraft.value.selectedScopes?.length) count++;
     if (filterDraft.value.selectedSections?.length) count++;
     if (filterDraft.value.selectedGroups?.length) count++;
-    if (filterDraft.value.fromYear || filterDraft.value.toYear || filterDraft.value.onlyOngoing) count++;
+    if (filterDraft.value.reportFromYear || filterDraft.value.reportToYear || filterDraft.value.fromYear || filterDraft.value.toYear) count++;
+    if (filterDraft.value.executionFrom || filterDraft.value.executionTo) count++;
+    if (filterDraft.value.onlyOngoing) count++;
     if (filterDraft.value.selectedStatuses?.length) count++;
     return count;
   });
@@ -42,6 +48,10 @@ export function useDocumentFilters({ props, userAgencyId, agencies, rawItemsList
     selectedGroups: [],
     fromYear: null,
     toYear: null,
+    reportFromYear: null,
+    reportToYear: null,
+    executionFrom: '',
+    executionTo: '',
     onlyOngoing: false
   });
 
@@ -96,7 +106,7 @@ export function useDocumentFilters({ props, userAgencyId, agencies, rawItemsList
     docDetailSearchRequestId++;
     filterDraft.value = {
       searchQuery: '',
-    assignmentRole: 'Lead',
+      assignmentRole: 'Lead',
       selectedAgencyIds: [],
       selectedSubAgencyIds: [],
       selectedScopes: [],
@@ -105,6 +115,10 @@ export function useDocumentFilters({ props, userAgencyId, agencies, rawItemsList
       selectedGroups: [],
       fromYear: null,
       toYear: null,
+      reportFromYear: null,
+      reportToYear: null,
+      executionFrom: '',
+      executionTo: '',
       onlyOngoing: false
     };
     appliedFilters.value = JSON.parse(JSON.stringify(filterDraft.value));
@@ -174,7 +188,10 @@ export function useDocumentFilters({ props, userAgencyId, agencies, rawItemsList
     { value: 'specific', label: props.filterItemType === 'Goal' ? 'Mục tiêu riêng (đơn vị cụ thể)' : 'Nhiệm vụ riêng (đơn vị cụ thể)' }
   ]);
 
-  const statusOptions = ref(executionStatusOptions);
+  const statusOptions = ref([
+    ...executionStatusOptions,
+    { value: 'Overdue', label: 'Quá hạn' }
+  ]);
 
   // Filtering and sorting happen before pagination on the server.
   const filteredList = computed(() => rawItemsList.value);

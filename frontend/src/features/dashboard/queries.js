@@ -1,6 +1,7 @@
 export function buildDashboardQuery(filters, { agencyIds = [], parentAgencyId, includeItemType = true } = {}) {
   const params = new URLSearchParams();
   params.set('assignmentRole', filters.assignmentRole || 'Lead');
+  if (filters.documentId) params.set('documentId', filters.documentId);
   if (includeItemType && filters.dashboardFilter && filters.dashboardFilter !== 'all') {
     params.set('itemType', filters.dashboardFilter === 'goals' ? 'Goal' : 'Task');
   }
@@ -12,5 +13,12 @@ export function buildDashboardQuery(filters, { agencyIds = [], parentAgencyId, i
   if (filters.fromYear) params.set('fromYear', filters.fromYear);
   if (filters.toYear) params.set('toYear', filters.toYear);
   if (filters.isOngoingOnly) params.set('isOngoing', 'true');
+  appendDashboardTimeFilters(params, filters);
   return params;
+}
+
+export function appendDashboardTimeFilters(params, filters) {
+  for (const key of ['reportFromYear', 'reportToYear', 'executionFrom', 'executionTo']) {
+    if (filters[key] != null && filters[key] !== '') params.set(key, filters[key]);
+  }
 }

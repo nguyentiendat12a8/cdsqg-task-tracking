@@ -32,6 +32,17 @@ public static class AgencyAssignments
         return result.ToList();
     }
 
+    // Seed/import repair only: never rebuild an existing assignment snapshot.
+    public static async Task<int> InitializeMissingAsync(AppDbContext db)
+    {
+        await using var transaction = await db.Database.BeginTransactionAsync();
+        var missing = await db.GoalTaskItems.Where(i => !i.AgencyExecutions.Any()).ToListAsync();
+        foreach (var item in missing) await SyncAsync(db, item);
+        await db.SaveChangesAsync();
+        await transaction.CommitAsync();
+        return missing.Count;
+    }
+
     public static async Task SyncAsync(AppDbContext db, GoalTaskItem item, bool refreshLead = true, bool refreshCoordination = true)
     {
         var agencies = await db.Agencies.ToListAsync();

@@ -43,3 +43,10 @@
 .ai-admin-body .ai-settings-section{padding:20px}
 .ai-admin-body .ai-goal-card{padding:16px}
 @media(max-width:639px){.ai-admin-body{padding:12px}.ai-admin-shell>.ai-page-header .ai-heading-row{padding:16px}.ai-admin-body .ai-settings-section{padding:16px}}
+
+/* Shared header and table palette follows the dashboard. */
+.ai-heading-row { background: var(--ui-header-background); }
+.ai-page-header, .ai-admin-shell, .ai-panel { border-color: var(--ui-header-border); }
+.ai-header-tabs { background: white; border-color: var(--ui-header-border); }
+.ai-admin-body .ai-table th { background: var(--ui-header-background); border-color: var(--ui-header-border); }
+.ai-toolbar, .ai-admin-body .ai-toolbar, .ai-admin-body .ai-footer { background: var(--color-slate-50); }

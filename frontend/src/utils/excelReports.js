@@ -130,7 +130,7 @@ export function exportToExcel({
 /**
  * Export specialized Progress Report template file for users to update & import back.
  */
-export function exportProgressReportTemplate({ items = [], itemType, currentAgency = null, fileName = 'Bao_Cao_Tien_Do_Thuc_Hien' }) {
+export function exportProgressReportTemplate({ items = [], itemType, currentAgency = null, fileName = 'Bao_Cao_Tien_Do_Thuc_Hien', documentTitle = '', documentNumber = '', documentShortTitle = '' }) {
   const now = new Date();
   const isTask = (itemType || items[0]?.itemType) !== 'Goal';
   const noun = isTask ? 'Nhiệm Vụ' : 'Mục Tiêu';
@@ -140,8 +140,12 @@ export function exportProgressReportTemplate({ items = [], itemType, currentAgen
   if (isTask) headers.push('Sản Phẩm Đầu Ra');
   headers.push('Tiến Độ Hiện Tại', 'TIẾN ĐỘ THỰC HIỆN MỚI [CẦN ĐIỀN]', 'GHI CHÚ [CẦN ĐIỀN]');
   if (isTask) headers.push('Mã Sản Phẩm');
+  const typeText = documentShortTitle ? ` ${documentShortTitle.toUpperCase()}` : '';
+  const docSuffix = documentTitle
+    ? ` THEO DÕI${typeText} - ${documentTitle.toUpperCase()}${documentNumber ? ` (${documentNumber})` : ''}`
+    : '';
   const rows = [
-    [`BÁO CÁO TIẾN ĐỘ THỰC HIỆN ${noun.toUpperCase()}`],
+    [`BÁO CÁO TIẾN ĐỘ THỰC HIỆN ${noun.toUpperCase()}${docSuffix}`],
     [`Đơn vị báo cáo: ${currentAgency?.name || 'Bộ, Ngành, Địa phương'} | Ngày xuất file: ${now.toLocaleDateString('vi-VN')}`],
     [`HƯỚNG DẪN: Điền tổng kết quả đã đạt đến năm báo cáo hoặc chọn trạng thái ở cột [${isTask ? 'H' : 'G'}]; ghi chú ở cột [${isTask ? 'I' : 'H'}]. Mỗi sản phẩm đầu ra chọn một trạng thái riêng. Chọn năm báo cáo khi import.`],
     headers

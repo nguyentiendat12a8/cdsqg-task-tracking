@@ -24,7 +24,7 @@ public class ProgressCalculatorTests
         var result = ProgressCalculator.Evaluate(item, Log(item, 2026, value), evaluatedAt: Now);
         Assert.Equal(50m, result.Target);
         Assert.Equal(percentage, result.Percentage);
-        Assert.Equal(complete, result.Status == ExecutionStatusEnum.CompletedOnTime);
+        Assert.Equal(complete, result.Status == ExecutionStatusEnum.Completed);
         Assert.True(result.IsCustomBaseline);
     }
 
@@ -53,7 +53,7 @@ public class ProgressCalculatorTests
         var result = ProgressCalculator.Evaluate(item, current, evaluatedAt: Now);
         Assert.Equal(20m, result.ActualValue);
         Assert.Equal(57.14m, result.Percentage);
-        Assert.Equal(ExecutionStatusEnum.InProgressOnTime, result.Status);
+        Assert.Equal(ExecutionStatusEnum.InProgress, result.Status);
     }
 
     [Fact]
@@ -64,7 +64,7 @@ public class ProgressCalculatorTests
         item.ProgressLogs.Add(Log(item, 2026, 100, 8, ApprovalStatusEnum.Pending));
         var result = ProgressCalculator.Evaluate(item, evaluatedAt: Now);
         Assert.Equal(25m, result.Percentage);
-        Assert.Equal(ExecutionStatusEnum.InProgressOnTime, result.Status);
+        Assert.Equal(ExecutionStatusEnum.InProgress, result.Status);
     }
 
     [Fact]
@@ -83,7 +83,7 @@ public class ProgressCalculatorTests
         var item = Item(); item.Unit = new() { Name = "Văn bản", Code = "DOC" }; item.UnitId = item.Unit.Id;
         var result = ProgressCalculator.Evaluate(item, Log(item, 2026, 150), evaluatedAt: Now);
         Assert.Null(result.Target); Assert.Null(result.Percentage);
-        Assert.Equal(ExecutionStatusEnum.InProgressOnTime, result.Status);
+        Assert.Equal(ExecutionStatusEnum.InProgress, result.Status);
     }
 
     [Theory]
@@ -99,14 +99,14 @@ public class ProgressCalculatorTests
         log.Deliverables = new() { new() { CurrentStatus = status } };
         var result = ProgressCalculator.Evaluate(item, log, evaluatedAt: Now);
         Assert.Equal(expected, result.Percentage);
-        Assert.Equal(expected == 100, result.Status == ExecutionStatusEnum.CompletedOnTime);
+        Assert.Equal(expected == 100, result.Status == ExecutionStatusEnum.Completed);
     }
 
     [Theory]
-    [InlineData(0, false, ExecutionStatusEnum.InProgressOverdue)]
-    [InlineData(25, false, ExecutionStatusEnum.InProgressOverdue)]
-    [InlineData(100, false, ExecutionStatusEnum.CompletedOverdue)]
-    [InlineData(100, true, ExecutionStatusEnum.CompletedOnTime)]
+    [InlineData(0, false, ExecutionStatusEnum.NotStarted)]
+    [InlineData(25, false, ExecutionStatusEnum.InProgress)]
+    [InlineData(100, false, ExecutionStatusEnum.Completed)]
+    [InlineData(100, true, ExecutionStatusEnum.Completed)]
     public void DeadlineAndCompletionUseTheSameEvaluation(decimal value, bool beforeDeadline, ExecutionStatusEnum expected)
     {
         var item = Item(); item.DueDate = new(2026, 10, 5);
@@ -118,7 +118,9 @@ public class ProgressCalculatorTests
     public void ExpiringSoonUsesThirtyDaysForEveryItem()
     {
         var item = Item(); item.DueDate = Now.AddDays(30);
-        Assert.Equal(ExecutionStatusEnum.ExpiringSoon, ProgressCalculator.Evaluate(item, Log(item, 2026, 1), evaluatedAt: Now).Status);
+        var result = ProgressCalculator.Evaluate(item, Log(item, 2026, 1), evaluatedAt: Now);
+        Assert.Equal(ExecutionStatusEnum.InProgress, result.Status);
+        Assert.Equal("ExpiringSoon", result.DeadlineStatus);
     }
 
     [Fact]
@@ -127,7 +129,7 @@ public class ProgressCalculatorTests
         var item = Item();
         var result = ProgressCalculator.Evaluate(item, Log(item, 2026, 99.999m), evaluatedAt: Now);
         Assert.Equal(99.99m, result.Percentage);
-        Assert.Equal(ExecutionStatusEnum.InProgressOnTime, result.Status);
+        Assert.Equal(ExecutionStatusEnum.InProgress, result.Status);
     }
 
     [Fact]
@@ -138,7 +140,41 @@ public class ProgressCalculatorTests
         var report = Log(item, 2026, 0); report.QualitativeStatus = TextStatusEnum.Completed; report.Deliverables = new();
         var result = ProgressCalculator.Evaluate(item, report, evaluatedAt: Now);
         Assert.Equal(25m, result.Percentage);
-        Assert.Equal(ExecutionStatusEnum.InProgressOnTime, result.Status);
+        Assert.Equal(ExecutionStatusEnum.InProgress, result.Status);
+    }
+
+    [Theory]
+    [InlineData(ItemTypeEnum.Goal)]
+    [InlineData(ItemTypeEnum.Task)]
+    public void SharedItemStatusFollowsAllAssignedRecipients(ItemTypeEnum itemType)
+    {
+        var item = Item(); item.IsGeneralTask = true; item.ItemType = itemType;
+        item.EvaluationType = itemType == ItemTypeEnum.Goal ? EvaluationTypeEnum.Quantitative : EvaluationTypeEnum.Qualitative;
+        item.CustomBaseline["2026"] = "100";
+        var first = new Agency { Id = item.LeadAgencyId, Code = "FIRST", Type = AgencyTypeEnum.Ministry };
+        var second = new Agency { Code = "SECOND", Type = AgencyTypeEnum.Province };
+        var unassigned = new Agency { Code = "UNASSIGNED", Type = AgencyTypeEnum.Ministry };
+        foreach (var agency in new[] { first, second })
+            item.AgencyExecutions.Add(new() { AgencyId = agency.Id, IsLeadAssignment = true, IsLeadGroupAssignment = true });
+        var agencies = new[] { first, second, unassigned };
+        ExecutionStatusEnum Overall() => ProgressCalculator.EvaluateOverall(item, agencies, Now, 2026).Status;
+        Assert.Equal(ExecutionStatusEnum.NotStarted, Overall());
+        var report = Log(item, 2026, 25, approval: ApprovalStatusEnum.Pending);
+        report.QualitativeStatus = TextStatusEnum.Drafting; item.ProgressLogs.Add(report);
+        Assert.Equal(ExecutionStatusEnum.NotStarted, Overall());
+        report.ApprovalStatus = ApprovalStatusEnum.Approved;
+        Assert.Equal(ExecutionStatusEnum.InProgress, Overall());
+        report.QuantitativeValue = 100; report.QualitativeStatus = TextStatusEnum.Completed;
+        Assert.Equal(ExecutionStatusEnum.InProgress, Overall()); // One completed, one not started.
+        Assert.Equal(ExecutionStatusEnum.Completed, ProgressCalculator.Evaluate(item, agencyId:first.Id, year:2026, evaluatedAt:Now).Status);
+        Assert.Equal(ExecutionStatusEnum.NotStarted, ProgressCalculator.Evaluate(item, agencyId:second.Id, year:2026, evaluatedAt:Now).Status);
+        var remaining = Log(item, 2026, 25); remaining.AgencyId = second.Id;
+        remaining.QualitativeStatus = TextStatusEnum.Drafting; item.ProgressLogs.Add(remaining);
+        Assert.Equal(ExecutionStatusEnum.InProgress, Overall());
+        remaining.QuantitativeValue = 100; remaining.QualitativeStatus = TextStatusEnum.Completed;
+        Assert.Equal(ExecutionStatusEnum.Completed, Overall()); // Unassigned agencies do not block completion.
+        remaining.ApprovalStatus = ApprovalStatusEnum.Rejected;
+        Assert.Equal(ExecutionStatusEnum.InProgress, Overall());
     }
 
     [Fact]
@@ -152,10 +188,10 @@ public class ProgressCalculatorTests
         item.ProgressLogs.Add(Log(item, 2026, 100));
         var partial = ProgressCalculator.EvaluateOverall(item, new[] { first, second }, Now);
         Assert.Equal(50m, partial.Percentage);
-        Assert.Equal(ExecutionStatusEnum.InProgressOnTime, partial.Status);
+        Assert.Equal(ExecutionStatusEnum.InProgress, partial.Status);
         var secondLog = Log(item, 2026, 100); secondLog.AgencyId = second.Id;
         item.ProgressLogs.Add(secondLog);
-        Assert.Equal(ExecutionStatusEnum.CompletedOnTime, ProgressCalculator.EvaluateOverall(item, new[] { first, second }, Now).Status);
+        Assert.Equal(ExecutionStatusEnum.Completed, ProgressCalculator.EvaluateOverall(item, new[] { first, second }, Now).Status);
     }
 
     [Fact]
@@ -246,7 +282,7 @@ public class ProgressCalculatorTests
         item.Deliverables.Clear(); item.ProgressLogs.Clear();
         completed.Deliverables.Clear();completed.QualitativeStatus=TextStatusEnum.Completed;
         item.ProgressLogs.Add(completed);
-        Assert.Equal(ExecutionStatusEnum.CompletedOnTime,ProgressCalculator.Evaluate(item,year:2027,evaluatedAt:Now).Status);
+        Assert.Equal(ExecutionStatusEnum.Completed,ProgressCalculator.Evaluate(item,year:2027,evaluatedAt:Now).Status);
         completed.ApprovalStatus=ApprovalStatusEnum.Pending;
         Assert.Equal(0m,ProgressCalculator.Evaluate(item,year:2027,evaluatedAt:Now).Percentage);
     }

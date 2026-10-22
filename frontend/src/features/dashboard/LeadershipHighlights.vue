@@ -16,7 +16,7 @@ const toneBorders = { slate: 'border-t-slate-500', emerald: 'border-t-emerald-60
 const cards = computed(() => [
   { status:'total', label:'Tổng', tone:'blue', value:props.total },
   { status:'notStarted', label:'Chưa thực hiện', tone:'slate', value:props.summary.notStarted ?? 0 },
-  { status:'inProgress', label:'Đang thực hiện', tone:'amber', value:(props.summary.inProgressOnTime ?? 0) + (props.summary.inProgressOverdue ?? 0) + (props.summary.expiringSoon ?? 0) },
-  { status:'completed', label:'Hoàn thành', tone:'emerald', value:(props.summary.completedOnTime ?? 0) + (props.summary.completedOverdue ?? 0) }
+  { status:'inProgress', label:'Đang thực hiện', tone:'amber', value:props.summary.inProgress ?? 0 },
+  { status:'completed', label:'Đã hoàn thành', tone:'emerald', value:props.summary.completed ?? 0 }
 ]);
 </script>

@@ -37,7 +37,8 @@ namespace Cdsqg.Api.Controllers
             [FromQuery] int? pageNumber = null,
             [FromQuery] int? pageSize = null,
             [FromQuery] Guid? userAgencyId = null,
-            [FromQuery] bool? restrictForUser = null)
+            [FromQuery] bool? restrictForUser = null,
+            [FromQuery] bool? prioritizeContacts = null)
         {
             var query = _context.Agencies.Include(a => a.ParentAgency).AsNoTrackingWithIdentityResolution();
 
@@ -159,6 +160,15 @@ namespace Cdsqg.Api.Controllers
                 {
                     list = list.Where(a => a.PlanFiles == null || a.PlanFiles.Count == 0).ToList();
                 }
+            }
+
+            if (prioritizeContacts == true)
+            {
+                list = list
+                    .OrderByDescending(a => a.Code == "ALL_AGENCIES" || a.Code == "ALL_MINISTRIES" || a.Code == "ALL_PROVINCES" || a.Code == "ALL_PROVINCES_UBND" || a.Code == "ALL_MINISTRIES_DIRECT")
+                    .ThenByDescending(a => a.ContactPersons != null && a.ContactPersons.Any(c => !string.IsNullOrWhiteSpace(c.Name)))
+                    .ThenBy(a => ProvinceCatalog.DisplayName(a))
+                    .ToList();
             }
 
             var leadCounts = await _context.GoalTaskItems

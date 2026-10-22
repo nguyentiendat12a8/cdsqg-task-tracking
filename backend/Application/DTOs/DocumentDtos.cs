@@ -76,6 +76,10 @@ namespace Cdsqg.Application.DTOs
         public List<string>? SelectedGroups { get; set; }
         public int? FromYear { get; set; }
         public int? ToYear { get; set; }
+        public int? ReportFromYear { get; set; }
+        public int? ReportToYear { get; set; }
+        public DateTime? ExecutionFrom { get; set; }
+        public DateTime? ExecutionTo { get; set; }
         public bool OnlyOngoing { get; set; } = false;
         public string SortBy { get; set; } = "code";
         public string SortOrder { get; set; } = "asc";

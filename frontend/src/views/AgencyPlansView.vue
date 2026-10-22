@@ -2,7 +2,7 @@
   <div class="w-full space-y-4 font-sans">
     
     <!-- Top Header Bar -->
-    <div class="bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-3.5 w-full">
+    <div class="ui-screen-heading bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-3.5 w-full">
       <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div class="flex items-center gap-2.5">
           <span class="p-2 bg-blue-600 text-white rounded-xl shadow-sm font-bold text-sm">
@@ -241,9 +241,9 @@
                 <button 
                   v-if="canEditAgency(item)"
                   @click="openEditModal(item)"
-                  class="w-9 h-9 bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white rounded-xl border border-blue-200/80 transition-all duration-150 flex items-center justify-center mx-auto cursor-pointer shadow-2xs hover:shadow-xs group"
+                  class="ui-action ui-action-primary w-9 h-9 bg-blue-50 hover:bg-blue-600 text-blue-600 hover:text-white rounded-xl border border-blue-200/80 transition-all duration-150 flex items-center justify-center mx-auto cursor-pointer shadow-2xs hover:shadow-xs group"
                   title="Cập nhật Kế hoạch CĐS & Đầu mối liên hệ"
-                >
+                 aria-label="Cập nhật Kế hoạch CĐS & Đầu mối liên hệ">
                   <svg class="w-4 h-4 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
@@ -683,6 +683,17 @@ async function fetchAllAgenciesOptions() {
   }
 }
 
+function sortWithContactsFirst(list) {
+  return [...list].sort((a, b) => {
+    const aHasContacts = (a.contactPersons && a.contactPersons.length > 0) ? 1 : 0;
+    const bHasContacts = (b.contactPersons && b.contactPersons.length > 0) ? 1 : 0;
+    if (bHasContacts !== aHasContacts) {
+      return bHasContacts - aHasContacts;
+    }
+    return (a.name || '').localeCompare(b.name || '', 'vi');
+  });
+}
+
 async function fetchAgencies() {
   loading.value = true;
   try {
@@ -690,6 +701,7 @@ async function fetchAgencies() {
     params.append('pageNumber', pageNumber.value);
     params.append('pageSize', pageSize.value);
     params.append('excludeSpecial', 'true');
+    params.append('prioritizeContacts', 'true');
 
     if (currentUserAgencyId.value) {
       params.append('userAgencyId', currentUserAgencyId.value);
@@ -732,7 +744,7 @@ async function fetchAgencies() {
       }
 
       if (!isUserLevel1.value) {
-        agencies.value = rawItems.filter(a => isAllowedAgencyForUser(a));
+        agencies.value = sortWithContactsFirst(rawItems.filter(a => isAllowedAgencyForUser(a)));
         totalCount.value = agencies.value.length;
         totalPages.value = 1;
       } else {
@@ -988,6 +1000,7 @@ async function exportAgencyPlansToExcel() {
 
     const params = new URLSearchParams();
     params.append('excludeSpecial', 'true');
+    params.append('prioritizeContacts', 'true');
 
     if (currentUserAgencyId.value) {
       params.append('userAgencyId', currentUserAgencyId.value);
@@ -1018,7 +1031,7 @@ async function exportAgencyPlansToExcel() {
     const data = await res.json();
     let agencyList = Array.isArray(data) ? data : (data.items || []);
     if (!isUserLevel1.value) {
-      agencyList = agencyList.filter(a => isAllowedAgencyForUser(a));
+      agencyList = sortWithContactsFirst(agencyList.filter(a => isAllowedAgencyForUser(a)));
     }
 
     if (agencyList.length === 0) {

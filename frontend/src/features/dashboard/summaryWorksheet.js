@@ -1,11 +1,15 @@
 import { styleWorksheet } from '../../utils/worksheetStyle';
+import { activeDocument } from '../../services/documentContext';
 
 export function appendSummaryWorksheet({ XLSX, wb, isGoalsOnly, isTasksOnly, filterNameLabel, timeStr, allFilteredAgencies, metrics }) {
+  const doc = activeDocument.value;
+  const docType = (doc.shortTitle || 'Chiến Lược').toUpperCase();
+  const docName = (doc.name || 'Quyết định số 1266/QĐ-TTg').toUpperCase();
   const reportTitle = isGoalsOnly
-    ? "BÁO CÁO TỔNG HỢP TIẾN ĐỘ THỰC HIỆN MỤC TIÊU CHIẾN LƯỢC - QUYẾT ĐỊNH 1266/QĐ-TTg"
+    ? `BÁO CÁO TỔNG HỢP TIẾN ĐỘ THỰC HIỆN MỤC TIÊU ${docType} - ${docName}`
     : (isTasksOnly
-        ? "BÁO CÁO TỔNG HỢP TIẾN ĐỘ THỰC HIỆN NHIỆM VỤ CHIẾN LƯỢC - QUYẾT ĐỊNH 1266/QĐ-TTg"
-        : "BÁO CÁO TỔNG HỢP TIẾN ĐỘ THỰC HIỆN MỤC TIÊU & NHIỆM VỤ CHIẾN LƯỢC - QUYẾT ĐỊNH 1266/QĐ-TTg");
+        ? `BÁO CÁO TỔNG HỢP TIẾN ĐỘ THỰC HIỆN NHIỆM VỤ ${docType} - ${docName}`
+        : `BÁO CÁO TỔNG HỢP TIẾN ĐỘ THỰC HIỆN MỤC TIÊU & NHIỆM VỤ ${docType} - ${docName}`);
 
   const summaryData = [
     [reportTitle],
@@ -31,22 +35,19 @@ export function appendSummaryWorksheet({ XLSX, wb, isGoalsOnly, isTasksOnly, fil
   if (isGoalsOnly) {
     headerRowSheet1 = [
       "STT", "Loại hình", "Tên Bộ / Ngành / Địa phương", "Số lượng Mục tiêu",
-      "Đang T/H quá hạn", "Đang T/H trong hạn", "Sắp tới hạn",
-      "Đã H/T quá hạn", "Đã H/T trong hạn", "Chưa thực hiện",
+      "Chưa thực hiện", "Đang thực hiện", "Đã hoàn thành",
       "Cán bộ đầu mối chính"
     ];
   } else if (isTasksOnly) {
     headerRowSheet1 = [
       "STT", "Loại hình", "Tên Bộ / Ngành / Địa phương", "Số lượng Nhiệm vụ",
-      "Đang T/H quá hạn", "Đang T/H trong hạn", "Sắp tới hạn",
-      "Đã H/T quá hạn", "Đã H/T trong hạn", "Chưa thực hiện",
+      "Chưa thực hiện", "Đang thực hiện", "Đã hoàn thành",
       "Cán bộ đầu mối chính"
     ];
   } else {
     headerRowSheet1 = [
       "STT", "Loại hình", "Tên Bộ / Ngành / Địa phương", "Tổng số", "Mục tiêu", "Nhiệm vụ",
-      "Đang T/H quá hạn", "Đang T/H trong hạn", "Sắp tới hạn",
-      "Đã H/T quá hạn", "Đã H/T trong hạn", "Chưa thực hiện",
+      "Chưa thực hiện", "Đang thực hiện", "Đã hoàn thành",
       "Cán bộ đầu mối chính"
     ];
   }
@@ -61,32 +62,25 @@ export function appendSummaryWorksheet({ XLSX, wb, isGoalsOnly, isTasksOnly, fil
       summaryData.push([
         idx + 1, agencyTypeLabel, ag.name,
         ag.totalGoals ?? ag.totalItems ?? 0,
-        ag.goalInProgressOverdue ?? ag.inProgressOverdue ?? 0,
-        ag.goalInProgressOnTime ?? ag.inProgressOnTime ?? 0,
-        ag.goalExpiringSoon ?? ag.expiringSoon ?? 0,
-        ag.goalCompletedOverdue ?? ag.completedOverdue ?? 0,
-        ag.goalCompletedOnTime ?? ag.completedOnTime ?? 0,
         ag.goalNotStarted ?? ag.notStarted ?? 0,
+        ag.goalInProgress ?? ag.inProgress ?? 0,
+        ag.goalCompleted ?? ag.completed ?? 0,
         contactStr
       ]);
     } else if (isTasksOnly) {
       summaryData.push([
         idx + 1, agencyTypeLabel, ag.name,
         ag.totalTasks ?? ag.totalItems ?? 0,
-        ag.taskInProgressOverdue ?? ag.inProgressOverdue ?? 0,
-        ag.taskInProgressOnTime ?? ag.inProgressOnTime ?? 0,
-        ag.taskExpiringSoon ?? ag.expiringSoon ?? 0,
-        ag.taskCompletedOverdue ?? ag.completedOverdue ?? 0,
-        ag.taskCompletedOnTime ?? ag.completedOnTime ?? 0,
         ag.taskNotStarted ?? ag.notStarted ?? 0,
+        ag.taskInProgress ?? ag.inProgress ?? 0,
+        ag.taskCompleted ?? ag.completed ?? 0,
         contactStr
       ]);
     } else {
       summaryData.push([
         idx + 1, agencyTypeLabel, ag.name,
         ag.totalItems || 0, ag.totalGoals || 0, ag.totalTasks || 0,
-        ag.inProgressOverdue || 0, ag.inProgressOnTime || 0, ag.expiringSoon || 0,
-        ag.completedOverdue || 0, ag.completedOnTime || 0, ag.notStarted || 0,
+        ag.notStarted || 0, ag.inProgress || 0, ag.completed || 0,
         contactStr
       ]);
     }
@@ -103,37 +97,7 @@ export function appendSummaryWorksheet({ XLSX, wb, isGoalsOnly, isTasksOnly, fil
     { s: { r: headerRowIdxSheet1 - 1, c: 0 }, e: { r: headerRowIdxSheet1 - 1, c: numColsSheet1 - 1 } }
   ];
 
-  if (isGoalsOnly || isTasksOnly) {
-    wsSummary['!cols'] = [
-      { wch: 6 },  // STT
-      { wch: 15 }, // Loại hình
-      { wch: 40 }, // Tên Bộ / Ngành / Địa phương
-      { wch: 18 }, // Số lượng Mục tiêu/Nhiệm vụ
-      { wch: 18 }, // Đang T/H quá hạn
-      { wch: 18 }, // Đang T/H trong hạn
-      { wch: 16 }, // Sắp tới hạn
-      { wch: 16 }, // Đã H/T quá hạn
-      { wch: 16 }, // Đã H/T trong hạn
-      { wch: 16 }, // Chưa thực hiện
-      { wch: 35 }  // Cán bộ đầu mối chính
-    ];
-  } else {
-    wsSummary['!cols'] = [
-      { wch: 6 },  // STT
-      { wch: 15 }, // Loại hình
-      { wch: 40 }, // Tên Bộ / Ngành / Địa phương
-      { wch: 12 }, // Tổng số
-      { wch: 12 }, // Mục tiêu
-      { wch: 12 }, // Nhiệm vụ
-      { wch: 18 }, // Đang T/H quá hạn
-      { wch: 18 }, // Đang T/H trong hạn
-      { wch: 16 }, // Sắp tới hạn
-      { wch: 16 }, // Đã H/T quá hạn
-      { wch: 16 }, // Đã H/T trong hạn
-      { wch: 16 }, // Chưa thực hiện
-      { wch: 35 }  // Cán bộ đầu mối chính
-    ];
-  }
+  wsSummary['!cols'] = headerRowSheet1.map((_, index) => ({ wch: index === 0 ? 6 : index === 2 ? 40 : index === headerRowSheet1.length - 1 ? 35 : 20 }));
 
   styleWorksheet(wsSummary, { numCols: numColsSheet1, headerRowIndex: headerRowIdxSheet1, titleRowIndex: 0 }, XLSX);
   XLSX.utils.book_append_sheet(wb, wsSummary, "TỔNG HỢP CHUNG");

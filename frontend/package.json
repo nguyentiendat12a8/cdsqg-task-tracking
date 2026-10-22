@@ -6,6 +6,8 @@
   "scripts": {
     "check:rules": "node tests/rules.check.mjs",
     "test:shared": "node tests/shared.test.mjs",
+    "test:theme": "node tests/system-theme.browser.mjs",
+    "test:dashboard-time": "node tests/dashboard-time.browser.mjs",
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",

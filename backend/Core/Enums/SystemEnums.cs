@@ -58,7 +58,7 @@ namespace Cdsqg.Core.Enums
     }
 
     /// <summary>
-    /// 6 Trạng thái chuẩn đánh giá tiến độ thực hiện Mục tiêu / Nhiệm vụ theo QĐ 1266
+    /// Trạng thái thực hiện. Giá trị 2–6 giữ để đọc cache legacy, không phát sinh mới.
     /// </summary>
     public enum ExecutionStatusEnum
     {
@@ -67,6 +67,8 @@ namespace Cdsqg.Core.Enums
         InProgressOverdue = 3,  // 3. Đang thực hiện (quá hạn)
         CompletedOnTime = 4,    // 4. Hoàn thành (đúng hạn)
         CompletedOverdue = 5,   // 5. Hoàn thành (quá hạn)
-        ExpiringSoon = 6        // 6. Sắp hết hạn (còn <= 30 ngày)
+        ExpiringSoon = 6,       // Legacy
+        InProgress = 7,
+        Completed = 8
     }
 }

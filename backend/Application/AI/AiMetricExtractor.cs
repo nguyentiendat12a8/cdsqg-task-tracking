@@ -33,9 +33,7 @@ public sealed class AiMetricExtractor(IOptions<AiDataOptions> settings, IHttpCli
                 response_format=new { type="json_schema", json_schema=new { name="metric_observations", strict=true, schema } }
             };
             using var response = await AiProviderRequest.SendAsync(clients.CreateClient("ai-provider"), endpoint, options.ApiKey, body, ct);
-            if (!response.IsSuccessStatusCode) throw new InvalidOperationException(response.StatusCode is System.Net.HttpStatusCode.BadGateway or System.Net.HttpStatusCode.ServiceUnavailable or System.Net.HttpStatusCode.GatewayTimeout
-                ? $"Nhà cung cấp AI trả HTTP {(int)response.StatusCode}: dịch vụ tạm thời không đáp ứng sau 3 lần thử. Tài liệu được giữ lại; hãy đọc lại sau."
-                : $"Nhà cung cấp AI trả HTTP {(int)response.StatusCode}; kiểm tra cấu hình/quota, không có dữ liệu nào được tự duyệt.");
+            if (!response.IsSuccessStatusCode) throw await AiProviderRequest.FailureAsync(response,options.Model,ct);
             using var json = await JsonDocument.ParseAsync(await response.Content.ReadAsStreamAsync(ct), cancellationToken:ct);
             var choice = json.RootElement.GetProperty("choices")[0];
             if (choice.GetProperty("finish_reason").GetString() != "stop") throw new InvalidOperationException("AI chưa trả kết quả đầy đủ; tài liệu được giữ để thử lại.");

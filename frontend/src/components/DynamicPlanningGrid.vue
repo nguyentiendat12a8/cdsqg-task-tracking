@@ -150,6 +150,7 @@
               
               <!-- SCROLLABLE COLUMNS -->
               
+              <th v-if="activeSubTab === 'goals'" class="px-4 py-3 border-r border-slate-200 text-center min-w-[120px]">Kết quả cần đạt</th>
               <!-- Dynamic Year Columns -->
               <th 
                 v-for="year in gridData.dynamicYears" 
@@ -190,9 +191,29 @@
                 </td>
 
                 <td class="px-4 py-3 border-r border-slate-200 font-normal text-slate-700 min-w-[130px] w-[130px] max-w-[130px] sticky left-[355px] z-20 bg-white group-hover:bg-blue-50 shadow-[3px_0_6px_-1px_rgba(0,0,0,0.15)]">
-                  {{ item.leadAgencyName || item.leadAgencyCode || 'N/A' }}
+                  <VTooltip 
+                    v-if="item.leadAgencyDisplayText || item.leadAgencyName || item.leadAgencyCode"
+                    theme="custom-dark"
+                    placement="top"
+                    :delay="{ show: 1500, hide: 0 }"
+                  >
+                    <div class="line-clamp-2 font-normal text-slate-700 text-xs leading-relaxed cursor-help">
+                      {{ item.leadAgencyDisplayText || item.leadAgencyName || item.leadAgencyCode }}
+                    </div>
+
+                    <template #popper>
+                      <div class="whitespace-normal break-words text-left leading-relaxed min-w-[200px] max-w-[420px] p-1">
+                        <span class="font-semibold text-blue-300 block mb-1 text-xs">🏛️ Cơ quan chủ trì</span>
+                        {{ item.leadAgencyDisplayText || item.leadAgencyName || item.leadAgencyCode }}
+                      </div>
+                    </template>
+                  </VTooltip>
+                  <span v-else class="text-slate-400 italic">N/A</span>
                 </td>
 
+                <td class="px-3 py-3 border-r border-slate-200 text-center whitespace-nowrap">
+                  {{ item.resultTarget == null ? '—' : formatNumber(item.resultTarget) }}<span v-if="item.resultTarget != null"> {{ item.unitName }}</span>
+                </td>
                 <!-- SCROLLABLE CELLS -->
 
                 <!-- Dynamic Year Target Cells with INLINE AUTO-SAVE -->
@@ -202,7 +223,8 @@
                   class="px-3 py-2 border-r border-slate-200 text-center transition"
                   :class="{ 'bg-slate-100/80 opacity-40': !isYearEnabledForItem(item, year) }"
                 >
-                  <template v-if="isQuantitative(item)">
+                  <template v-if="!isYearEnabledForItem(item, year)"><span class="text-slate-400" aria-label="Ngoài thời gian thực hiện">—</span></template>
+                  <template v-else-if="isQuantitative(item)">
                     <div class="relative flex items-center">
                       <QuantityInput  
                         v-model="item.yearlyTargets[year]" 
@@ -229,7 +251,7 @@
               </tr>
 
               <tr v-if="filteredGoalsList.length === 0">
-                <td :colspan="3 + gridData.dynamicYears.length" class="px-4 py-8 text-center text-slate-400 italic text-xs bg-slate-50/50">
+                <td :colspan="(activeSubTab === 'goals' ? 4 : 3) + gridData.dynamicYears.length" class="px-4 py-8 text-center text-slate-400 italic text-xs bg-slate-50/50">
                   Chưa có Mục tiêu (1A) nào trong văn bản này.
                 </td>
               </tr>
@@ -263,7 +285,24 @@
                 </td>
 
                 <td class="px-4 py-3 border-r border-slate-200 font-normal text-slate-700 min-w-[130px] w-[130px] max-w-[130px] sticky left-[355px] z-20 bg-white group-hover:bg-blue-50 shadow-[3px_0_6px_-1px_rgba(0,0,0,0.15)]">
-                  {{ item.leadAgencyName || item.leadAgencyCode || 'N/A' }}
+                  <VTooltip 
+                    v-if="item.leadAgencyDisplayText || item.leadAgencyName || item.leadAgencyCode"
+                    theme="custom-dark"
+                    placement="top"
+                    :delay="{ show: 1500, hide: 0 }"
+                  >
+                    <div class="line-clamp-2 font-normal text-slate-700 text-xs leading-relaxed cursor-help">
+                      {{ item.leadAgencyDisplayText || item.leadAgencyName || item.leadAgencyCode }}
+                    </div>
+
+                    <template #popper>
+                      <div class="whitespace-normal break-words text-left leading-relaxed min-w-[200px] max-w-[420px] p-1">
+                        <span class="font-semibold text-blue-300 block mb-1 text-xs">🏛️ Cơ quan chủ trì</span>
+                        {{ item.leadAgencyDisplayText || item.leadAgencyName || item.leadAgencyCode }}
+                      </div>
+                    </template>
+                  </VTooltip>
+                  <span v-else class="text-slate-400 italic">N/A</span>
                 </td>
 
                 <!-- SCROLLABLE CELLS -->
@@ -275,7 +314,8 @@
                   class="px-3 py-2 border-r border-slate-200 text-center transition"
                   :class="{ 'bg-slate-100/80 opacity-40': !isYearEnabledForItem(item, year) }"
                 >
-                  <template v-if="isQuantitative(item)">
+                  <template v-if="!isYearEnabledForItem(item, year)"><span class="text-slate-400" aria-label="Ngoài thời gian thực hiện">—</span></template>
+                  <template v-else-if="isQuantitative(item)">
                     <div class="relative flex items-center">
                       <QuantityInput  
                         v-model="item.yearlyTargets[year]" 
@@ -302,7 +342,7 @@
               </tr>
 
               <tr v-if="filteredTasksList.length === 0">
-                <td :colspan="3 + gridData.dynamicYears.length" class="px-4 py-8 text-center text-slate-400 italic text-xs bg-slate-50/50">
+                <td :colspan="(activeSubTab === 'goals' ? 4 : 3) + gridData.dynamicYears.length" class="px-4 py-8 text-center text-slate-400 italic text-xs bg-slate-50/50">
                   Chưa có Nhiệm vụ (1B) nào trong văn bản này.
                 </td>
               </tr>
@@ -327,6 +367,7 @@
 </template>
 
 <script setup>
+import { executionStatusOptions } from '../shared/statusPresentation';
 import { formatNumber } from "../shared/formatters";
 import QuantityInput from './QuantityInput.vue';
 import DocumentPagination from '../features/document/DocumentPagination.vue';
@@ -392,12 +433,10 @@ const groupFilterOptions = computed(() => {
   return props.filterItemType === 'Goal' ? GOAL_GROUPS : (props.filterItemType === 'Task' ? TASK_GROUPS : [...GOAL_GROUPS, ...TASK_GROUPS]);
 });
 
-const gridStatusOptions = ref([
-  { value: 'Completed', label: 'Hoàn thành (≥100%)' },
-  { value: 'OnTrack', label: 'Đạt kế hoạch (≥80%)' },
-  { value: 'Lagging', label: 'Chậm tiến độ (<80%)' },
-  { value: 'NoReport', label: 'Chưa có báo cáo' }
-]);
+const gridStatusOptions = [
+  ...executionStatusOptions,
+  { value: 'Overdue', label: 'Quá hạn' }
+];
 
 const yearRangeOptions = computed(() => [2026, 2027, 2028, 2029, 2030].map(y => ({ value: y, label: String(y) })));
 
@@ -705,33 +744,13 @@ function filterGridItem(item) {
     if (appliedFilters.value.toYear && targetYear > tYr) return false;
   }
 
-  // 7. Progress / Alert Status Filter (Multi-select)
-  if (appliedFilters.value.selectedStatuses && appliedFilters.value.selectedStatuses.length > 0) {
-    const selectedStatuses = appliedFilters.value.selectedStatuses;
-    const latestVal = item.completionPercentage;
-    const latestStatus = item.latestProgressStatus;
-    
-    let matchStatus = false;
-    for (const statusFilter of selectedStatuses) {
-      if (statusFilter === 'Completed') {
-        if (['CompletedOnTime', 'CompletedOverdue'].includes(item.calculatedStatus)) {
-          matchStatus = true; break;
-        }
-      } else if (statusFilter === 'OnTrack') {
-        if (item.calculatedAlert === 'Green' && !['CompletedOnTime', 'CompletedOverdue'].includes(item.calculatedStatus)) {
-          matchStatus = true; break;
-        }
-      } else if (statusFilter === 'Lagging') {
-        if (['Yellow', 'Red'].includes(item.calculatedAlert)) {
-          matchStatus = true; break;
-        }
-      } else if (statusFilter === 'NoReport') {
-        if (latestVal === null && latestStatus === null) {
-          matchStatus = true; break;
-        }
-      }
-    }
-    if (!matchStatus) return false;
+  // Execution state is supplied by the BE calculator, independent of deadline alerts.
+  if (appliedFilters.value.selectedStatuses?.length) {
+    const filterOverdue = appliedFilters.value.selectedStatuses.includes('Overdue');
+    const statuses = appliedFilters.value.selectedStatuses.filter(s => s !== 'Overdue');
+    const matchOverdue = filterOverdue && item.deadlineStatus === 'Overdue';
+    const matchStatus = statuses.length > 0 && statuses.includes(item.calculatedStatus);
+    if (!matchOverdue && !matchStatus) return false;
   }
 
   // 8. Year Filter (Multi-select)
@@ -777,11 +796,10 @@ function isQuantitative(item) {
 
 function isYearEnabledForItem(item, year) {
   if (!item) return true;
-  if (item.isOngoing) return true;
 
   const yr = Number(year);
-  let startYr = 2026;
-  let dueYr = 2030;
+  let startYr = gridData.value.startYear;
+  let dueYr = gridData.value.endYear;
 
   if (item.startDate) {
     const dt = new Date(item.startDate);

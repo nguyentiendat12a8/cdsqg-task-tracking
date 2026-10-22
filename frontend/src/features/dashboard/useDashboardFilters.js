@@ -1,8 +1,10 @@
+import { defaultDashboardTimeFilters } from './dashboardTimeFilters';
+import { activeDocument } from '../../services/documentContext';
 import { ref, computed } from 'vue';
 import { GOAL_SECTIONS, GOAL_GROUPS, TASK_SECTIONS, TASK_GROUPS } from '../../config/planningStructureConfig';
 
 export function useDashboardFilters({ agencies, loadDashboardMetrics }) {
-  const dashboardFilter = ref('goals'); // 'goals', 'tasks'
+  const dashboardFilter = ref('all'); // Both types are loaded; each visualization switches independently.
 
   function setDashboardFilter(val) {
     dashboardFilter.value = val;
@@ -32,7 +34,11 @@ export function useDashboardFilters({ agencies, loadDashboardMetrics }) {
   const selectedGroups = ref([]);
   const fromYear = ref(null);
   const toYear = ref(null);
-  const isOngoingOnly = ref(false);
+  const defaults = defaultDashboardTimeFilters();
+  const isOngoingOnly = ref(defaults.isOngoingOnly);
+  const reportFromYear = ref(defaults.reportFromYear), reportToYear = ref(defaults.reportToYear);
+  const executionFrom = ref(defaults.executionFrom), executionTo = ref(defaults.executionTo);
+  const timeModels = { reportFromYear, reportToYear, executionFrom, executionTo, isOngoingOnly };
 
   const dashboardFilterOptions = ref([
     { value: 'goals', label: '🎯 Mục tiêu' },
@@ -46,13 +52,8 @@ export function useDashboardFilters({ agencies, loadDashboardMetrics }) {
 
   const activeDashboardFilterCount = computed(() => {
     let count = 0;
-    if (dashboardFilter.value && dashboardFilter.value !== 'goals') count++;
-    if (selectedAgencyIds.value?.length) count++;
-    if (selectedSubAgencyIds.value?.length) count++;
-    if (selectedScopes.value?.length) count++;
-    if (selectedSections.value?.length) count++;
-    if (selectedGroups.value?.length) count++;
-    if (fromYear.value || toYear.value) count++;
+    if (reportFromYear.value || reportToYear.value) count++;
+    if (executionFrom.value || executionTo.value) count++;
     if (isOngoingOnly.value) count++;
     return count;
   });
@@ -66,8 +67,8 @@ export function useDashboardFilters({ agencies, loadDashboardMetrics }) {
     selectedGroups.value = [];
     fromYear.value = null;
     toYear.value = null;
-    isOngoingOnly.value = false;
-    dashboardFilter.value = 'goals';
+    for (const [key, value] of Object.entries(defaultDashboardTimeFilters())) timeModels[key].value = value;
+    dashboardFilter.value = 'all';
     loadDashboardMetrics();
   }
 
@@ -98,7 +99,7 @@ export function useDashboardFilters({ agencies, loadDashboardMetrics }) {
 
   const agencyOptions = computed(() => leadAgencyOptions.value);
 
-  const yearOptions = computed(() => [2026, 2027, 2028, 2029, 2030].map(y => ({ value: y, label: String(y) })));
+  const yearOptions = computed(() => Array.from({ length: activeDocument.value.endYear - activeDocument.value.startYear + 1 }, (_, i) => activeDocument.value.startYear + i).map(y => ({ value: y, label: String(y) })));
 
   const sectionOptions = computed(() => [...GOAL_SECTIONS, ...TASK_SECTIONS]);
   const groupOptions = computed(() => [...GOAL_GROUPS, ...TASK_GROUPS]);
@@ -117,7 +118,7 @@ export function useDashboardFilters({ agencies, loadDashboardMetrics }) {
   selectedGroups,
   fromYear,
   toYear,
-  isOngoingOnly,
+  isOngoingOnly, reportFromYear, reportToYear, executionFrom, executionTo,
   dashboardFilterOptions,
   scopeOptions,
   activeDashboardFilterCount,

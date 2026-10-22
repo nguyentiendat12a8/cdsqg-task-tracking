@@ -51,6 +51,16 @@ namespace Cdsqg.Core.Entities
         public Agency? LeadAgency { get; set; }
 
         /// <summary>
+        /// Tên text hiển thị nguyên văn của Đơn vị chủ trì (theo văn bản quyết định)
+        /// </summary>
+        public string? LeadAgencyDisplayText { get; set; }
+
+        /// <summary>
+        /// Tên text hiển thị nguyên văn của các Đơn vị phối hợp (theo văn bản quyết định)
+        /// </summary>
+        public string? CoordinatingAgenciesDisplayText { get; set; }
+
+        /// <summary>
         /// Đơn vị trực thuộc được giao nhiệm vụ (Optional)
         /// </summary>
         public Guid? AssignedAgencyId { get; set; }
@@ -64,6 +74,8 @@ namespace Cdsqg.Core.Entities
         /// <summary>
         /// Đơn vị tính
         /// </summary>
+        public decimal? ResultTarget { get; set; }
+
         public Guid? UnitId { get; set; }
         public UnitDictionary? Unit { get; set; }
 

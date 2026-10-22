@@ -56,44 +56,34 @@ export async function appendAgencyWorksheet({ XLSX, wb, ag, usedSheetNames, filt
   if (isGoalsOnly) {
     sheetRows.push(["BẢNG TỔNG HỢP TRẠNG THÁI TIẾN ĐỘ MỤC TIÊU CỦA ĐƠN VỊ"]);
     sheetRows.push([
-      "Số lượng Mục tiêu", "Đang T/H quá hạn", "Đang T/H trong hạn", "Sắp tới hạn",
-      "Đã H/T quá hạn", "Đã H/T trong hạn", "Chưa thực hiện"
+      "Số lượng Mục tiêu", "Chưa thực hiện", "Đang thực hiện", "Đã hoàn thành"
     ]);
     sheetRows.push([
       ag.totalGoals ?? ag.totalItems ?? 0,
-      ag.goalInProgressOverdue ?? ag.inProgressOverdue ?? 0,
-      ag.goalInProgressOnTime ?? ag.inProgressOnTime ?? 0,
-      ag.goalExpiringSoon ?? ag.expiringSoon ?? 0,
-      ag.goalCompletedOverdue ?? ag.completedOverdue ?? 0,
-      ag.goalCompletedOnTime ?? ag.completedOnTime ?? 0,
-      ag.goalNotStarted ?? ag.notStarted ?? 0
+      ag.goalNotStarted ?? ag.notStarted ?? 0,
+        ag.goalInProgress ?? ag.inProgress ?? 0,
+        ag.goalCompleted ?? ag.completed ?? 0
     ]);
   } else if (isTasksOnly) {
     sheetRows.push(["BẢNG TỔNG HỢP TRẠNG THÁI TIẾN ĐỘ NHIỆM VỤ CỦA ĐƠN VỊ"]);
     sheetRows.push([
-      "Số lượng Nhiệm vụ", "Đang T/H quá hạn", "Đang T/H trong hạn", "Sắp tới hạn",
-      "Đã H/T quá hạn", "Đã H/T trong hạn", "Chưa thực hiện"
+      "Số lượng Nhiệm vụ", "Chưa thực hiện", "Đang thực hiện", "Đã hoàn thành"
     ]);
     sheetRows.push([
       ag.totalTasks ?? ag.totalItems ?? 0,
-      ag.taskInProgressOverdue ?? ag.inProgressOverdue ?? 0,
-      ag.taskInProgressOnTime ?? ag.inProgressOnTime ?? 0,
-      ag.taskExpiringSoon ?? ag.expiringSoon ?? 0,
-      ag.taskCompletedOverdue ?? ag.completedOverdue ?? 0,
-      ag.taskCompletedOnTime ?? ag.completedOnTime ?? 0,
-      ag.taskNotStarted ?? ag.notStarted ?? 0
+      ag.taskNotStarted ?? ag.notStarted ?? 0,
+        ag.taskInProgress ?? ag.inProgress ?? 0,
+        ag.taskCompleted ?? ag.completed ?? 0
     ]);
   } else {
     sheetRows.push(["BẢNG TỔNG HỢP TRẠNG THÁI TIẾN ĐỘ CỦA ĐƠN VỊ"]);
     sheetRows.push([
       "Tổng số hạng mục", "Mục tiêu", "Nhiệm vụ",
-      "Đang T/H quá hạn", "Đang T/H trong hạn", "Sắp tới hạn",
-      "Đã H/T quá hạn", "Đã H/T trong hạn", "Chưa thực hiện"
+      "Chưa thực hiện", "Đang thực hiện", "Đã hoàn thành"
     ]);
     sheetRows.push([
       ag.totalItems || 0, ag.totalGoals || 0, ag.totalTasks || 0,
-      ag.inProgressOverdue || 0, ag.inProgressOnTime || 0, ag.expiringSoon || 0,
-      ag.completedOverdue || 0, ag.completedOnTime || 0, ag.notStarted || 0
+      ag.notStarted || 0, ag.inProgress || 0, ag.completed || 0
     ]);
   }
   sheetRows.push([]);
@@ -117,50 +107,40 @@ export async function appendAgencyWorksheet({ XLSX, wb, ag, usedSheetNames, filt
       sheetRows.push([`${secCounter}. TỔNG SỐ MỤC TIÊU THEO TRẠNG THÁI CỦA TỪNG ĐƠN VỊ TRỰC THUỘC`]);
       sheetRows.push([
         "STT", "Tên Đơn Vị Trực Thuộc", "Số Lượng Mục Tiêu",
-        "Đang T/H quá hạn", "Đang T/H trong hạn", "Sắp tới hạn",
-        "Đã H/T quá hạn", "Đã H/T trong hạn", "Chưa thực hiện"
+        "Chưa thực hiện", "Đang thực hiện", "Đã hoàn thành"
       ]);
       subAgencies.forEach((sub, sIdx) => {
         sheetRows.push([
           sIdx + 1, sub.name, sub.totalGoals ?? sub.totalItems ?? 0,
-          sub.goalInProgressOverdue ?? sub.inProgressOverdue ?? 0,
-          sub.goalInProgressOnTime ?? sub.inProgressOnTime ?? 0,
-          sub.goalExpiringSoon ?? sub.expiringSoon ?? 0,
-          sub.goalCompletedOverdue ?? sub.completedOverdue ?? 0,
-          sub.goalCompletedOnTime ?? sub.completedOnTime ?? 0,
-          sub.goalNotStarted ?? sub.notStarted ?? 0
+          sub.goalNotStarted ?? sub.notStarted ?? 0,
+          sub.goalInProgress ?? sub.inProgress ?? 0,
+          sub.goalCompleted ?? sub.completed ?? 0
         ]);
       });
     } else if (isTasksOnly) {
       sheetRows.push([`${secCounter}. TỔNG SỐ NHIỆM VỤ THEO TRẠNG THÁI CỦA TỪNG ĐƠN VỊ TRỰC THUỘC`]);
       sheetRows.push([
         "STT", "Tên Đơn Vị Trực Thuộc", "Số Lượng Nhiệm Vụ",
-        "Đang T/H quá hạn", "Đang T/H trong hạn", "Sắp tới hạn",
-        "Đã H/T quá hạn", "Đã H/T trong hạn", "Chưa thực hiện"
+        "Chưa thực hiện", "Đang thực hiện", "Đã hoàn thành"
       ]);
       subAgencies.forEach((sub, sIdx) => {
         sheetRows.push([
           sIdx + 1, sub.name, sub.totalTasks ?? sub.totalItems ?? 0,
-          sub.taskInProgressOverdue ?? sub.inProgressOverdue ?? 0,
-          sub.taskInProgressOnTime ?? sub.inProgressOnTime ?? 0,
-          sub.taskExpiringSoon ?? sub.expiringSoon ?? 0,
-          sub.taskCompletedOverdue ?? sub.completedOverdue ?? 0,
-          sub.taskCompletedOnTime ?? sub.completedOnTime ?? 0,
-          sub.taskNotStarted ?? sub.notStarted ?? 0
+          sub.taskNotStarted ?? sub.notStarted ?? 0,
+          sub.taskInProgress ?? sub.inProgress ?? 0,
+          sub.taskCompleted ?? sub.completed ?? 0
         ]);
       });
     } else {
       sheetRows.push([`${secCounter}. TỔNG SỐ MỤC TIÊU, NHIỆM VỤ THEO TRẠNG THÁI CỦA TỪNG ĐƠN VỊ TRỰC THUỘC`]);
       sheetRows.push([
         "STT", "Tên Đơn Vị Trực Thuộc", "Tổng Số", "Mục Tiêu", "Nhiệm Vụ",
-        "Đang T/H quá hạn", "Đang T/H trong hạn", "Sắp tới hạn",
-        "Đã H/T quá hạn", "Đã H/T trong hạn", "Chưa thực hiện"
+        "Chưa thực hiện", "Đang thực hiện", "Đã hoàn thành"
       ]);
       subAgencies.forEach((sub, sIdx) => {
         sheetRows.push([
           sIdx + 1, sub.name, sub.totalItems || 0, sub.totalGoals || 0, sub.totalTasks || 0,
-          sub.inProgressOverdue || 0, sub.inProgressOnTime || 0, sub.expiringSoon || 0,
-          sub.completedOverdue || 0, sub.completedOnTime || 0, sub.notStarted || 0
+          sub.notStarted || 0, sub.inProgress || 0, sub.completed || 0
         ]);
       });
     }

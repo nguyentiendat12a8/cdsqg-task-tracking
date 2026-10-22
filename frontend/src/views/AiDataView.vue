@@ -139,7 +139,7 @@ function closeReview(){if(!busy.value)selected.value=null;}
 async function downloadPrivate(path,name){await act(async()=>{const res=await fetchWithAuth(getApiUrl(path));if(!res.ok)throw new Error('Không tải được tài liệu gốc.');const url=URL.createObjectURL(await res.blob());const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);});}
 async function review(approve){busy.value=true;reviewError.value='';try{await api(`suggestions/${selected.value.id}/review`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({approve,acceptedValue:approve?Number(acceptedValue.value):null,note:reviewNote.value,verified:checked.value})});selected.value=null;message.value=approve?'Đã duyệt và tạo báo cáo mới cho các mục tiêu liên kết theo đúng năm số liệu.':'Đã từ chối đề xuất.';await refresh(true);}catch(e){reviewError.value=e.message;}finally{busy.value=false;}}
 watch([tab,status,metricFilter],()=>{page.value=1;refresh();});watch(page,()=>refresh());
-onMounted(()=>refresh());onUnmounted(()=>{version++;historyVersion++;});
+onMounted(()=>refresh());onUnmounted(()=>{version++;});
 </script>
 <style scoped>
 .field{display:block;width:100%;min-height:var(--ui-control-height);margin-top:8px;border:1px solid var(--color-slate-300);border-radius:8px;padding:8px 12px;background:white}

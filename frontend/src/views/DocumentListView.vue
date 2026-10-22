@@ -2,7 +2,7 @@
   <div class="w-full space-y-6 font-sans">
     
     <!-- Header Bar -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 w-full">
+    <div class="ui-screen-heading flex flex-col md:flex-row md:items-center justify-between gap-4 bg-white p-6 rounded-2xl shadow-sm border border-slate-200/80 w-full">
       <div>
         <div class="flex items-center gap-2.5">
           <span class="p-2 bg-blue-600 text-white rounded-xl shadow-sm">

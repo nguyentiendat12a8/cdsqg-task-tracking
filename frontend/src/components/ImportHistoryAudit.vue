@@ -2,7 +2,7 @@
   <div class="w-full bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80 space-y-6 font-sans">
     
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-100 pb-4 gap-4">
+    <div class="ui-section-heading flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-slate-100 pb-4 gap-4">
       <div>
         <h2 class="text-lg font-bold text-slate-800 flex items-center gap-2">
           📥 Thống kê lịch sử nạp dữ liệu file

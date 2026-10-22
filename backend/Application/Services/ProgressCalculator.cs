@@ -27,7 +27,10 @@ public static class ProgressCalculator
                 throw new InvalidOperationException("Chỉ tiêu tùy chỉnh chỉ nhận năm (YYYY) và số lớn hơn 0.");
     }
     public sealed record Result(int Year, decimal? ActualValue, decimal? Target,
-        bool IsCustomBaseline, decimal? Percentage, ExecutionStatusEnum Status, AlertStatusEnum Alert);
+        bool IsCustomBaseline, decimal? Percentage, ExecutionStatusEnum Status, AlertStatusEnum Alert)
+    {
+        public string DeadlineStatus { get; init; } = "OnTime";
+    }
 
     public static (decimal? Target, bool IsCustom) ResolveBaseline(GoalTaskItem item, int year)
     {
@@ -36,6 +39,7 @@ public static class ProgressCalculator
             return (custom, true);
         var target = item.Baselines.FirstOrDefault(b => b.Year == year)?.TargetQuantity;
         if (target > 0) return (target, false);
+        if (item.ResultTarget.HasValue) return (GoalResultPlan.CumulativeTarget(item, year), false);
         // Legacy records without a unit are displayed as percentages throughout the application.
         if (!item.UnitId.HasValue || item.Unit?.Name == "%" || item.Unit?.Code == "PERCENT") return (100m, false);
         return (null, false);
@@ -126,15 +130,14 @@ public static class ProgressCalculator
         var overdue = deadline.HasValue && now.Date > deadline.Value
             || products.Any(d => d.DueDate.HasValue && now.Date > d.DueDate.Value.Date
                 && d.CurrentStatus?.ToLowerInvariant() is not ("completed" or "4"));
-        var status = completed
-            ? deadline.HasValue && report!.LogDate.Date > deadline.Value ? ExecutionStatusEnum.CompletedOverdue : ExecutionStatusEnum.CompletedOnTime
-            : overdue ? ExecutionStatusEnum.InProgressOverdue
-            : !started ? ExecutionStatusEnum.NotStarted
-            : deadline.HasValue && (deadline.Value - now.Date).TotalDays <= 30 ? ExecutionStatusEnum.ExpiringSoon
-            : ExecutionStatusEnum.InProgressOnTime;
+        var status = completed ? ExecutionStatusEnum.Completed : started ? ExecutionStatusEnum.InProgress : ExecutionStatusEnum.NotStarted;
+        var deadlineStatus = completed
+            ? deadline.HasValue && report!.LogDate.Date > deadline.Value ? "CompletedOverdue" : "CompletedOnTime"
+            : overdue ? "Overdue"
+            : deadline.HasValue && (deadline.Value - now.Date).TotalDays <= 30 ? "ExpiringSoon" : "OnTime";
         var alert = percentage >= 95 ? AlertStatusEnum.Green
             : percentage >= (item.EvaluationType == EvaluationTypeEnum.Quantitative ? 70 : 50) ? AlertStatusEnum.Yellow : AlertStatusEnum.Red;
-        return new(reportYear, actual, target, custom, percentage, status, alert);
+        return new(reportYear, actual, target, custom, percentage, status, alert) { DeadlineStatus = deadlineStatus };
     }
 
     public static Result EvaluateOverall(GoalTaskItem item, IEnumerable<Agency> agencies, DateTime? evaluatedAt = null, int? reportYear = null)
@@ -153,16 +156,17 @@ public static class ProgressCalculator
         var results = ids.Select(id => Evaluate(item, agencyId: id, year: year, evaluatedAt: evaluatedAt)).ToList();
         var (target, custom) = ResolveBaseline(item, year);
         if (results.Count == 0) return new(year, null, target, custom, null, ExecutionStatusEnum.NotStarted, AlertStatusEnum.Red);
-        var allComplete = results.All(r => r.Status is ExecutionStatusEnum.CompletedOnTime or ExecutionStatusEnum.CompletedOverdue);
+        var allComplete = results.All(r => r.Status == ExecutionStatusEnum.Completed);
         var percentage = item.EvaluationType == EvaluationTypeEnum.Quantitative && target == null ? (decimal?)null
             : Math.Round(results.Average(r => Math.Clamp(r.Percentage ?? 0, 0m, 100m)), 2);
         if (!allComplete && percentage >= 100m) percentage = 99.99m;
-        var status = allComplete ? results.Any(r => r.Status == ExecutionStatusEnum.CompletedOverdue) ? ExecutionStatusEnum.CompletedOverdue : ExecutionStatusEnum.CompletedOnTime
-            : results.Any(r => r.Status == ExecutionStatusEnum.InProgressOverdue) ? ExecutionStatusEnum.InProgressOverdue
-            : results.Any(r => r.Status == ExecutionStatusEnum.ExpiringSoon) ? ExecutionStatusEnum.ExpiringSoon
-            : results.All(r => r.Status == ExecutionStatusEnum.NotStarted) ? ExecutionStatusEnum.NotStarted : ExecutionStatusEnum.InProgressOnTime;
+        var status = allComplete ? ExecutionStatusEnum.Completed
+            : results.All(r => r.Status == ExecutionStatusEnum.NotStarted) ? ExecutionStatusEnum.NotStarted : ExecutionStatusEnum.InProgress;
+        var deadlineStatus = allComplete ? results.Any(r => r.DeadlineStatus == "CompletedOverdue") ? "CompletedOverdue" : "CompletedOnTime"
+            : results.Any(r => r.DeadlineStatus == "Overdue") ? "Overdue"
+            : results.Any(r => r.DeadlineStatus == "ExpiringSoon") ? "ExpiringSoon" : "OnTime";
         return new(year, null, target, custom, percentage, status,
-            percentage >= 95 ? AlertStatusEnum.Green : percentage >= 70 ? AlertStatusEnum.Yellow : AlertStatusEnum.Red);
+            percentage >= 95 ? AlertStatusEnum.Green : percentage >= 70 ? AlertStatusEnum.Yellow : AlertStatusEnum.Red) { DeadlineStatus = deadlineStatus };
     }
 
     public static DateTime? AnnualEvaluationDate(int? year)

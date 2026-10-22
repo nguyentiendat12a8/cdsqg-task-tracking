@@ -1,17 +1,23 @@
 <template>
-  <header class="h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between shrink-0 shadow-xs z-40">
+  <header class="app-header h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between shrink-0 shadow-xs z-40">
     <button class="md:hidden shrink-0 mr-2 p-2 rounded-lg border border-slate-200" aria-label="Mở hoặc đóng menu" :aria-expanded="menuOpen" @click="$emit('toggle-menu')">☰</button>
     <!-- System Official Title Branding -->
-    <div class="flex items-center gap-3">
-      <div>
-        <h1 class="text-sm sm:text-base font-bold text-slate-800 leading-snug">
-          Hệ thống theo dõi nhiệm vụ được giao tại Quyết định số 1266/QĐ-TTg ngày 14/07/2026
+    <div class="flex items-center gap-3 min-w-0 flex-1 mr-3">
+      <div class="truncate">
+        <h1
+          class="ui-app-title truncate font-bold text-slate-800"
+          title="HỆ THỐNG THEO DÕI NHIỆM VỤ CHUYỂN ĐỔI SỐ QUỐC GIA"
+        >
+          HỆ THỐNG THEO DÕI NHIỆM VỤ CHUYỂN ĐỔI SỐ QUỐC GIA
         </h1>
       </div>
     </div>
 
-    <!-- Right Side Actions: Bell & User Character Avatar Popover -->
-    <div class="flex items-center gap-2">
+    <!-- Center/Right: Document Mode Switcher and Actions -->
+    <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+      <!-- Document Mode Switcher (1266 vs 2629) -->
+      <DocumentModeSwitcher />
+
       <!-- 1. Notification Bell Button (Right next to user icon) -->
       <NotificationCenter />
 
@@ -76,6 +82,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import NotificationCenter from './NotificationCenter.vue';
+import DocumentModeSwitcher from './DocumentModeSwitcher.vue';
 import { authState } from '../services/auth';
 
 const props = defineProps({
@@ -114,4 +121,3 @@ onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
 });
 </script>
-

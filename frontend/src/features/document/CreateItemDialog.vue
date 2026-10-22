@@ -76,6 +76,8 @@
             />
           </div>
 
+          <GoalResultField v-if="createItemType === 'Goal'" v-model="createForm.resultTarget" :unit-name="createForm.unitName" />
+
           <!-- Is Ongoing / Thường Xuyên Toggle -->
           <div class="flex items-center gap-2.5 p-3 bg-blue-50/70 border border-blue-200 rounded-xl">
             <input
@@ -155,6 +157,11 @@
             </div>
           </div>
 
+          <AgencyDisplayOptions
+            v-model:lead-text="createForm.leadAgencyDisplayText"
+            v-model:coordinating-text="createForm.coordinatingAgenciesDisplayText"
+          />
+
           <!-- Multi-Deliverables Section for Tasks (Phương án 1: Phụ lục II) -->
           <div v-if="createItemType === 'Task'" class="border border-slate-200 rounded-xl p-3.5 bg-slate-50/50 space-y-3">
             <div class="flex items-center justify-between">
@@ -217,6 +224,8 @@
 </template>
 
 <script setup>
+import GoalResultField from './GoalResultField.vue';
+import AgencyDisplayOptions from './AgencyDisplayOptions.vue';
 import ActionButton from "../../components/ActionButton.vue";
 import SearchableSelect from '../../components/SearchableSelect.vue';
 import DatePicker from '../../components/DatePicker.vue';

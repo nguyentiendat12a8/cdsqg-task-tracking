@@ -393,7 +393,7 @@ async function submitItem() {
 
   if (form.value.isOngoing) {
     form.value.startDate = new Date('2026-01-01T00:00:00.000Z').toISOString();
-    form.value.dueDate = new Date('2030-12-31T23:59:59.000Z').toISOString();
+    form.value.dueDate = new Date('2030-12-31T00:00:00.000Z').toISOString();
   }
 
   isSubmitting.value = true;

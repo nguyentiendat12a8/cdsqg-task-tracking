@@ -1,8 +1,10 @@
+import { appendDashboardTimeFilters } from './queries';
 import { fetchWithAuth } from '../../services/auth';
 import { ref, computed } from 'vue';
+import { activeDocumentId } from '../../services/documentContext';
 import { getApiUrl } from '../../config/api';
 
-export function useAgencyDrilldown({ assignmentRole, dashboardFilter, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, metrics }) {
+export function useAgencyDrilldown({ assignmentRole, dashboardFilter, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly,reportFromYear,reportToYear,executionFrom,executionTo, agencies, metrics }) {
   const selectedDrilldownAgency = ref(null);
   const subAgenciesList = ref([]);
   const isSubAgenciesLoading = ref(false);
@@ -14,12 +16,14 @@ export function useAgencyDrilldown({ assignmentRole, dashboardFilter, selectedSc
   const modalSearchKeyword = ref('');
   const modalItemTypeFilter = ref('all');
   const modalStatusFilter = ref('all');
+  const modalDeadlineFilter = ref('all');
+  const deadlineItems = computed(() => modalDeadlineFilter.value === 'all' ? agencyItemsList.value : agencyItemsList.value.filter(i => i.deadlineStatus === modalDeadlineFilter.value));
 
-  const modalGoalsList = computed(() => (agencyItemsList.value || []).filter(i => i.itemType === 'Goal'));
-  const modalTasksList = computed(() => (agencyItemsList.value || []).filter(i => i.itemType === 'Task'));
+  const modalGoalsList = computed(() => (deadlineItems.value || []).filter(i => i.itemType === 'Goal'));
+  const modalTasksList = computed(() => (deadlineItems.value || []).filter(i => i.itemType === 'Task'));
 
   const filteredAgencyItems = computed(() => {
-    let list = agencyItemsList.value || [];
+    let list = deadlineItems.value || [];
 
     if (drilldownTab.value === 'goals') {
       list = list.filter(i => i.itemType === 'Goal');
@@ -87,6 +91,7 @@ export function useAgencyDrilldown({ assignmentRole, dashboardFilter, selectedSc
     isAgencyItemsLoading.value = true;
     try {
       const params = new URLSearchParams();
+      if (activeDocumentId.value) params.set('documentId', activeDocumentId.value);
       params.set('assignmentRole', assignmentRole?.value || 'Lead');
       params.append('agencyId', agencyId);
       if (selectedScopes.value && selectedScopes.value.length === 1) {
@@ -101,6 +106,7 @@ export function useAgencyDrilldown({ assignmentRole, dashboardFilter, selectedSc
       if (fromYear.value) params.append('fromYear', fromYear.value);
       if (toYear.value) params.append('toYear', toYear.value);
       if (isOngoingOnly.value) params.append('isOngoing', 'true');
+      appendDashboardTimeFilters(params, { reportFromYear: reportFromYear?.value, reportToYear: reportToYear?.value, executionFrom: executionFrom?.value, executionTo: executionTo?.value });
 
       const res = await fetchWithAuth(getApiUrl(`/api/dashboard/agency-items?${params.toString()}`));
       if (res.ok) {
@@ -117,6 +123,7 @@ export function useAgencyDrilldown({ assignmentRole, dashboardFilter, selectedSc
     isSubAgenciesLoading.value = true;
     try {
       const params = new URLSearchParams();
+      if (activeDocumentId.value) params.set('documentId', activeDocumentId.value);
       params.set('assignmentRole', assignmentRole?.value || 'Lead');
       params.append('parentAgencyId', parentAgencyId);
       if (dashboardFilter.value && dashboardFilter.value !== 'all') {
@@ -135,6 +142,7 @@ export function useAgencyDrilldown({ assignmentRole, dashboardFilter, selectedSc
       if (fromYear.value) params.append('fromYear', fromYear.value);
       if (toYear.value) params.append('toYear', toYear.value);
       if (isOngoingOnly.value) params.append('isOngoing', 'true');
+      appendDashboardTimeFilters(params, { reportFromYear: reportFromYear?.value, reportToYear: reportToYear?.value, executionFrom: executionFrom?.value, executionTo: executionTo?.value });
 
       const res = await fetchWithAuth(getApiUrl(`/api/dashboard/metrics?${params.toString()}`));
       if (res.ok) {
@@ -163,13 +171,14 @@ export function useAgencyDrilldown({ assignmentRole, dashboardFilter, selectedSc
     }
   }
 
-  async function drilldownAgency(agency) {
+  async function drilldownAgency(agency, { deadlineStatus = 'all' } = {}) {
     selectedDrilldownAgency.value = agency;
     subAgenciesList.value = [];
     agencyItemsList.value = [];
     modalSearchKeyword.value = '';
     modalItemTypeFilter.value = 'all';
     modalStatusFilter.value = 'all';
+    modalDeadlineFilter.value = deadlineStatus;
 
     if (dashboardFilter.value === 'tasks') {
       drilldownTab.value = 'tasks';
@@ -204,6 +213,7 @@ export function useAgencyDrilldown({ assignmentRole, dashboardFilter, selectedSc
   modalSearchKeyword,
   modalItemTypeFilter,
   modalStatusFilter,
+  modalDeadlineFilter,
   modalGoalsList,
   modalTasksList,
   filteredAgencyItems,

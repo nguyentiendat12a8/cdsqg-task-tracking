@@ -41,13 +41,16 @@ namespace Cdsqg.Application.DTOs
         public Guid LeadAgencyId { get; set; }
         public string LeadAgencyCode { get; set; } = string.Empty;
         public string LeadAgencyName { get; set; } = string.Empty;
+        public string? LeadAgencyDisplayText { get; set; }
         public Guid? AssignedAgencyId { get; set; }
         public string? AssignedAgencyCode { get; set; }
         public string? AssignedAgencyName { get; set; }
         public List<Guid> CoordinatingAgencyIds { get; set; } = new List<Guid>();
         public List<string> CoordinatingAgencyCodes { get; set; } = new List<string>();
         public List<string> CoordinatingAgencyNames { get; set; } = new List<string>();
+        public string? CoordinatingAgenciesDisplayText { get; set; }
 
+        public decimal? ResultTarget { get; set; }
         public Guid? UnitId { get; set; }
         public string EvaluationType { get; set; } = "Quantitative";
         public string UnitName { get; set; } = "%";
@@ -63,13 +66,15 @@ namespace Cdsqg.Application.DTOs
         public bool HasPendingApproval { get; set; } = false;
 
         /// <summary>
-        /// 6-status execution evaluation status: NotStarted, InProgressOnTime, InProgressOverdue, CompletedOnTime, CompletedOverdue, ExpiringSoon
+        /// Execution state: NotStarted, InProgress, Completed
         /// </summary>
         public string CalculatedStatus { get; set; } = "NotStarted";
+        public string DeadlineStatus { get; set; } = "OnTime";
         public string CalculatedAlert { get; set; } = "Red";
 
         public Dictionary<string, string> CustomBaseline { get; set; } = new Dictionary<string, string>();
         public List<TaskDeliverable> Deliverables { get; set; } = new List<TaskDeliverable>();
+        public Dictionary<int, decimal> YearlyAllocations { get; set; } = new();
         public Dictionary<int, object?> YearlyTargets { get; set; } = new Dictionary<int, object?>();
 
     }
@@ -91,9 +96,12 @@ namespace Cdsqg.Application.DTOs
         public DateTime? DueDate { get; set; }
 
         public Guid LeadAgencyId { get; set; }
+        public string? LeadAgencyDisplayText { get; set; }
         public Guid? AssignedAgencyId { get; set; }
         public List<Guid> CoordinatingAgencyIds { get; set; } = new List<Guid>();
+        public string? CoordinatingAgenciesDisplayText { get; set; }
 
+        public decimal? ResultTarget { get; set; }
         public Guid? UnitId { get; set; }
         public string? UnitName { get; set; }
         public string EvaluationType { get; set; } = "Quantitative";
@@ -126,8 +134,18 @@ namespace Cdsqg.Application.DTOs
         public DateTime? StartDate { get; set; }
         public DateTime? DueDate { get; set; }
         public Guid LeadAgencyId { get; set; }
+        public string? LeadAgencyDisplayText { get; set; }
         public Guid? AssignedAgencyId { get; set; }
         public List<Guid> CoordinatingAgencyIds { get; set; } = new List<Guid>();
+        public string? CoordinatingAgenciesDisplayText { get; set; }
+        private decimal? _resultTarget;
+        [System.Text.Json.Serialization.JsonIgnore]
+        public bool ResultTargetSpecified { get; private set; }
+        public decimal? ResultTarget
+        {
+            get => _resultTarget;
+            set { _resultTarget = value; ResultTargetSpecified = true; }
+        }
         public Guid? UnitId { get; set; }
         public string? UnitName { get; set; }
         public List<TaskDeliverable> Deliverables { get; set; } = new List<TaskDeliverable>();

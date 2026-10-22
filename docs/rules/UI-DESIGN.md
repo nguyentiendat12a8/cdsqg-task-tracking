@@ -23,7 +23,7 @@ Không tạo thêm cỡ 9, 10, 11, 13px trong UI mới. Chiều cao control mộ
 
 Nền trang slate-50; card trắng; nội dung chính slate-900; nội dung phụ slate-600; viền slate-200. Blue-600/700 cho hành động chính, rose-600/700 cho thao tác phá hủy/lỗi. Chỉ một hành động chính trong một nhóm thao tác. Không dùng text-slate-400 cho thông tin bắt buộc phải đọc; reserve cho placeholder/decorative và kiểm tra contrast thực tế.
 
-Chuẩn trạng thái thực thi: NotStarted slate; InProgressOnTime emerald; InProgressOverdue rose; ExpiringSoon amber; CompletedOnTime blue; CompletedOverdue orange. Chuẩn phê duyệt: Pending amber; Approved emerald; Rejected rose. Cảnh báo nghiệp vụ Green/Yellow/Red tách biệt màu trạng thái. Luôn kèm nhãn chữ, không chỉ dùng màu/icon. Đây là chuẩn mới; mapping legacy còn lệch được ghi trong SOURCE-AUDIT.
+Chuẩn trạng thái thực thi (22/10/2026): NotStarted — Chưa thực hiện (slate); InProgress — Đang thực hiện (blue); Completed — Đã hoàn thành (emerald). Cùng nhãn/màu trên bảng, biểu đồ, filter, lịch sử và Excel. Sắp hết hạn/quá hạn là cảnh báo thời hạn riêng, không chia thêm trạng thái. Chuẩn phê duyệt: Pending amber; Approved emerald; Rejected rose. Cảnh báo nghiệp vụ Green/Yellow/Red tách biệt màu trạng thái. Luôn kèm nhãn chữ, không chỉ dùng màu/icon.
 
 ## Khoảng cách và bề mặt
 
@@ -44,3 +44,11 @@ Root ứng dụng dùng `ui-density-compact`, quy định tập trung tại styl
 ## Bảng màu toàn hệ thống (13/10/2026)
 
 Token màu tại style.css: navy menu #18273B, primary #315EAD, nền trang #F5F6F8, card trắng, viền #E2E6EC, chữ chính #243247 và phụ #64748B. Tab mục tiêu và nhiệm vụ dùng cùng primary; bỏ bóng phát sáng menu. Các utility blue/purple dùng bảng màu primary chung; emerald/teal/rose/amber giữ ý nghĩa trạng thái với sắc độ dịu. Biểu đồ tiến độ đọc token CSS qua shared/themeColors.js, không tự định nghĩa màu trạng thái. Màu phân loại văn bản và mức hoàn thành bản đồ giữ bảng phân loại riêng.
+
+22/10/2026 — Theo ảnh tham khảo người dùng, trang chủ có bề mặt pastel và màu nhấn theo khối: tổng số sky, trạng thái giữ slate/blue/emerald, thời hạn amber/rose, phân bổ violet, tiêu đề bảng/bản đồ blue. Phạm vi màu trang trí chỉ ở dashboard, không đổi palette toàn ứng dụng hoặc màu phân loại tỉnh. Giữ bố cục gọn và chiều cao control hiện có.
+
+22/10/2026 — Theo yêu cầu tăng độ nổi bật, 8 thẻ KPI trang chủ dùng nền màu đậm sky/slate/blue/emerald và chữ trắng; ngoại lệ bề mặt card trắng/pastel chỉ trong KPI và header dashboard. Giữ nhãn trạng thái, màu bản đồ và palette toàn hệ thống.
+
+22/10/2026 — Theo yêu cầu đồng bộ màu từ trang chủ ra toàn hệ thống: menu navy #213658, mục chọn #3b5fa8; primary blue theo token chung; header trang/khối/bảng/modal #f1f5fc, nền ứng dụng #f4f7fc, card trắng. Nguồn màu tại style.css; dùng ui-screen-heading/ui-section-heading thay cho màu cứng ở từng màn. Giữ nguyên màu nghiệp vụ của trạng thái, cảnh báo, bản đồ và phân loại văn bản. Quy định này mở rộng phạm vi palette dashboard trước đó theo yêu cầu mới của người dùng.
+
+22/10/2026 — Icon thao tác dùng ui-action tại style.css: xem/sửa/cập nhật/giao/sao chép màu primary, menu thêm màu slate, thông báo/đặt mật khẩu màu amber, xóa màu rose. SVG kế thừa currentColor từ nút; nền/viền cùng tông nhạt, hover tăng nền, disabled dùng slate. Không thay màu nhãn trạng thái để biểu thị thao tác.

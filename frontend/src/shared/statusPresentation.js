@@ -1,14 +1,17 @@
 export const executionStatuses = Object.freeze({
   NotStarted: { label: 'Chưa thực hiện', tone: 'slate' },
-  InProgressOnTime: { label: 'Đang thực hiện (trong hạn)', tone: 'blue' },
-  InProgressOverdue: { label: 'Đang thực hiện (quá hạn)', tone: 'rose' },
-  ExpiringSoon: { label: 'Sắp hết hạn', tone: 'amber' },
-  CompletedOnTime: { label: 'Hoàn thành (đúng hạn)', tone: 'emerald' },
-  CompletedOverdue: { label: 'Hoàn thành (quá hạn)', tone: 'teal' }
+  InProgress: { label: 'Đang thực hiện', tone: 'blue' },
+  Completed: { label: 'Đã hoàn thành', tone: 'emerald' }
 });
+// Read-only compatibility for historical API/cache values; never use these as options.
+export function normalizeExecutionStatus(status) {
+  return ({ InProgressOnTime: 'InProgress', InProgressOverdue: 'InProgress', ExpiringSoon: 'InProgress',
+    CompletedOnTime: 'Completed', CompletedOverdue: 'Completed', Drafting: 'InProgress', Reviewing: 'InProgress', Submitted: 'InProgress' })[status] || status;
+}
+export const executionStatusSeries = Object.entries(executionStatuses).map(([value, { label, tone }]) => ({
+  value, label, tone, key: value[0].toLowerCase() + value.slice(1), color: ({ slate: 'slate-400', blue: 'blue-500', emerald: 'emerald-500' })[tone]
+}));
 const labels = {
-  InProgress: 'Đang thực hiện', Completed: 'Hoàn thành', Drafting: 'Đang xây dựng / soạn thảo',
-  Reviewing: 'Đang thẩm định / xin ý kiến', Submitted: 'Đã trình',
   Pending: 'Chờ phê duyệt', PendingApproval: 'Chờ phê duyệt', Approved: 'Đã phê duyệt', Rejected: 'Bị từ chối',
   NotRelevant: 'Không liên quan'
 };
@@ -22,10 +25,10 @@ const badges = {
   orange: 'border bg-teal-50 text-teal-700 border-teal-200'
 };
 export function getStatusLabel(status) {
-  return executionStatuses[status]?.label ?? labels[status] ?? (status || executionStatuses.NotStarted.label);
+  return executionStatuses[normalizeExecutionStatus(status)]?.label ?? labels[status] ?? (status || executionStatuses.NotStarted.label);
 }
 export function getStatusBadgeClass(status) {
   const approvalTone = { Pending: 'amber', PendingApproval: 'amber', Approved: 'emerald', Rejected: 'rose', NotRelevant: 'rose' };
-  return badges[executionStatuses[status]?.tone ?? approvalTone[status] ?? 'slate'];
+  return badges[executionStatuses[normalizeExecutionStatus(status)]?.tone ?? approvalTone[status] ?? 'slate'];
 }
 export const executionStatusOptions = Object.entries(executionStatuses).map(([value, { label }]) => ({ value, label }));

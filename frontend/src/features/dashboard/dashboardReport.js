@@ -1,67 +1,55 @@
+import { activeDocument } from '../../services/documentContext';
 import { toast } from 'vue3-toastify';
 import { loadExcelWriter } from '../../utils/excelRuntime';
-import { appendSummaryWorksheet } from './summaryWorksheet';
-import { appendAgencyWorksheet } from './agencyWorksheet';
+import { fetchWithAuth } from '../../services/auth';
+import { getApiUrl } from '../../config/api';
+import { buildDashboardQuery } from './queries';
+import { buildDashboardWorkbook } from './dashboardWorkbook';
 
-export async function exportDashboardReport({ assignmentRole, dashboardFilter, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, metrics, filterOutSpecialAgencies, filteredMinistriesPerformance, filteredProvincesPerformance, filteredOthersPerformance, formatDate, formatItemProgressDisplay, isExportingExcel }) {
-  const XLSX = await loadExcelWriter();
-  isExportingExcel.value = true;
-  const filterType = dashboardFilter.value; // 'goals', 'tasks', or 'all'
-  const isGoalsOnly = filterType === 'goals';
-  const isTasksOnly = filterType === 'tasks';
+export async function exportDashboardReport(options) {
 
-  const filterNameLabel = isGoalsOnly ? 'Mục tiêu' : (isTasksOnly ? 'Nhiệm vụ' : 'Mục tiêu & Nhiệm vụ');
-  toast.info(`Đang khởi tạo báo cáo Excel (${filterNameLabel}) theo bộ lọc...`, { autoClose: 2000 });
-
+  options.isExportingExcel.value = true;
+  // Capture filters before asynchronous work, so changing the UI cannot mix decisions.
+  const document = { ...activeDocument.value };
+  const filters = { documentId: document.id };
+  for (const key of ['assignmentRole', 'dashboardFilter', 'selectedScopes', 'selectedSections', 'selectedGroups', 'fromYear', 'toYear', 'isOngoingOnly', 'reportFromYear', 'reportToYear', 'executionFrom', 'executionTo']) {
+    const value = options[key]?.value;
+    filters[key] = Array.isArray(value) ? [...value] : value;
+  }
+  const metricsQuery = options.metricsQuery?.value || buildDashboardQuery(filters).toString();
+  const now = new Date();
   try {
-    const allFilteredAgencies = [
-      ...(filteredMinistriesPerformance.value || []),
-      ...(filteredProvincesPerformance.value || []),
-      ...(filteredOthersPerformance.value || [])
-    ];
-
-    if (allFilteredAgencies.length === 0) {
-      toast.warning("Không có dữ liệu Bộ/Ngành/Địa phương phù hợp với bộ lọc hiện tại!");
-      isExportingExcel.value = false;
-      return;
+    toast.info('Đang tải đầy đủ dữ liệu để xuất báo cáo Excel...', { autoClose: 2000 });
+    async function read(query, endpoint = 'metrics') {
+      const response = await fetchWithAuth(getApiUrl(`/api/dashboard/${endpoint}?${query}`));
+      if (!response.ok) throw new Error('Không tải đủ dữ liệu báo cáo. Vui lòng thử lại.');
+      return response.json();
     }
-
-    const wb = XLSX.utils.book_new();
-    const now = new Date();
-    const timeStr = `${now.toLocaleDateString('vi-VN')} ${now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
-
-    // ==========================================
-    // SHEET 1: TỔNG HỢP CHUNG
-    // ==========================================
-    appendSummaryWorksheet({ XLSX, wb, isGoalsOnly, isTasksOnly, filterNameLabel, timeStr, allFilteredAgencies, metrics });
-
-    const filters = {
-      assignmentRole: assignmentRole?.value || 'Lead',
-      dashboardFilter: filterType,
-      selectedScopes: [...selectedScopes.value],
-      selectedSections: [...selectedSections.value],
-      selectedGroups: [...selectedGroups.value],
-      fromYear: fromYear.value,
-      toYear: toYear.value,
-      isOngoingOnly: isOngoingOnly.value
-    };
-    const usedSheetNames = new Set(["TỔNG HỢP CHUNG"]);
-
-    // ==========================================
-    // SHEETS FOR EACH AGENCY
-    // ==========================================
-    for (const ag of allFilteredAgencies) {
-      await appendAgencyWorksheet({ XLSX, wb, ag, usedSheetNames, filters, filterOutSpecialAgencies, isGoalsOnly, isTasksOnly, filterNameLabel, timeStr, agencies, formatDate, formatItemProgressDisplay });
-    }
-
-    const fileSuffix = isGoalsOnly ? "Muc_Tieu" : (isTasksOnly ? "Nhiem_Vu" : "Chien_Luoc");
-    const dateFileStr = now.toISOString().slice(0, 10);
-    XLSX.writeFile(wb, `Bao_Cao_Theo_Doi_${fileSuffix}_${dateFileStr}.xlsx`);
-    toast.success(`Đã xuất thành công file Báo cáo Excel (${filterNameLabel}) gồm ${allFilteredAgencies.length + 1} Sheet!`);
-  } catch (err) {
-    console.error("Lỗi khi xuất báo cáo Excel:", err);
-    toast.error("Lỗi khi xuất file Excel: " + (err.message || err));
+    const XLSX = await loadExcelWriter();
+    const metrics = await read(metricsQuery);
+    const agencies = options.filterOutSpecialAgencies([
+      ...(metrics.ministriesPerformance || []), ...(metrics.provincesPerformance || []), ...(metrics.othersPerformance || [])
+    ]).sort((a, b) => (b.totalItems || 0) - (a.totalItems || 0) || a.name.localeCompare(b.name, 'vi'));
+    const details = new Array(agencies.length);
+    let next = 0;
+    // Four concurrent requests, without the old subordinate-metrics request per unit.
+    await Promise.all(Array.from({ length: Math.min(4, agencies.length) }, async () => {
+      while (next < agencies.length) {
+        const index = next++;
+        const agency = agencies[index];
+        const items = await read(buildDashboardQuery(filters, { agencyIds: [agency.agencyId] }), 'agency-items');
+        if (!Array.isArray(items)) throw new Error('Dữ liệu chi tiết không hợp lệ.');
+        details[index] = items.map(item => ({ ...item, reportAgency: agency }));
+      }
+    }));
+    const workbook = buildDashboardWorkbook({ XLSX, document, filters, metrics, agencies, items: details.flat(), now });
+    const date = new Intl.DateTimeFormat('sv-SE', { timeZone: 'Asia/Ho_Chi_Minh' }).format(now);
+    XLSX.writeFile(workbook, `Bao_cao_trang_chu_${document.code}_${date}.xlsx`);
+    toast.success('Đã xuất báo cáo Excel gồm 4 sheet.');
+  } catch (error) {
+    console.error('Lỗi xuất báo cáo trang chủ:', error);
+    toast.error(`Không thể xuất Excel: ${error.message || error}`);
   } finally {
-    isExportingExcel.value = false;
+    options.isExportingExcel.value = false;
   }
 }

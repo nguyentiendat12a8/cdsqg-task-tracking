@@ -2,11 +2,14 @@
   <VDropdown 
     :triggers="['click']" 
     :auto-hide="false" 
-    placement="bottom-start"
+    :placement="placement"
     :distance="8"
+    :overflow-padding="overflowPadding"
     v-model:shown="isOpen"
+    @show="emit('show')"
     popper-class="v-popper-clean-overlay"
   >
+    <slot name="trigger" :is-open="isOpen" :set-trigger-ref="setTriggerRef" :close="closePanel">
     <!-- Trigger Button -->
     <button 
       ref="triggerBtnRef"
@@ -30,15 +33,19 @@
       </svg>
     </button>
 
+    </slot>
+
     <!-- Overlay Panel Popper Content -->
     <template #popper>
       <div 
         ref="panelRef"
-        class="bg-slate-100 rounded-2xl shadow-2xl shadow-slate-900/30 border-2 border-slate-300 font-sans p-4 space-y-3.5 z-50 text-slate-800 flex flex-col max-w-full max-h-[calc(100dvh-2rem)]"
-        :class="panelWidthClass"
+        @keydown.esc.stop.prevent="closePanel"
+        class="rounded-2xl font-sans p-4 space-y-3.5 z-50 text-slate-800 flex flex-col max-w-full max-h-[calc(100dvh-2rem)]"
+        :class="[panelWidthClass, heightClass, panelClass || 'bg-white shadow-xl shadow-blue-900/10 border border-blue-200']"
       >
         <!-- Panel Header -->
         <div class="flex shrink-0 items-center justify-between border-b border-slate-200 pb-2.5">
+          <slot name="heading">
           <div class="flex items-center gap-2">
             <div class="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -50,8 +57,10 @@
             </h4>
           </div>
 
+          </slot>
           <button 
             type="button" 
+            aria-label="Đóng bảng tùy chọn"
             @click="closePanel" 
             class="w-6 h-6 rounded-lg bg-slate-200/80 hover:bg-slate-300 text-slate-500 hover:text-slate-800 flex items-center justify-center text-xs font-bold transition cursor-pointer"
             title="Đóng panel"
@@ -61,18 +70,18 @@
         </div>
 
         <!-- Filter Form Fields Slot -->
-        <div class="space-y-3 min-h-0 max-h-[70vh] overflow-y-auto custom-scrollbar px-0.5">
-          <slot></slot>
+        <div class="space-y-3 min-h-0 flex-1 overflow-y-auto custom-scrollbar px-0.5">
+          <slot :close="closePanel"></slot>
         </div>
 
         <!-- Panel Footer / Actions -->
-        <div class="flex shrink-0 items-center justify-between gap-2 border-t border-slate-200 pt-3">
+        <div v-if="showActions" class="flex shrink-0 items-center justify-between gap-2 border-t border-slate-200 pt-3">
           <button 
             type="button" 
             @click="handleReset" 
             class="ui-single-line px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer flex items-center gap-1"
           >
-            <span>↺</span>
+            <span aria-hidden="true">↺</span>
             <span>Đặt lại</span>
           </button>
 
@@ -86,7 +95,8 @@
             </button>
             <button 
               type="button" 
-              @click="handleApply" 
+              @click="handleApply"
+              :disabled="applyDisabled"
               class="ui-single-line px-4 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition cursor-pointer flex items-center gap-1.5"
             >
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
@@ -101,9 +111,15 @@
 
 <script setup>
 import { formatNumber } from "../shared/formatters";
-import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue';
 
 const props = defineProps({
+  applyDisabled: { type: Boolean, default: false },
+  overflowPadding: { type: Number, default: 0 },
+  placement: { type: String, default: 'bottom-start' },
+  showActions: { type: Boolean, default: true },
+  panelClass: { type: String, default: '' },
+  heightClass: { type: String, default: '' },
   title: {
     type: String,
     default: 'Bộ Lọc Tìm Kiếm Nâng Cao'
@@ -122,7 +138,7 @@ const props = defineProps({
   }
 });
 
-const emit = defineEmits(['apply', 'reset']);
+const emit = defineEmits(['apply', 'reset', 'show']);
 
 const isOpen = ref(false);
 const panelRef = ref(null);
@@ -130,11 +146,14 @@ const triggerBtnRef = ref(null);
 
 const panelWidthClass = computed(() => props.widthClass);
 
+function setTriggerRef(element) { triggerBtnRef.value = element; }
 function closePanel() {
   isOpen.value = false;
+  nextTick(() => triggerBtnRef.value?.focus());
 }
 
 function handleApply() {
+  if (props.applyDisabled) return;
   isOpen.value = false;
   emit('apply');
 }
@@ -195,4 +214,3 @@ onUnmounted(() => {
   }
 }
 </style>
-

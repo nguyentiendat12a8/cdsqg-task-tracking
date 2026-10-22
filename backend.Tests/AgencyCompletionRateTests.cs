@@ -12,9 +12,10 @@ public class AgencyCompletionRateTests
         Assert.Null(dto.CompletionRateOverall);
     }
     [Fact]
-    public void IncludesBothCompletionStatusesAndKeepsGoalAndTaskDenominatorsSeparate()
+    public void KeepsGoalAndTaskCompletionDenominatorsSeparate()
     {
-        var dto = new AgencyStatusSummaryDto { TotalGoals = 3, GoalCompletedOnTime = 1, GoalCompletedOverdue = 1, TotalTasks = 4, TaskCompletedOverdue = 1, TotalItems = 7, CompletedOnTime = 1, CompletedOverdue = 2 };
+        var dto = new AgencyStatusSummaryDto { TotalGoals = 3, TotalTasks = 4, TotalItems = 7,
+            Goals = new() { Completed = 2 }, Tasks = new() { Completed = 1 } };
         Assert.Equal(66.67m, dto.GoalCompletionRate);
         Assert.Equal(25m, dto.TaskCompletionRate);
         Assert.Equal(42.86m, dto.CompletionRateOverall);

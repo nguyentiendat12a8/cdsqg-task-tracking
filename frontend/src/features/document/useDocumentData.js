@@ -1,5 +1,5 @@
 import { loadAllExportPages } from '../../services/exportData';
-import { REPORTING_DOCUMENT_ID } from '../../config/reporting';
+import { activeDocumentId } from '../../services/documentContext';
 import { fetchWithAuth } from '../../services/auth';
 import { ref, watch, onUnmounted } from 'vue';
 import { authState } from '../../services/auth';
@@ -51,11 +51,21 @@ export function useDocumentData({ props, getQueryState }) {
       if (appliedFilters.value.selectedGroups?.length) {
         params.append('selectedGroups', appliedFilters.value.selectedGroups.join(','));
       }
-      if (appliedFilters.value.fromYear) {
-        params.append('fromYear', String(appliedFilters.value.fromYear));
+      if (appliedFilters.value.reportFromYear || appliedFilters.value.fromYear) {
+        const val = String(appliedFilters.value.reportFromYear || appliedFilters.value.fromYear);
+        params.append('reportFromYear', val);
+        params.append('fromYear', val);
       }
-      if (appliedFilters.value.toYear) {
-        params.append('toYear', String(appliedFilters.value.toYear));
+      if (appliedFilters.value.reportToYear || appliedFilters.value.toYear) {
+        const val = String(appliedFilters.value.reportToYear || appliedFilters.value.toYear);
+        params.append('reportToYear', val);
+        params.append('toYear', val);
+      }
+      if (appliedFilters.value.executionFrom) {
+        params.append('executionFrom', appliedFilters.value.executionFrom);
+      }
+      if (appliedFilters.value.executionTo) {
+        params.append('executionTo', appliedFilters.value.executionTo);
       }
       if (appliedFilters.value.onlyOngoing) {
         params.append('onlyOngoing', 'true');
@@ -64,14 +74,17 @@ export function useDocumentData({ props, getQueryState }) {
     return params;
   }
   async function loadExportItems() {
-    return loadAllExportPages(getApiUrl('/api/documents/' + REPORTING_DOCUMENT_ID + '/items?' + buildQuery().toString()));
+    return loadAllExportPages(getApiUrl('/api/documents/' + activeDocumentId.value + '/items?' + buildQuery().toString()));
   }
+  watch(activeDocumentId, () => {
+    loadData();
+  });
   async function loadData() {
     const version = ++requestVersion;
     isLoading.value = true;
     loadError.value = '';
     try {
-      const docId = REPORTING_DOCUMENT_ID;
+      const docId = activeDocumentId.value;
 
       const params = buildQuery();
 

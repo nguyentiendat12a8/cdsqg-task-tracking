@@ -1,5 +1,6 @@
 @echo off
 chcp 65001 >nul
+set "PATH=C:\Users\datnt\AppData\Local\OpenAI\Codex\runtimes\cua_node\78fb63cda1a9e2b2\bin;C:\Users\datnt\AppData\Local\OpenAI\Codex\runtimes\cua_node\78fb63cda1a9e2b2\bin\node_modules\corepack\shims;%PATH%"
 echo ===================================================
 echo   KHỞI ĐỘNG HỆ THỐNG CDSQG (BACKEND VÀ FRONTEND)
 echo ===================================================

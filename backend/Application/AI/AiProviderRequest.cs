@@ -1,3 +1,6 @@
+using System.Globalization;
+using System.Text.Json;
+using System.Text.RegularExpressions;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
@@ -23,6 +26,60 @@ public static class AiProviderRequest
             await Task.Delay(TimeSpan.FromSeconds(attempt+1),ct);
         }
     }
+    // Return only allowlisted diagnostics; never expose the provider body, key, project or account identifiers.
+    public static async Task<InvalidOperationException> FailureAsync(HttpResponseMessage response,string model,CancellationToken ct)
+    {
+        var code=(int)response.StatusCode;
+        if(response.StatusCode!=HttpStatusCode.TooManyRequests)
+            return new(response.StatusCode is HttpStatusCode.BadGateway or HttpStatusCode.ServiceUnavailable or HttpStatusCode.GatewayTimeout
+                ? $"Nhà cung cấp AI trả HTTP {code}: dịch vụ tạm thời không đáp ứng. Tài liệu được giữ lại; hãy đọc lại sau."
+                : $"Nhà cung cấp AI trả HTTP {code}; kiểm tra cấu hình và quyền truy cập của model. Tài liệu được giữ lại.");
+        var zero=false;var daily=false;var minute=false;var tokens=false;var billing=false;
+        double? retrySeconds=response.Headers.RetryAfter?.Delta?.TotalSeconds;
+        if(retrySeconds==null&&response.Headers.RetryAfter?.Date is DateTimeOffset retryDate)retrySeconds=(retryDate-DateTimeOffset.UtcNow).TotalSeconds;
+        try{
+            using var stream=await response.Content.ReadAsStreamAsync(ct);
+            var bytes=new byte[65536];var length=0;
+            while(length<bytes.Length){var read=await stream.ReadAsync(bytes.AsMemory(length),ct);if(read==0)break;length+=read;}
+            using var doc=JsonDocument.Parse(bytes.AsMemory(0,length));
+            if(doc.RootElement.ValueKind==JsonValueKind.Object&&doc.RootElement.TryGetProperty("error",out var error)&&error.ValueKind==JsonValueKind.Object){
+                var message=Text(error,"message").ToLowerInvariant();
+                var errorCode=(Text(error,"code")+" "+Text(error,"type")).ToLowerInvariant();
+                billing=errorCode.Contains("insufficient_quota")||message.Contains("credits are depleted")||message.Contains("billing is not enabled")||message.Contains("billing account is disabled");
+                daily=errorCode.Contains("quota_exceeded")||message.Contains("per day")||message.Contains("perday")||message.Contains("daily");
+                minute=errorCode.Contains("rate_limit_exceeded")||message.Contains("per minute")||message.Contains("perminute");
+                tokens=message.Contains("token");
+                zero=Regex.IsMatch(message,@"limit\s*:\s*0(?:[^\d.]|$)",RegexOptions.None,TimeSpan.FromSeconds(1));
+                if(error.TryGetProperty("details",out var details)&&details.ValueKind==JsonValueKind.Array)
+                    foreach(var detail in details.EnumerateArray()){
+                        if(detail.ValueKind!=JsonValueKind.Object)continue;
+                        var type=Text(detail,"@type");
+                        if(type.EndsWith("QuotaFailure",StringComparison.Ordinal)&&detail.TryGetProperty("violations",out var violations)&&violations.ValueKind==JsonValueKind.Array)
+                            foreach(var violation in violations.EnumerateArray()){
+                                if(violation.ValueKind!=JsonValueKind.Object)continue;
+                                var metric=(Text(violation,"quotaMetric")+" "+Text(violation,"quotaId")).ToLowerInvariant();
+                                daily|=metric.Contains("perday")||metric.Contains("per_day");
+                                minute|=metric.Contains("perminute")||metric.Contains("per_minute");
+                                tokens|=metric.Contains("token");
+                                zero|=Text(violation,"quotaValue")=="0";
+                            }
+                        if(type.EndsWith("RetryInfo",StringComparison.Ordinal)){
+                            var delay=Text(detail,"retryDelay");
+                            if(delay.EndsWith('s')&&double.TryParse(delay[..^1],NumberStyles.Float,CultureInfo.InvariantCulture,out var seconds)&&seconds>0&&double.IsFinite(seconds))retrySeconds=Math.Max(retrySeconds??0,seconds);
+                        }
+                    }
+            }
+        }catch(Exception ex)when(ex is JsonException or IOException or RegexMatchTimeoutException){/* Keep generic 429 when the body is absent or malformed. */}
+        var reason=zero?"Nhà cung cấp báo hạn mức bằng 0 cho yêu cầu/model này. Chờ rồi đọc lại sẽ không giải quyết được; cần kiểm tra model có quota và cấu hình thanh toán của project."
+            :billing?"Project AI đã hết quota hoặc tín dụng sử dụng. Cần kiểm tra hạn mức/thanh toán của project trước khi đọc lại."
+            :daily?"Đã chạm hạn mức AI theo ngày"+(tokens?" về token.":" về lượt gọi.")+" Cần chờ quota được cấp lại hoặc tăng hạn mức; nghỉ một phút không khắc phục được giới hạn ngày."
+            :minute?"Đã chạm giới hạn AI theo phút"+(tokens?" về token.":" về lượt gọi.")+" Hãy chờ trước khi đọc lại."
+            :"Nhà cung cấp đang giới hạn yêu cầu hoặc quota, nhưng phản hồi chưa xác định rõ loại hạn mức. Kiểm tra Rate limits/Usage của project và model đang dùng.";
+        var retry=retrySeconds is >0 and <=86400?$" Nhà cung cấp đề nghị chờ ít nhất {Math.Ceiling(retrySeconds.Value).ToString(CultureInfo.InvariantCulture)} giây.":"";
+        var safeModel=Regex.IsMatch(model,@"^[a-zA-Z0-9._:/-]{1,100}$",RegexOptions.None,TimeSpan.FromSeconds(1))?$" Model: {model}.":"";
+        return new("Nhà cung cấp AI trả HTTP 429: "+reason+safeModel+retry+" Tài liệu được giữ lại; chưa có số liệu nào được tự ghi.");
+    }
+    private static string Text(JsonElement element,string name)=>element.TryGetProperty(name,out var value)?value.ValueKind==JsonValueKind.String?value.GetString()??"":value.ValueKind==JsonValueKind.Number?value.GetRawText():"":"";
     public static string Error(Exception ex)
     {
         if(ex is InvalidOperationException && (ex.Message.StartsWith("Nhà cung cấp AI trả HTTP ") || ex.Message.StartsWith("AI chưa trả kết quả") || ex.Message.StartsWith("Chưa bật AI")))return ex.Message;

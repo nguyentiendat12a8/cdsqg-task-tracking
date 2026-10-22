@@ -18,6 +18,8 @@
               buttonText="Lọc nâng cao"
               :activeCount="activeFilterCount"
               widthClass="w-[320px] sm:w-[480px] max-w-[90vw]"
+              heightClass="h-[480px] max-h-[calc(100dvh-3rem)]"
+              :applyDisabled="!!filterError"
               @apply="execFilterSearch"
               @reset="resetFilterSearch"
             >
@@ -86,31 +88,51 @@
                 </div>
 
                 <div>
-                  <div class="flex items-center justify-between mb-1">
-                    <label class="text-xs font-semibold text-slate-600 block">Giai đoạn (từ năm ➔ đến năm)</label>
-                    <label class="inline-flex items-center gap-1 cursor-pointer text-xs font-bold text-blue-700 select-none">
-                      <input type="checkbox" v-model="filterDraft.onlyOngoing" class="rounded border-slate-300 text-blue-600 focus:ring-blue-500 w-3.5 h-3.5">
-                      <span>Thường xuyên</span>
-                    </label>
-                  </div>
+                  <label class="text-xs font-semibold text-slate-700 block mb-1">Thời gian báo cáo (từ năm ➔ đến năm)</label>
                   <div class="flex items-center gap-2">
                     <SearchableSelect
-                      v-model="filterDraft.fromYear"
+                      v-model="filterDraft.reportFromYear"
                       :options="yearOptions"
                       :isMulti="false"
+                      label="Từ năm"
+                      label-class="sr-only"
                       placeholder="Từ năm"
                       class="w-full"
                     />
                     <span class="text-xs font-bold text-slate-400 shrink-0">➔</span>
                     <SearchableSelect
-                      v-model="filterDraft.toYear"
+                      v-model="filterDraft.reportToYear"
                       :options="yearOptions"
                       :isMulti="false"
+                      label="Đến năm"
+                      label-class="sr-only"
                       placeholder="Đến năm"
                       class="w-full"
                     />
                   </div>
                 </div>
+
+                <div>
+                  <label class="text-xs font-semibold text-slate-700 block mb-1">Thời gian hoàn thành (từ ngày ➔ đến ngày)</label>
+                  <div class="flex items-center gap-2">
+                    <div class="w-full">
+                      <label :for="`${filterId}-from`" class="sr-only">Từ ngày</label>
+                      <DatePicker v-model="filterDraft.executionFrom" :input-id="`${filterId}-from`" placeholder="Từ ngày" />
+                    </div>
+                    <span class="text-xs font-bold text-slate-400 shrink-0">➔</span>
+                    <div class="w-full">
+                      <label :for="`${filterId}-to`" class="sr-only">Đến ngày</label>
+                      <DatePicker v-model="filterDraft.executionTo" :input-id="`${filterId}-to`" placeholder="Đến ngày" />
+                    </div>
+                  </div>
+                </div>
+
+                <label class="flex cursor-pointer items-center gap-2 text-xs font-semibold text-slate-700 select-none">
+                  <input v-model="filterDraft.onlyOngoing" type="checkbox" class="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500" />
+                  <span>{{ filterItemType === 'Goal' ? 'Mục tiêu thường xuyên' : 'Nhiệm vụ thường xuyên' }}</span>
+                </label>
+
+                <p v-if="filterError" role="alert" class="text-xs text-rose-700">{{ filterError }}</p>
               </div>
             </OverlayPanel>
           </div>
@@ -118,7 +140,9 @@
 </template>
 
 <script setup>
+import { computed, useId } from 'vue';
 import SearchableSelect from '../../components/SearchableSelect.vue';
+import DatePicker from '../../components/DatePicker.vue';
 import OverlayPanel from '../../components/OverlayPanel.vue';
 
 defineProps([
@@ -135,6 +159,14 @@ defineProps([
   'filterItemType'
 ]);
 const filterDraft = defineModel('filterDraft', { required: true });
+const filterId = `doc-filter-${useId()}`;
+
+const filterError = computed(() => {
+  const draft = filterDraft.value;
+  if (draft.reportFromYear && draft.reportToYear && Number(draft.reportFromYear) > Number(draft.reportToYear)) return 'Năm báo cáo từ không được lớn hơn năm đến.';
+  if (draft.executionFrom && draft.executionTo && draft.executionFrom > draft.executionTo) return 'Ngày hoàn thành từ không được lớn hơn ngày đến.';
+  return '';
+});
 </script>
 
 

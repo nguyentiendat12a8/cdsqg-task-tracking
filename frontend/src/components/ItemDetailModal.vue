@@ -75,7 +75,7 @@
             <div class="border-t border-slate-200/60 pt-2">
               <span class="text-slate-500 font-semibold block text-xs">Đơn vị chủ trì</span>
               <span class="font-medium text-slate-800 mt-0.5 block">
-                🏛️ {{ item?.leadAgencyName || '—' }}
+                🏛️ {{ item?.leadAgencyDisplayText || item?.leadAgencyName || '—' }}
               </span>
             </div>
 
@@ -586,6 +586,9 @@ const isLoadingNotifications = ref(false);
 
 const coordinatingNamesDisplay = computed(() => {
   if (!props.item) return '—';
+  if (props.item.coordinatingAgenciesDisplayText) {
+    return props.item.coordinatingAgenciesDisplayText;
+  }
   if (props.item.coordinatingAgencyNames && props.item.coordinatingAgencyNames.length > 0) {
     return props.item.coordinatingAgencyNames.join(', ');
   }

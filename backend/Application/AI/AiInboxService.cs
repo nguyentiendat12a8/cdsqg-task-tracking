@@ -106,7 +106,7 @@ public sealed class AiInboxService(AppDbContext db,IWebHostEnvironment environme
         if(!Uri.TryCreate(options.BaseUrl.TrimEnd('/')+"/chat/completions",UriKind.Absolute,out var endpoint)||endpoint.Scheme!="https")throw new InvalidOperationException("AI BaseUrl cần HTTPS.");
         using var request=new HttpRequestMessage(HttpMethod.Post,endpoint){Content=System.Net.Http.Json.JsonContent.Create(body)};
         request.Headers.Authorization=new("Bearer",options.ApiKey);
-        using var response=await clients.CreateClient("ai-provider").SendAsync(request,ct);if(!response.IsSuccessStatusCode)throw new InvalidOperationException($"Nhà cung cấp AI trả HTTP {(int)response.StatusCode}; kiểm tra cấu hình/quota, không có dữ liệu nào được tự duyệt.");
+        using var response=await clients.CreateClient("ai-provider").SendAsync(request,ct);if(!response.IsSuccessStatusCode)throw await AiProviderRequest.FailureAsync(response,options.Model,ct);
         using var json=JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct));var choice=json.RootElement.GetProperty("choices")[0];
         if(choice.GetProperty("finish_reason").GetString()!="stop")throw new InvalidOperationException("AI chưa phân loại đầy đủ; cần thử lại.");
         using var result=JsonDocument.Parse(choice.GetProperty("message").GetProperty("content").GetString()!);

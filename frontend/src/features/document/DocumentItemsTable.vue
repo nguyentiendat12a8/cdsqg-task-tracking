@@ -1,5 +1,5 @@
 <template>
-<div  class="overflow-x-auto overflow-y-auto max-h-[calc(100vh-320px)] custom-scrollbar w-full">
+<div  class="document-items-scroll overflow-x-auto overflow-y-auto max-h-[calc(100vh-320px)] custom-scrollbar w-full">
           <table class="w-full min-w-[1280px] text-left text-sm text-slate-700 border-collapse">
             <thead class="bg-slate-100 text-xs text-slate-700 font-semibold border-b border-slate-200 sticky top-0 z-30 shadow-xs select-none">
               <tr>
@@ -114,7 +114,26 @@
                     </VTooltip>
                   </td>
                   <td class="px-3 py-2.5 border-r border-slate-200 font-normal text-slate-700 text-xs leading-relaxed min-w-[180px] w-[180px] max-w-[180px]">
-                    {{ item.leadAgencyName }}
+                    <VTooltip
+                      v-if="item.leadAgencyDisplayText || item.leadAgencyName"
+                      theme="custom-dark"
+                      placement="top"
+                      :delay="{ show: 1500, hide: 0 }"
+                    >
+                      <div class="line-clamp-2 font-normal text-slate-700 text-xs leading-relaxed cursor-help">
+                        {{ item.leadAgencyDisplayText || item.leadAgencyName }}
+                      </div>
+
+                      <template #popper>
+                        <div class="whitespace-normal break-words text-left leading-relaxed min-w-[200px] max-w-[420px] p-1">
+                          <span class="font-semibold text-blue-300 block mb-1 text-xs">
+                            🏛️ Cơ quan chủ trì
+                          </span>
+                          {{ item.leadAgencyDisplayText || item.leadAgencyName }}
+                        </div>
+                      </template>
+                    </VTooltip>
+                    <span v-else class="text-slate-400 italic">—</span>
                   </td>
                   <td v-if="isLeadAgencyFilteredByBKHCN" class="px-3 py-2.5 border-r border-slate-200 font-normal text-slate-700 text-xs leading-relaxed min-w-[180px] w-[180px] max-w-[180px]">
                     <span v-if="item.assignedAgencyName" class="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-semibold text-xs border border-blue-100 inline-block">
@@ -123,7 +142,10 @@
                     <span v-else class="text-slate-400 italic">—</span>
                   </td>
                   <td class="px-3 py-2.5 border-r border-slate-200 font-normal text-slate-700 text-xs leading-relaxed min-w-[180px] w-[180px] max-w-[180px]">
-                    <template v-if="item.coordinatingAgencyNames && item.coordinatingAgencyNames.length > 0">
+                    <template v-if="item.coordinatingAgenciesDisplayText">
+                      {{ item.coordinatingAgenciesDisplayText }}
+                    </template>
+                    <template v-else-if="item.coordinatingAgencyNames && item.coordinatingAgencyNames.length > 0">
                       {{ item.coordinatingAgencyNames.join(', ') }}
                     </template>
                     <template v-else-if="item.coordinatingAgencyCodes && item.coordinatingAgencyCodes.length > 0">
@@ -147,11 +169,11 @@
                   </td>
                   <td class="px-3 py-2.5 border-r border-slate-200 text-center min-w-[195px] w-[195px] max-w-[195px]">
                     <div class="flex flex-col items-center gap-1">
-                      <span v-if="authState.isAdmin.value && isGeneralTaskOrAllAgencies(item)" class="px-2.5 py-0.5 rounded-full text-xs font-normal bg-slate-100 text-slate-500 italic border border-slate-200">
-                        —
-                      </span>
-                      <span v-else :class="['px-2.5 py-0.5 rounded-full text-xs font-medium shadow-2xs inline-block whitespace-nowrap', getStatusBadgeClass(item.calculatedStatus)]">
+                      <span :class="['px-2.5 py-0.5 rounded-full text-xs font-medium shadow-2xs inline-block whitespace-nowrap', getStatusBadgeClass(item.calculatedStatus)]">
                         {{ getStatusLabel(item.calculatedStatus) }}
+                      </span>
+                      <span v-if="item.deadlineStatus === 'Overdue'" class="text-xs font-semibold text-rose-700">
+                        Quá hạn
                       </span>
                       <span v-if="item.hasPendingApproval" class="px-2 py-0.5 rounded-md text-xs font-medium bg-amber-100 text-amber-900 border border-amber-300 animate-pulse cursor-pointer" @click.stop="openItemDetailModal(item, 'history')" title="Có báo cáo tiến độ mới chờ Cấp 2 phê duyệt. Bấm để xem chi tiết.">
                         ⏳ Báo cáo chờ duyệt
@@ -164,9 +186,9 @@
                       <button
                         v-if="canUpdateProgress(item)"
                         @click.stop="openProgressModal(item)"
-                        class="p-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg border border-slate-200 inline-flex items-center justify-center shadow-2xs cursor-pointer"
+                        class="ui-action ui-action-primary p-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 rounded-lg border border-slate-200 inline-flex items-center justify-center shadow-2xs cursor-pointer"
                         title="Cập nhật tiến độ và minh chứng"
-                      >
+                       aria-label="Cập nhật tiến độ và minh chứng">
                         <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                       </button>
 
@@ -183,9 +205,9 @@
                         <button
                           type="button"
                           @click.stop
-                          class="p-1.5 bg-slate-50 text-slate-600 hover:bg-slate-200 hover:text-slate-900 rounded-lg border border-slate-200 inline-flex items-center justify-center shadow-2xs cursor-pointer transition"
+                          class="ui-action ui-action-neutral p-1.5 bg-slate-50 text-slate-600 hover:bg-slate-200 hover:text-slate-900 rounded-lg border border-slate-200 inline-flex items-center justify-center shadow-2xs cursor-pointer transition"
                           title="Thao tác khác"
-                        >
+                         aria-label="Thao tác khác">
                           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
                           </svg>
@@ -196,26 +218,26 @@
                             <button
                               v-if="canAssignTask(item)"
                               @click="openAssignModalFromList(item); hide()"
-                              class="ui-single-line w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer"
+                              class="ui-action ui-action-primary ui-action-menu ui-single-line w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer"
                               title="Giao cho đơn vị trực thuộc"
-                            >
+                             aria-label="Giao cho đơn vị trực thuộc">
                               <span>Giao đơn vị trực thuộc</span>
                             </button>
 
                             <button
                               v-if="authState.isAdmin.value && !hasProgress(item)"
                               @click="openEditModal(item); hide()"
-                              class="ui-single-line w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer"
+                              class="ui-action ui-action-primary ui-action-menu ui-single-line w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer"
                               title="Chỉnh Sửa"
-                            >
+                             aria-label="Chỉnh Sửa">
                               <span>Chỉnh sửa</span>
                             </button>
 
                             <button
                               @click="openNotificationModal(item); hide()"
-                              class="ui-single-line w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer"
+                              class="ui-action ui-action-warning ui-action-menu ui-single-line w-full text-left px-3 py-2 text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition cursor-pointer"
                               title="Gửi thông báo đến đơn vị chủ trì & phối hợp"
-                            >
+                             aria-label="Gửi thông báo đến đơn vị chủ trì & phối hợp">
                               <span>Gửi thông báo</span>
                             </button>
 
@@ -224,9 +246,9 @@
                             <button
                               v-if="authState.isAdmin.value && !hasProgress(item)"
                               @click="handleDeleteItem(item); hide()"
-                              class="ui-single-line w-full text-left px-3 py-2 text-rose-600 hover:bg-rose-50 transition cursor-pointer"
+                              class="ui-action ui-action-danger ui-action-menu ui-single-line w-full text-left px-3 py-2 text-rose-600 hover:bg-rose-50 transition cursor-pointer"
                               title="Xóa"
-                            >
+                             aria-label="Xóa">
                               <span>Xóa</span>
                             </button>
                           </div>
@@ -277,4 +299,10 @@ defineProps([
 ]);
 
 </script>
+<style scoped>
+@media (max-width: 639px) {
+  /* Pinned name columns must not cover actions when the table is scrolled. */
+  .document-items-scroll :is(th, td).sticky { position: static; }
+}
+</style>
 

@@ -41,56 +41,7 @@
               </div>
             </div>
 
-            <!-- 6 Status Legend Breakdown Grid on Right -->
-            <div class="sm:col-span-7 grid grid-cols-1 gap-2 text-xs font-bold">
-              <button type="button" class="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-200/80 w-full text-left cursor-pointer hover:brightness-95 focus-visible:outline-2 focus-visible:outline-blue-600" :aria-label="statisticLabel('items', 'NotStarted')" @click="openStatistic('items', 'NotStarted')">
-                <div class="flex items-center gap-2">
-                  <span class="w-3 h-3 rounded-full bg-slate-400 shrink-0"></span>
-                  <span class="text-slate-700 font-medium">Chưa thực hiện</span>
-                </div>
-                <span class="font-bold text-slate-900 px-1">{{ formatNumber(activeCreatedStatusSummary.notStarted ?? 0) }}</span>
-              </button>
-
-              <button type="button" class="flex items-center justify-between p-2 rounded-lg bg-blue-50/60 border border-blue-200/80 w-full text-left cursor-pointer hover:brightness-95 focus-visible:outline-2 focus-visible:outline-blue-600" :aria-label="statisticLabel('items', 'InProgressOnTime')" @click="openStatistic('items', 'InProgressOnTime')">
-                <div class="flex items-center gap-2">
-                  <span class="w-3 h-3 rounded-full bg-blue-500 shrink-0"></span>
-                  <span class="text-blue-800 font-medium">Đang thực hiện (trong hạn)</span>
-                </div>
-                <span class="font-bold text-blue-900 px-1">{{ formatNumber(activeCreatedStatusSummary.inProgressOnTime ?? 0) }}</span>
-              </button>
-
-              <button type="button" class="flex items-center justify-between p-2 rounded-lg bg-rose-50/60 border border-rose-200/80 w-full text-left cursor-pointer hover:brightness-95 focus-visible:outline-2 focus-visible:outline-blue-600" :aria-label="statisticLabel('items', 'InProgressOverdue')" @click="openStatistic('items', 'InProgressOverdue')">
-                <div class="flex items-center gap-2">
-                  <span class="w-3 h-3 rounded-full bg-rose-500 shrink-0"></span>
-                  <span class="text-rose-800 font-medium">Đang thực hiện (quá hạn)</span>
-                </div>
-                <span class="font-bold text-rose-900 px-1">{{ formatNumber(activeCreatedStatusSummary.inProgressOverdue ?? 0) }}</span>
-              </button>
-
-              <button type="button" class="flex items-center justify-between p-2 rounded-lg bg-emerald-50/60 border border-emerald-200/80 w-full text-left cursor-pointer hover:brightness-95 focus-visible:outline-2 focus-visible:outline-blue-600" :aria-label="statisticLabel('items', 'CompletedOnTime')" @click="openStatistic('items', 'CompletedOnTime')">
-                <div class="flex items-center gap-2">
-                  <span class="w-3 h-3 rounded-full bg-emerald-500 shrink-0"></span>
-                  <span class="text-emerald-800 font-medium">Hoàn thành (đúng hạn)</span>
-                </div>
-                <span class="font-bold text-emerald-900 px-1">{{ formatNumber(activeCreatedStatusSummary.completedOnTime ?? 0) }}</span>
-              </button>
-
-              <button type="button" class="flex items-center justify-between p-2 rounded-lg bg-teal-50/60 border border-teal-200/80 w-full text-left cursor-pointer hover:brightness-95 focus-visible:outline-2 focus-visible:outline-blue-600" :aria-label="statisticLabel('items', 'CompletedOverdue')" @click="openStatistic('items', 'CompletedOverdue')">
-                <div class="flex items-center gap-2">
-                  <span class="w-3 h-3 rounded-full bg-teal-500 shrink-0"></span>
-                  <span class="text-teal-800 font-medium">Hoàn thành (quá hạn)</span>
-                </div>
-                <span class="font-bold text-teal-900 px-1">{{ formatNumber(activeCreatedStatusSummary.completedOverdue ?? 0) }}</span>
-              </button>
-
-              <button type="button" class="flex items-center justify-between p-2 rounded-lg bg-amber-50/60 border border-amber-200/80 w-full text-left cursor-pointer hover:brightness-95 focus-visible:outline-2 focus-visible:outline-blue-600" :aria-label="statisticLabel('items', 'ExpiringSoon')" @click="openStatistic('items', 'ExpiringSoon')">
-                <div class="flex items-center gap-2">
-                  <span class="w-3 h-3 rounded-full bg-amber-500 shrink-0"></span>
-                  <span class="text-amber-800 font-medium">Sắp hết hạn</span>
-                </div>
-                <span class="font-bold text-amber-900 px-1">{{ formatNumber(activeCreatedStatusSummary.expiringSoon ?? 0) }}</span>
-              </button>
-            </div>
+            <ExecutionStatusBreakdown class="sm:col-span-7" :summary="activeCreatedStatusSummary" interactive context="danh sách" @select="openStatistic('items', $event)" />
           </div>
         </div>
 
@@ -118,56 +69,7 @@
               </div>
             </div>
 
-            <!-- 6 Status Legend Breakdown Grid on Right -->
-            <div class="sm:col-span-7 grid grid-cols-1 gap-2 text-xs font-bold">
-              <button type="button" class="flex items-center justify-between p-2 rounded-lg bg-slate-50 border border-slate-200/80 w-full text-left cursor-pointer hover:brightness-95 focus-visible:outline-2 focus-visible:outline-blue-600" :aria-label="statisticLabel('assignments', 'NotStarted')" @click="openStatistic('assignments', 'NotStarted')">
-                <div class="flex items-center gap-2">
-                  <span class="w-3 h-3 rounded-full bg-slate-400 shrink-0"></span>
-                  <span class="text-slate-700 font-medium">Chưa thực hiện</span>
-                </div>
-                <span class="font-bold text-slate-900 px-1">{{ formatNumber(activeStatusSummary.notStarted ?? 0) }}</span>
-              </button>
-
-              <button type="button" class="flex items-center justify-between p-2 rounded-lg bg-blue-50/60 border border-blue-200/80 w-full text-left cursor-pointer hover:brightness-95 focus-visible:outline-2 focus-visible:outline-blue-600" :aria-label="statisticLabel('assignments', 'InProgressOnTime')" @click="openStatistic('assignments', 'InProgressOnTime')">
-                <div class="flex items-center gap-2">
-                  <span class="w-3 h-3 rounded-full bg-blue-500 shrink-0"></span>
-                  <span class="text-blue-800 font-medium">Đang thực hiện (trong hạn)</span>
-                </div>
-                <span class="font-bold text-blue-900 px-1">{{ formatNumber(activeStatusSummary.inProgressOnTime ?? 0) }}</span>
-              </button>
-
-              <button type="button" class="flex items-center justify-between p-2 rounded-lg bg-rose-50/60 border border-rose-200/80 w-full text-left cursor-pointer hover:brightness-95 focus-visible:outline-2 focus-visible:outline-blue-600" :aria-label="statisticLabel('assignments', 'InProgressOverdue')" @click="openStatistic('assignments', 'InProgressOverdue')">
-                <div class="flex items-center gap-2">
-                  <span class="w-3 h-3 rounded-full bg-rose-500 shrink-0"></span>
-                  <span class="text-rose-800 font-medium">Đang thực hiện (quá hạn)</span>
-                </div>
-                <span class="font-bold text-rose-900 px-1">{{ formatNumber(activeStatusSummary.inProgressOverdue ?? 0) }}</span>
-              </button>
-
-              <button type="button" class="flex items-center justify-between p-2 rounded-lg bg-emerald-50/60 border border-emerald-200/80 w-full text-left cursor-pointer hover:brightness-95 focus-visible:outline-2 focus-visible:outline-blue-600" :aria-label="statisticLabel('assignments', 'CompletedOnTime')" @click="openStatistic('assignments', 'CompletedOnTime')">
-                <div class="flex items-center gap-2">
-                  <span class="w-3 h-3 rounded-full bg-emerald-500 shrink-0"></span>
-                  <span class="text-emerald-800 font-medium">Hoàn thành (đúng hạn)</span>
-                </div>
-                <span class="font-bold text-emerald-900 px-1">{{ formatNumber(activeStatusSummary.completedOnTime ?? 0) }}</span>
-              </button>
-
-              <button type="button" class="flex items-center justify-between p-2 rounded-lg bg-teal-50/60 border border-teal-200/80 w-full text-left cursor-pointer hover:brightness-95 focus-visible:outline-2 focus-visible:outline-blue-600" :aria-label="statisticLabel('assignments', 'CompletedOverdue')" @click="openStatistic('assignments', 'CompletedOverdue')">
-                <div class="flex items-center gap-2">
-                  <span class="w-3 h-3 rounded-full bg-teal-500 shrink-0"></span>
-                  <span class="text-teal-800 font-medium">Hoàn thành (quá hạn)</span>
-                </div>
-                <span class="font-bold text-teal-900 px-1">{{ formatNumber(activeStatusSummary.completedOverdue ?? 0) }}</span>
-              </button>
-
-              <button type="button" class="flex items-center justify-between p-2 rounded-lg bg-amber-50/60 border border-amber-200/80 w-full text-left cursor-pointer hover:brightness-95 focus-visible:outline-2 focus-visible:outline-blue-600" :aria-label="statisticLabel('assignments', 'ExpiringSoon')" @click="openStatistic('assignments', 'ExpiringSoon')">
-                <div class="flex items-center gap-2">
-                  <span class="w-3 h-3 rounded-full bg-amber-500 shrink-0"></span>
-                  <span class="text-amber-800 font-medium">Sắp hết hạn</span>
-                </div>
-                <span class="font-bold text-amber-900 px-1">{{ formatNumber(activeStatusSummary.expiringSoon ?? 0) }}</span>
-              </button>
-            </div>
+            <ExecutionStatusBreakdown class="sm:col-span-7" :summary="activeStatusSummary" interactive context="lượt giao theo cơ quan" @select="openStatistic('assignments', $event)" />
           </div>
         </div>
 
@@ -175,13 +77,10 @@
 </template>
 
 <script setup>
+import ExecutionStatusBreakdown from '../../components/ExecutionStatusBreakdown.vue';
 import { formatNumber } from "../../shared/formatters";
 import MiniStatusDonut from '../../components/MiniStatusDonut.vue';
-import { getStatusLabel } from '../../shared/statusPresentation';
 const emit = defineEmits(['select-statistic']);
-function statisticLabel(mode, status) {
-  return `Xem ${getStatusLabel(status)} — ${mode === 'items' ? 'danh sách' : 'lượt giao theo cơ quan'}`;
-}
 function openStatistic(mode, status = null, scope = 'specific') {
   emit('select-statistic', { mode, status, scope });
 }

@@ -1,7 +1,9 @@
+import { initializeAgencyDisplayNames, useAgencyDisplayNames } from './useAgencyDisplayNames';
 import { fetchWithAuth } from '../../services/auth';
 import { ref, computed, watch } from 'vue';
 import { toast } from 'vue3-toastify';
 import { getApiUrl } from '../../config/api';
+import { activeDocumentId } from '../../services/documentContext';
 import { GOAL_SECTIONS, GOAL_GROUPS, TASK_SECTIONS, TASK_GROUPS } from '../../config/planningStructureConfig';
 import { parseApiError } from '../../utils/errorUtils';
 
@@ -14,6 +16,7 @@ export function useCreateItem({ planningGridRef, agencies, rawItemsList, loadDat
   const createForm = ref({
     code: '',
     title: '',
+    resultTarget: null,
     section: '',
     group: '',
     isOngoing: false,
@@ -23,12 +26,16 @@ export function useCreateItem({ planningGridRef, agencies, rawItemsList, loadDat
     startDate: '',
     dueDate: '',
     leadAgencyId: '',
+    leadAgencyDisplayText: '',
     assignedAgencyId: '',
     coordinatingAgencyIds: [],
+    coordinatingAgenciesDisplayText: '',
     deliverables: []
   });
 
   const createErrorMessage = ref('');
+
+  useAgencyDisplayNames(createForm, agencies);
 
   watch(() => createForm.value.isOngoing, (val) => {
     if (val) {
@@ -46,6 +53,7 @@ export function useCreateItem({ planningGridRef, agencies, rawItemsList, loadDat
     const defaultDueDate = createForm.value.dueDate || '2030-12-31';
     createForm.value.deliverables.push({
       title: '',
+    resultTarget: null,
       dueDate: defaultDueDate,
       notes: ''
     });
@@ -99,9 +107,11 @@ export function useCreateItem({ planningGridRef, agencies, rawItemsList, loadDat
     createForm.value = {
       code: autoCode,
       title: '',
+    resultTarget: null,
       section: type === 'Goal' ? 'Mục A' : '',
       group: '',
       unitName: '%',
+      resultTarget: null,
       isOngoing: false,
       isGeneralTask: false,
       startYear: 2026,
@@ -109,10 +119,13 @@ export function useCreateItem({ planningGridRef, agencies, rawItemsList, loadDat
       startDate: '',
       dueDate: '',
       leadAgencyId: agencies.value[0]?.id || '',
+      leadAgencyDisplayText: '',
       assignedAgencyId: '',
       coordinatingAgencyIds: [],
+      coordinatingAgenciesDisplayText: '',
       deliverables: []
     };
+    initializeAgencyDisplayNames(createForm.value, agencies.value);
     isCreateModalOpen.value = true;
   }
 
@@ -155,13 +168,16 @@ export function useCreateItem({ planningGridRef, agencies, rawItemsList, loadDat
     }
 
     try {
-      const docId = '12660000-0000-0000-0000-000000001266';
+      const docId = activeDocumentId.value || '12660000-0000-0000-0000-000000001266';
       let startDateIso = null;
       let dueDateIso = null;
 
       if (createForm.value.isOngoing) {
         startDateIso = new Date('2026-01-01T00:00:00.000Z').toISOString();
         dueDateIso = new Date('2030-12-31T23:59:59.000Z').toISOString();
+      } else if (createForm.value.startDate || createForm.value.dueDate) {
+        startDateIso = createForm.value.startDate ? new Date(createForm.value.startDate).toISOString() : null;
+        dueDateIso = createForm.value.dueDate ? new Date(createForm.value.dueDate).toISOString() : null;
       } else {
         const sYear = createForm.value.startYear || 2026;
         const dYear = createForm.value.dueYear || 2030;
@@ -177,13 +193,16 @@ export function useCreateItem({ planningGridRef, agencies, rawItemsList, loadDat
         section: createItemType.value === 'Goal' ? createForm.value.section : '',
         group: createForm.value.group,
         unitName: createForm.value.unitName || '%',
+        resultTarget: createItemType.value === 'Goal' && createForm.value.resultTarget != null && createForm.value.resultTarget !== '' ? Number(createForm.value.resultTarget) : null,
         isOngoing: createForm.value.isOngoing,
         isGeneralTask: createForm.value.isGeneralTask,
         startDate: startDateIso,
         dueDate: dueDateIso,
         leadAgencyId: createForm.value.leadAgencyId,
+        leadAgencyDisplayText: createForm.value.leadAgencyDisplayText?.trim() || null,
         assignedAgencyId: createForm.value.assignedAgencyId || null,
         coordinatingAgencyIds: createForm.value.coordinatingAgencyIds || [],
+        coordinatingAgenciesDisplayText: createForm.value.coordinatingAgenciesDisplayText?.trim() || null,
         evaluationType: createItemType.value === 'Goal' ? 'Quantitative' : 'Qualitative',
         deliverables: createForm.value.deliverables || []
       };

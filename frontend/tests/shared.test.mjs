@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { parseQuantityInput, formatQuantityInput } from '../src/shared/numericInput.js';
 import { formatDate, formatDateTime, formatPercent, formatFileName, formatMeasuredValue } from '../src/shared/formatters.js';
-import { getStatusLabel, getStatusBadgeClass } from '../src/shared/statusPresentation.js';
+import { getStatusLabel, getStatusBadgeClass, executionStatusOptions } from '../src/shared/statusPresentation.js';
 import { isAdminRole } from '../src/shared/roles.js';
 import { isGeneralTaskItem } from '../src/shared/agencyPresentation.js';
 
@@ -26,9 +26,9 @@ assert.ok(Number.isNaN(parseQuantityInput('20.00')));
 assert.ok(Number.isNaN(parseQuantityInput('12abc')));
 assert.equal(formatQuantityInput('10000000.000001'), '10.000.000,000001');
 assert.equal(formatQuantityInput(0), '0');
-assert.equal(getStatusLabel('ExpiringSoon'), 'Sắp hết hạn');
-assert.match(getStatusBadgeClass('ExpiringSoon'), /amber/);
-assert.match(getStatusBadgeClass('CompletedOverdue'), /teal/);
+assert.equal(getStatusLabel('ExpiringSoon'), 'Đang thực hiện');
+assert.match(getStatusBadgeClass('ExpiringSoon'), /blue/);
+assert.match(getStatusBadgeClass('CompletedOverdue'), /emerald/);
 assert.match(getStatusBadgeClass('InProgressOnTime'), /blue/);
 assert.match(getStatusBadgeClass('CompletedOnTime'), /emerald/);
 assert.equal(getStatusLabel('UnknownFutureStatus'), 'UnknownFutureStatus');
@@ -39,3 +39,5 @@ assert.ok(isGeneralTaskItem({ leadAgencyCode: 'ALL_PROVINCES' }));
 assert.ok(!isGeneralTaskItem({ leadAgencyCode: 'SPECIFIC' }));
 assert.equal(formatFileName('/files/12345678-1234-1234-1234-123456789abc_Báo cáo.xlsx'), 'Báo cáo.xlsx');
 console.log('Passed: shared formatting, UTC/Vietnam date boundary, null/zero, canonical status and role adapters.');
+
+assert.deepEqual(executionStatusOptions.map(s => s.label), ['Chưa thực hiện', 'Đang thực hiện', 'Đã hoàn thành']);

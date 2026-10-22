@@ -138,8 +138,11 @@ namespace Cdsqg.Api.Controllers
                     StartDate = dto.IsOngoing ? (dto.StartDate ?? new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)) : dto.StartDate,
                     DueDate = dto.IsOngoing ? (dto.DueDate ?? new DateTime(2030, 12, 31, 23, 59, 59, DateTimeKind.Utc)) : dto.DueDate,
                     LeadAgencyId = dto.LeadAgencyId,
+                    LeadAgencyDisplayText = string.IsNullOrWhiteSpace(dto.LeadAgencyDisplayText) ? null : dto.LeadAgencyDisplayText.Trim(),
                     AssignedAgencyId = dto.AssignedAgencyId,
                     CoordinatingAgencyIds = dto.CoordinatingAgencyIds ?? new List<Guid>(),
+                    CoordinatingAgenciesDisplayText = string.IsNullOrWhiteSpace(dto.CoordinatingAgenciesDisplayText) ? null : dto.CoordinatingAgenciesDisplayText.Trim(),
+                    ResultTarget = dto.ResultTarget,
                     UnitId = unitIdToAssign,
                     EvaluationType = evalType,
                     CalculationMethod = calcMethod,
@@ -148,6 +151,9 @@ namespace Cdsqg.Api.Controllers
                     CreatedAt = DateTime.UtcNow
                 };
 
+                GoalResultPlan.Validate(newItem);
+                PlanningYears.ValidateTargets(newItem, (dto.YearlyTargets?.Keys.AsEnumerable() ?? Enumerable.Empty<int>())
+                    .Concat((dto.CustomBaseline?.Keys.AsEnumerable() ?? Enumerable.Empty<string>()).Select(int.Parse)));
                 _context.GoalTaskItems.Add(newItem);
                 await AgencyAssignments.SyncAsync(_context, newItem);
 
@@ -182,6 +188,7 @@ namespace Cdsqg.Api.Controllers
                     leadAgencyId = newItem.LeadAgencyId,
                     assignedAgencyId = newItem.AssignedAgencyId,
                     coordinatingAgencyIds = newItem.CoordinatingAgencyIds,
+                    resultTarget = newItem.ResultTarget,
                     unitId = newItem.UnitId,
                     unitName = assignedUnit?.Name ?? dto.UnitName ?? "%",
                     evaluationType = newItem.EvaluationType.ToString(),
@@ -395,8 +402,10 @@ namespace Cdsqg.Api.Controllers
                 item.StartDate = dto.IsOngoing ? (dto.StartDate ?? new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc)) : dto.StartDate;
                 item.DueDate = dto.IsOngoing ? (dto.DueDate ?? new DateTime(2030, 12, 31, 23, 59, 59, DateTimeKind.Utc)) : dto.DueDate;
                 item.LeadAgencyId = dto.LeadAgencyId;
+                item.LeadAgencyDisplayText = string.IsNullOrWhiteSpace(dto.LeadAgencyDisplayText) ? null : dto.LeadAgencyDisplayText.Trim();
                 item.AssignedAgencyId = dto.AssignedAgencyId;
                 item.CoordinatingAgencyIds = dto.CoordinatingAgencyIds ?? new List<Guid>();
+                item.CoordinatingAgenciesDisplayText = string.IsNullOrWhiteSpace(dto.CoordinatingAgenciesDisplayText) ? null : dto.CoordinatingAgenciesDisplayText.Trim();
                 item.Deliverables = dto.Deliverables ?? new List<TaskDeliverable>();
 
                 if (dto.UnitId.HasValue)
@@ -409,6 +418,8 @@ namespace Cdsqg.Api.Controllers
                     if (targetUnit != null) item.UnitId = targetUnit.Id;
                 }
 
+                if (dto.ResultTargetSpecified) item.ResultTarget = dto.ResultTarget;
+                GoalResultPlan.Validate(item);
                 if (refreshLead || refreshCoordination) await AgencyAssignments.SyncAsync(_context, item, refreshLead, refreshCoordination);
                 await _context.SaveChangesAsync();
 

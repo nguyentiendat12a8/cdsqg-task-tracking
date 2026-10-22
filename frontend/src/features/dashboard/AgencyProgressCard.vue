@@ -15,15 +15,7 @@
     </div>
     <div class="flex items-center gap-3 py-0.5 w-full">
       <MiniStatusDonut :stats="item" :size="84" :innerSize="54" :fontSize="18" />
-      <div class="flex-1 min-w-0 space-y-1 text-xs font-bold">
-        <div v-for="status in statuses" v-show="status.key !== 'notStarted' || item.notStarted > 0" :key="status.key" class="flex items-center justify-between gap-1.5">
-          <span class="flex items-center gap-1.5 min-w-0">
-            <span :class="['w-2.5 h-2.5 rounded-full shrink-0', status.color]"></span>
-            <span class="text-slate-600 truncate">{{ status.label }}</span>
-          </span>
-          <span class="font-bold text-slate-900">{{ item[status.key] || 0 }}</span>
-        </div>
-      </div>
+      <ExecutionStatusBreakdown class="flex-1 min-w-0" :summary="item" />
     </div>
     <div class="pt-2 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-bold w-full">
       <span v-if="dashboardFilter === 'goals'" class="text-purple-800 bg-purple-50 px-1.5 py-0.5 rounded border border-purple-200/60">🎯 {{ formatNumber(item.totalGoals || 0) }} mục tiêu</span>
@@ -34,6 +26,7 @@
 </template>
 
 <script setup>
+import ExecutionStatusBreakdown from '../../components/ExecutionStatusBreakdown.vue';
 import { formatNumber } from "../../shared/formatters";
 import { computed } from 'vue';
 import MiniStatusDonut from '../../components/MiniStatusDonut.vue';
@@ -46,12 +39,4 @@ const props = defineProps({
 });
 defineEmits(['select']);
 const badgeColor = computed(() => ({ blue: 'bg-blue-600', purple: 'bg-purple-600', indigo: 'bg-indigo-600' })[props.tone] || 'bg-blue-600');
-const statuses = [
-  { key: 'inProgressOverdue', label: 'Đang t/h quá hạn', color: 'bg-rose-500' },
-  { key: 'inProgressOnTime', label: 'Đang t/h trong hạn', color: 'bg-blue-500' },
-  { key: 'expiringSoon', label: 'Sắp tới hạn', color: 'bg-amber-500' },
-  { key: 'completedOverdue', label: 'Đã h/t quá hạn', color: 'bg-teal-500' },
-  { key: 'completedOnTime', label: 'Đã h/t trong hạn', color: 'bg-emerald-500' },
-  { key: 'notStarted', label: 'Chưa thực hiện', color: 'bg-slate-400' }
-];
 </script>

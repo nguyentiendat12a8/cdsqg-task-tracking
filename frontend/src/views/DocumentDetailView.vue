@@ -5,11 +5,36 @@
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden w-full">
 
       <!-- Integrated Top Header Bar -->
-      <div class="p-4 sm:p-5 border-b border-slate-200/80 bg-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div>
-          <h2 class="text-sm sm:text-base font-bold text-slate-800">
-            {{ filterItemType === 'Goal' ? (activeSubTab === 'grid' ? '🎯 Danh sách thiết lập kế hoạch mục tiêu' : '🎯 Danh sách mục tiêu') : '📋 Danh sách nhiệm vụ' }}
-          </h2>
+      <div class="ui-screen-heading p-4 sm:p-5 border-b border-slate-200/80 bg-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div 
+            class="ui-screen-icon w-10 h-10 rounded-2xl text-white flex items-center justify-center shrink-0 shadow-md"
+
+          >
+            <svg v-if="filterItemType === 'Goal'" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+            </svg>
+            <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+            </svg>
+          </div>
+          <div>
+            <div class="flex items-center gap-2.5 flex-wrap">
+              <h2 class="text-base sm:text-lg font-bold text-slate-800 tracking-tight">
+                {{ filterItemType === 'Goal' ? (activeSubTab === 'grid' ? 'Danh sách thiết lập kế hoạch mục tiêu' : 'Danh sách mục tiêu') : 'Danh sách nhiệm vụ' }}
+              </h2>
+              <span 
+                class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-bold border"
+                :class="activeDocument.code === '2629' ? 'bg-emerald-50 text-emerald-800 border-emerald-200' : 'bg-blue-50 text-blue-800 border-blue-200'"
+              >
+                <span class="w-1.5 h-1.5 rounded-full" :class="activeDocument.code === '2629' ? 'bg-emerald-500' : 'bg-blue-500'"></span>
+                {{ activeDocument.documentNumber }} ({{ activeDocument.shortTitle }})
+              </span>
+            </div>
+            <p class="text-xs text-slate-500 font-medium mt-0.5">
+              Phạm vi theo dõi: <span class="font-bold text-slate-700">{{ activeDocument.title }}</span>
+            </p>
+          </div>
         </div>
 
         <div class="flex items-center gap-2 flex-wrap">
@@ -46,7 +71,7 @@
 
       <!-- DYNAMIC PLANNING GRID SUB-TAB -->
       <div v-show="activeSubTab === 'grid'" class="w-full">
-        <DynamicPlanningGrid ref="planningGridRef" :documentId="REPORTING_DOCUMENT_ID" :filterItemType="filterItemType || 'Task'" />
+        <DynamicPlanningGrid ref="planningGridRef" :documentId="activeDocumentId" :filterItemType="filterItemType || 'Task'" />
       </div>
 
       <!-- LIST TABLE SUB-TAB WITH STICKY HEADERS & EVIDENCE FILES AUDIT LOG -->
@@ -399,6 +424,7 @@
 import ActionButton from "../components/ActionButton.vue";
 import { formatNumber as formatQuantity } from '../shared/formatters';
 import { REPORTING_DOCUMENT_ID } from '../config/reporting';
+import { activeDocument, activeDocumentId } from '../services/documentContext';
 import { useCreateItem } from '../features/document/useCreateItem';
 import { useEditItem } from '../features/document/useEditItem';
 import { usePendingApprovals } from '../features/document/usePendingApprovals';
@@ -744,7 +770,7 @@ async function handleDeleteItem(item) {
   }
 
   if (hasProgress(item)) {
-    toast.warning("Chỉ được phép xóa Mục tiêu / Nhiệm vụ khi ở trạng thái Chưa bắt đầu.");
+    toast.warning("Chỉ được phép xóa Mục tiêu / Nhiệm vụ khi ở trạng thái Chưa thực hiện.");
     return;
   }
 

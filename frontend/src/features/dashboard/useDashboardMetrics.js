@@ -1,10 +1,11 @@
 import { fetchWithAuth } from '../../services/auth';
-import { ref, computed, onUnmounted } from 'vue';
+import { ref, computed, watch, onUnmounted } from 'vue';
+import { activeDocumentId } from '../../services/documentContext';
 import { buildDashboardQuery } from './queries';
 import { getApiUrl } from '../../config/api';
 import { authState } from '../../services/auth';
 
-export function useDashboardMetrics({ assignmentRole, dashboardFilter, selectedAgencyIds, selectedSubAgencyIds, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly, agencies, isSpecialAgencyCode }) {
+export function useDashboardMetrics({ assignmentRole, dashboardFilter, selectedAgencyIds, selectedSubAgencyIds, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly,reportFromYear,reportToYear,executionFrom,executionTo, agencies, isSpecialAgencyCode }) {
   const isLoading = ref(true);
   const metricsQuery = ref('');
   const metrics = ref({
@@ -29,12 +30,7 @@ export function useDashboardMetrics({ assignmentRole, dashboardFilter, selectedA
 
   const activeStatusTotal = computed(() => {
     const s = activeStatusSummary.value || {};
-    return (s.notStarted || 0) +
-           (s.inProgressOnTime || 0) +
-           (s.inProgressOverdue || 0) +
-           (s.completedOnTime || 0) +
-           (s.completedOverdue || 0) +
-           (s.expiringSoon || 0);
+    return (s.notStarted || 0) + (s.inProgress || 0) + (s.completed || 0);
   });
 
   const overallDonutStats = computed(() => {
@@ -210,22 +206,16 @@ export function useDashboardMetrics({ assignmentRole, dashboardFilter, selectedA
         ...found,
         totalItems: found.totalGoals ?? found.totalItems ?? 0,
         notStarted: found.goalNotStarted ?? found.notStarted ?? 0,
-        inProgressOnTime: found.goalInProgressOnTime ?? found.inProgressOnTime ?? 0,
-        inProgressOverdue: found.goalInProgressOverdue ?? found.inProgressOverdue ?? 0,
-        completedOnTime: found.goalCompletedOnTime ?? found.completedOnTime ?? 0,
-        completedOverdue: found.goalCompletedOverdue ?? found.completedOverdue ?? 0,
-        expiringSoon: found.goalExpiringSoon ?? found.expiringSoon ?? 0,
+        inProgress: found.goalInProgress ?? 0,
+        completed: found.goalCompleted ?? 0,
       };
     } else if (filter === 'tasks') {
       return {
         ...found,
         totalItems: found.totalTasks ?? found.totalItems ?? 0,
         notStarted: found.taskNotStarted ?? found.notStarted ?? 0,
-        inProgressOnTime: found.taskInProgressOnTime ?? found.inProgressOnTime ?? 0,
-        inProgressOverdue: found.taskInProgressOverdue ?? found.inProgressOverdue ?? 0,
-        completedOnTime: found.taskCompletedOnTime ?? found.completedOnTime ?? 0,
-        completedOverdue: found.taskCompletedOverdue ?? found.completedOverdue ?? 0,
-        expiringSoon: found.taskExpiringSoon ?? found.expiringSoon ?? 0,
+        inProgress: found.taskInProgress ?? 0,
+        completed: found.taskCompleted ?? 0,
       };
     }
     return found;
@@ -260,11 +250,14 @@ export function useDashboardMetrics({ assignmentRole, dashboardFilter, selectedA
     const filters = {
       assignmentRole: assignmentRole?.value || 'Lead',
       dashboardFilter: dashboardFilter.value,
+      documentId: activeDocumentId.value,
       selectedScopes: selectedScopes.value,
       selectedSections: selectedSections.value,
       selectedGroups: selectedGroups.value,
       fromYear: fromYear.value,
       toYear: toYear.value,
+      reportFromYear: reportFromYear?.value, reportToYear: reportToYear?.value,
+      executionFrom: executionFrom?.value, executionTo: executionTo?.value,
       isOngoingOnly: isOngoingOnly.value
     };
     const ids = [...selectedAgencyIds.value, ...selectedSubAgencyIds.value];
@@ -306,6 +299,10 @@ export function useDashboardMetrics({ assignmentRole, dashboardFilter, selectedA
       if (version === requestVersion) isLoading.value = false;
     }
   }
+
+  watch(activeDocumentId, () => {
+    loadDashboardMetrics();
+  });
 
   return {
   isLoading,

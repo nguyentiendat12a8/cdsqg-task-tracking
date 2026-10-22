@@ -56,7 +56,10 @@ connectionString = ConvertPostgresConnectionString(connectionString);
 if (usePostgreSql && !string.IsNullOrWhiteSpace(connectionString))
 {
     builder.Services.AddDbContext<AppDbContext>(options =>
-        options.UseNpgsql(connectionString));
+    {
+        options.UseNpgsql(connectionString);
+        options.ConfigureWarnings(w => w.Ignore(Microsoft.EntityFrameworkCore.Diagnostics.RelationalEventId.PendingModelChangesWarning));
+    });
 }
 else
 {
@@ -190,6 +193,16 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Maintenance mode does not start HTTP listeners or hosted workers.
+if (args.Contains("--backfill-missing-assignments"))
+{
+    using var repairScope = app.Services.CreateScope();
+    var repairDb = repairScope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var repaired = await AgencyAssignments.InitializeMissingAsync(repairDb);
+    Console.WriteLine($"Initialized assignment snapshots for {repaired} items.");
+    return;
+}
+
 app.UseCors("AllowFrontend");
 
 // Ensure Database Clean Recreation & Seed Initial Data (Fail-safe wrapper)
@@ -204,6 +217,7 @@ using (var scope = app.Services.CreateScope())
             EnsurePostgresSchemaUpToDate(context);
         }
         SeedInitialData(context, hasher);
+        await AgencyAssignments.InitializeMissingAsync(context);
         EnsureSampleFilesExist(app.Environment);
     }
     catch (Exception ex)
@@ -441,7 +455,7 @@ void SeedInitialData(AppDbContext db, IPasswordHasher hasher)
             Id = doc1266Id,
             DocumentNumber = "1266/QĐ-TTg",
             Name = "Quyết định số 1266/QĐ-TTg ngày 14/07/2026 của Thủ tướng Chính phủ",
-            Summary = "Hệ thống theo dõi nhiệm vụ được giao tại Quyết định số 1266/QĐ-TTg",
+            Summary = "Chiến lược quốc gia về chuyển đổi số giai đoạn 2026 - 2030, định hướng đến năm 2045",
             Signer = "Thủ tướng Chính phủ",
             IssueDate = new DateTime(2026, 7, 14),
             StartYear = 2026,
@@ -449,6 +463,26 @@ void SeedInitialData(AppDbContext db, IPasswordHasher hasher)
             CreatedAt = DateTime.UtcNow
         };
         db.Documents.Add(doc1266);
+    }
+
+    // 5. Seed Decision 2629 Document Container if missing
+    var doc2629Id = Guid.Parse("26290000-0000-0000-0000-000000002629");
+    var doc2629 = db.Documents.FirstOrDefault(d => d.Id == doc2629Id || d.DocumentNumber == "2629/QĐ-TTg");
+    if (doc2629 == null)
+    {
+        doc2629 = new Document
+        {
+            Id = doc2629Id,
+            DocumentNumber = "2629/QĐ-TTg",
+            Name = "Quyết định số 2629/QĐ-TTg ngày 01/12/2025 của Thủ tướng Chính phủ",
+            Summary = "Chương trình phát triển Chính phủ số",
+            Signer = "Thủ tướng Chính phủ",
+            IssueDate = new DateTime(2025, 12, 1),
+            StartYear = 2025,
+            EndYear = 2030,
+            CreatedAt = DateTime.UtcNow
+        };
+        db.Documents.Add(doc2629);
     }
 
 

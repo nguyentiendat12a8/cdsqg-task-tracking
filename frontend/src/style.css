@@ -13,29 +13,29 @@
 
 @theme {
   /* Shared application palette: navigation, controls, tables and dialogs. */
-  --color-blue-50: #f0f5fc;
-  --color-blue-100: #e1eafb;
-  --color-blue-200: #c4d5ef;
-  --color-blue-300: #9ab6df;
-  --color-blue-400: #7398cf;
-  --color-blue-500: #527bb9;
-  --color-blue-600: #315ead;
-  --color-blue-700: #284e91;
-  --color-blue-800: #244277;
-  --color-blue-900: #20385e;
-  --color-purple-50: #f0f5fc;
-  --color-purple-100: #e1eafb;
-  --color-purple-200: #c4d5ef;
-  --color-purple-300: #9ab6df;
-  --color-purple-400: #7398cf;
-  --color-purple-500: #527bb9;
-  --color-purple-600: #315ead;
-  --color-purple-700: #284e91;
-  --color-purple-800: #244277;
-  --color-purple-900: #20385e;
+  --color-blue-50: #f1f5fc;
+  --color-blue-100: #e5edfa;
+  --color-blue-200: #cbdaf2;
+  --color-blue-300: #a9bfe5;
+  --color-blue-400: #7c9dcd;
+  --color-blue-500: #557bb7;
+  --color-blue-600: #3b5fa8;
+  --color-blue-700: #304f8e;
+  --color-blue-800: #294476;
+  --color-blue-900: #22395f;
+  --color-purple-50: #f1f5fc;
+  --color-purple-100: #e5edfa;
+  --color-purple-200: #cbdaf2;
+  --color-purple-300: #a9bfe5;
+  --color-purple-400: #7c9dcd;
+  --color-purple-500: #557bb7;
+  --color-purple-600: #3b5fa8;
+  --color-purple-700: #304f8e;
+  --color-purple-800: #294476;
+  --color-purple-900: #22395f;
   --color-slate-50: #f8f9fb;
   --color-slate-100: #f0f2f5;
-  --color-slate-200: #e2e6ec;
+  --color-slate-200: #dfe6f0;
   --color-slate-300: #cbd2dc;
   --color-slate-400: #94a3b8;
   --color-slate-500: #64748b;
@@ -75,11 +75,34 @@
   --text-base--line-height: 1.125rem;
 }
 
+@theme {
+  --color-indigo-50: var(--color-blue-50);
+  --color-indigo-100: var(--color-blue-100);
+  --color-indigo-200: var(--color-blue-200);
+  --color-indigo-500: var(--color-blue-500);
+  --color-indigo-600: var(--color-blue-600);
+  --color-indigo-700: var(--color-blue-700);
+  --color-indigo-800: var(--color-blue-800);
+  --color-indigo-900: var(--color-blue-900);
+}
+
 :root {
-  --ui-page-background: #f5f6f8;
+  --ui-page-background: #f4f7fc;
+  --ui-primary: var(--color-blue-600);
+  --ui-header-background: #f1f5fc;
+  --ui-header-border: #dce5f3;
+  --ui-surface: #ffffff;
+  --ui-surface-hover: #f5f8fe;
+  --ui-nav-background: #213658;
+  --ui-nav-hover: #2c456b;
+  --ui-nav-active: #3b5fa8;
+  --ui-nav-text: #d0ddf0;
+  --ui-nav-muted: #a9bfdc;
+  --ui-nav-line: #395071;
   --ui-font-body: 0.75rem;
   --ui-font-caption: 0.75rem;
   --ui-font-title: 1.125rem;
+  --ui-font-app-title: 1.1875rem;
   --ui-control-height: 2.25rem;
   --ui-control-radius: 0.5rem;
   font-family: var(--font-sans);
@@ -92,6 +115,18 @@ button, input, select, textarea { font-family: inherit; }
   .ui-button { min-height: var(--ui-control-height); border-radius: var(--ui-control-radius); font-size: var(--ui-font-body); font-weight: 600; padding: 0.5rem 1rem; }
   .ui-control { min-height: var(--ui-control-height); border-radius: var(--ui-control-radius); font-size: var(--ui-font-body); }
   .ui-toolbar-control { height: var(--ui-control-height); min-height: var(--ui-control-height); border-radius: var(--ui-control-radius); font-size: var(--ui-font-body); line-height: 1.25rem; }
+  .ui-app-title {
+    font-size: 1.125rem;
+    line-height: 1.4;
+    font-weight: 700;
+    letter-spacing: normal;
+    color: var(--color-slate-800);
+  }
+  @media (max-width: 767px) {
+    .ui-app-title {
+      font-size: 0.9375rem;
+    }
+  }
   .ui-page-title { font-size: var(--ui-font-title); line-height: 1.5; font-weight: 700; }
   .ui-title { font-size: var(--ui-font-title); line-height: 1.5; font-weight: 700; }
   .ui-section-title { font-size: 0.875rem; line-height: 1.25rem; font-weight: 600; }
@@ -178,7 +213,7 @@ button, input, select, textarea { font-family: inherit; }
   .ui-modal-backdrop {
     position: fixed;
     inset: 0;
-    background-color: rgba(15, 23, 42, 0.6);
+    background-color: rgb(24 39 59 / .48);
     backdrop-filter: blur(2px);
     z-index: 50;
     display: flex;
@@ -203,7 +238,8 @@ button, input, select, textarea { font-family: inherit; }
     align-items: center;
     justify-content: space-between;
     padding: 1rem 1.25rem;
-    border-bottom: 1px solid var(--color-slate-100);
+    border-bottom: 1px solid var(--ui-header-border);
+    background-color: var(--ui-header-background);
     flex-shrink: 0;
   }
   .ui-modal-title {
@@ -383,7 +419,7 @@ textarea:focus,
 select:focus,
 .searchable-select-trigger-open {
   border-color: var(--color-blue-600) !important; /* Vivid Blue-600 */
-  box-shadow: inset 0 0 0 1px var(--color-blue-600), 0 0 0 3px rgba(37, 99, 235, 0.2) !important;
+  box-shadow: inset 0 0 0 1px var(--color-blue-600), 0 0 0 3px color-mix(in srgb, var(--ui-primary) 18%, transparent) !important;
   outline: none !important;
   background-color: #ffffff !important;
 }
@@ -392,7 +428,7 @@ select:focus,
 input[type="checkbox"]:focus,
 input[type="radio"]:focus {
   outline: none !important;
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.3) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--ui-primary) 28%, transparent) !important;
   border-color: var(--color-blue-600) !important;
 }
 
@@ -430,3 +466,43 @@ input[type="radio"]:focus {
 @media (max-width: 767px) {
   input:not([type="checkbox"]):not([type="radio"]):not([type="file"]):not([type="hidden"]), textarea { font-size: 1rem; }
 }
+
+/* Semantic surfaces shared by all workspaces, including teleported dialogs. */
+.app-header { border-color: var(--ui-header-border); box-shadow: 0 1px 8px rgb(33 54 88 / .035); }
+.ui-screen-heading, .ui-section-heading {
+  background-color: var(--ui-header-background);
+  border-color: var(--ui-header-border);
+  color: var(--color-blue-900);
+}
+.ui-section-heading { border-radius: .75rem .75rem 0 0; padding: .875rem; }
+.ui-screen-icon { background: var(--color-blue-600); color: white; box-shadow: none; }
+#main-content :where(thead), #main-content :where(thead th),
+:where([role="dialog"]) :where(thead), :where([role="dialog"]) :where(thead th), .ai-table th {
+  background-color: var(--ui-header-background);
+  color: var(--color-slate-700);
+  border-color: var(--ui-header-border);
+}
+
+.ui-btn-secondary { border-color: var(--color-blue-200); color: var(--color-blue-800); }
+.ui-btn-secondary:hover { border-color: var(--color-blue-300); background-color: var(--color-blue-50); color: var(--color-blue-900); }
+.ui-modal-footer { background-color: var(--color-slate-50); border-color: var(--ui-header-border); }
+::selection { color: var(--color-blue-900); background: var(--color-blue-100); }
+
+/* Row actions use the same palette in tables, toolbars and teleported menus. */
+.ui-action {
+  --action-ink: var(--color-blue-700);
+  --action-fill: var(--color-blue-50);
+  --action-border: var(--color-blue-200);
+  --action-hover: var(--color-blue-100);
+  display: inline-flex; align-items: center; justify-content: center; gap: .375rem;
+  color: var(--action-ink); background-color: var(--action-fill);
+  border: 1px solid var(--action-border);
+  transition: color .15s, background-color .15s, border-color .15s;
+}
+.ui-action-neutral { --action-ink: var(--color-slate-600); --action-fill: var(--color-slate-50); --action-border: var(--color-slate-200); --action-hover: var(--color-slate-100); }
+.ui-action-warning { --action-ink: var(--color-amber-700); --action-fill: var(--color-amber-50); --action-border: var(--color-amber-200); --action-hover: var(--color-amber-100); }
+.ui-action-danger { --action-ink: var(--color-rose-700); --action-fill: var(--color-rose-50); --action-border: var(--color-rose-200); --action-hover: var(--color-rose-100); }
+.ui-action-menu { justify-content: flex-start; border-color: transparent; background-color: transparent; }
+.ui-action:hover:not(:disabled):not([aria-disabled="true"]) { color: var(--action-ink); background-color: var(--action-hover); border-color: var(--action-border); }
+.ui-action svg, .ui-btn svg { color: inherit; }
+.ui-action:disabled, .ui-action[aria-disabled="true"] { color: var(--color-slate-400); background-color: var(--color-slate-100); border-color: var(--color-slate-200); cursor: not-allowed; }

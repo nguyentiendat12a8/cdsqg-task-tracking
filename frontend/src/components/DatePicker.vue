@@ -13,10 +13,11 @@
       :class="{ 'opacity-60 pointer-events-none': disabled }"
     >
       <input
-        ref="trigger" role="combobox" :aria-expanded="isOpen" aria-haspopup="dialog" :aria-label="placeholder || 'Chọn ngày'"
+        ref="trigger" role="combobox" :aria-expanded="isOpen" aria-haspopup="dialog" :aria-label="inputId ? undefined : (placeholder || 'Chọn ngày')"
         @keydown.enter.prevent="openCalendar" @keydown.space.prevent="openCalendar" @keydown.down.prevent="openCalendar"
         type="text"
         readonly
+        :id="inputId"
         :value="formattedDisplay"
         :placeholder="placeholder"
         :disabled="disabled"
@@ -153,6 +154,7 @@
 import { ref, computed, watch, nextTick } from 'vue';
 
 const props = defineProps({
+  inputId: { type: String, default: undefined },
   modelValue: { type: String, default: '' }, // YYYY-MM-DD
   placeholder: { type: String, default: 'dd/mm/yyyy' },
   disabled: { type: Boolean, default: false },

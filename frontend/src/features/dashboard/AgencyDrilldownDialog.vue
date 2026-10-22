@@ -11,7 +11,7 @@
             </h3>
             <p class="text-xs text-slate-500 mt-0.5">Chi tiết tiến độ đơn vị trực thuộc, danh sách mục tiêu & nhiệm vụ được gán và thông tin cán bộ đầu mối liên hệ</p>
           </div>
-          <button @click="selectedDrilldownAgency = null" class="p-1.5 text-slate-400 hover:text-slate-700 bg-slate-100 rounded-xl transition cursor-pointer">✕</button>
+          <button type="button" aria-label="Đóng chi tiết đơn vị" @click="selectedDrilldownAgency = null" class="p-1.5 text-slate-400 hover:text-slate-700 bg-slate-100 rounded-xl transition cursor-pointer">✕</button>
         </div>
 
         <!-- Navigation Tabs inside Modal -->
@@ -99,56 +99,7 @@
                   <MiniStatusDonut :stats="child" :size="84" :innerSize="54" :fontSize="18" />
                 </div>
 
-                <!-- 6 Status Legend List -->
-                <div class="flex-1 min-w-0 space-y-1 text-xs font-bold">
-                  <div class="flex items-center justify-between gap-1.5">
-                    <div class="flex items-center gap-1.5 min-w-0">
-                      <span class="w-2.5 h-2.5 rounded-full bg-rose-500 shrink-0"></span>
-                      <span class="text-slate-600 truncate">Đang t/h quá hạn</span>
-                    </div>
-                    <span class="font-bold text-slate-900">{{ formatNumber(child.inProgressOverdue || 0) }}</span>
-                  </div>
-
-                  <div class="flex items-center justify-between gap-1.5">
-                    <div class="flex items-center gap-1.5 min-w-0">
-                      <span class="w-2.5 h-2.5 rounded-full bg-blue-500 shrink-0"></span>
-                      <span class="text-slate-600 truncate">Đang t/h trong hạn</span>
-                    </div>
-                    <span class="font-bold text-slate-900">{{ formatNumber(child.inProgressOnTime || 0) }}</span>
-                  </div>
-
-                  <div class="flex items-center justify-between gap-1.5">
-                    <div class="flex items-center gap-1.5 min-w-0">
-                      <span class="w-2.5 h-2.5 rounded-full bg-amber-500 shrink-0"></span>
-                      <span class="text-slate-600 truncate">Sắp tới hạn</span>
-                    </div>
-                    <span class="font-bold text-slate-900">{{ formatNumber(child.expiringSoon || 0) }}</span>
-                  </div>
-
-                  <div class="flex items-center justify-between gap-1.5">
-                    <div class="flex items-center gap-1.5 min-w-0">
-                      <span class="w-2.5 h-2.5 rounded-full bg-teal-500 shrink-0"></span>
-                      <span class="text-slate-600 truncate">Đã h/t quá hạn</span>
-                    </div>
-                    <span class="font-bold text-slate-900">{{ formatNumber(child.completedOverdue || 0) }}</span>
-                  </div>
-
-                  <div class="flex items-center justify-between gap-1.5">
-                    <div class="flex items-center gap-1.5 min-w-0">
-                      <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shrink-0"></span>
-                      <span class="text-slate-600 truncate">Đã h/t trong hạn</span>
-                    </div>
-                    <span class="font-bold text-slate-900">{{ formatNumber(child.completedOnTime || 0) }}</span>
-                  </div>
-
-                  <div class="flex items-center justify-between gap-1.5">
-                    <div class="flex items-center gap-1.5 min-w-0">
-                      <span class="w-2.5 h-2.5 rounded-full bg-slate-400 shrink-0"></span>
-                      <span class="text-slate-600 truncate">Chưa thực hiện</span>
-                    </div>
-                    <span class="font-bold text-slate-900">{{ formatNumber(child.notStarted || 0) }}</span>
-                  </div>
-                </div>
+                <ExecutionStatusBreakdown class="flex-1 min-w-0" :summary="child" />
               </div>
             </div>
           </div>
@@ -160,6 +111,7 @@
 
         <!-- TAB CONTENT: Goal/Task Items Assigned to Agency -->
         <div v-if="drilldownTab === 'goals' || drilldownTab === 'tasks'" class="space-y-3 max-h-[60vh] overflow-y-auto custom-scrollbar pr-1">
+          <div v-if="modalDeadlineFilter==='Overdue'" class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-900" role="status"><strong>Đang xem mục tiêu, nhiệm vụ quá hạn của đơn vị</strong><button type="button" class="ui-btn ui-btn-secondary" @click="modalDeadlineFilter='all'">Xem tất cả công việc</button></div>
           <!-- Local Filters Toolbar -->
           <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200/80">
             <div class="flex items-center gap-2 flex-1 min-w-[200px]">
@@ -174,7 +126,8 @@
               </div>
             </div>
 
-            <div class="flex items-center gap-2 shrink-0">
+            <div class="flex flex-wrap items-center gap-2 min-w-0">
+              <div class="w-48 max-w-full"><SearchableSelect v-model="modalDeadlineFilter" :options="[{value:'all',label:'Tất cả thời hạn'},{value:'Overdue',label:'Quá hạn'},{value:'ExpiringSoon',label:'Sắp hết hạn'}]" :is-multi="false" :clearable="false" label="Tình trạng thời hạn" label-class="sr-only" /></div>
               <!-- Status Filter -->
               <div class="w-60 max-w-full">
                 <SearchableSelect v-model="modalStatusFilter" :options="[{ value: 'all', label: 'Tất cả trạng thái' }, ...executionStatusOptions]" :isMulti="false" :clearable="false" label="Trạng thái thực hiện" label-class="sr-only" />
@@ -221,14 +174,8 @@
                     <!-- Tên & Phân loại -->
                     <td class="px-3 py-2.5 border-r border-slate-200 leading-relaxed">
                       <div class="flex items-center gap-1.5 flex-wrap mb-1">
-                        <span :class="['px-2 py-0.5 text-xs font-bold rounded-md border', item.itemType === 'Goal' ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-slate-100 text-slate-700 border-slate-200']">
-                          {{ item.itemType === 'Goal' ? '🎯 Mục tiêu' : '📋 Nhiệm vụ' }}
-                        </span>
                         <span :class="['px-2 py-0.5 text-xs font-bold rounded-md border', item.isGeneralTask ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-slate-50 text-slate-600 border-slate-200']">
                           {{ item.isGeneralTask ? 'Phạm vi chung' : 'Phạm vi riêng' }}
-                        </span>
-                        <span v-if="item.section || item.category" class="text-xs font-medium text-slate-400">
-                          • {{ item.section || item.category }}
                         </span>
                       </div>
                       <div class="font-semibold text-slate-900 leading-snug line-clamp-2" :title="item.title">
@@ -265,6 +212,7 @@
                       <span :class="['px-2.5 py-0.5 rounded-full text-xs font-bold shadow-2xs inline-block whitespace-nowrap border', getStatusBadgeClass(item.status)]">
                         {{ getStatusLabel(item.status) }}
                       </span>
+                      <span v-if="item.deadlineStatus==='Overdue'" class="mt-1 block text-xs font-semibold text-rose-700">Quá hạn</span>
                     </td>
 
                     <!-- Nút thao tác Xem chi tiết -->
@@ -348,6 +296,7 @@
 </template>
 
 <script setup>
+import ExecutionStatusBreakdown from '../../components/ExecutionStatusBreakdown.vue';
 import { formatNumber } from "../../shared/formatters";
 import SearchableSelect from '../../components/SearchableSelect.vue';
 import { executionStatusOptions } from '../../shared/statusPresentation';
@@ -373,6 +322,7 @@ defineProps([
   'switchDrilldownTab'
 ]);
 const modalSearchKeyword = defineModel('modalSearchKeyword', { required: true });
+const modalDeadlineFilter = defineModel('modalDeadlineFilter', { default: 'all' });
 const modalStatusFilter = defineModel('modalStatusFilter', { required: true });
 const selectedDrilldownAgency = defineModel('selectedDrilldownAgency', { required: true });
 const selectedDetailItem = defineModel('selectedDetailItem', { required: true });

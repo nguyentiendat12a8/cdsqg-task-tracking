@@ -52,6 +52,11 @@ public class AgencyAssignmentPostgresTests
             var options = new DbContextOptionsBuilder<AppDbContext>().UseNpgsql(new NpgsqlConnectionStringBuilder(connection) { SearchPath = schema }.ConnectionString).AddInterceptors(trace).Options;
             await using var db = new AppDbContext(options);
             await db.GetService<IMigrator>().MigrateAsync("20261008164528_AnnualReportingOnly");
+            // Current CLR model includes optional display names; emulate their existing legacy columns before the assignment backfill.
+            await db.Database.ExecuteSqlRawAsync("""
+                ALTER TABLE "GoalTaskItems" ADD COLUMN "LeadAgencyDisplayText" text NULL;
+                ALTER TABLE "GoalTaskItems" ADD COLUMN "CoordinatingAgenciesDisplayText" text NULL;
+                """);
             var bca = new Agency { Code="BCA", Name="Bộ Công an", Type=AgencyTypeEnum.Ministry };
             var btc = new Agency { Code="BTC", Name="Bộ Tài chính", Type=AgencyTypeEnum.Ministry };
             var province = new Agency { Code="HN", Name="Hà Nội", Type=AgencyTypeEnum.Province };
@@ -89,7 +94,7 @@ public class AgencyAssignmentPostgresTests
             Assert.Equal(new[]{"BOTH","DIRECT","GENERAL","MINISTRY"},lead.Items.Select(i=>i.Code).Order());
             Assert.Equal(lead.Items.Count,lead.Items.Select(i=>i.TaskId).Distinct().Count());
             Assert.Equal(66.67m,lead.Items.Single(i=>i.Code=="DIRECT").CompletionPercentage);
-            Assert.Equal("InProgressOnTime",lead.Items.Single(i=>i.Code=="DIRECT").CalculatedStatus);
+            Assert.Equal("InProgress",lead.Items.Single(i=>i.Code=="DIRECT").CalculatedStatus);
             Assert.Equal("Direct",lead.Items.Single(i=>i.Code=="BOTH").AssignmentKind);
             Assert.Equal("NotStarted",lead.Items.Single(i=>i.Code=="GENERAL").CalculatedStatus);
             Assert.All(lead.Items,i=>Assert.Equal(bca.Id,i.ProgressAgencyId));
@@ -98,17 +103,17 @@ public class AgencyAssignmentPostgresTests
             Assert.Equal(new[]{"BOTH","COORD"},allCoord.Items.Select(i=>i.Code).Order());
             var coord=await planning.GetDocumentItemsPagedAsync(doc.Id,new DocumentItemsQueryDto { UserRole="Admin", SelectedAgencyIds=new(){bca.Id}, AssignmentRole="Coordinating", PageSize=100 });
             Assert.Equal(new[]{"BOTH","COORD"},coord.Items.Select(i=>i.Code).Order());
-            Assert.Equal("CompletedOnTime",coord.Items.Single(i=>i.Code=="COORD").CalculatedStatus);
+            Assert.Equal("Completed",coord.Items.Single(i=>i.Code=="COORD").CalculatedStatus);
             Assert.Equal("Group",coord.Items.Single(i=>i.Code=="BOTH").AssignmentKind);
-            var completeCoord=await planning.GetDocumentItemsPagedAsync(doc.Id,new DocumentItemsQueryDto { UserRole="Admin", SelectedAgencyIds=new(){bca.Id}, AssignmentRole="Coordinating", SelectedStatuses=new(){"CompletedOnTime"} });
+            var completeCoord=await planning.GetDocumentItemsPagedAsync(doc.Id,new DocumentItemsQueryDto { UserRole="Admin", SelectedAgencyIds=new(){bca.Id}, AssignmentRole="Coordinating", SelectedStatuses=new(){"Completed"} });
             Assert.Equal("COORD",Assert.Single(completeCoord.Items).Code);
             var detail=Json(Assert.IsType<OkObjectResult>(await dashboard.GetAgencyItems(bca.Id)).Value!);
-            Assert.Equal(4,detail.GetArrayLength()); Assert.Equal("InProgressOnTime",detail.EnumerateArray().Single(i=>i.GetProperty("code").GetString()=="DIRECT").GetProperty("status").GetString());
+            Assert.Equal(4,detail.GetArrayLength()); Assert.Equal("InProgress",detail.EnumerateArray().Single(i=>i.GetProperty("code").GetString()=="DIRECT").GetProperty("status").GetString());
             var coordinationDetail=Json(Assert.IsType<OkObjectResult>(await dashboard.GetAgencyItems(bca.Id,assignmentRole:"Coordinating")).Value!);
             Assert.Equal(2,coordinationDetail.GetArrayLength());
             var metrics=Json(Assert.IsType<OkObjectResult>(await dashboard.GetDashboardMetrics(agencyId:new[]{bca.Id})).Value!);
             var bcaSummary=metrics.GetProperty("ministriesPerformance").EnumerateArray().Single(i=>i.GetProperty("agencyId").GetGuid()==bca.Id);
-            Assert.Equal(4,bcaSummary.GetProperty("totalGoals").GetInt32()); Assert.Equal(1,bcaSummary.GetProperty("goalInProgressOnTime").GetInt32());
+            Assert.Equal(4,bcaSummary.GetProperty("totalGoals").GetInt32()); Assert.Equal(1,bcaSummary.GetProperty("goalInProgress").GetInt32());
             var matrix=Json(Assert.IsType<OkObjectResult>(await new ExecutionController(null!,db).GetTaskAgenciesExecution(general.Id)).Value!);
             var unreported=matrix.GetProperty("agencyExecutions").EnumerateArray().Single(i=>i.GetProperty("agencyId").GetGuid()==bca.Id);
             Assert.Equal("NotReported",unreported.GetProperty("approvalStatus").GetString());
@@ -130,6 +135,19 @@ public class AgencyAssignmentPostgresTests
             changed!.LeadAgencyId=bca.Id; changed.IsGeneralTask=false;await AgencyAssignments.SyncAsync(db,changed);await db.SaveChangesAsync();
             Assert.False((await db.AgencyTaskExecutions.SingleAsync(e=>e.GoalTaskId==general.Id && e.AgencyId==btc.Id)).IsLeadAssignment);
             Assert.True(await db.ProgressLogs.AnyAsync(l=>l.GoalTaskId==general.Id && l.AgencyId==btc.Id));
+            // Raw seeds written after the migration still need their initial snapshot.
+            var seeded = new GoalTaskItem { DocumentId=doc.Id, Code="RAW-SEED", Title="Raw seed", LeadAgencyId=all.Id, ItemType=ItemTypeEnum.Task };
+            db.Add(seeded); await db.SaveChangesAsync();
+            var preserved = await db.AgencyTaskExecutions.AsNoTracking().OrderBy(e=>e.Id).Select(e=>new {e.Id,e.IsLeadAssignment,e.IsCoordinatingAssignment,e.ApprovalStatus,e.CompletionPercentage}).ToListAsync();
+            Assert.Equal(1,await AgencyAssignments.InitializeMissingAsync(db));
+            Assert.Equal(4,await db.AgencyTaskExecutions.CountAsync(e=>e.GoalTaskId==seeded.Id && e.IsLeadAssignment));
+            var afterRepair = await db.AgencyTaskExecutions.AsNoTracking().Where(e=>e.GoalTaskId!=seeded.Id).OrderBy(e=>e.Id).Select(e=>new {e.Id,e.IsLeadAssignment,e.IsCoordinatingAssignment,e.ApprovalStatus,e.CompletionPercentage}).ToListAsync();
+            Assert.Equal(preserved,afterRepair);
+            Assert.Equal(0,await AgencyAssignments.InitializeMissingAsync(db));
+            Assert.Equal(originalLogIds.Order(),(await db.ProgressLogs.Select(l=>l.Id).ToListAsync()).Order());
+            var repairedMetrics=Json(Assert.IsType<OkObjectResult>(await dashboard.GetDashboardMetrics(documentId:doc.Id,itemType:"Task")).Value!);
+            Assert.Equal(4,repairedMetrics.GetProperty("taskStatusSummary").GetProperty("notStarted").GetInt32());
+
         }
         finally { await using var command=new NpgsqlCommand($"DROP SCHEMA \"{schema}\" CASCADE",admin);await command.ExecuteNonQueryAsync(); }
     }

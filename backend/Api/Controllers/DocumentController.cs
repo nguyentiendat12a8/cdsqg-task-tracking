@@ -238,6 +238,10 @@ namespace Cdsqg.Api.Controllers
             [FromQuery] string? selectedGroups = null,
             [FromQuery] int? fromYear = null,
             [FromQuery] int? toYear = null,
+            [FromQuery] int? reportFromYear = null,
+            [FromQuery] int? reportToYear = null,
+            [FromQuery] DateTime? executionFrom = null,
+            [FromQuery] DateTime? executionTo = null,
             [FromQuery] bool? onlyOngoing = null,
             [FromQuery] string? sortBy = "code",
             [FromQuery] string? sortOrder = "asc",
@@ -252,6 +256,9 @@ namespace Cdsqg.Api.Controllers
                 ? selectedSubAgencyIds.Split(',').Select(s => Guid.TryParse(s, out var g) ? g : Guid.Empty).Where(g => g != Guid.Empty).ToList()
                 : null;
 
+            var effectiveFromYear = reportFromYear ?? fromYear;
+            var effectiveToYear = reportToYear ?? toYear;
+
             var queryDto = new DocumentItemsQueryDto
             {
                 ItemType = itemType,
@@ -265,8 +272,12 @@ namespace Cdsqg.Api.Controllers
                 SelectedStatuses = !string.IsNullOrWhiteSpace(selectedStatuses) ? selectedStatuses.Split(',').ToList() : null,
                 SelectedSections = !string.IsNullOrWhiteSpace(selectedSections) ? selectedSections.Split(',').ToList() : null,
                 SelectedGroups = !string.IsNullOrWhiteSpace(selectedGroups) ? selectedGroups.Split(',').ToList() : null,
-                FromYear = fromYear,
-                ToYear = toYear,
+                FromYear = effectiveFromYear,
+                ToYear = effectiveToYear,
+                ReportFromYear = effectiveFromYear,
+                ReportToYear = effectiveToYear,
+                ExecutionFrom = executionFrom,
+                ExecutionTo = executionTo,
                 OnlyOngoing = onlyOngoing ?? false,
                 SortBy = sortBy ?? "code",
                 SortOrder = sortOrder ?? "asc",

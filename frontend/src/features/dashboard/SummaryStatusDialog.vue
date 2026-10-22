@@ -46,6 +46,7 @@ let controller, version=0, timer;
 async function load() {
   const requestVersion=++version; controller?.abort(); controller=new AbortController(); loading.value=true; error.value='';
   const params=new URLSearchParams(props.query);
+  params.set('itemType',props.itemType);
   params.set('detailMode',props.selection.mode); params.set('detailScope',props.selection.scope || 'specific');
   if(props.selection.status) params.set('detailStatus',props.selection.status);
   params.set('pageNumber',page.value); params.set('pageSize',String(pageSize)); if(searchQuery.value)params.set('search',searchQuery.value);

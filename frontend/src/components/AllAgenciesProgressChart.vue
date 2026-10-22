@@ -6,32 +6,10 @@
       <div v-if="sortedAgencies.length > 0" class="bg-white p-4 rounded-xl border border-slate-200/80 shadow-2xs space-y-3">
         <!-- Static Fixed Legend Header Bar -->
         <div class="flex flex-wrap items-center justify-end gap-2.5 bg-slate-50/90 p-3 rounded-xl border border-slate-200/70 text-xs font-semibold">
-          <!-- Fixed Visible Status Legend Badges -->
           <div class="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs font-bold">
-
-            <div class="flex items-center gap-1.5 text-slate-700">
-              <span class="w-2.5 h-2.5 rounded-full bg-rose-500 inline-block"></span>
-              <span>Đang t/h quá hạn</span>
-            </div>
-            <div class="flex items-center gap-1.5 text-slate-700">
-              <span class="w-2.5 h-2.5 rounded-full bg-blue-500 inline-block"></span>
-              <span>Đang t/h trong hạn</span>
-            </div>
-            <div class="flex items-center gap-1.5 text-slate-700">
-              <span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span>
-              <span>Sắp tới hạn</span>
-            </div>
-            <div class="flex items-center gap-1.5 text-slate-700">
-              <span class="w-2.5 h-2.5 rounded-full bg-teal-500 inline-block"></span>
-              <span>Đã h/t quá hạn</span>
-            </div>
-            <div class="flex items-center gap-1.5 text-slate-700">
-              <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
-              <span>Đã h/t trong hạn</span>
-            </div>
-            <div class="flex items-center gap-1.5 text-slate-700">
-              <span class="w-2.5 h-2.5 rounded-full bg-slate-400 inline-block"></span>
-              <span>Chưa thực hiện</span>
+            <div v-for="status in executionStatusSeries" :key="status.value" class="flex items-center gap-1.5 text-slate-700">
+              <span class="w-2.5 h-2.5 rounded-full inline-block" :style="{ backgroundColor: themeColor(status.color) }"></span>
+              <span>{{ status.label }}</span>
             </div>
           </div>
         </div>
@@ -54,6 +32,7 @@
 </template>
 
 <script setup>
+import { executionStatusSeries } from '../shared/statusPresentation';
 import { themeColor } from "../shared/themeColors";
 import { formatNumber } from "../shared/formatters";
 import { computed } from 'vue';
@@ -244,14 +223,9 @@ function getStatValues(statusKeyGoal, statusKeyTask, statusKeyAll) {
 const chartData = computed(() => {
   const labels = sortedAgencies.value.map(ag => formatXAxisLabel(ag.name));
 
-  const datasetConfigs = [
-    { label: 'Đang t/h quá hạn', keyG: 'goalInProgressOverdue', keyT: 'taskInProgressOverdue', keyA: 'inProgressOverdue', color: themeColor('rose-500') },
-    { label: 'Đang t/h trong hạn', keyG: 'goalInProgressOnTime', keyT: 'taskInProgressOnTime', keyA: 'inProgressOnTime', color: themeColor('blue-500') },
-    { label: 'Sắp tới hạn', keyG: 'goalExpiringSoon', keyT: 'taskExpiringSoon', keyA: 'expiringSoon', color: themeColor('amber-500') },
-    { label: 'Đã h/t quá hạn', keyG: 'goalCompletedOverdue', keyT: 'taskCompletedOverdue', keyA: 'completedOverdue', color: themeColor('teal-500') },
-    { label: 'Đã h/t trong hạn', keyG: 'goalCompletedOnTime', keyT: 'taskCompletedOnTime', keyA: 'completedOnTime', color: themeColor('emerald-500') },
-    { label: 'Chưa thực hiện', keyG: 'goalNotStarted', keyT: 'taskNotStarted', keyA: 'notStarted', color: themeColor('slate-400') }
-  ];
+  const datasetConfigs = executionStatusSeries.map(status => ({
+    label: status.label, keyA: status.key, keyG: `goal${status.value}`, keyT: `task${status.value}`, color: themeColor(status.color)
+  }));
 
   const datasets = datasetConfigs.map(cfg => ({
     label: cfg.label,
