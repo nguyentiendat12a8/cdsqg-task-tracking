@@ -8,6 +8,10 @@ namespace Cdsqg.Infrastructure.Data
 {
     public class AppDbContext : DbContext
     {
+        // Legacy imports stored camelCase while EF writes PascalCase. Preserve persisted
+        // product IDs in either format instead of running TaskDeliverable's ID initializer.
+        private static readonly JsonSerializerOptions DeliverableReadOptions = new() { PropertyNameCaseInsensitive = true };
+
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
 
         public DbSet<Agency> Agencies => Set<Agency>();
@@ -521,14 +525,14 @@ namespace Cdsqg.Infrastructure.Data
                       .HasColumnType("jsonb")
                       .HasConversion(
                           v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                          v => JsonSerializer.Deserialize<List<TaskDeliverable>>(v, (JsonSerializerOptions?)null) ?? new List<TaskDeliverable>()
+                          v => JsonSerializer.Deserialize<List<TaskDeliverable>>(v, DeliverableReadOptions) ?? new List<TaskDeliverable>()
                       );
 
                 entity.Property(e => e.AgencyDeliverables)
                       .HasColumnType("jsonb")
                       .HasConversion(
                           v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                          v => JsonSerializer.Deserialize<Dictionary<string, List<TaskDeliverable>>>(v, (JsonSerializerOptions?)null) ?? new Dictionary<string, List<TaskDeliverable>>()
+                          v => JsonSerializer.Deserialize<Dictionary<string, List<TaskDeliverable>>>(v, DeliverableReadOptions) ?? new Dictionary<string, List<TaskDeliverable>>()
                       );
             });
 
@@ -567,7 +571,7 @@ namespace Cdsqg.Infrastructure.Data
                       .HasColumnType("jsonb")
                       .HasConversion(
                           v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                          v => JsonSerializer.Deserialize<List<TaskDeliverable>>(v, (JsonSerializerOptions?)null) ?? new List<TaskDeliverable>()
+                          v => JsonSerializer.Deserialize<List<TaskDeliverable>>(v, DeliverableReadOptions) ?? new List<TaskDeliverable>()
                       );
 
                 entity.HasOne(e => e.GoalTaskItem)
@@ -593,7 +597,7 @@ namespace Cdsqg.Infrastructure.Data
                       .HasColumnType("jsonb")
                       .HasConversion(
                           v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
-                          v => JsonSerializer.Deserialize<List<TaskDeliverable>>(v, (JsonSerializerOptions?)null) ?? new List<TaskDeliverable>()
+                          v => JsonSerializer.Deserialize<List<TaskDeliverable>>(v, DeliverableReadOptions) ?? new List<TaskDeliverable>()
                       );
 
                 entity.Property(e => e.AttachmentFileUrls)

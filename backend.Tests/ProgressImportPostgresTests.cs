@@ -131,14 +131,33 @@ public class ProgressImportPostgresTests
             var pending = await service.ImportProgressBulkAsync(new() { UserRole = "AgencyUser", UserAgencyId = agency.Id, Items = new() { new() { Code = goal.Code, Value = 40, PeriodYear = (reportYear + 1) } } });
             Assert.Equal(1, pending.PendingCount); Assert.Equal(0, pending.SuccessCount);
             Assert.Equal(ApprovalStatusEnum.Pending, (await db.ProgressLogs.SingleAsync(x => x.PeriodYear == (reportYear + 1))).ApprovalStatus);
+            var pendingBefore = await db.ProgressLogs.SingleAsync(x => x.PeriodYear == (reportYear + 1));
+            pendingBefore.AttachmentFileUrls = new() { "/evidence/keep.pdf" };
+            db.Entry(pendingBefore).Property(x => x.AttachmentFileUrls).IsModified = true;
+            await db.SaveChangesAsync();
             var duplicatePending = await service.ImportProgressBulkAsync(new() { UserRole = "AgencyUser", UserAgencyId = agency.Id, Items = new() { new() { Code = goal.Code, Value = 45, PeriodYear = (reportYear + 1) } } });
-            Assert.Equal(1, duplicatePending.FailureCount);
+            Assert.Equal(1, duplicatePending.PendingCount);
+            Assert.Equal(45m, (await db.ProgressLogs.SingleAsync(x => x.PeriodYear == (reportYear + 1))).QuantitativeValue);
+            var pendingAfter = await db.ProgressLogs.SingleAsync(x => x.PeriodYear == (reportYear + 1));
+            Assert.Equal(pendingBefore.Id, pendingAfter.Id);
+            Assert.Contains("/evidence/keep.pdf", pendingAfter.AttachmentFileUrls);
+            var edited = await service.SubmitProgressAsync(goal.Id, new() { UserRole="AgencyUser", AgencyId=agency.Id,
+                PeriodYear=reportYear+1, Value=46, SummaryNotes="Updated pending", ReplaceExistingFiles=true, ExistingFiles=new() });
+            Assert.Equal(pendingBefore.Id, edited.ProgressLogId);
+            Assert.Equal("Pending", edited.ApprovalStatus);
+            Assert.Empty(pendingAfter.AttachmentFileUrls);
+            Assert.Equal("Updated pending", pendingAfter.SummaryNotes);
             Assert.Equal(3, await db.ProgressLogs.CountAsync());
             Assert.Equal("Pending", (await service.GetProgressLogAsync(goal.Id, (reportYear + 1), agency.Id))!.ApprovalStatus);
             var officialItem = await db.GoalTaskItems.Include(x => x.ProgressLogs).SingleAsync(x => x.Id == goal.Id);
             Assert.Null(ProgressCalculator.LatestApproved(officialItem, agency.Id, (reportYear + 1)));
             Assert.Equal(35.5m, ProgressCalculator.LatestApproved(officialItem, agency.Id)!.QuantitativeValue);
             Assert.Equal(35.5m, (await service.GetProgressLogAsync(goal.Id, reportYear, agency.Id))!.ActualValue);
+            var sameYear = await service.SubmitProgressAsync(goal.Id, new() { UserRole="AgencyUser", AgencyId=agency.Id, PeriodYear=reportYear, Value=49 });
+            Assert.Equal("Pending", sameYear.ApprovalStatus);
+            Assert.Equal(49m, (await service.GetProgressLogAsync(goal.Id,reportYear,agency.Id,preferPending:true))!.ActualValue);
+            Assert.Equal(35.5m, (await service.GetProgressLogAsync(goal.Id,reportYear,agency.Id))!.ActualValue);
+
             var scope = group;
             var general = new GoalTaskItem { Code = "MT_GENERAL", DocumentId = document.Id, LeadAgencyId = scope.Id, IsGeneralTask = true, EvaluationType = EvaluationTypeEnum.Quantitative };
             db.Add(general); await db.SaveChangesAsync();
@@ -167,6 +186,42 @@ public class ProgressImportPostgresTests
             Assert.Equal("Completed", productsLog.Deliverables[0].CurrentStatus);
             Assert.Equal("Drafting", productsLog.Deliverables[1].CurrentStatus);
             Assert.Equal(62.5m, productsLog.CompletionPercentage);
+            var sharedProducts = new GoalTaskItem { Code="NV_SHARED_PENDING", DocumentId=document.Id, LeadAgencyId=scope.Id,
+                IsGeneralTask=true, EvaluationType=EvaluationTypeEnum.Qualitative,
+                Deliverables=new() { new() { Id="shared-p",Title="Shared product" } } };
+            db.Add(sharedProducts); await db.SaveChangesAsync(); await AssignmentTestData.PrepareAsync(db);
+            var otherReport=await service.SubmitProgressAsync(sharedProducts.Id,new() { UserRole="Admin", AgencyId=province.Id,PeriodYear=2026,
+                Deliverables=new() {new() {Id="shared-p",Title="Shared product",CurrentStatus="Completed"}} });
+            var ownReport=await service.SubmitProgressAsync(sharedProducts.Id,new() { UserRole="AgencyUser",AgencyId=agency.Id,PeriodYear=2026,
+                Deliverables=new() {new() {Id="shared-p",Title="Shared product",CurrentStatus="Drafting",DocumentNumber="PENDING-META"}} });
+            var ownEdit=await service.ImportProgressBulkAsync(new() { UserRole="AgencyUser",UserAgencyId=agency.Id,Items=new() {
+                new() {Code=sharedProducts.Code,PeriodYear=2026,Deliverables=new() {new() {Id="shared-p",CurrentStatus="Completed"}}} } });
+            Assert.Equal(1,ownEdit.PendingCount);
+            var ownPending=await db.ProgressLogs.SingleAsync(p=>p.Id==ownReport.ProgressLogId);
+            Assert.Equal(ApprovalStatusEnum.Pending,ownPending.ApprovalStatus);
+            Assert.Equal("Completed",ownPending.Deliverables!.Single().CurrentStatus);
+            Assert.Equal("PENDING-META",ownPending.Deliverables.Single().DocumentNumber);
+            Assert.Equal(2,await db.ProgressLogs.CountAsync(p=>p.GoalTaskId==sharedProducts.Id));
+            Assert.Equal(ApprovalStatusEnum.Approved,(await db.ProgressLogs.SingleAsync(p=>p.Id==otherReport.ProgressLogId)).ApprovalStatus);
+            Assert.Equal("NotStarted",sharedProducts.Deliverables.Single().CurrentStatus);
+            // Completion does not lock an administrator out of corrections or evidence updates.
+            var completedGoal=await service.SubmitProgressAsync(goal.Id,new() {UserRole="Admin",AgencyId=agency.Id,PeriodYear=2026,Value=100});
+            var correctedGoal=await service.SubmitProgressAsync(goal.Id,new() {UserRole="Admin",AgencyId=agency.Id,PeriodYear=2026,Value=100,SummaryNotes="Admin corrected completed goal",ExistingFiles=new(){"/evidence/goal.pdf"}});
+            Assert.Equal("Approved",correctedGoal.ApprovalStatus);
+            Assert.NotEqual(completedGoal.ProgressLogId,correctedGoal.ProgressLogId);
+            Assert.Equal("Admin corrected completed goal",(await db.ProgressLogs.SingleAsync(p=>p.Id==correctedGoal.ProgressLogId)).SummaryNotes);
+            Assert.Contains("/evidence/goal.pdf",(await db.ProgressLogs.SingleAsync(p=>p.Id==correctedGoal.ProgressLogId)).AttachmentFileUrls);
+            Assert.Equal(100m,(await db.ProgressLogs.SingleAsync(p=>p.Id==completedGoal.ProgressLogId)).QuantitativeValue);
+            var completedTask=await service.SubmitProgressAsync(productTask.Id,new() {UserRole="Admin",AgencyId=agency.Id,PeriodYear=2026,Deliverables=new(){new(){Id="p1",Title="Sản phẩm 1",CurrentStatus="Completed"},new(){Id="p2",Title="Sản phẩm 2",CurrentStatus="Completed"}}});
+            var correctedTask=await service.SubmitProgressAsync(productTask.Id,new() {UserRole="Admin",AgencyId=agency.Id,PeriodYear=2026,SummaryNotes="Admin corrected completed task",Deliverables=new(){new(){Id="p1",Title="Sản phẩm 1",CurrentStatus="Completed",DocumentNumber="NEW-01"},new(){Id="p2",Title="Sản phẩm 2",CurrentStatus="Completed"}}});
+            Assert.Equal("Approved",correctedTask.ApprovalStatus);
+            var correctedTaskLog=await db.ProgressLogs.SingleAsync(p=>p.Id==correctedTask.ProgressLogId);
+            Assert.Equal("Admin corrected completed task",correctedTaskLog.SummaryNotes);
+            Assert.Equal("NEW-01",correctedTaskLog.Deliverables!.First().DocumentNumber);
+            Assert.NotEqual(completedTask.ProgressLogId,correctedTask.ProgressLogId);
+            Assert.Equal(100m,correctedTaskLog.CalculatedProgressPercentage);
+
+
         }
         finally
         {

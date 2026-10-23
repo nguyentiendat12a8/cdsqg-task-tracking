@@ -77,8 +77,21 @@ public static class AiMetricCatalog
             kwGoal?.KeywordsEn ?? "",
             prompt);
     }
-    public static readonly string[] AllowedHosts = ["desapublications.un.org", "publicadministration.un.org", "publicadministration.desa.un.org", "nso.gov.vn", "www.nso.gov.vn", "gso.gov.vn", "www.gso.gov.vn", "moit.gov.vn", "www.moit.gov.vn", "idea.gov.vn", "www.idea.gov.vn", "mst.gov.vn", "www.mst.gov.vn"];
-    public static bool IsAllowedUrl(string url) => Uri.TryCreate(url, UriKind.Absolute, out var u) && u.Scheme == "https" && u.Port == 443 && string.IsNullOrEmpty(u.UserInfo) && AllowedHosts.Contains(u.IdnHost, StringComparer.OrdinalIgnoreCase);
+    public static readonly string[] AllowedHosts = [
+        "desapublications.un.org", "publicadministration.un.org", "publicadministration.desa.un.org",
+        "nso.gov.vn", "www.nso.gov.vn", "gso.gov.vn", "www.gso.gov.vn",
+        "moit.gov.vn", "www.moit.gov.vn", "idea.gov.vn", "www.idea.gov.vn",
+        "mst.gov.vn", "www.mst.gov.vn",
+        "baochinhphu.vn", "www.baochinhphu.vn", "chinhphu.vn", "www.chinhphu.vn", "media.chinhphu.vn",
+        "mic.gov.vn", "www.mic.gov.vn", "dx.gov.vn", "www.dx.gov.vn", "aita.gov.vn", "www.aita.gov.vn",
+        "news.google.com"
+    ];
+    public static bool IsAllowedUrl(string url) =>
+        Uri.TryCreate(url, UriKind.Absolute, out var u) &&
+        u.Scheme == "https" && u.Port == 443 &&
+        string.IsNullOrEmpty(u.UserInfo) &&
+        (AllowedHosts.Contains(u.IdnHost, StringComparer.OrdinalIgnoreCase) ||
+         u.IdnHost.EndsWith(".gov.vn", StringComparison.OrdinalIgnoreCase));
     public static bool Reached(string code, decimal value) => code switch {
         "MT-12" => value <= 50, "MT-25" => value <= 30, "MT-26" => value >= 50,
         "MT-13" => value >= 30, "MT-16" => value >= 15, _ => false

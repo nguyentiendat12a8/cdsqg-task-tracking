@@ -46,6 +46,13 @@ public sealed class ApiPermissionFilter(AppDbContext db) : IAsyncActionFilter
         if (args.ContainsKey("isAdmin")) args["isAdmin"] = admin;
         if (args.ContainsKey("userId")) args["userId"] = userId;
         if (controller == "Notification" && args.ContainsKey("agencyId")) args["agencyId"] = agencyId;
+        // These list endpoints must always use the authenticated agency, including exports.
+        if (!admin && ((controller == "Document" && action == "GetDocumentItems")
+            || (controller == "Planning" && action == "GetDocumentPlanningGrid")))
+        {
+            if (!agencyId.HasValue || agencyId == Guid.Empty) { context.Result = new ForbidResult(); return; }
+            args["agencyId"] = agencyId;
+        }
         if (args.ContainsKey("approvedBy")) args["approvedBy"] = user.FindFirstValue("FullName") ?? user.Identity?.Name;
 
         bool write = !HttpMethods.IsGet(context.HttpContext.Request.Method)

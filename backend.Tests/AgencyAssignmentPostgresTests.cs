@@ -54,6 +54,7 @@ public class AgencyAssignmentPostgresTests
             await db.GetService<IMigrator>().MigrateAsync("20261008164528_AnnualReportingOnly");
             // Current CLR model includes optional display names; emulate their existing legacy columns before the assignment backfill.
             await db.Database.ExecuteSqlRawAsync("""
+                ALTER TABLE "GoalTaskItems" ADD COLUMN "ResultTarget" numeric NULL;
                 ALTER TABLE "GoalTaskItems" ADD COLUMN "LeadAgencyDisplayText" text NULL;
                 ALTER TABLE "GoalTaskItems" ADD COLUMN "CoordinatingAgenciesDisplayText" text NULL;
                 """);
@@ -76,6 +77,7 @@ public class AgencyAssignmentPostgresTests
             var originalLogIds=await db.ProgressLogs.Select(l=>l.Id).ToListAsync();
             var legacyId=Guid.NewGuid();
             await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO \"AgencyTaskExecutions\" (\"Id\",\"GoalTaskId\",\"AgencyId\",\"CalculatedStatus\",\"ApprovalStatus\",\"CompletionPercentage\",\"Deliverables\",\"AttachmentFileUrls\",\"CreatedAt\",\"UpdatedAt\") VALUES ({legacyId},{direct.Id},{bca.Id},'CompletedOnTime',3,999,'[]'::jsonb,'[]'::jsonb,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)");
+            await db.Database.ExecuteSqlRawAsync("ALTER TABLE \"GoalTaskItems\" DROP COLUMN \"ResultTarget\"");
             await db.Database.MigrateAsync(); db.ChangeTracker.Clear();
             Assert.False(db.Database.HasPendingModelChanges());
             Assert.Equal(originalLogIds.Order(), (await db.ProgressLogs.Select(l=>l.Id).ToListAsync()).Order());

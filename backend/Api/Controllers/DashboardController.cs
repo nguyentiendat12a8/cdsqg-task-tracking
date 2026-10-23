@@ -411,7 +411,9 @@ namespace Cdsqg.Api.Controllers
             [FromQuery] string assignmentRole = "Lead",
             [FromQuery] int? reportFromYear = null, [FromQuery] int? reportToYear = null,
             [FromQuery] DateTime? executionFrom = null, [FromQuery] DateTime? executionTo = null,
-            [FromQuery] Guid? documentId = null)
+            [FromQuery] Guid? documentId = null,
+            [FromQuery] int? pageNumber = null,
+            [FromQuery] int? pageSize = null)
         {
             try
             {
@@ -590,6 +592,24 @@ namespace Cdsqg.Api.Controllers
                 if (!string.IsNullOrWhiteSpace(status) && !status.Equals("all", StringComparison.OrdinalIgnoreCase))
                 {
                     resultList = resultList.Where(i => string.Equals(i.Status, status, StringComparison.OrdinalIgnoreCase)).ToList();
+                }
+
+                if (pageNumber.HasValue || pageSize.HasValue)
+                {
+                    int pNum = Math.Max(1, pageNumber ?? 1);
+                    int pSize = Math.Max(1, pageSize ?? 10);
+                    int totalCount = resultList.Count;
+                    int totalPages = (int)Math.Ceiling((double)totalCount / pSize);
+                    var pagedItems = resultList.Skip((pNum - 1) * pSize).Take(pSize).ToList();
+
+                    return Ok(new
+                    {
+                        items = pagedItems,
+                        totalCount = totalCount,
+                        pageNumber = pNum,
+                        pageSize = pSize,
+                        totalPages = totalPages
+                    });
                 }
 
                 return Ok(resultList);

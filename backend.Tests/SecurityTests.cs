@@ -50,6 +50,28 @@ public class SecurityTests
     }
 
     [Theory]
+    [InlineData("Document", "GetDocumentItems")]
+    [InlineData("Planning", "GetDocumentPlanningGrid")]
+    public async Task ListsAlwaysUseAuthenticatedAgency(string controller, string action)
+    {
+        using var db = Database();
+        var own = Guid.NewGuid();
+        foreach (var requested in new Guid?[] { null, Guid.NewGuid() })
+        {
+            var ctx = Context(controller, action, "GET", new() { ["agencyId"] = requested, ["userRole"] = "Admin" }, own);
+            Assert.True(await Run(db, ctx));
+            Assert.Equal(own, ctx.ActionArguments["agencyId"]);
+            Assert.Equal("AgencyUser", ctx.ActionArguments["userRole"]);
+        }
+        var missing = Context(controller, action, "GET");
+        Assert.False(await Run(db, missing));
+        Assert.IsType<ForbidResult>(missing.Result);
+        var admin = Context(controller, action, "GET", new() { ["agencyId"] = null }, admin: true);
+        Assert.True(await Run(db, admin));
+        Assert.Null(admin.ActionArguments["agencyId"]);
+    }
+
+    [Theory]
     [InlineData("PeriodQuarter")]
     [InlineData("PeriodMonth")]
     [InlineData("PeriodType")]

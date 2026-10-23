@@ -195,9 +195,7 @@ export function useDashboardMetrics({ assignmentRole, dashboardFilter, selectedA
     if (loggedUserAgencyId.value) {
       found = allPerf.find(p => String(p.agencyId).toLowerCase() === loggedUserAgencyId.value);
     }
-    if (!found) {
-      found = allPerf[0] || null;
-    }
+    if (!found && !loggedUserAgencyId.value) found = allPerf[0] || null;
     if (!found) return null;
 
     const filter = dashboardFilter.value;

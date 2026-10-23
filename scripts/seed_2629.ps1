@@ -49,6 +49,8 @@ try {
         try {
             $env:ConnectionStrings__DefaultConnection = $seedConnection.ConnectionString
             Remove-Item Env:DATABASE_URL -ErrorAction SilentlyContinue
+            & dotnet run --project $backendProject --no-build --artifacts-path $maintenanceArtifacts --launch-profile http -- --repair-2629-assignment-mapping
+            if ($LASTEXITCODE -ne 0) { throw 'Không sửa được ánh xạ cơ quan seed 2629; dừng khởi tạo phân giao.' }
             & dotnet run --project $backendProject --no-build --artifacts-path $maintenanceArtifacts --launch-profile http -- --backfill-missing-assignments
             if ($LASTEXITCODE -ne 0) { throw 'Không khởi tạo được phân giao sau seed.' }
         } finally { $env:ConnectionStrings__DefaultConnection = $previousConnection; $env:DATABASE_URL = $previousDatabaseUrl; Pop-Location }

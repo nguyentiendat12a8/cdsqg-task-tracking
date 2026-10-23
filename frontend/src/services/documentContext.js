@@ -14,8 +14,6 @@ export const SUPPORTED_DOCUMENTS = [
     startYear: 2026,
     endYear: 2030,
     timeHorizon: '2026 – 2030 (định hướng 2045)',
-    goalsCount: 27,
-    tasksCount: 82,
     badgeColor: 'blue',
     description: 'Chiến lược quốc gia về chuyển đổi số giai đoạn 2026 - 2030, định hướng đến năm 2045 ban hành theo Quyết định số 1266/QĐ-TTg.'
   },
@@ -32,8 +30,6 @@ export const SUPPORTED_DOCUMENTS = [
     startYear: 2025,
     endYear: 2030,
     timeHorizon: '2025 – 2030 (GĐ 2025–2027 & 2028–2030)',
-    goalsCount: 22,
-    tasksCount: 75,
     badgeColor: 'emerald',
     description: 'Chương trình phát triển Chính phủ số thay thế Quyết định số 942/QĐ-TTg ngày 15/06/2021.'
   }

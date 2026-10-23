@@ -17,7 +17,7 @@ export function useDocumentData({ props, getQueryState }) {
   onUnmounted(() => { requestVersion++; });
   function buildQuery() {
     const { appliedFilters, currentPage, pageSize, sortBy, sortOrder, userRoleStr } = getQueryState();
-    const currentAgencyId = authState.user.value?.agencyId || '';
+    const currentAgencyId = authState.user.value?.agencyId || authState.user.value?.agency?.id || '';
     const userRole = userRoleStr.value;
       const params = new URLSearchParams();
       params.append('itemType', props.filterItemType || 'Task');

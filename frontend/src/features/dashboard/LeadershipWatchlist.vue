@@ -9,7 +9,7 @@
       <div v-else class="flex h-full items-center gap-2 text-xs text-emerald-800"><span aria-hidden="true">✓</span> Chưa ghi nhận lượt giao quá hạn.</div>
       </div>
     </section>
-    <section class="rounded-2xl border border-blue-200 bg-white p-3 flex-1" aria-labelledby="coverage-title"><h3 id="coverage-title" class="ui-section-title text-blue-900">Phân bổ theo khối</h3><div class="mt-3 space-y-2"><div v-for="group in groups" :key="group.label" class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs"><div class="flex items-center justify-between gap-3"><span class="font-semibold text-slate-800">{{ group.label }}</span><span class="text-slate-700">{{ formatNumber(group.units) }} đơn vị · <strong class="font-semibold text-slate-900">{{ formatNumber(group.total) }} lượt</strong></span></div><div class="mt-2 h-2 rounded-full bg-slate-200 overflow-hidden"><div class="h-full rounded-full" :class="group.color" :style="{width:`${visualShare(group.total,assignmentTotal)}%`}"></div></div></div></div>
+    <section v-if="showCoverage" class="rounded-2xl border border-blue-200 bg-white p-3 flex-1" aria-labelledby="coverage-title"><h3 id="coverage-title" class="ui-section-title text-blue-900">Phân bổ theo khối</h3><div class="mt-3 space-y-2"><div v-for="group in groups" :key="group.label" class="rounded-lg border border-slate-200 bg-slate-50 px-3 py-2 text-xs"><div class="flex items-center justify-between gap-3"><span class="font-semibold text-slate-800">{{ group.label }}</span><span class="text-slate-700">{{ formatNumber(group.units) }} đơn vị · <strong class="font-semibold text-slate-900">{{ formatNumber(group.total) }} lượt</strong></span></div><div class="mt-2 h-2 rounded-full bg-slate-200 overflow-hidden"><div class="h-full rounded-full" :class="group.color" :style="{width:`${visualShare(group.total,assignmentTotal)}%`}"></div></div></div></div>
       <div class="mt-3 border-t border-slate-100 pt-2" aria-label="Đơn vị nổi bật"><div class="text-xs font-semibold text-slate-700">Đơn vị nổi bật</div><div v-if="leaders.length" class="mt-1 space-y-1"><button v-for="agency in leaders" :key="agency.agencyId" type="button" class="flex w-full items-center justify-between gap-3 rounded-lg py-1 text-left text-xs hover:text-blue-700" @click="$emit('select-agency',agency)"><span class="min-w-0 text-slate-600">{{ agency.name }}</span><strong class="shrink-0 text-emerald-700 tabular-nums">{{ formatNumber(agency.totalItems) }} lượt giao</strong></button></div><p v-else class="mt-1 text-xs text-slate-500">Chưa có đơn vị được giao {{ noun }}.</p></div>
     </section>
 
@@ -19,7 +19,7 @@
 import { computed } from 'vue';
 import { formatNumber } from '../../shared/formatters';
 import { visualShare } from './leadershipPresentation';
-const props=defineProps({agencies:{type:Array,default:()=>[]},leaders:{type:Array,default:()=>[]},noun:{type:String,default:'mục tiêu'}});
+const props=defineProps({showCoverage:{type:Boolean,default:true},agencies:{type:Array,default:()=>[]},leaders:{type:Array,default:()=>[]},noun:{type:String,default:'mục tiêu'}});
 defineEmits(['select-agency','select-overdue-agency']);
 const overdue=computed(()=>props.agencies.reduce((sum,a)=>sum+(a.overdue||0),0));
 const expiring=computed(()=>props.agencies.reduce((sum,a)=>sum+(a.expiringSoon||0),0));

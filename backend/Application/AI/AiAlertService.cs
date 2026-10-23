@@ -70,7 +70,12 @@ public sealed class AiAlertService(AppDbContext db,IAiAlertFeedReader reader,AiI
             {
                 // Validate targets before AI or HTTP access. Google wrapper URLs are never followed.
                 if(entry.Title.Length is <3 or >1000||!AiMetricCatalog.IsAllowedUrl(entry.Url)){scan.Blocked++;continue;}
-                var added=await inbox.ImportEntryAsync(new(entry.Title,entry.Url),feed.Id,entry.PublishedAt,(new Uri(feed.FeedUrl).Host=="www.google.com"?"Google Alerts · ":"RSS trực tiếp · ")+feed.Name,ct);
+                var originPrefix = new Uri(feed.FeedUrl).Host switch {
+                    "news.google.com" => "Google News · ",
+                    "www.google.com" or "google.com" => "Google Alerts · ",
+                    _ => "RSS trực tiếp · "
+                };
+                var added=await inbox.ImportEntryAsync(new(entry.Title,entry.Url),feed.Id,entry.PublishedAt,originPrefix+feed.Name,ct);
                 if(added)scan.Added++;else scan.Duplicates++;
             }
             scan.Status="Completed";scan.Error="";

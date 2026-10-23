@@ -14,15 +14,32 @@ DOC_ID = "26290000-0000-0000-0000-000000002629"
 PERCENT_UNIT_ID = "d4b90eca-7f38-4600-8a26-1426dc3aa7db"
 QTY_UNIT_ID = "a2765126-d188-47ec-8d70-40d2244349a3"
 
-# Dùng đúng các cơ quan đã có sẵn trong bảng Agencies, KHÔNG thêm cơ quan mới
-BCA_ID = "bd7af0f3-8179-47cb-aca1-24ca43fc480e"
-ALL_AGENCIES_ID = "00000000-0000-0000-0000-000000009999"
-
-def resolve_agency_id(lead_text):
+# Exact recipients only. Unknown names must never expand to all agencies.
+AGENCIES = {
+ "BCA": ("Bộ Công an", "Ministry"), "VPCP": ("Văn phòng Chính phủ", "Ministry"),
+ "BKHCN": ("Bộ Khoa học và Công nghệ", "Ministry"), "BNV": ("Bộ Nội vụ", "Ministry"),
+ "BTC": ("Bộ Tài chính", "Ministry"), "BCYCP": ("Ban Cơ yếu Chính phủ", "Other"),
+ "ALL_AGENCIES": ("Các bộ, ngành, địa phương", "Special"),
+ "ALL_MINISTRIES_DIRECT": ("Các bộ, ngành", "Special"),
+}
+AGENCY_IDS = {code: str(uuid.uuid5(uuid.NAMESPACE_URL, "cdsqg:2629:" + code)) for code in AGENCIES}
+BCA_ID = AGENCY_IDS["BCA"]
+ALL_AGENCIES_ID = AGENCY_IDS["ALL_AGENCIES"]
+def resolve_agencies(lead_text):
     text = (lead_text or "").strip().lower()
-    if "bộ công an" in text or "trung tâm dữ liệu quốc gia" in text:
-        return BCA_ID
-    return ALL_AGENCIES_ID
+    if text == "bộ khoa học và công nghệ, bộ công an": return "BKHCN", "BCA"
+    if text == "bộ khoa học và công nghệ; bộ nội vụ": return "BKHCN", "BNV"
+    if text.startswith("bộ công an, bộ khoa học và công nghệ với các tiêu chuẩn") and "các bộ, ngành" in text:
+        return "ALL_MINISTRIES_DIRECT", None
+    if text == "bộ công an (trung tâm dữ liệu quốc gia)": return "BCA", None
+    for code, (name, _) in AGENCIES.items():
+        if text == name.lower(): return code, None
+    raise ValueError(f"Unknown lead agency; refusing broad assignment: {lead_text}")
+def resolve_agency_id(lead_text):
+    return AGENCY_IDS[resolve_agencies(lead_text)[0]]
+def assigned_agency_sql(lead_text):
+    code = resolve_agencies(lead_text)[1]
+    return "NULL" if code is None else "'" + AGENCY_IDS[code] + "'"
 
 ISSUE_START = "2025-12-01 00:00:00"
 
@@ -129,7 +146,7 @@ for r_idx in range(1, len(t3.rows)):
         "CurrentStatus": "NotStarted"
     }]
     
-    is_general = (agency_id == ALL_AGENCIES_ID) or ("các bộ, ngành" in lead.lower())
+    is_general = resolve_agencies(lead)[0].startswith("ALL_")
     
     tasks.append({
         "id": str(uuid.uuid4()),
@@ -157,7 +174,7 @@ lines.append("SET client_encoding = 'UTF8';")
 lines.append("-- ===========================================================================")
 lines.append("-- SEED DATA: QUYẾT ĐỊNH SỐ 2629/QĐ-TTg")
 lines.append("-- Chương trình phát triển Chính phủ số")
-lines.append("-- Chỉ thêm Mục tiêu (MT) và Nhiệm vụ (NV), KHÔNG thay đổi bảng Agencies")
+lines.append("-- Bổ sung cơ quan còn thiếu theo mã/tên; không thay thế ID danh mục đã tồn tại")
 lines.append("-- ===========================================================================")
 lines.append("BEGIN;")
 lines.append("")
@@ -216,11 +233,11 @@ for g in goals:
     {escape_sql(g["section"])},
     {escape_sql(g["group"])},
     FALSE,
-    FALSE,
+    {str(resolve_agencies(g["lead_agency_display"])[0].startswith("ALL_")).upper()},
     '{g["start_date"]}',
     '{g["target_year"]}-12-31 00:00:00',
     '{g["lead_agency_id"]}',
-    NULL,
+    {assigned_agency_sql(g["lead_agency_display"])},
     '[]'::jsonb,
     '{PERCENT_UNIT_ID}',
     {g["target_num"]},
@@ -275,7 +292,7 @@ for t in tasks:
     '{t["start_date"]}',
     '{t["due_date"]}',
     '{t["lead_agency_id"]}',
-    NULL,
+    {assigned_agency_sql(t["lead_agency_display"])},
     '[]'::jsonb,
     NULL,
     'Qualitative',
@@ -314,7 +331,15 @@ sql_content = sql_content.replace(
 ).replace(
     f"'{BCA_ID}'", '(SELECT "Id" FROM "Agencies" WHERE "Code" = \'BCA\')',
 )
-sql_content = sql_content.replace("BEGIN;", "BEGIN;\n\n" + REFERENCE_GUARD)
+catalog_sql = []
+for code, (name, agency_type) in AGENCIES.items():
+    condition = f'"Code" = {escape_sql(code)} OR lower(trim("Name")) = lower({escape_sql(name)})'
+    catalog_sql.append('DO $$ BEGIN IF (SELECT count(*) FROM "Agencies" WHERE ' + condition + ") > 1 THEN RAISE EXCEPTION 'Ambiguous agency: " + code + "'; END IF; END $$;")
+    catalog_sql.append('INSERT INTO "Agencies" ("Id", "Code", "Name", "Type", "IsActive", "CreatedAt") SELECT '
+        + ", ".join([escape_sql(AGENCY_IDS[code]), escape_sql(code), escape_sql(name), escape_sql(agency_type), "TRUE", "NOW()"])
+        + ' WHERE NOT EXISTS (SELECT 1 FROM "Agencies" WHERE ' + condition + ');')
+    sql_content = sql_content.replace("'" + AGENCY_IDS[code] + "'", f'(SELECT "Id" FROM "Agencies" WHERE {condition})')
+sql_content = sql_content.replace("BEGIN;", "BEGIN;\n\n" + "\n".join(catalog_sql) + REFERENCE_GUARD)
 
 sql_out_path = args.output
 with open(sql_out_path, 'w', encoding='utf-8') as f:

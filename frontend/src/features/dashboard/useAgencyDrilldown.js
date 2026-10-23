@@ -1,3 +1,4 @@
+import { fetchDashboardAgencyItems } from './agencyItemsApi';
 import { appendDashboardTimeFilters } from './queries';
 import { fetchWithAuth } from '../../services/auth';
 import { ref, computed } from 'vue';
@@ -108,10 +109,7 @@ export function useAgencyDrilldown({ assignmentRole, dashboardFilter, selectedSc
       if (isOngoingOnly.value) params.append('isOngoing', 'true');
       appendDashboardTimeFilters(params, { reportFromYear: reportFromYear?.value, reportToYear: reportToYear?.value, executionFrom: executionFrom?.value, executionTo: executionTo?.value });
 
-      const res = await fetchWithAuth(getApiUrl(`/api/dashboard/agency-items?${params.toString()}`));
-      if (res.ok) {
-        agencyItemsList.value = await res.json();
-      }
+      agencyItemsList.value = await fetchDashboardAgencyItems(params);
     } catch (e) {
       console.error('Lỗi khi tải danh sách mục tiêu/nhiệm vụ của đơn vị:', e);
     } finally {

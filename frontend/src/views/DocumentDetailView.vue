@@ -611,10 +611,7 @@ function isCoordinatingOnly(item) {
 }
 
 function openProgressModal(item) {
-  if (item && item.hasPendingApproval && !authState.isAdmin.value) {
-    toast.warning('Nhiệm vụ này đang ở trạng thái Chờ duyệt. Vui lòng chờ Cấp 2 phê duyệt hoặc từ chối trước khi gửi báo cáo mới.');
-    return;
-  }
+  if (!canUpdateProgress(item)) return;
   selectedTaskForProgress.value = item;
   isProgressModalOpen.value = true;
 }

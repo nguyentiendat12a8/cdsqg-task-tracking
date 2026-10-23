@@ -13,7 +13,7 @@ namespace Cdsqg.Application.Services
     public interface IExecutionService
     {
         Task<SubmitProgressResponseDto> SubmitProgressAsync(Guid taskId, SubmitProgressRequestDto dto);
-        Task<GetProgressLogResponseDto?> GetProgressLogAsync(Guid taskId, int year, Guid? agencyId = null);
+        Task<GetProgressLogResponseDto?> GetProgressLogAsync(Guid taskId, int year, Guid? agencyId = null, bool preferPending = false);
         Task<List<GetProgressLogResponseDto>> GetTaskProgressHistoryAsync(Guid taskId, Guid? agencyId = null);
         Task<TaskUrgeLogResponseDto> CreateUrgeLogAsync(CreateTaskUrgeLogDto dto);
         Task<List<TaskUrgeLogResponseDto>> GetTaskUrgeHistoryAsync(Guid taskId);
@@ -106,16 +106,12 @@ namespace Cdsqg.Application.Services
             bool isAdminSubmitter = !string.IsNullOrWhiteSpace(dto.UserRole) && (dto.UserRole.ToLower() == "admin" || dto.UserRole == "1");
             var initialApprovalStatus = isAdminSubmitter ? ApprovalStatusEnum.Approved : ApprovalStatusEnum.Pending;
 
-            if (!isAdminSubmitter && reportingAgencyId.HasValue)
-            {
-                bool hasPending = await _context.ProgressLogs
-                    .AnyAsync(p => p.GoalTaskId == taskId && p.AgencyId == reportingAgencyId.Value && p.ApprovalStatus == ApprovalStatusEnum.Pending);
-
-                if (hasPending)
-                {
-                    throw new InvalidOperationException("Nhiệm vụ này đang có báo cáo tiến độ ở trạng thái 'Chờ duyệt'. Vui lòng chờ Cấp 1 (Admin) phê duyệt hoặc từ chối trước khi gửi báo cáo mới.");
-                }
-            }
+            var pendingReport = !isAdminSubmitter
+                ? await _context.ProgressLogs.Where(p => p.GoalTaskId == taskId && p.AgencyId == reportingAgencyId
+                    && p.PeriodYear == dto.PeriodYear && p.ApprovalStatus == ApprovalStatusEnum.Pending)
+                    .OrderByDescending(p => p.LogDate).FirstOrDefaultAsync() : null;
+            await using var pendingTransaction = pendingReport != null && _context.Database.CurrentTransaction == null
+                ? await _context.Database.BeginTransactionAsync() : null;
 
             var preview = new ProgressLog { PeriodYear = dto.PeriodYear, LogDate = DateTime.UtcNow,
                 QuantitativeValue = dto.Value, QualitativeStatus = dto.Status, AgencyId = reportingAgencyId,
@@ -129,6 +125,9 @@ namespace Cdsqg.Application.Services
             // 4. Evidence File Storage
             List<string> uploadedUrls = new List<string>();
 
+            // Excel omits attachments; preserve them unless the edit form explicitly replaces them.
+            if (pendingReport != null && dto.ExistingFiles == null && !dto.ReplaceExistingFiles)
+                uploadedUrls.AddRange(pendingReport.AttachmentFileUrls);
             // Retain existing files passed from client
             if (dto.ExistingFiles != null && dto.ExistingFiles.Count > 0)
             {
@@ -206,10 +205,29 @@ namespace Cdsqg.Application.Services
                 ApprovalStatus = initialApprovalStatus
             };
 
-            _context.ProgressLogs.Add(progressLog);
+            if (pendingReport == null) _context.ProgressLogs.Add(progressLog);
+            else
+            {
+                progressLog.Id = pendingReport.Id;
+                // Atomically reject stale edits and reports already approved/rejected.
+                var updated = await _context.ProgressLogs.Where(p => p.Id == pendingReport.Id
+                    && p.ApprovalStatus == ApprovalStatusEnum.Pending && p.LogDate == pendingReport.LogDate)
+                    .ExecuteUpdateAsync(set => set
+                        .SetProperty(p => p.LogDate, progressLog.LogDate)
+                        .SetProperty(p => p.QuantitativeValue, progressLog.QuantitativeValue)
+                        .SetProperty(p => p.QualitativeStatus, progressLog.QualitativeStatus)
+                        .SetProperty(p => p.SummaryNotes, progressLog.SummaryNotes)
+                        .SetProperty(p => p.CalculatedProgressPercentage, progressLog.CalculatedProgressPercentage)
+                        .SetProperty(p => p.AttachmentFileUrls, progressLog.AttachmentFileUrls)
+                        .SetProperty(p => p.Deliverables, progressLog.Deliverables)
+                        .SetProperty(p => p.CalculatedAlert, progressLog.CalculatedAlert)
+                        .SetProperty(p => p.CreatedBy, progressLog.CreatedBy));
+                if (updated != 1) throw new InvalidOperationException("Báo cáo đã thay đổi hoặc được xử lý. Vui lòng tải lại trước khi sửa.");
+                await _context.Entry(pendingReport).ReloadAsync();
+            }
 
             // Create notification for Level 1 Admin agency if pending approval (submitted by Level 2 or Level 3)
-            if (initialApprovalStatus == ApprovalStatusEnum.Pending)
+            if (initialApprovalStatus == ApprovalStatusEnum.Pending && pendingReport == null)
             {
                 var level1Agency = await _context.Agencies
                     .FirstOrDefaultAsync(a => (!string.IsNullOrEmpty(a.Code) && a.Code.ToLower() == "bkhcn") ||
@@ -311,6 +329,8 @@ namespace Cdsqg.Application.Services
             await ProgressCalculator.RefreshCachesAsync(_context, task);
             await _context.SaveChangesAsync();
 
+            if (pendingTransaction != null) await pendingTransaction.CommitAsync();
+
             return new SubmitProgressResponseDto
             {
                 ProgressLogId = progressLog.Id,
@@ -371,7 +391,7 @@ namespace Cdsqg.Application.Services
             return result;
         }
 
-        public async Task<GetProgressLogResponseDto?> GetProgressLogAsync(Guid taskId, int year, Guid? agencyId = null)
+        public async Task<GetProgressLogResponseDto?> GetProgressLogAsync(Guid taskId, int year, Guid? agencyId = null, bool preferPending = false)
         {
             var task = await _context.GoalTaskItems.Include(t => t.Baselines).Include(t => t.ProgressLogs).Include(t => t.Unit).FirstOrDefaultAsync(t => t.Id == taskId);
 
@@ -386,8 +406,11 @@ namespace Cdsqg.Application.Services
                 baseQuery = baseQuery.Where(l => l.AgencyId == agencyId.Value || l.AgencyId == null);
             }
 
+            var pending = preferPending ? await baseQuery.Where(l => l.PeriodYear == year && l.ApprovalStatus == ApprovalStatusEnum.Pending)
+                .OrderByDescending(l => l.LogDate).FirstOrDefaultAsync() : null;
+            // Official reads still prefer approved; editing explicitly requests pending.
             // 1. Try finding approved log for exact year
-            var log = await baseQuery
+            var log = pending ?? await baseQuery
                 .Where(l => l.PeriodYear == year && l.ApprovalStatus == ApprovalStatusEnum.Approved)
                 .OrderByDescending(l => l.LogDate)
                 .FirstOrDefaultAsync();
@@ -804,7 +827,10 @@ namespace Cdsqg.Application.Services
                             if (products == null || products.Count != task.Deliverables.Count || products.Select(d => d.Id).Distinct().Count() != products.Count
                                 || products.Any(d => !task.Deliverables.Any(required => required.Id == d.Id) || !allowed.Contains(d.CurrentStatus)))
                                 throw new InvalidOperationException("Báo cáo phải có đúng các sản phẩm và chọn một trong ba trạng thái cho từng sản phẩm.");
-                            var previous = PlanningService.GetDeliverablesForAgency(task, reportingAgency?.Id);
+                            var pendingProducts = !isAdmin ? task.ProgressLogs.Where(p => p.AgencyId == reportingAgency?.Id
+                                && p.PeriodYear == submitDto.PeriodYear && p.ApprovalStatus == ApprovalStatusEnum.Pending)
+                                .OrderByDescending(p => p.LogDate).FirstOrDefault()?.Deliverables : null;
+                            var previous = pendingProducts is { Count: > 0 } ? pendingProducts : PlanningService.GetDeliverablesForAgency(task, reportingAgency?.Id);
                             submitDto.Deliverables = task.Deliverables.Select(d =>
                             {
                                 var old = previous.FirstOrDefault(p => p.Id == d.Id) ?? d;
@@ -826,7 +852,7 @@ namespace Cdsqg.Application.Services
                         Title = task.Title,
                         Success = true,
                         Message = isPending
-                            ? "Đã gửi báo cáo tiến độ, đang chờ Cấp 2 phê duyệt."
+                            ? "Đã gửi báo cáo tiến độ, đang chờ phê duyệt."
                             : "Cập nhật tiến độ thành công.",
                         ApprovalStatus = submitResult.ApprovalStatus
                     });

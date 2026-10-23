@@ -119,8 +119,8 @@ button, input, select, textarea { font-family: inherit; }
     font-size: 1.125rem;
     line-height: 1.4;
     font-weight: 700;
-    letter-spacing: normal;
-    color: var(--color-slate-800);
+    letter-spacing: -0.01em;
+    color: var(--color-blue-900);
   }
   @media (max-width: 767px) {
     .ui-app-title {

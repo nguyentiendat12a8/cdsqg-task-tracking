@@ -114,9 +114,10 @@ namespace Cdsqg.Api.Controllers
         /// Chi tiết văn bản và danh sách các Mục tiêu (1A) & Nhiệm vụ (1B) thuộc văn bản đó.
         /// </summary>
         [HttpGet("{id:guid}")]
-        public async Task<IActionResult> GetDocumentById(Guid id)
+        public async Task<IActionResult> GetDocumentById(Guid id, [FromQuery] Guid? userAgencyId = null, [FromQuery] string? userRole = null)
         {
             var doc = await _context.Documents
+                .Include(d => d.Items).ThenInclude(i => i.AgencyExecutions)
                 .Include(d => d.Items)
                     .ThenInclude(i => i.LeadAgency)
                 .Include(d => d.Items)
@@ -133,6 +134,7 @@ namespace Cdsqg.Api.Controllers
                 if (taskItem != null)
                 {
                     doc = await _context.Documents
+                        .Include(d => d.Items).ThenInclude(i => i.AgencyExecutions)
                         .Include(d => d.Items).ThenInclude(i => i.LeadAgency)
                         .Include(d => d.Items).ThenInclude(i => i.Unit)
                         .Include(d => d.Items).ThenInclude(i => i.ProgressLogs)
@@ -147,10 +149,17 @@ namespace Cdsqg.Api.Controllers
             }
 
             var reportingAgencies = await _context.Agencies.ToListAsync();
-            var mappedItems = doc.Items.OrderBy(i => i.CreatedAt).Select(item =>
+            AgencyViewScope? scope = null;
+            if (userRole != "Admin")
             {
-                var latestLog = PlanningService.GetLatestProgressLogForAgency(item, null);
-                var progress = ProgressCalculator.EvaluateOverall(item, reportingAgencies);
+                if (!userAgencyId.HasValue || userAgencyId == Guid.Empty) return Forbid();
+                scope = await AgencyScopePolicy.ResolveViewScopeAsync(_context, userAgencyId.Value);
+            }
+            var visibleItems = scope == null ? doc.Items : doc.Items.Where(i => AgencyAssignments.Matches(i, scope.AgencyIds, "Any"));
+            var mappedItems = visibleItems.OrderBy(i => i.CreatedAt).Select(item =>
+            {
+                var latestLog = PlanningService.GetLatestProgressLogForAgency(item, scope == null ? null : userAgencyId);
+                var progress = scope == null ? ProgressCalculator.EvaluateOverall(item, reportingAgencies) : ProgressCalculator.EvaluateRecipients(item, scope.AgencyIds, aggregate: scope.IsParentAgency);
                 var baselinesList = item.Baselines.Select(b => new
                 {
                     year = b.Year,

@@ -5,10 +5,10 @@
     <div class="flex items-center gap-3 min-w-0 flex-1 mr-3">
       <div class="truncate">
         <h1
-          class="ui-app-title truncate font-bold text-slate-800"
-          title="HỆ THỐNG THEO DÕI NHIỆM VỤ CHUYỂN ĐỔI SỐ QUỐC GIA"
+          class="ui-app-title truncate font-bold text-blue-900 tracking-tight"
+          title="Hệ thống theo dõi nhiệm vụ Chuyển đổi số quốc gia"
         >
-          HỆ THỐNG THEO DÕI NHIỆM VỤ CHUYỂN ĐỔI SỐ QUỐC GIA
+          Hệ thống theo dõi nhiệm vụ Chuyển đổi số quốc gia
         </h1>
       </div>
     </div>

@@ -23,6 +23,7 @@ namespace Cdsqg.Application.DTOs
         public IFormFile? EvidenceFile { get; set; }
         public List<IFormFile>? EvidenceFiles { get; set; }
         public List<string>? ExistingFiles { get; set; }
+        public bool ReplaceExistingFiles { get; set; }
         public string? CreatedBy { get; set; } = "Chuyên viên theo dõi";
         public string? UserRole { get; set; }
         public Guid? AgencyId { get; set; }

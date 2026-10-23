@@ -19,7 +19,7 @@
             <span class="text-base leading-none">⏳</span>
             <div>
               <strong class="font-bold">Nhiệm vụ này đang ở trạng thái Chờ duyệt:</strong>
-              <span class="font-medium text-amber-950 block mt-0.5"> Báo cáo tiến độ trước đó đang chờ Cấp 1 (Admin) xem xét phê duyệt hoặc từ chối. Bạn không thể gửi báo cáo tiến độ mới cho tới khi cấp trên duyệt xong.</span>
+              <span class="font-medium text-amber-950 block mt-0.5"> Bạn có thể chỉnh sửa báo cáo của đơn vị trong năm đã chọn. Sau khi cập nhật, báo cáo vẫn chờ phê duyệt.</span>
             </div>
           </div>
 
@@ -230,11 +230,11 @@
           <button type="button" @click="close" class="ui-single-line px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl">Hủy</button>
           <button 
             type="submit" 
-            :disabled="isSubmitting || isLoadingExisting || !!existingLoadError || (hasPendingApproval && !authState.isAdmin.value)"
-            :class="['px-5 py-2.5 text-xs font-bold text-white rounded-xl shadow-2xs transition flex items-center gap-1.5 cursor-pointer', (isSubmitting || (hasPendingApproval && !authState.isAdmin.value)) ? 'bg-slate-400 cursor-not-allowed opacity-60' : 'bg-blue-600 hover:bg-blue-700']"
+            :disabled="isSubmitting || isLoadingExisting || !!existingLoadError"
+            :class="['px-5 py-2.5 text-xs font-bold text-white rounded-xl shadow-2xs transition flex items-center gap-1.5 cursor-pointer', (isSubmitting) ? 'bg-slate-400 cursor-not-allowed opacity-60' : 'bg-blue-600 hover:bg-blue-700']"
           >
             <span v-if="isSubmitting" class="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-            {{ isSubmitting ? 'Đang gửi...' : 'Gửi báo cáo tiến độ' }}
+            {{ isSubmitting ? (isEditingPending ? 'Đang cập nhật...' : 'Đang gửi...') : (isEditingPending ? 'Cập nhật báo cáo' : 'Gửi báo cáo tiến độ') }}
           </button>
         </div>
 
@@ -375,6 +375,7 @@ const fileInput = ref(null);
 const selectedFiles = ref([]);
 const existingFiles = ref([]);
 const isSubmitting = ref(false);
+const isEditingPending = ref(false);
 const isLoadingExisting = ref(false);
 const existingLoadError = ref('');
 const initialSnapshot = ref(null);
@@ -420,6 +421,7 @@ function removeExistingFile(index) {
 }
 
 function resetFormFields() {
+  isEditingPending.value = false;
   form.value.value = null;
   form.value.status = 'Drafting';
   form.value.notes = '';
@@ -447,7 +449,7 @@ async function fetchExistingProgress() {
   try {
     const targetAgencyId = form.value.selectedAgencyId || authState.user.value?.agencyId || props.leadAgencyId || '';
     const agencyQuery = targetAgencyId ? `&agencyId=${targetAgencyId}` : '';
-    const res = await fetchWithAuth(getApiUrl(`/api/execution/tasks/${props.taskId}/progress?year=${form.value.periodYear}${agencyQuery}`));
+    const res = await fetchWithAuth(getApiUrl(`/api/execution/tasks/${props.taskId}/progress?preferPending=true&year=${form.value.periodYear}${agencyQuery}`));
     if (requestId !== progressRequestId || !props.isOpen) return;
     if (!res.ok) throw new Error('Không tải được báo cáo đã lưu.');
     if (res.ok && res.status !== 204) {
@@ -456,6 +458,7 @@ async function fetchExistingProgress() {
       if (text && text.trim().length > 0) {
         const data = JSON.parse(text);
         if (data) {
+          isEditingPending.value = data.approvalStatus === 'Pending' && !authState.isAdmin.value;
           form.value.value = data.actualValue !== undefined ? data.actualValue : (data.value !== undefined ? data.value : null);
           form.value.status = data.status || 'Drafting';
           form.value.notes = data.summaryNotes || '';
@@ -541,10 +544,7 @@ function close() {
 
 async function submitProgress() {
   if (isLoadingExisting.value || isSubmitting.value || existingLoadError.value) return;
-  if (props.hasPendingApproval && !authState.isAdmin.value) {
-    toast.warning("Nhiệm vụ này đang ở trạng thái Chờ duyệt. Vui lòng chờ Cấp 2 phê duyệt hoặc từ chối trước khi gửi báo cáo mới.");
-    return;
-  }
+
 
   if (!form.value.periodYear) {
     toast.error("Vui lòng chọn Năm Báo Cáo!");
@@ -620,6 +620,7 @@ async function submitProgress() {
     const creatorLabel = authState.isAdmin.value ? `Quản trị viên (Admin) - ${cleanAgName || userName}` : (cleanAgName || userName || 'Đơn vị chủ trì');
     formData.append('CreatedBy', creatorLabel);
 
+    formData.append('ReplaceExistingFiles', 'true');
     if (existingFiles.value.length > 0) {
       for (const fileUrl of existingFiles.value) {
         formData.append('ExistingFiles', fileUrl);

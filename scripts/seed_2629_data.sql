@@ -2,11 +2,26 @@ SET client_encoding = 'UTF8';
 -- ===========================================================================
 -- SEED DATA: QUYẾT ĐỊNH SỐ 2629/QĐ-TTg
 -- Chương trình phát triển Chính phủ số
--- Chỉ thêm Mục tiêu (MT) và Nhiệm vụ (NV), KHÔNG thay đổi bảng Agencies
+-- Bổ sung cơ quan còn thiếu theo mã/tên; không thay thế ID danh mục đã tồn tại
 -- ===========================================================================
 BEGIN;
 
-
+DO $$ BEGIN IF (SELECT count(*) FROM "Agencies" WHERE "Code" = 'BCA' OR lower(trim("Name")) = lower('Bộ Công an')) > 1 THEN RAISE EXCEPTION 'Ambiguous agency: BCA'; END IF; END $$;
+INSERT INTO "Agencies" ("Id", "Code", "Name", "Type", "IsActive", "CreatedAt") SELECT '583274e2-278c-5fe9-ae18-2dfc88e8f61c', 'BCA', 'Bộ Công an', 'Ministry', TRUE, NOW() WHERE NOT EXISTS (SELECT 1 FROM "Agencies" WHERE "Code" = 'BCA' OR lower(trim("Name")) = lower('Bộ Công an'));
+DO $$ BEGIN IF (SELECT count(*) FROM "Agencies" WHERE "Code" = 'VPCP' OR lower(trim("Name")) = lower('Văn phòng Chính phủ')) > 1 THEN RAISE EXCEPTION 'Ambiguous agency: VPCP'; END IF; END $$;
+INSERT INTO "Agencies" ("Id", "Code", "Name", "Type", "IsActive", "CreatedAt") SELECT 'e35143a7-8ea4-5c89-9b6a-b8ababb1c707', 'VPCP', 'Văn phòng Chính phủ', 'Ministry', TRUE, NOW() WHERE NOT EXISTS (SELECT 1 FROM "Agencies" WHERE "Code" = 'VPCP' OR lower(trim("Name")) = lower('Văn phòng Chính phủ'));
+DO $$ BEGIN IF (SELECT count(*) FROM "Agencies" WHERE "Code" = 'BKHCN' OR lower(trim("Name")) = lower('Bộ Khoa học và Công nghệ')) > 1 THEN RAISE EXCEPTION 'Ambiguous agency: BKHCN'; END IF; END $$;
+INSERT INTO "Agencies" ("Id", "Code", "Name", "Type", "IsActive", "CreatedAt") SELECT '954b15d6-afac-5965-bf2a-e890b64588e2', 'BKHCN', 'Bộ Khoa học và Công nghệ', 'Ministry', TRUE, NOW() WHERE NOT EXISTS (SELECT 1 FROM "Agencies" WHERE "Code" = 'BKHCN' OR lower(trim("Name")) = lower('Bộ Khoa học và Công nghệ'));
+DO $$ BEGIN IF (SELECT count(*) FROM "Agencies" WHERE "Code" = 'BNV' OR lower(trim("Name")) = lower('Bộ Nội vụ')) > 1 THEN RAISE EXCEPTION 'Ambiguous agency: BNV'; END IF; END $$;
+INSERT INTO "Agencies" ("Id", "Code", "Name", "Type", "IsActive", "CreatedAt") SELECT '61fa4637-763e-5424-8f1d-fa0fa557fa3c', 'BNV', 'Bộ Nội vụ', 'Ministry', TRUE, NOW() WHERE NOT EXISTS (SELECT 1 FROM "Agencies" WHERE "Code" = 'BNV' OR lower(trim("Name")) = lower('Bộ Nội vụ'));
+DO $$ BEGIN IF (SELECT count(*) FROM "Agencies" WHERE "Code" = 'BTC' OR lower(trim("Name")) = lower('Bộ Tài chính')) > 1 THEN RAISE EXCEPTION 'Ambiguous agency: BTC'; END IF; END $$;
+INSERT INTO "Agencies" ("Id", "Code", "Name", "Type", "IsActive", "CreatedAt") SELECT 'd0196016-dceb-5d1e-80eb-9d9dcc70f81b', 'BTC', 'Bộ Tài chính', 'Ministry', TRUE, NOW() WHERE NOT EXISTS (SELECT 1 FROM "Agencies" WHERE "Code" = 'BTC' OR lower(trim("Name")) = lower('Bộ Tài chính'));
+DO $$ BEGIN IF (SELECT count(*) FROM "Agencies" WHERE "Code" = 'BCYCP' OR lower(trim("Name")) = lower('Ban Cơ yếu Chính phủ')) > 1 THEN RAISE EXCEPTION 'Ambiguous agency: BCYCP'; END IF; END $$;
+INSERT INTO "Agencies" ("Id", "Code", "Name", "Type", "IsActive", "CreatedAt") SELECT '981872bb-ab93-574f-a311-894134790e91', 'BCYCP', 'Ban Cơ yếu Chính phủ', 'Other', TRUE, NOW() WHERE NOT EXISTS (SELECT 1 FROM "Agencies" WHERE "Code" = 'BCYCP' OR lower(trim("Name")) = lower('Ban Cơ yếu Chính phủ'));
+DO $$ BEGIN IF (SELECT count(*) FROM "Agencies" WHERE "Code" = 'ALL_AGENCIES' OR lower(trim("Name")) = lower('Các bộ, ngành, địa phương')) > 1 THEN RAISE EXCEPTION 'Ambiguous agency: ALL_AGENCIES'; END IF; END $$;
+INSERT INTO "Agencies" ("Id", "Code", "Name", "Type", "IsActive", "CreatedAt") SELECT 'cb4c6c64-8aa0-58d8-b1fa-f217d88b42f2', 'ALL_AGENCIES', 'Các bộ, ngành, địa phương', 'Special', TRUE, NOW() WHERE NOT EXISTS (SELECT 1 FROM "Agencies" WHERE "Code" = 'ALL_AGENCIES' OR lower(trim("Name")) = lower('Các bộ, ngành, địa phương'));
+DO $$ BEGIN IF (SELECT count(*) FROM "Agencies" WHERE "Code" = 'ALL_MINISTRIES_DIRECT' OR lower(trim("Name")) = lower('Các bộ, ngành')) > 1 THEN RAISE EXCEPTION 'Ambiguous agency: ALL_MINISTRIES_DIRECT'; END IF; END $$;
+INSERT INTO "Agencies" ("Id", "Code", "Name", "Type", "IsActive", "CreatedAt") SELECT '4f7d7f06-9ba6-5608-a0fa-96d88e31b777', 'ALL_MINISTRIES_DIRECT', 'Các bộ, ngành', 'Special', TRUE, NOW() WHERE NOT EXISTS (SELECT 1 FROM "Agencies" WHERE "Code" = 'ALL_MINISTRIES_DIRECT' OR lower(trim("Name")) = lower('Các bộ, ngành'));
 -- Resolve reference data on the target database; IDs differ between installations.
 DO $$
 BEGIN
@@ -56,7 +71,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    'dcb43c7e-a2cf-4c47-b2d5-bc006ceb676e',
+    '90e2266c-cdcf-43d9-b3bb-8cb1555ef590',
     '26290000-0000-0000-0000-000000002629',
     'Goal',
     'MT-01',
@@ -68,7 +83,7 @@ INSERT INTO "GoalTaskItems" (
     FALSE,
     '2025-12-01 00:00:00',
     '2027-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'VPCP' OR lower(trim("Name")) = lower('Văn phòng Chính phủ')),
     NULL,
     '[]'::jsonb,
     (SELECT "Id" FROM "Units" WHERE "Name" = '%' ORDER BY "Id" LIMIT 1),
@@ -86,8 +101,8 @@ INSERT INTO "GoalTaskItems" (
 INSERT INTO "TargetBaselines" (
     "Id", "GoalTaskId", "Year", "TargetQuantity", "TargetQualitativeStatus", "IsCustomOverride", "OverrideNote"
 ) VALUES (
-    'b1efb09f-f49e-476e-8e8f-ee5b99541403',
-    'dcb43c7e-a2cf-4c47-b2d5-bc006ceb676e',
+    '4c0512fd-e3a9-4a88-967d-d413ece2ad23',
+    '90e2266c-cdcf-43d9-b3bb-8cb1555ef590',
     2027,
     100.0,
     NULL,
@@ -101,7 +116,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '81c6aaf2-2d52-4c9e-afe2-c5895590d288',
+    'b59ef337-d61d-4fc8-9cc0-8e48a24e4d34',
     '26290000-0000-0000-0000-000000002629',
     'Goal',
     'MT-02',
@@ -113,7 +128,7 @@ INSERT INTO "GoalTaskItems" (
     FALSE,
     '2025-12-01 00:00:00',
     '2027-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'VPCP' OR lower(trim("Name")) = lower('Văn phòng Chính phủ')),
     NULL,
     '[]'::jsonb,
     (SELECT "Id" FROM "Units" WHERE "Name" = '%' ORDER BY "Id" LIMIT 1),
@@ -131,8 +146,8 @@ INSERT INTO "GoalTaskItems" (
 INSERT INTO "TargetBaselines" (
     "Id", "GoalTaskId", "Year", "TargetQuantity", "TargetQualitativeStatus", "IsCustomOverride", "OverrideNote"
 ) VALUES (
-    '1ddd2826-1daf-4b0d-96ad-7af748b2bcfd',
-    '81c6aaf2-2d52-4c9e-afe2-c5895590d288',
+    '3b93a1a3-13d0-4281-b5d1-00b682d9c6e4',
+    'b59ef337-d61d-4fc8-9cc0-8e48a24e4d34',
     2027,
     100.0,
     NULL,
@@ -146,7 +161,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '5bafeb2c-cd2c-4878-9a4f-62f8e2c8f4ef',
+    '65f5576d-2b09-41d1-bacc-f0aef9e64f00',
     '26290000-0000-0000-0000-000000002629',
     'Goal',
     'MT-03',
@@ -158,7 +173,7 @@ INSERT INTO "GoalTaskItems" (
     FALSE,
     '2025-12-01 00:00:00',
     '2027-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BKHCN' OR lower(trim("Name")) = lower('Bộ Khoa học và Công nghệ')),
     NULL,
     '[]'::jsonb,
     (SELECT "Id" FROM "Units" WHERE "Name" = '%' ORDER BY "Id" LIMIT 1),
@@ -176,8 +191,8 @@ INSERT INTO "GoalTaskItems" (
 INSERT INTO "TargetBaselines" (
     "Id", "GoalTaskId", "Year", "TargetQuantity", "TargetQualitativeStatus", "IsCustomOverride", "OverrideNote"
 ) VALUES (
-    '21f2d31e-9397-4c33-9868-438884cb5fc1',
-    '5bafeb2c-cd2c-4878-9a4f-62f8e2c8f4ef',
+    '17f8ae76-758d-425b-a8d8-c76050b5b140',
+    '65f5576d-2b09-41d1-bacc-f0aef9e64f00',
     2027,
     95.0,
     NULL,
@@ -191,7 +206,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '2903c94b-d906-4a20-bb1e-1052e8a7dd99',
+    'ce501f30-169b-489d-a8bb-fcda1ba48b8a',
     '26290000-0000-0000-0000-000000002629',
     'Goal',
     'MT-04',
@@ -203,7 +218,7 @@ INSERT INTO "GoalTaskItems" (
     FALSE,
     '2025-12-01 00:00:00',
     '2027-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BKHCN' OR lower(trim("Name")) = lower('Bộ Khoa học và Công nghệ')),
     NULL,
     '[]'::jsonb,
     (SELECT "Id" FROM "Units" WHERE "Name" = '%' ORDER BY "Id" LIMIT 1),
@@ -221,8 +236,8 @@ INSERT INTO "GoalTaskItems" (
 INSERT INTO "TargetBaselines" (
     "Id", "GoalTaskId", "Year", "TargetQuantity", "TargetQualitativeStatus", "IsCustomOverride", "OverrideNote"
 ) VALUES (
-    '103bd512-6234-414d-8020-386f962bc668',
-    '2903c94b-d906-4a20-bb1e-1052e8a7dd99',
+    'e85d0852-b725-478b-ad06-e6b871abf026',
+    'ce501f30-169b-489d-a8bb-fcda1ba48b8a',
     2027,
     100.0,
     NULL,
@@ -236,7 +251,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '231d3ffa-b0e1-408d-b57a-7a76c6d38190',
+    'fd5187cb-4a54-4ca5-b8bf-8a6bef737a3d',
     '26290000-0000-0000-0000-000000002629',
     'Goal',
     'MT-05',
@@ -248,7 +263,7 @@ INSERT INTO "GoalTaskItems" (
     FALSE,
     '2025-12-01 00:00:00',
     '2027-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'VPCP' OR lower(trim("Name")) = lower('Văn phòng Chính phủ')),
     NULL,
     '[]'::jsonb,
     (SELECT "Id" FROM "Units" WHERE "Name" = '%' ORDER BY "Id" LIMIT 1),
@@ -266,8 +281,8 @@ INSERT INTO "GoalTaskItems" (
 INSERT INTO "TargetBaselines" (
     "Id", "GoalTaskId", "Year", "TargetQuantity", "TargetQualitativeStatus", "IsCustomOverride", "OverrideNote"
 ) VALUES (
-    '2d619348-7f24-4c83-a979-9bf69b1dff61',
-    '231d3ffa-b0e1-408d-b57a-7a76c6d38190',
+    'e0cdbe8e-3a2a-44d5-9fcb-f68423997ecd',
+    'fd5187cb-4a54-4ca5-b8bf-8a6bef737a3d',
     2027,
     100.0,
     NULL,
@@ -281,7 +296,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '76fb0e1d-3cc5-47c0-a605-2758a3fb411f',
+    '91b13a70-9ba2-4da9-90ca-08e9931fe45e',
     '26290000-0000-0000-0000-000000002629',
     'Goal',
     'MT-06',
@@ -293,7 +308,7 @@ INSERT INTO "GoalTaskItems" (
     FALSE,
     '2025-12-01 00:00:00',
     '2027-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'VPCP' OR lower(trim("Name")) = lower('Văn phòng Chính phủ')),
     NULL,
     '[]'::jsonb,
     (SELECT "Id" FROM "Units" WHERE "Name" = '%' ORDER BY "Id" LIMIT 1),
@@ -311,8 +326,8 @@ INSERT INTO "GoalTaskItems" (
 INSERT INTO "TargetBaselines" (
     "Id", "GoalTaskId", "Year", "TargetQuantity", "TargetQualitativeStatus", "IsCustomOverride", "OverrideNote"
 ) VALUES (
-    '4c596690-23e0-4ddc-86dc-c115e9a8d9b0',
-    '76fb0e1d-3cc5-47c0-a605-2758a3fb411f',
+    '2f32c436-8404-42c6-a8f6-e1a5b6d66e23',
+    '91b13a70-9ba2-4da9-90ca-08e9931fe45e',
     2027,
     100.0,
     NULL,
@@ -326,7 +341,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '8f90b94d-3ac0-410c-a4b9-389716321f65',
+    '91080318-335c-4dd3-be50-cabc969a074d',
     '26290000-0000-0000-0000-000000002629',
     'Goal',
     'MT-07',
@@ -338,7 +353,7 @@ INSERT INTO "GoalTaskItems" (
     FALSE,
     '2025-12-01 00:00:00',
     '2027-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'VPCP' OR lower(trim("Name")) = lower('Văn phòng Chính phủ')),
     NULL,
     '[]'::jsonb,
     (SELECT "Id" FROM "Units" WHERE "Name" = '%' ORDER BY "Id" LIMIT 1),
@@ -356,8 +371,8 @@ INSERT INTO "GoalTaskItems" (
 INSERT INTO "TargetBaselines" (
     "Id", "GoalTaskId", "Year", "TargetQuantity", "TargetQualitativeStatus", "IsCustomOverride", "OverrideNote"
 ) VALUES (
-    'a19ae369-3c75-4aec-9eb5-8f9d3ceeb446',
-    '8f90b94d-3ac0-410c-a4b9-389716321f65',
+    'c451e4db-471b-4b18-9962-b78491feafd1',
+    '91080318-335c-4dd3-be50-cabc969a074d',
     2027,
     100.0,
     NULL,
@@ -371,7 +386,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '0bcb2eaa-757f-4f6a-b446-684b1fcbb969',
+    '1dbbb70c-b49f-4099-a345-3e7f6db3eaaa',
     '26290000-0000-0000-0000-000000002629',
     'Goal',
     'MT-08',
@@ -401,8 +416,8 @@ INSERT INTO "GoalTaskItems" (
 INSERT INTO "TargetBaselines" (
     "Id", "GoalTaskId", "Year", "TargetQuantity", "TargetQualitativeStatus", "IsCustomOverride", "OverrideNote"
 ) VALUES (
-    'ed95bd5e-fb42-4e5f-ae67-26be59075e4c',
-    '0bcb2eaa-757f-4f6a-b446-684b1fcbb969',
+    '290caa28-d3e8-4b12-bbfa-acf035238210',
+    '1dbbb70c-b49f-4099-a345-3e7f6db3eaaa',
     2027,
     100.0,
     NULL,
@@ -416,7 +431,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    'cdb5db24-f369-4acd-9178-a8f79db24d94',
+    '53fb94c3-c258-4884-bc04-79de8f761353',
     '26290000-0000-0000-0000-000000002629',
     'Goal',
     'MT-09',
@@ -428,7 +443,7 @@ INSERT INTO "GoalTaskItems" (
     FALSE,
     '2025-12-01 00:00:00',
     '2027-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BNV' OR lower(trim("Name")) = lower('Bộ Nội vụ')),
     NULL,
     '[]'::jsonb,
     (SELECT "Id" FROM "Units" WHERE "Name" = '%' ORDER BY "Id" LIMIT 1),
@@ -446,8 +461,8 @@ INSERT INTO "GoalTaskItems" (
 INSERT INTO "TargetBaselines" (
     "Id", "GoalTaskId", "Year", "TargetQuantity", "TargetQualitativeStatus", "IsCustomOverride", "OverrideNote"
 ) VALUES (
-    'c7e1750d-78fd-4d09-a2b6-ded6a061dbed',
-    'cdb5db24-f369-4acd-9178-a8f79db24d94',
+    '141d3140-9e80-433e-9437-a756234d9839',
+    '53fb94c3-c258-4884-bc04-79de8f761353',
     2027,
     100.0,
     NULL,
@@ -461,7 +476,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '4f2305f8-1807-446e-a580-3b20cce7f57a',
+    '8987a468-a901-4253-99ad-8ef2a936d8a3',
     '26290000-0000-0000-0000-000000002629',
     'Goal',
     'MT-10',
@@ -491,8 +506,8 @@ INSERT INTO "GoalTaskItems" (
 INSERT INTO "TargetBaselines" (
     "Id", "GoalTaskId", "Year", "TargetQuantity", "TargetQualitativeStatus", "IsCustomOverride", "OverrideNote"
 ) VALUES (
-    'fa80395a-7666-4951-acb4-4494f8dd89fe',
-    '4f2305f8-1807-446e-a580-3b20cce7f57a',
+    '0b1bfde9-56ca-4f77-b459-de2c58989717',
+    '8987a468-a901-4253-99ad-8ef2a936d8a3',
     2027,
     50.0,
     NULL,
@@ -506,7 +521,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '7513352d-4413-43d7-9537-171906197ee0',
+    '93123781-a531-45da-a262-dd1c27eb7797',
     '26290000-0000-0000-0000-000000002629',
     'Goal',
     'MT-11',
@@ -518,7 +533,7 @@ INSERT INTO "GoalTaskItems" (
     FALSE,
     '2028-01-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BKHCN' OR lower(trim("Name")) = lower('Bộ Khoa học và Công nghệ')),
     NULL,
     '[]'::jsonb,
     (SELECT "Id" FROM "Units" WHERE "Name" = '%' ORDER BY "Id" LIMIT 1),
@@ -536,8 +551,8 @@ INSERT INTO "GoalTaskItems" (
 INSERT INTO "TargetBaselines" (
     "Id", "GoalTaskId", "Year", "TargetQuantity", "TargetQualitativeStatus", "IsCustomOverride", "OverrideNote"
 ) VALUES (
-    '6a792362-aa3d-4eb0-9403-61aa68ac6f58',
-    '7513352d-4413-43d7-9537-171906197ee0',
+    '7f1c7cf9-bdd0-471c-9440-edae5c62e489',
+    '93123781-a531-45da-a262-dd1c27eb7797',
     2030,
     99.0,
     NULL,
@@ -551,7 +566,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '1b71f52e-040c-4b6a-8364-207eb714b897',
+    'dcbbc217-e84f-42bf-a390-82e204be9c04',
     '26290000-0000-0000-0000-000000002629',
     'Goal',
     'MT-12',
@@ -563,7 +578,7 @@ INSERT INTO "GoalTaskItems" (
     FALSE,
     '2028-01-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BKHCN' OR lower(trim("Name")) = lower('Bộ Khoa học và Công nghệ')),
     NULL,
     '[]'::jsonb,
     (SELECT "Id" FROM "Units" WHERE "Name" = '%' ORDER BY "Id" LIMIT 1),
@@ -581,8 +596,8 @@ INSERT INTO "GoalTaskItems" (
 INSERT INTO "TargetBaselines" (
     "Id", "GoalTaskId", "Year", "TargetQuantity", "TargetQualitativeStatus", "IsCustomOverride", "OverrideNote"
 ) VALUES (
-    'cdc9a4f3-1857-4abf-8b32-22910acc56e1',
-    '1b71f52e-040c-4b6a-8364-207eb714b897',
+    'ca7c33bd-68b3-486e-ab7b-5493e558c306',
+    'dcbbc217-e84f-42bf-a390-82e204be9c04',
     2030,
     50.0,
     NULL,
@@ -596,7 +611,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '3cc53880-957f-444c-a90c-02c2ce53d66a',
+    '497f5e43-571e-4499-953d-87c01ffdc7c4',
     '26290000-0000-0000-0000-000000002629',
     'Goal',
     'MT-13',
@@ -626,8 +641,8 @@ INSERT INTO "GoalTaskItems" (
 INSERT INTO "TargetBaselines" (
     "Id", "GoalTaskId", "Year", "TargetQuantity", "TargetQualitativeStatus", "IsCustomOverride", "OverrideNote"
 ) VALUES (
-    'f3eb53ba-165b-4ad0-9b2c-a66e5c56492e',
-    '3cc53880-957f-444c-a90c-02c2ce53d66a',
+    'c6c69a49-2b63-49b7-94f2-383415120541',
+    '497f5e43-571e-4499-953d-87c01ffdc7c4',
     2030,
     100.0,
     NULL,
@@ -641,7 +656,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '185181bb-ddda-48b1-a79b-674f19b31090',
+    'f2d90b5e-f47b-4ba1-91f0-fba7d9347498',
     '26290000-0000-0000-0000-000000002629',
     'Goal',
     'MT-14',
@@ -653,7 +668,7 @@ INSERT INTO "GoalTaskItems" (
     FALSE,
     '2028-01-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'VPCP' OR lower(trim("Name")) = lower('Văn phòng Chính phủ')),
     NULL,
     '[]'::jsonb,
     (SELECT "Id" FROM "Units" WHERE "Name" = '%' ORDER BY "Id" LIMIT 1),
@@ -671,8 +686,8 @@ INSERT INTO "GoalTaskItems" (
 INSERT INTO "TargetBaselines" (
     "Id", "GoalTaskId", "Year", "TargetQuantity", "TargetQualitativeStatus", "IsCustomOverride", "OverrideNote"
 ) VALUES (
-    '6e5e54d8-e99a-4256-b79a-441c928987bd',
-    '185181bb-ddda-48b1-a79b-674f19b31090',
+    '165add21-7b0d-4a38-8fce-ed3799ada613',
+    'f2d90b5e-f47b-4ba1-91f0-fba7d9347498',
     2030,
     100.0,
     NULL,
@@ -686,7 +701,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    'cc559c6b-d459-417c-a46a-917a8128b2bb',
+    '586bda52-37c7-4368-b084-c47bfbc6550e',
     '26290000-0000-0000-0000-000000002629',
     'Goal',
     'MT-15',
@@ -698,7 +713,7 @@ INSERT INTO "GoalTaskItems" (
     FALSE,
     '2028-01-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'VPCP' OR lower(trim("Name")) = lower('Văn phòng Chính phủ')),
     NULL,
     '[]'::jsonb,
     (SELECT "Id" FROM "Units" WHERE "Name" = '%' ORDER BY "Id" LIMIT 1),
@@ -716,8 +731,8 @@ INSERT INTO "GoalTaskItems" (
 INSERT INTO "TargetBaselines" (
     "Id", "GoalTaskId", "Year", "TargetQuantity", "TargetQualitativeStatus", "IsCustomOverride", "OverrideNote"
 ) VALUES (
-    '4d27eaef-230e-4202-a21d-47cea02fc132',
-    'cc559c6b-d459-417c-a46a-917a8128b2bb',
+    '65b09236-2540-403b-aa56-37013d63e8dd',
+    '586bda52-37c7-4368-b084-c47bfbc6550e',
     2030,
     80.0,
     NULL,
@@ -731,7 +746,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    'c167b384-cd80-4788-8819-6906de588647',
+    '9bdbe5fb-e6c3-4924-9119-236cb7da289b',
     '26290000-0000-0000-0000-000000002629',
     'Goal',
     'MT-16',
@@ -761,8 +776,8 @@ INSERT INTO "GoalTaskItems" (
 INSERT INTO "TargetBaselines" (
     "Id", "GoalTaskId", "Year", "TargetQuantity", "TargetQualitativeStatus", "IsCustomOverride", "OverrideNote"
 ) VALUES (
-    '7a41f377-516f-40f3-910c-473efa4252ba',
-    'c167b384-cd80-4788-8819-6906de588647',
+    '7003eb67-4bf8-4a6f-8df2-afefc206c8cf',
+    '9bdbe5fb-e6c3-4924-9119-236cb7da289b',
     2030,
     100.0,
     NULL,
@@ -776,7 +791,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '9cc5d07b-a2de-4c10-8a1e-05743e556760',
+    '61cedcf3-7ad6-41e0-8408-ebcd3fd31c39',
     '26290000-0000-0000-0000-000000002629',
     'Goal',
     'MT-17',
@@ -806,8 +821,8 @@ INSERT INTO "GoalTaskItems" (
 INSERT INTO "TargetBaselines" (
     "Id", "GoalTaskId", "Year", "TargetQuantity", "TargetQualitativeStatus", "IsCustomOverride", "OverrideNote"
 ) VALUES (
-    'bc727efc-077a-4a36-a0fe-19eb1fa2caea',
-    '9cc5d07b-a2de-4c10-8a1e-05743e556760',
+    '597f55dc-c3f8-4355-911a-86167af833c6',
+    '61cedcf3-7ad6-41e0-8408-ebcd3fd31c39',
     2030,
     90.0,
     NULL,
@@ -821,7 +836,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '9b719c98-9149-4e4d-a726-3f6d3a64ee94',
+    '1593caa0-6e08-4f3c-b23d-17db250608fd',
     '26290000-0000-0000-0000-000000002629',
     'Goal',
     'MT-18',
@@ -851,8 +866,8 @@ INSERT INTO "GoalTaskItems" (
 INSERT INTO "TargetBaselines" (
     "Id", "GoalTaskId", "Year", "TargetQuantity", "TargetQualitativeStatus", "IsCustomOverride", "OverrideNote"
 ) VALUES (
-    'a4b63352-ee1e-4266-97f5-b4d2c7a1dc48',
-    '9b719c98-9149-4e4d-a726-3f6d3a64ee94',
+    '8bdcab9e-9fd9-4fe6-8686-e08003ec0e85',
+    '1593caa0-6e08-4f3c-b23d-17db250608fd',
     2030,
     100.0,
     NULL,
@@ -866,7 +881,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '27bda09d-f965-49b6-bdb4-d858e8977d9d',
+    'e9f8063e-a7e4-4648-badd-981bda109eec',
     '26290000-0000-0000-0000-000000002629',
     'Goal',
     'MT-19',
@@ -878,7 +893,7 @@ INSERT INTO "GoalTaskItems" (
     FALSE,
     '2028-01-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BKHCN' OR lower(trim("Name")) = lower('Bộ Khoa học và Công nghệ')),
     NULL,
     '[]'::jsonb,
     (SELECT "Id" FROM "Units" WHERE "Name" = '%' ORDER BY "Id" LIMIT 1),
@@ -896,8 +911,8 @@ INSERT INTO "GoalTaskItems" (
 INSERT INTO "TargetBaselines" (
     "Id", "GoalTaskId", "Year", "TargetQuantity", "TargetQualitativeStatus", "IsCustomOverride", "OverrideNote"
 ) VALUES (
-    'b41beeb6-083a-40a9-8d21-c944d5aceee3',
-    '27bda09d-f965-49b6-bdb4-d858e8977d9d',
+    '98250402-5e1e-4205-857d-056bb8bdba51',
+    'e9f8063e-a7e4-4648-badd-981bda109eec',
     2030,
     100.0,
     NULL,
@@ -911,7 +926,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '33d8f90a-d757-4f33-9f37-32501f104bdb',
+    '0acfc779-6cb4-440b-9b94-8253da80c6f5',
     '26290000-0000-0000-0000-000000002629',
     'Goal',
     'MT-20',
@@ -923,7 +938,7 @@ INSERT INTO "GoalTaskItems" (
     FALSE,
     '2028-01-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BNV' OR lower(trim("Name")) = lower('Bộ Nội vụ')),
     NULL,
     '[]'::jsonb,
     (SELECT "Id" FROM "Units" WHERE "Name" = '%' ORDER BY "Id" LIMIT 1),
@@ -941,8 +956,8 @@ INSERT INTO "GoalTaskItems" (
 INSERT INTO "TargetBaselines" (
     "Id", "GoalTaskId", "Year", "TargetQuantity", "TargetQualitativeStatus", "IsCustomOverride", "OverrideNote"
 ) VALUES (
-    'f7513349-303e-453a-8b98-7d9a172e3fa4',
-    '33d8f90a-d757-4f33-9f37-32501f104bdb',
+    'bca3d740-7c5f-48ba-bd77-2958381a966f',
+    '0acfc779-6cb4-440b-9b94-8253da80c6f5',
     2030,
     25.0,
     NULL,
@@ -956,7 +971,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    'd8826d8d-cfd2-4ad1-8d63-3caf274d1610',
+    '6328ae7a-9859-4575-81d4-309559268d1e',
     '26290000-0000-0000-0000-000000002629',
     'Goal',
     'MT-21',
@@ -986,8 +1001,8 @@ INSERT INTO "GoalTaskItems" (
 INSERT INTO "TargetBaselines" (
     "Id", "GoalTaskId", "Year", "TargetQuantity", "TargetQualitativeStatus", "IsCustomOverride", "OverrideNote"
 ) VALUES (
-    'a3138d41-6030-4455-b7a3-3d6ab0adb503',
-    'd8826d8d-cfd2-4ad1-8d63-3caf274d1610',
+    'f04966b9-bb35-406e-b934-525606e43ca8',
+    '6328ae7a-9859-4575-81d4-309559268d1e',
     2030,
     100.0,
     NULL,
@@ -1001,7 +1016,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '0e627045-c874-4a45-9827-ad95fd0e567b',
+    '8e87aa96-bcd1-460b-82fd-f11211218dda',
     '26290000-0000-0000-0000-000000002629',
     'Goal',
     'MT-22',
@@ -1031,8 +1046,8 @@ INSERT INTO "GoalTaskItems" (
 INSERT INTO "TargetBaselines" (
     "Id", "GoalTaskId", "Year", "TargetQuantity", "TargetQualitativeStatus", "IsCustomOverride", "OverrideNote"
 ) VALUES (
-    'd898d000-5112-4606-b743-e369eb9089e5',
-    '0e627045-c874-4a45-9827-ad95fd0e567b',
+    'dca73a36-b91d-49c8-ab4b-129f65e18f72',
+    '8e87aa96-bcd1-460b-82fd-f11211218dda',
     2030,
     100.0,
     NULL,
@@ -1048,7 +1063,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '9868baec-b3eb-4291-b432-51454bc94b23',
+    'fedb0dbc-1507-4e8d-ba30-0b460ddb741f',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-01',
@@ -1057,17 +1072,17 @@ INSERT INTO "GoalTaskItems" (
     'Danh mục nhiệm vụ',
     'Hoàn thiện thể chế',
     FALSE,
-    TRUE,
+    FALSE,
     '2025-12-01 00:00:00',
     '2025-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BKHCN' OR lower(trim("Name")) = lower('Bộ Khoa học và Công nghệ')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "f50878bfc4ec41f39f91e27145f44785", "Title": "Trình Quốc hội dự thảo Luật", "DueDate": "2025-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "1aa511a5297146248d3b7c22b46b3f34", "Title": "Trình Quốc hội dự thảo Luật", "DueDate": "2025-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -1081,7 +1096,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    'fa63607c-575f-4c54-875f-ad7d6005ebaf',
+    'cd24e015-a428-4f12-8471-ee2e8cf8ede8',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-02',
@@ -1090,17 +1105,17 @@ INSERT INTO "GoalTaskItems" (
     'Danh mục nhiệm vụ',
     'Hoàn thiện thể chế',
     FALSE,
-    TRUE,
+    FALSE,
     '2025-12-01 00:00:00',
     '2025-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BKHCN' OR lower(trim("Name")) = lower('Bộ Khoa học và Công nghệ')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "7b12ef4afdfb48528d66cea448becb87", "Title": "Trình Quốc hội dự thảo Luật", "DueDate": "2025-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "90dd42e47bc84d7d9385267a88237cc4", "Title": "Trình Quốc hội dự thảo Luật", "DueDate": "2025-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -1114,7 +1129,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    'e99fd083-866f-48ce-9fea-b1b3d07d26eb',
+    'f13f9f00-73cd-4531-a2ea-abc249be7ebd',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-03',
@@ -1133,7 +1148,7 @@ INSERT INTO "GoalTaskItems" (
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "79f3dd42bf2744bfbca85ebd7add0442", "Title": "Trình Quốc hội dự thảo Luật", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "28559a3a7b034aaabe8a2422decc546f", "Title": "Trình Quốc hội dự thảo Luật", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -1147,7 +1162,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    'cd89318d-8c42-4e6b-a47e-9908b7a5c287',
+    '929efafc-5c89-4ed3-bcc0-505f5cf9a482',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-04',
@@ -1159,14 +1174,14 @@ INSERT INTO "GoalTaskItems" (
     TRUE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BCA'),
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'ALL_MINISTRIES_DIRECT' OR lower(trim("Name")) = lower('Các bộ, ngành')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "21cbb95a7e9140c49049765ca6ffbf9c", "Title": "Tiêu chuẩn, Quy chuẩn, Hướng dẫn kỹ thuật được ban hành", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "c00d2fb45cb74de0b1281b642cee9f98", "Title": "Tiêu chuẩn, Quy chuẩn, Hướng dẫn kỹ thuật được ban hành", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -1180,7 +1195,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    'f2745612-1ae2-4358-96e4-eebf5fe8236f',
+    'e0cbac79-75e5-4111-86d2-b3cb74decea1',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-05',
@@ -1192,14 +1207,14 @@ INSERT INTO "GoalTaskItems" (
     TRUE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'ALL_AGENCIES' OR lower(trim("Name")) = lower('Các bộ, ngành, địa phương')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "f6fd90a3109f4281bc600fad6b477c72", "Title": "Các Khung kiến trúc số được cập nhật phù hợp yêu cầu", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "29321cc0cdc34130bb49c054baedb355", "Title": "Các Khung kiến trúc số được cập nhật phù hợp yêu cầu", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -1213,7 +1228,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '87a596fe-81bb-4b87-8b92-a5e7a2a42f1f',
+    '171cc5ca-472b-430b-bf1a-7855b5f655b6',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-06',
@@ -1225,14 +1240,14 @@ INSERT INTO "GoalTaskItems" (
     TRUE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'ALL_AGENCIES' OR lower(trim("Name")) = lower('Các bộ, ngành, địa phương')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "6c3e7ed0b7cd44c08d60a3ca1c8d178b", "Title": "Chiến lược dữ liệu được xây dựng phù hợp yêu cầu", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "5907d5b5b46c4ad19efd856c5f9af813", "Title": "Chiến lược dữ liệu được xây dựng phù hợp yêu cầu", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -1246,7 +1261,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '6445c767-d46d-4224-91d5-5fe9c553235d',
+    'f4b5c7e7-c7b2-4992-9dbf-ed8546e9d901',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-07',
@@ -1255,17 +1270,17 @@ INSERT INTO "GoalTaskItems" (
     'Danh mục nhiệm vụ',
     'Hoàn thiện thể chế',
     FALSE,
-    TRUE,
+    FALSE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BKHCN' OR lower(trim("Name")) = lower('Bộ Khoa học và Công nghệ')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "07ea19ef605f4e3d92d9883067ed23d1", "Title": "Danh mục được cấp có thẩm quyền ban hành", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "4f479b3226844e58b17fe6c43c3cc4be", "Title": "Danh mục được cấp có thẩm quyền ban hành", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -1279,7 +1294,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '07d6a4f3-6dba-438f-bb48-d87cac9d2821',
+    '624738bd-cebc-4863-8f6c-01a31e025b32',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-08',
@@ -1288,17 +1303,17 @@ INSERT INTO "GoalTaskItems" (
     'Danh mục nhiệm vụ',
     'Hoàn thiện thể chế',
     FALSE,
-    TRUE,
+    FALSE,
     '2025-12-01 00:00:00',
     '2026-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BKHCN' OR lower(trim("Name")) = lower('Bộ Khoa học và Công nghệ')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "0fa2a3d34f6a40208248139588dc24bb", "Title": "Hướng dẫn kỹ thuật được ban hành", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "26826c987f1b4d318d20a7f59492e85f", "Title": "Hướng dẫn kỹ thuật được ban hành", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -1312,7 +1327,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '8b2f6080-5d1a-4f1d-88d1-4e8b164450a5',
+    '0db3a208-44fc-4209-9389-467fcf7a29e0',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-09',
@@ -1321,17 +1336,17 @@ INSERT INTO "GoalTaskItems" (
     'Danh mục nhiệm vụ',
     'Hoàn thiện thể chế',
     FALSE,
-    TRUE,
+    FALSE,
     '2025-12-01 00:00:00',
     '2026-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BKHCN' OR lower(trim("Name")) = lower('Bộ Khoa học và Công nghệ')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "24e8ff88a86f42428aef31c03bea8aeb", "Title": "Hướng dẫn kỹ thuật được ban hành", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "2859b702d72f49cb832eaba7a4ad873d", "Title": "Hướng dẫn kỹ thuật được ban hành", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -1345,7 +1360,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '41dd40b3-c5d9-47fa-821a-a97bc7a00380',
+    '17935d53-1629-427e-8a2a-7756c2ea91ef',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-10',
@@ -1354,17 +1369,17 @@ INSERT INTO "GoalTaskItems" (
     'Danh mục nhiệm vụ',
     'Hoàn thiện thể chế',
     FALSE,
-    TRUE,
+    FALSE,
     '2025-12-01 00:00:00',
     '2026-03-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BKHCN' OR lower(trim("Name")) = lower('Bộ Khoa học và Công nghệ')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "78ce41ee653344e78d5e45d194561303", "Title": "Tiêu chuẩn quốc gia được ban hành", "DueDate": "2026-03-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "dea66eecd95342c9a8c587a28d1b26e9", "Title": "Tiêu chuẩn quốc gia được ban hành", "DueDate": "2026-03-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -1378,7 +1393,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    'ece57183-6b42-463a-acf5-73c7bc72206b',
+    '1012871d-d762-4607-b377-79f96b833827',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-11',
@@ -1397,7 +1412,7 @@ INSERT INTO "GoalTaskItems" (
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "98a9d32be972477b949cba2e6b9bb156", "Title": "Bộ chỉ số và Khung hướng dẫn được cấp có thẩm quyền ban hành", "DueDate": "2026-06-30", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "ddf7dbe84f884ea685c246b790dae3e0", "Title": "Bộ chỉ số và Khung hướng dẫn được cấp có thẩm quyền ban hành", "DueDate": "2026-06-30", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -1411,7 +1426,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '30f0f42b-3aa4-4324-85cc-b5d59e32e614',
+    '2cb7bd6f-ac9a-48f0-993a-276460392e34',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-12',
@@ -1423,14 +1438,14 @@ INSERT INTO "GoalTaskItems" (
     TRUE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'ALL_AGENCIES' OR lower(trim("Name")) = lower('Các bộ, ngành, địa phương')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "72254ec6641844adb55a87c3e307c8f8", "Title": "Tiêu chuẩn, mô tả vị trí việc làm được ban hành", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "20f6823eac8d4804bbb97840e56e67d6", "Title": "Tiêu chuẩn, mô tả vị trí việc làm được ban hành", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -1444,7 +1459,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    'bd8f4bc4-8ff6-41d3-8e84-fe1f479755f3',
+    '9b3df4a4-7a9c-4b7f-9022-e4ff1a26b5e5',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-13',
@@ -1453,17 +1468,17 @@ INSERT INTO "GoalTaskItems" (
     'Danh mục nhiệm vụ',
     'Hoàn thiện thể chế',
     FALSE,
-    TRUE,
+    FALSE,
     '2025-12-01 00:00:00',
     '2026-08-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BTC' OR lower(trim("Name")) = lower('Bộ Tài chính')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "522eb0aceac24835a5a23eabee4bf93f", "Title": "Bộ tiêu chí đánh giá được cấp có thẩm quyền ban hành", "DueDate": "2026-08-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "6b3e7729ee90490daecaa615d3e41066", "Title": "Bộ tiêu chí đánh giá được cấp có thẩm quyền ban hành", "DueDate": "2026-08-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -1477,7 +1492,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '4cad2b46-0e66-4156-8b1c-dc2c17a42845',
+    '24246da2-6e52-455f-8226-15d395db297a',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-14',
@@ -1496,7 +1511,7 @@ INSERT INTO "GoalTaskItems" (
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "eebf60f1541e4aac8258cbb7b3428b56", "Title": "Khung đào tạo và chương trình cấp chứng chỉ quản trị dữ liệu được cấp có thẩm quyền ban hành", "DueDate": "2026-06-30", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "84f4d66b3e834bb5b00b36562b44c098", "Title": "Khung đào tạo và chương trình cấp chứng chỉ quản trị dữ liệu được cấp có thẩm quyền ban hành", "DueDate": "2026-06-30", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -1510,7 +1525,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '9b10c20e-6a5c-4309-8249-acec5b751405',
+    'eadcbca5-4340-424f-8cd9-46bb3c98585d',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-15',
@@ -1522,14 +1537,14 @@ INSERT INTO "GoalTaskItems" (
     TRUE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'ALL_AGENCIES' OR lower(trim("Name")) = lower('Các bộ, ngành, địa phương')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "4dd912f2557141148766ebefb83a8eb7", "Title": "Dữ liệu các lĩnh vực tư pháp, giáo dục, y tế, đất đai được tạo lập, số hóa", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "17e3d272fa924494936ffb91c79db01a", "Title": "Dữ liệu các lĩnh vực tư pháp, giáo dục, y tế, đất đai được tạo lập, số hóa", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -1543,7 +1558,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '70f92e86-a9e8-4d46-b4e4-e3de938c72a7',
+    '859b01a5-913e-438d-b03e-1ade3aaa851c',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-16',
@@ -1555,14 +1570,14 @@ INSERT INTO "GoalTaskItems" (
     TRUE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'ALL_AGENCIES' OR lower(trim("Name")) = lower('Các bộ, ngành, địa phương')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "53dabe55b1a5496fba1c911ce9c2c32e", "Title": "Báo cáo thực hiện", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "b18d148f99c04aaa96fbb01b47e884bd", "Title": "Báo cáo thực hiện", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -1576,7 +1591,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '4ee8219b-ad40-46f6-8441-e789a22bc0bd',
+    'dd6eae71-3097-43e5-850f-ce9521a63f6b',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-17',
@@ -1588,14 +1603,14 @@ INSERT INTO "GoalTaskItems" (
     TRUE,
     '2025-12-01 00:00:00',
     '2026-06-30 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'ALL_AGENCIES' OR lower(trim("Name")) = lower('Các bộ, ngành, địa phương')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "17bfede0a6ab41809db2f28897dd0360", "Title": "Báo cáo thực hiện", "DueDate": "2026-06-30", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "7fc2f19de14b4a11920e278c1ca9fa85", "Title": "Báo cáo thực hiện", "DueDate": "2026-06-30", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -1609,7 +1624,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    'fa484656-6144-4b85-891b-0d746567a554',
+    '2a548b0f-fef4-4af2-9436-2604d60fb42e',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-18',
@@ -1621,14 +1636,14 @@ INSERT INTO "GoalTaskItems" (
     TRUE,
     '2025-12-01 00:00:00',
     '2026-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'ALL_AGENCIES' OR lower(trim("Name")) = lower('Các bộ, ngành, địa phương')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "7e466ea580be40c49f9dccd8ed835aad", "Title": "Văn bản được cấp có thẩm quyền ban hành", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "655e9fa35fe148ee9892bf4acacfb32c", "Title": "Văn bản được cấp có thẩm quyền ban hành", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -1642,7 +1657,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '2037914a-1f1f-4773-a7b9-243b5323f844',
+    'bef588a7-7c08-4abf-9bac-81da77dd15ec',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-19',
@@ -1661,7 +1676,7 @@ INSERT INTO "GoalTaskItems" (
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "71276c57c46148919d131c9cc12f5b54", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2026-02-28", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "816e2c74711d47058753cc30f2e4cded", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2026-02-28", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -1675,7 +1690,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '071224bb-1691-4411-9ca1-32e105555ebd',
+    '091ab7cb-f168-4419-a520-1a0981128b09',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-20',
@@ -1684,17 +1699,17 @@ INSERT INTO "GoalTaskItems" (
     'Danh mục nhiệm vụ',
     'Nhóm các nền tảng số giải quyết thủ tục hành chính và tương tác với người dân, doanh nghiệp',
     FALSE,
-    TRUE,
+    FALSE,
     '2025-12-01 00:00:00',
     '2026-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BTC' OR lower(trim("Name")) = lower('Bộ Tài chính')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "b7422b99f2d74ed5be83bf575ff603a5", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "bd4092c970174d5ab5eb61479e28681d", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -1708,7 +1723,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    'eb4c66c0-e7d1-480a-8864-af6384f3bd72',
+    'dce15a1e-92e4-4341-baa4-e82e9732d8b4',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-21',
@@ -1717,17 +1732,17 @@ INSERT INTO "GoalTaskItems" (
     'Danh mục nhiệm vụ',
     'Nhóm các nền tảng số giải quyết thủ tục hành chính và tương tác với người dân, doanh nghiệp',
     FALSE,
-    TRUE,
+    FALSE,
     '2025-12-01 00:00:00',
     '2026-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'VPCP' OR lower(trim("Name")) = lower('Văn phòng Chính phủ')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "cc5241d6567641d8bdc5fb7ac9c97f46", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "ee5c31e66e504e0f818380ce5b53f3d5", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -1741,7 +1756,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '27af2c35-4b90-44ff-a863-0c893cae4aa1',
+    'cb60f6f2-3faf-4931-9ba0-448b5c60cefd',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-22',
@@ -1760,7 +1775,7 @@ INSERT INTO "GoalTaskItems" (
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "90ad493f7a364a1cb0e29cc836aab78e", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "bfd41b5f33594d43b2879e1fe3419f58", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -1774,7 +1789,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    'f5ced929-b954-4e58-846a-365de86ed507',
+    '5bf4a3b9-2bb4-4088-87bd-3a3e4fb66ca2',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-23',
@@ -1783,17 +1798,17 @@ INSERT INTO "GoalTaskItems" (
     'Danh mục nhiệm vụ',
     'Nhóm các nền tảng phục vụ quản trị và chỉ đạo, điều hành',
     FALSE,
-    TRUE,
+    FALSE,
     '2025-12-01 00:00:00',
     '2026-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'VPCP' OR lower(trim("Name")) = lower('Văn phòng Chính phủ')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "d202163a75984df78730b4de867b690a", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "e3fe080903024b4397362028282feb2d", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -1807,7 +1822,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '3fd0ff9b-78a8-4753-8c0b-4da6c420785f',
+    'c14a682c-7216-4dde-9750-44d84fc9aa24',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-24',
@@ -1816,17 +1831,17 @@ INSERT INTO "GoalTaskItems" (
     'Danh mục nhiệm vụ',
     'Nhóm các nền tảng phục vụ quản trị và chỉ đạo, điều hành',
     FALSE,
-    TRUE,
+    FALSE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'VPCP' OR lower(trim("Name")) = lower('Văn phòng Chính phủ')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "5e25f08091164db99234f56600fa8533", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "0f46a24d10514b79bbb336961b8b5d4f", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -1840,7 +1855,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '04a13955-3930-4799-a3e8-80d2f47f22c3',
+    '519e9e0f-265a-439d-9b00-7add485a352e',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-25',
@@ -1849,17 +1864,17 @@ INSERT INTO "GoalTaskItems" (
     'Danh mục nhiệm vụ',
     'Nhóm các nền tảng phục vụ quản trị và chỉ đạo, điều hành',
     FALSE,
-    TRUE,
+    FALSE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'VPCP' OR lower(trim("Name")) = lower('Văn phòng Chính phủ')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "671e8e477ec741a09ba8b361b5cbee44", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "9906ee228358402f946d5898f8653f16", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -1873,7 +1888,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '06ead984-fa30-4b28-ae0a-3a38672d302a',
+    '83e73294-1d95-454f-a9b3-dc5641f3ddd0',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-26',
@@ -1892,7 +1907,7 @@ INSERT INTO "GoalTaskItems" (
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "ce742bf65ebe40baa424154ab63426b5", "Title": "Bộ Từ điển dữ liệu dùng chung", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "7b2b65a5b13845f2885b3d05ba0ffab5", "Title": "Bộ Từ điển dữ liệu dùng chung", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -1906,7 +1921,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    'f8109821-df5f-4ac2-849c-cecbc54b21cc',
+    '38948c17-e6ff-49ce-9d18-ccb9b41734af',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-27',
@@ -1925,7 +1940,7 @@ INSERT INTO "GoalTaskItems" (
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "c1863746c9a5420e94b0eeb1128a8c2e", "Title": "Bộ Từ điển dữ liệu dùng chung", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "5bd7b9b4d21144f598ffc689f719fb28", "Title": "Bộ Từ điển dữ liệu dùng chung", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -1939,7 +1954,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '065a719d-730f-4f5e-8a5f-168add572a6a',
+    'ec8c2234-00ce-4f1b-a8e3-263a9a11c220',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-28',
@@ -1958,7 +1973,7 @@ INSERT INTO "GoalTaskItems" (
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "98268e630e2c462185fbf265956f5494", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "25334e8990dd4aa48cf13f105cd54b8b", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -1972,7 +1987,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '8f38df76-1d21-4672-a614-f8246966178a',
+    '2790fe86-8b7a-44e4-b024-cfc09e2396b2',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-29',
@@ -1981,17 +1996,17 @@ INSERT INTO "GoalTaskItems" (
     'Danh mục nhiệm vụ',
     'Nhóm các nền tảng cung cấp dịch vụ hạ tầng cơ bản, dùng chung',
     FALSE,
-    TRUE,
+    FALSE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'VPCP' OR lower(trim("Name")) = lower('Văn phòng Chính phủ')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "90b7e5a58ffc4797955127011f5cc524", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "fecdc854c7c14f908de9816bd06f954b", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -2005,7 +2020,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '76f73cfe-4805-4a13-9570-d4a269beda9a',
+    'b30b2d74-6ebe-4ad3-941b-56fa62a3383e',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-30',
@@ -2014,17 +2029,17 @@ INSERT INTO "GoalTaskItems" (
     'Danh mục nhiệm vụ',
     'Nhóm các nền tảng cung cấp dịch vụ hạ tầng cơ bản, dùng chung',
     FALSE,
-    TRUE,
+    FALSE,
     '2025-12-01 00:00:00',
     '2025-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'VPCP' OR lower(trim("Name")) = lower('Văn phòng Chính phủ')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "af2b949f74a84c13bb80b225105b7e28", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2025-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "5822f72087954d2e9dcf59bffe9eafbe", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2025-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -2038,7 +2053,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '999e3504-73fe-497b-83c8-d6b1a222c9d5',
+    '3d256eca-9b3a-475e-87bf-23af9aee36a3',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-31',
@@ -2050,14 +2065,14 @@ INSERT INTO "GoalTaskItems" (
     FALSE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BKHCN' OR lower(trim("Name")) = lower('Bộ Khoa học và Công nghệ')),
     (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BCA'),
-    NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "62a71ec3b01645a29e79d7a1caae9a83", "Title": "Hệ thống vận hành ổn định, đáp ứng các mục tiêu của từng thời kỳ", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "ff00c47418294c539ae6afdc3d89615a", "Title": "Hệ thống vận hành ổn định, đáp ứng các mục tiêu của từng thời kỳ", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -2071,7 +2086,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    'e648cba4-e9ac-4c9d-a282-1a9bc46249c0',
+    '20a21c33-adbd-4a20-aa4f-e530bb87588c',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-32',
@@ -2090,7 +2105,7 @@ INSERT INTO "GoalTaskItems" (
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "26ae1d1ecbc04e71913672a807f323e2", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "e4cd276c051341388ffc3720219cf5bb", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -2104,7 +2119,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    'e70b2cae-363a-48ad-86f1-12ed7359be27',
+    'e01f86b0-d06a-42c0-ba5c-9445b992d769',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-33',
@@ -2123,7 +2138,7 @@ INSERT INTO "GoalTaskItems" (
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "c529e4c3065f4fa5ad7c92bef4157f50", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "ee429205239e4cf486607fbf3899be83", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -2137,7 +2152,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '35dc6334-157d-479e-9d5f-de7aca593525',
+    '0c4f3113-7de3-405e-911b-64a18f0d64cf',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-34',
@@ -2149,14 +2164,14 @@ INSERT INTO "GoalTaskItems" (
     TRUE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'ALL_MINISTRIES_DIRECT' OR lower(trim("Name")) = lower('Các bộ, ngành')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "977f25a2b9c14111b10ea365ff514b55", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "7ebf822b0b3648e0a95058b638ace50d", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -2170,7 +2185,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '0c7af26e-85b8-4d60-9ff1-506b484379f8',
+    '702f152d-046a-4559-914a-c56de98b2b67',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-35',
@@ -2179,17 +2194,17 @@ INSERT INTO "GoalTaskItems" (
     'Danh mục nhiệm vụ',
     'Nhóm các nền tảng cung cấp dịch vụ hạ tầng cơ bản, dùng chung',
     FALSE,
-    TRUE,
+    FALSE,
     '2025-12-01 00:00:00',
     '2026-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BKHCN' OR lower(trim("Name")) = lower('Bộ Khoa học và Công nghệ')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "d374c258869444ecbaf5bff8d26f52be", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "1b25da5fcbac4546966ad68772276c5d", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -2203,7 +2218,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    'feaae4dd-2f88-4d95-a88f-3ff87549ba1a',
+    'c91c5c5d-ae66-4b2d-ad9f-9e86653bbdbe',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-36',
@@ -2222,7 +2237,7 @@ INSERT INTO "GoalTaskItems" (
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "4ce9dc22b00543eca19be6ae83fe376d", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "aca463740a484db7b61217dc08224c68", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -2236,7 +2251,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '6a67f2cc-0377-49a6-9b3b-8d29fc14aa48',
+    '515a0fae-5419-490b-934c-bf7adf3e43f4',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-37',
@@ -2255,7 +2270,7 @@ INSERT INTO "GoalTaskItems" (
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "9389e54f633844fcb9f15478c89b8deb", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "1f185079e1ab46dba83e3da38f7ded91", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -2269,7 +2284,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '5a85d8cd-7efc-4d7c-8ee5-44554fb1e1ed',
+    '3b02c103-59ed-4df2-ba5a-3578ecd5cb92',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-38',
@@ -2288,7 +2303,7 @@ INSERT INTO "GoalTaskItems" (
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "31d0ccce7dd04bbeb771c4ba5976d113", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "860b724b3db24546b3b5882e99fc5fce", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -2302,7 +2317,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    'faaf53df-907f-47d9-aa39-3a74dc8c5c36',
+    '77b7fbbf-8d2a-4cac-b836-a4c81a5cc98f',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-39',
@@ -2321,7 +2336,7 @@ INSERT INTO "GoalTaskItems" (
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "4c0512b18f4946ac94629b67f2a81bec", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "364d459d79f24185bbe438aae6022846", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -2335,7 +2350,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    'a9da2207-c32a-4d1c-b5f2-aff802bee0b3',
+    'e2555e59-369a-4c0b-ba84-1f29bf927745',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-40',
@@ -2344,17 +2359,17 @@ INSERT INTO "GoalTaskItems" (
     'Danh mục nhiệm vụ',
     'Nhóm các nền tảng cung cấp dịch vụ hạ tầng cơ bản, dùng chung',
     FALSE,
-    TRUE,
+    FALSE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BKHCN' OR lower(trim("Name")) = lower('Bộ Khoa học và Công nghệ')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "c92d7a2a31674ceb94550177f5b0ad90", "Title": "Hệ thống vận hành ổn định, đáp ứng các mục tiêu của từng thời kỳ", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "1836368d01324cc692f3f7c0f22b0bfa", "Title": "Hệ thống vận hành ổn định, đáp ứng các mục tiêu của từng thời kỳ", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -2368,7 +2383,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '1f05c598-a6f4-461d-a00a-e3b931638aed',
+    'd5f03741-c14b-4837-ae69-4536a0a2145b',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-41',
@@ -2377,17 +2392,17 @@ INSERT INTO "GoalTaskItems" (
     'Danh mục nhiệm vụ',
     'Nhóm các nền tảng cung cấp dịch vụ hạ tầng cơ bản, dùng chung',
     TRUE,
-    TRUE,
+    FALSE,
     '2026-01-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BKHCN' OR lower(trim("Name")) = lower('Bộ Khoa học và Công nghệ')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "1b1dcdf9079c4bedb15cc841cd55f61e", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "1a7ce4a281ba4deba1c69a82a7f7e8fa", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -2401,7 +2416,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '2f94ab5e-f0f5-4319-9ff5-4d0398627d2c',
+    'c584ca9a-c8a6-456c-8bc1-f58d46aafb4a',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-42',
@@ -2420,7 +2435,7 @@ INSERT INTO "GoalTaskItems" (
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "60f547979772419f812340590ba1f337", "Title": "Hệ thống vận hành ổn định, đáp ứng các mục tiêu của từng thời kỳ", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "3bfebe9230e8472f91aac403d5930c9d", "Title": "Hệ thống vận hành ổn định, đáp ứng các mục tiêu của từng thời kỳ", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -2434,7 +2449,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '988d2d7e-1a75-4f8d-ab9d-4e01aaa54b73',
+    '54256355-0564-4c13-953d-ac2943ac3a0e',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-43',
@@ -2453,7 +2468,7 @@ INSERT INTO "GoalTaskItems" (
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "6cd65b79ad8e45eb95356b9a29797a5a", "Title": "Cổng xác thực, xác nhận quốc gia tại Trung tâm Dữ liệu quốc gia", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "74b5b0a25252449ba14a0750039bb10e", "Title": "Cổng xác thực, xác nhận quốc gia tại Trung tâm Dữ liệu quốc gia", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -2467,7 +2482,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    'fd114209-7e61-462a-823a-094129eca1b0',
+    '56f42c73-f03c-41a3-a170-48384936ebf0',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-44',
@@ -2479,14 +2494,14 @@ INSERT INTO "GoalTaskItems" (
     TRUE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'ALL_MINISTRIES_DIRECT' OR lower(trim("Name")) = lower('Các bộ, ngành')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "92416d064c334691bf124c45a4c5243e", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "78bd0ee207dd47129599443d14bad43e", "Title": "Hoàn thành, khai thác sử dụng", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -2500,7 +2515,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '4703d362-1b13-4a6b-bf33-3d955cf4e75f',
+    '97e7bde6-d4b7-47c1-94e3-816f38cf0f21',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-45',
@@ -2512,14 +2527,14 @@ INSERT INTO "GoalTaskItems" (
     TRUE,
     '2025-12-01 00:00:00',
     '2025-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'ALL_AGENCIES' OR lower(trim("Name")) = lower('Các bộ, ngành, địa phương')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "76d9abe009e04b1faa3d766cb0669586", "Title": "Hệ thống vận hành ổn định, đáp ứng các mục tiêu của từng thời kỳ", "DueDate": "2025-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "8ca36f4b56a64ba682a3c6de62d87609", "Title": "Hệ thống vận hành ổn định, đáp ứng các mục tiêu của từng thời kỳ", "DueDate": "2025-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -2533,7 +2548,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '920af6b2-96b9-4ae8-b92b-37d807e4e926',
+    '46c3402d-b0ec-4beb-bfb7-625690e09abb',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-46',
@@ -2545,14 +2560,14 @@ INSERT INTO "GoalTaskItems" (
     TRUE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'ALL_AGENCIES' OR lower(trim("Name")) = lower('Các bộ, ngành, địa phương')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "0399df53aa2841a6a810b5862c54f589", "Title": "Hệ thống vận hành ổn định, đáp ứng các mục tiêu của từng thời kỳ", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "88873dc23e094d83a8ed61fd8cf26b99", "Title": "Hệ thống vận hành ổn định, đáp ứng các mục tiêu của từng thời kỳ", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -2566,7 +2581,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '0f65dc5c-64ec-4e03-9179-28e7c44308c0',
+    '696ab12f-13e4-4a1e-8dfc-3c85aa905c36',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-47',
@@ -2578,14 +2593,14 @@ INSERT INTO "GoalTaskItems" (
     TRUE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'ALL_AGENCIES' OR lower(trim("Name")) = lower('Các bộ, ngành, địa phương')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "22628185c8444c5f930f1887a90b4789", "Title": "Hệ thống vận hành ổn định, đáp ứng các mục tiêu của từng thời kỳ", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "dd59b174404046388a72e41b99dc0135", "Title": "Hệ thống vận hành ổn định, đáp ứng các mục tiêu của từng thời kỳ", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -2599,7 +2614,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    'dfa16a4d-86db-4706-82da-3d646121beec',
+    'b7b022bd-4319-4b13-bd80-4c617308e5e6',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-48',
@@ -2611,14 +2626,14 @@ INSERT INTO "GoalTaskItems" (
     TRUE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'ALL_AGENCIES' OR lower(trim("Name")) = lower('Các bộ, ngành, địa phương')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "d4857d40e29d4b09805a4a01925309a7", "Title": "Hệ thống vận hành ổn định, đáp ứng các mục tiêu của từng thời kỳ", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "2a093be2026a45d68747060488bd0833", "Title": "Hệ thống vận hành ổn định, đáp ứng các mục tiêu của từng thời kỳ", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -2632,7 +2647,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    'd1b99783-7e6d-4e5c-9595-3ef30011b4a0',
+    'c44bb3a5-4279-470f-acc8-0e476c8992bd',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-49',
@@ -2644,14 +2659,14 @@ INSERT INTO "GoalTaskItems" (
     TRUE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'ALL_AGENCIES' OR lower(trim("Name")) = lower('Các bộ, ngành, địa phương')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "533e0ae0bbb94c68a2e6c7e1fbe2e637", "Title": "Hệ thống vận hành ổn định, đáp ứng các mục tiêu của từng thời kỳ", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "20728a898a9b4eb3813a4fbd6f801afe", "Title": "Hệ thống vận hành ổn định, đáp ứng các mục tiêu của từng thời kỳ", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -2665,7 +2680,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    'b9f48252-6c0d-4e27-b47a-c6f4bb2318f4',
+    '1a9a0d91-ada5-4d63-b19f-5ee32507b517',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-50',
@@ -2677,14 +2692,14 @@ INSERT INTO "GoalTaskItems" (
     TRUE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'ALL_AGENCIES' OR lower(trim("Name")) = lower('Các bộ, ngành, địa phương')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "9d617026cc3a40bdbc9ec115ff77dc1b", "Title": "Hệ thống vận hành ổn định, đáp ứng các mục tiêu của từng thời kỳ", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "41a263937b674e2388fa73c8a8009731", "Title": "Hệ thống vận hành ổn định, đáp ứng các mục tiêu của từng thời kỳ", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -2698,7 +2713,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '3dabc52b-9022-4fe7-9416-b3c89aa21c69',
+    'd91379a4-9f24-4b41-be02-8c7020d4bea0',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-51',
@@ -2710,14 +2725,14 @@ INSERT INTO "GoalTaskItems" (
     TRUE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'ALL_AGENCIES' OR lower(trim("Name")) = lower('Các bộ, ngành, địa phương')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "f5331db389cc410fba56cb7134c3e468", "Title": "Hạ tầng số đáp ứng yêu cầu phát triển Chính phủ số", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "ec7684b20d62492091172209259c0f53", "Title": "Hạ tầng số đáp ứng yêu cầu phát triển Chính phủ số", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -2731,7 +2746,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '26e81356-b8d2-4572-9316-8fb512e32f43',
+    '757c0ab5-2c1e-42a4-8333-812cb48eaccf',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-52',
@@ -2750,7 +2765,7 @@ INSERT INTO "GoalTaskItems" (
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "756b0721fbf04f0993b1bf954cabcb2c", "Title": "Hệ thống vận hành ổn định, đáp ứng các mục tiêu của từng thời kỳ", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "2caa1b2633d5461b8912e29953de4cac", "Title": "Hệ thống vận hành ổn định, đáp ứng các mục tiêu của từng thời kỳ", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -2764,7 +2779,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    'e13584ec-9c6b-436c-be53-522c257f006a',
+    'f6344391-a365-42fb-a2b7-fdc3fd1ed60e',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-53',
@@ -2783,7 +2798,7 @@ INSERT INTO "GoalTaskItems" (
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "c2e3e707499d41e587d7134bbf94e051", "Title": "Hệ thống vận hành ổn định, đáp ứng các mục tiêu của từng thời kỳ", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "185b8c2648dc40699db893647416ea9d", "Title": "Hệ thống vận hành ổn định, đáp ứng các mục tiêu của từng thời kỳ", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -2797,7 +2812,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '10da417c-afeb-41bf-bb21-86441fd221da',
+    '5a56d87d-48f3-4d4e-96a7-a758caf25332',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-54',
@@ -2806,17 +2821,17 @@ INSERT INTO "GoalTaskItems" (
     'Danh mục nhiệm vụ',
     'Phát triển hạ tầng Chính phủ số',
     FALSE,
-    TRUE,
+    FALSE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BKHCN' OR lower(trim("Name")) = lower('Bộ Khoa học và Công nghệ')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "04fea21b2021407fb6b65b7f8eba7e61", "Title": "Báo cáo thực hiện", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "6adb9f07ccef47e5bdb36571eb3194f7", "Title": "Báo cáo thực hiện", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -2830,7 +2845,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    'f36ef1d0-20a8-4480-8391-4fcf5a75054d',
+    '3cf23a38-bb71-4be1-b180-4223d6a110d0',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-55',
@@ -2842,14 +2857,14 @@ INSERT INTO "GoalTaskItems" (
     TRUE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'ALL_AGENCIES' OR lower(trim("Name")) = lower('Các bộ, ngành, địa phương')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "51bba45f69ed4c218a053a36aa7e4046", "Title": "Báo cáo thực hiện", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "dc9d3811b45d4e6f87abebfec2220c6a", "Title": "Báo cáo thực hiện", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -2863,7 +2878,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '3011f8c9-b950-4e92-95ca-063334bc734b',
+    'e94cb008-1c8b-45fc-b024-0b7920dc3348',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-56',
@@ -2872,17 +2887,17 @@ INSERT INTO "GoalTaskItems" (
     'Danh mục nhiệm vụ',
     'Phát triển hạ tầng Chính phủ số',
     FALSE,
-    TRUE,
+    FALSE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BCYCP' OR lower(trim("Name")) = lower('Ban Cơ yếu Chính phủ')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "f718228b5d4c4d3d87bcee2de0cfd0d7", "Title": "Hệ thống vận hành ổn định, đáp ứng các mục tiêu của từng thời kỳ", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "f54b4dc6e141435692dde99be01a8d86", "Title": "Hệ thống vận hành ổn định, đáp ứng các mục tiêu của từng thời kỳ", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -2896,7 +2911,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    'a487e931-4964-4bce-bcb2-d5e220b77757',
+    '55c83aa2-a27a-468f-b4e6-2fdddd687187',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-57',
@@ -2905,17 +2920,17 @@ INSERT INTO "GoalTaskItems" (
     'Danh mục nhiệm vụ',
     'Phát triển hạ tầng Chính phủ số',
     FALSE,
-    TRUE,
+    FALSE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BKHCN' OR lower(trim("Name")) = lower('Bộ Khoa học và Công nghệ')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "708702adb915428fb9199c438747027b", "Title": "Hệ thống vận hành ổn định, đáp ứng các mục tiêu của từng thời kỳ", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "8b08d2b006cd48ffbd1730edc54c0302", "Title": "Hệ thống vận hành ổn định, đáp ứng các mục tiêu của từng thời kỳ", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -2929,7 +2944,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '0445ec4a-2738-482e-8b03-26120ed737b8',
+    'fdd892e2-0e64-418a-9b4f-8fba76d12e05',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-58',
@@ -2948,7 +2963,7 @@ INSERT INTO "GoalTaskItems" (
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "4bf6444845f747288afefe144783d6ec", "Title": "Văn bản được cấp có thẩm quyền ban hành", "DueDate": "2026-06-30", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "879263bac0cd40479049f45d0463276a", "Title": "Văn bản được cấp có thẩm quyền ban hành", "DueDate": "2026-06-30", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -2962,7 +2977,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '66934ecd-fe92-47cc-ad5a-3290cd7f815e',
+    '2e92ea70-e743-422b-aad3-5400c1f4b085',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-59',
@@ -2981,7 +2996,7 @@ INSERT INTO "GoalTaskItems" (
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "5d78b702bb494fb19181f13a5b07cddc", "Title": "Văn bản được cấp có thẩm quyền ban hành", "DueDate": "2026-06-30", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "941042edebe24dddb0d03441b8ad2352", "Title": "Văn bản được cấp có thẩm quyền ban hành", "DueDate": "2026-06-30", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -2995,7 +3010,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '4698d012-63ec-4172-b242-520d4b54ba44',
+    'bf6758cb-507e-4bdc-a401-2fa97e84e82a',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-60',
@@ -3014,7 +3029,7 @@ INSERT INTO "GoalTaskItems" (
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "d28e0fbb5c8c479aacceddb58ea63575", "Title": "Hình thành thị trường an toàn, an ninh mạng có sức cạnh tranh khu vực và quốc tế với hệ sinh thái doanh nghiệp công nghệ số Việt Nam làm chủ công nghệ nguồn mở và cung cấp các sản phẩm, dịch vụ an ninh mạng", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "685dc760a2c141ed99e243813d4df474", "Title": "Hình thành thị trường an toàn, an ninh mạng có sức cạnh tranh khu vực và quốc tế với hệ sinh thái doanh nghiệp công nghệ số Việt Nam làm chủ công nghệ nguồn mở và cung cấp các sản phẩm, dịch vụ an ninh mạng", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -3028,7 +3043,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '1b41eb15-5442-4fe8-8ec5-401574e984da',
+    'ab48b562-892d-4876-80a1-e9fbd799f966',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-61',
@@ -3047,7 +3062,7 @@ INSERT INTO "GoalTaskItems" (
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "3f333f076c974e429f14171453acbb91", "Title": "Báo cáo thực hiện", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "cc869a82b3ca462990d46a54e0926533", "Title": "Báo cáo thực hiện", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -3061,7 +3076,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    'c649e2a6-f944-48c0-a8f7-a08de6f512cc',
+    'b169190d-2b94-48b1-88a8-831542be6977',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-62',
@@ -3080,7 +3095,7 @@ INSERT INTO "GoalTaskItems" (
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "2c4d1a0f4c914870b3e4b41a0ecbcb79", "Title": "Báo cáo thực hiện", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "07ae114f9e03484cae90ba719ad71153", "Title": "Báo cáo thực hiện", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -3094,7 +3109,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '1e5947a2-8c29-4c83-9a60-365a06149d66',
+    '0533e1bb-5c6f-43dd-86d0-b934732e7442',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-63',
@@ -3106,14 +3121,14 @@ INSERT INTO "GoalTaskItems" (
     TRUE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'ALL_AGENCIES' OR lower(trim("Name")) = lower('Các bộ, ngành, địa phương')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "d7aa9fc440e44943b200683aee7a03d5", "Title": "Báo cáo thực hiện", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "f6370ed01a2c4b218f6808b005676ec6", "Title": "Báo cáo thực hiện", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -3127,7 +3142,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    'a7730379-6b32-42f8-9018-65ae9309ac48',
+    'e39a2b50-2716-46de-9d74-ab618b96cbb8',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-64',
@@ -3139,14 +3154,14 @@ INSERT INTO "GoalTaskItems" (
     TRUE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'ALL_MINISTRIES_DIRECT' OR lower(trim("Name")) = lower('Các bộ, ngành')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "3b955f776eef46b4aa2ce666fd4c5648", "Title": "Báo cáo thực hiện", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "0ac3a977d8f64e7db7b54c9a11aa1c46", "Title": "Báo cáo thực hiện", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -3160,7 +3175,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '44e1674a-1b9b-476a-8d9d-825b65c80ea7',
+    'e2a5cf53-01a5-4bb5-9ad0-4f91c4e57a2e',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-65',
@@ -3169,17 +3184,17 @@ INSERT INTO "GoalTaskItems" (
     'Danh mục nhiệm vụ',
     'Phát triển nhân lực số',
     FALSE,
-    TRUE,
+    FALSE,
     '2025-12-01 00:00:00',
     '2026-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
-    NULL,
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BKHCN' OR lower(trim("Name")) = lower('Bộ Khoa học và Công nghệ')),
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BNV' OR lower(trim("Name")) = lower('Bộ Nội vụ')),
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "860e9ac55edc4bfa8483a1c1f5d54b0f", "Title": "Báo cáo thực hiện", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "8a74531ca687469c9ff83400045b03a2", "Title": "Báo cáo thực hiện", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -3193,7 +3208,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '02e7efc9-589c-4e3f-84b0-09bfcaacb0b4',
+    '7b2650b9-5b7b-430e-8ec7-13e39419c1be',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-66',
@@ -3202,17 +3217,17 @@ INSERT INTO "GoalTaskItems" (
     'Danh mục nhiệm vụ',
     'Phát triển nhân lực số',
     FALSE,
-    TRUE,
+    FALSE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BKHCN' OR lower(trim("Name")) = lower('Bộ Khoa học và Công nghệ')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "bd38d74bc4a64329ab8cc7d4a6c5777a", "Title": "Báo cáo thực hiện", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "701a58d3d40a434b88bb91ee1a9eedb3", "Title": "Báo cáo thực hiện", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -3226,7 +3241,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '0de70307-3d70-46ce-852b-4d1bfbb5af71',
+    '8affbb34-0703-4b1f-baeb-1c53285dde5e',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-67',
@@ -3238,14 +3253,14 @@ INSERT INTO "GoalTaskItems" (
     TRUE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'ALL_AGENCIES' OR lower(trim("Name")) = lower('Các bộ, ngành, địa phương')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "e019139272cb470e81d59129e2d33c9e", "Title": "Báo cáo thực hiện", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "df6cc894f8ea4a6fb5554b99041275df", "Title": "Báo cáo thực hiện", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -3259,7 +3274,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '7fe597c2-3014-454a-9675-90dd43bedd31',
+    '2c6eed5e-168a-4d9d-b5ed-caf45a0d1bb8',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-68',
@@ -3278,7 +3293,7 @@ INSERT INTO "GoalTaskItems" (
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "d2801136dc7542cfbfa3754ce263a1b1", "Title": "Khung chương trình đào tạo được ban hành", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "b2c11dc32c834086bf655dcfd5b1c01e", "Title": "Khung chương trình đào tạo được ban hành", "DueDate": "2026-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -3292,7 +3307,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '84864b0d-a066-4e8c-8824-b3b9f43fefe1',
+    '721e34ac-3ac6-4369-82b9-1bed6bfa9c5c',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-69',
@@ -3301,17 +3316,17 @@ INSERT INTO "GoalTaskItems" (
     'Danh mục nhiệm vụ',
     'Hợp tác quốc tế',
     FALSE,
-    TRUE,
+    FALSE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BKHCN' OR lower(trim("Name")) = lower('Bộ Khoa học và Công nghệ')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "b6b9fd90183c45d7ac990149dd94ae62", "Title": "Báo cáo thực hiện", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "28d7a4f9d71343e481cb29955ddb600d", "Title": "Báo cáo thực hiện", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -3325,7 +3340,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '63160d54-f3e5-4980-b354-830f28e83327',
+    '387b0d9d-26db-4f4d-ac99-e90eb103cf4a',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-70',
@@ -3334,17 +3349,17 @@ INSERT INTO "GoalTaskItems" (
     'Danh mục nhiệm vụ',
     'Hợp tác quốc tế',
     FALSE,
-    TRUE,
+    FALSE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BKHCN' OR lower(trim("Name")) = lower('Bộ Khoa học và Công nghệ')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "419575c474064d88853e8dece19fcbc4", "Title": "Báo cáo thực hiện", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "77813ac8cf8e43408e33bc2a545d1417", "Title": "Báo cáo thực hiện", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -3358,7 +3373,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    'b82ebb39-56f9-4639-b9e5-1bc9d9e80c7f',
+    '64ba49aa-ea81-4a28-bf4a-44dab1954358',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-71',
@@ -3367,17 +3382,17 @@ INSERT INTO "GoalTaskItems" (
     'Danh mục nhiệm vụ',
     'Hợp tác quốc tế',
     FALSE,
-    TRUE,
+    FALSE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BKHCN' OR lower(trim("Name")) = lower('Bộ Khoa học và Công nghệ')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "b668ee2318c14333a2b19a067a43a861", "Title": "Báo cáo thực hiện", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "1d3dd2293f9945599e4300f7898da160", "Title": "Báo cáo thực hiện", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -3391,7 +3406,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    'bc3329df-23de-47d5-92b5-55e829bf3348',
+    '3b33b82f-5f7b-42bf-81fc-639caeb93914',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-72',
@@ -3400,17 +3415,17 @@ INSERT INTO "GoalTaskItems" (
     'Danh mục nhiệm vụ',
     'Bảo đảm kinh phí',
     FALSE,
-    TRUE,
+    FALSE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BTC' OR lower(trim("Name")) = lower('Bộ Tài chính')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "fbf6d22e00db46b7b3ac86832eca9129", "Title": "Báo cáo thực hiện", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "c45fa9a2cc984150aaecc1307bd059f5", "Title": "Báo cáo thực hiện", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -3424,7 +3439,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '02bacf94-c319-4a19-9516-d7e2b4c216b9',
+    '2b2ee8e1-9a12-48b0-bb4a-f31a3f13fba9',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-73',
@@ -3433,17 +3448,17 @@ INSERT INTO "GoalTaskItems" (
     'Danh mục nhiệm vụ',
     'Bảo đảm kinh phí',
     FALSE,
-    TRUE,
+    FALSE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BTC' OR lower(trim("Name")) = lower('Bộ Tài chính')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "36e58d2d1fa94ced88faf24912d3f30a", "Title": "Báo cáo thực hiện", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "f13e436bfb2a4018a39f8cdd0151655d", "Title": "Báo cáo thực hiện", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -3457,7 +3472,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    '551e5a71-0dbd-474c-9e82-8bb5ea608d33',
+    'ca4cf3bb-fe35-4035-93eb-8b685579a82d',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-74',
@@ -3466,17 +3481,17 @@ INSERT INTO "GoalTaskItems" (
     'Danh mục nhiệm vụ',
     'Đo lường, giám sát, đánh giá triển khai',
     FALSE,
-    TRUE,
+    FALSE,
     '2025-12-01 00:00:00',
     '2025-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BKHCN' OR lower(trim("Name")) = lower('Bộ Khoa học và Công nghệ')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "6586e550cd354e08b0ee3562924a8d4f", "Title": "Bộ chỉ số được ban hành", "DueDate": "2025-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "bda3111ce7c64554928e691083932a46", "Title": "Bộ chỉ số được ban hành", "DueDate": "2025-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),
@@ -3490,7 +3505,7 @@ INSERT INTO "GoalTaskItems" (
     "EvaluationType", "CalculationMethod", "CustomBaseline", "Deliverables", 
     "AgencyDeliverables", "DynamicKPIs", "CreatedAt", "LeadAgencyDisplayText", "CoordinatingAgenciesDisplayText"
 ) VALUES (
-    'e500f716-3261-4d05-a3e4-f316982b37f0',
+    'b6d735d6-27f2-45bd-b0ba-c138f5bcbd78',
     '26290000-0000-0000-0000-000000002629',
     'Task',
     'NV-75',
@@ -3499,17 +3514,17 @@ INSERT INTO "GoalTaskItems" (
     'Danh mục nhiệm vụ',
     'Đo lường, giám sát, đánh giá triển khai',
     FALSE,
-    TRUE,
+    FALSE,
     '2025-12-01 00:00:00',
     '2030-12-31 00:00:00',
-    '00000000-0000-0000-0000-000000009999',
+    (SELECT "Id" FROM "Agencies" WHERE "Code" = 'BKHCN' OR lower(trim("Name")) = lower('Bộ Khoa học và Công nghệ')),
     NULL,
     '[]'::jsonb,
     NULL,
     'Qualitative',
     'LatestValue',
     '{}'::jsonb,
-    '[{"Id": "03beb667ee434701ac6522b6936b3d32", "Title": "Hình thành cơ chế giám sát liên tục và công khai minh bạch tình hình phát triển Chính phủ số thông qua hệ thống đo lường, giám sát tập trung và công bố trực tuyến các chỉ số chính trên phạm vi toàn quốc", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
+    '[{"Id": "ea7d08e3091e42189e435d7358a6886c", "Title": "Hình thành cơ chế giám sát liên tục và công khai minh bạch tình hình phát triển Chính phủ số thông qua hệ thống đo lường, giám sát tập trung và công bố trực tuyến các chỉ số chính trên phạm vi toàn quốc", "DueDate": "2030-12-31", "CurrentStatus": "NotStarted"}]'::jsonb,
     '{}'::jsonb,
     '{}'::jsonb,
     NOW(),

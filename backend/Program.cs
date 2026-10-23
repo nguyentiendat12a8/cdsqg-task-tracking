@@ -193,6 +193,15 @@ builder.Services.AddCors(options =>
 
 var app = builder.Build();
 
+// Explicit repair preserves reports, decisions and execution IDs; no destructive seed replay.
+if (args.Contains("--repair-2629-assignment-mapping"))
+{
+    using var repairScope = app.Services.CreateScope();
+    var repaired = await Seed2629AssignmentRepair.RunAsync(repairScope.ServiceProvider.GetRequiredService<AppDbContext>());
+    Console.WriteLine($"Corrected 2629 assignment mapping for {repaired} seed items.");
+    return;
+}
+
 // Maintenance mode does not start HTTP listeners or hosted workers.
 if (args.Contains("--backfill-missing-assignments"))
 {

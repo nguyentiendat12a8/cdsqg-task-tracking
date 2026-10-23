@@ -9,7 +9,7 @@
         <div class="mt-2 h-1 w-full rounded-full bg-slate-100 overflow-hidden"><div class="h-full rounded-full transition-all duration-300" :class="card.barClass" :style="{width: `${visualShare(card.value,total)}%`}"></div></div>
       </button>
     </div>
-    <div class="rounded-xl border border-slate-200 bg-white p-3 space-y-2" aria-label="Phân công và lượt giao">
+    <div v-if="showAssignments" class="rounded-xl border border-slate-200 bg-white p-3 space-y-2" aria-label="Phân công và lượt giao">
       <p class="text-xs text-slate-600">Một mục tiêu hoặc nhiệm vụ giao cho một đơn vị được tính là một lượt giao.</p>
       <div class="flex flex-wrap items-center justify-between gap-2">
         <button type="button" @click="$emit('select-statistic',{mode:'assignments',scope:'all',status:null})" class="flex flex-wrap items-center gap-x-2 gap-y-1 rounded-md text-slate-800 hover:text-blue-700 text-xs" aria-label="Xem toàn bộ lượt giao theo cơ quan">
@@ -29,7 +29,7 @@ import { computed } from 'vue';
 import { executionStatusSeries } from '../../shared/statusPresentation';
 import { formatNumber } from '../../shared/formatters';
 import { visualShare } from './leadershipPresentation';
-const props=defineProps({summary:{type:Object,default:()=>({})},assignmentSummary:{type:Object,default:()=>({})},total:{type:Number,default:0},unitCount:{type:Number,default:0},noun:{type:String,default:'mục tiêu'},scopeCounts:{type:Object,default:null}});
+const props=defineProps({showAssignments:{type:Boolean,default:true},summary:{type:Object,default:()=>({})},assignmentSummary:{type:Object,default:()=>({})},total:{type:Number,default:0},unitCount:{type:Number,default:0},noun:{type:String,default:'mục tiêu'},scopeCounts:{type:Object,default:null}});
 const emit=defineEmits(['select-statistic']);
 const assignmentTotal=computed(()=>executionStatusSeries.reduce((sum,s)=>sum+(props.assignmentSummary[s.key]||0),0));
 const cards=computed(()=>[

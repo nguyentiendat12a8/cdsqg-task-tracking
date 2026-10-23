@@ -15,11 +15,16 @@ function metrics(type,empty=false){const perf=empty?[]:agencies.map((a,i)=>{cons
 const browser=await chromium.launch({channel:'msedge',headless:true});
 try{
  for(const width of (process.env.TEST_WIDTH?[Number(process.env.TEST_WIDTH)]:[1440,390])){
-  const page=await browser.newPage({viewport:{width,height:1000},acceptDownloads:true});page.setDefaultTimeout(12000);const errors=[],warnings=[],requests=[];let fail=false,empty=false;
+  const page=await browser.newPage({viewport:{width,height:1000},acceptDownloads:true});page.setDefaultTimeout(12000);const errors=[],warnings=[],requests=[];let fail=false,empty=false,documentCountsFail=false;
   page.on('pageerror',e=>errors.push(e.message));page.on('console',m=>{if(m.text().includes('[Vue warn]'))warnings.push(m.text())});
   await page.addInitScript(()=>{localStorage.setItem('cdsqg_auth_token','fixture');localStorage.setItem('cdsqg_auth_user',JSON.stringify({role:1,username:'fixture'}));localStorage.setItem('cdsqg_active_doc_code','1266')});
   await page.route('**/api/**',async route=>{const url=new URL(route.request().url());requests.push(url);const type=url.searchParams.get('itemType')||'Goal';let data=[];
    if(url.pathname==='/api/agencies')data=agencies;
+   else if(url.pathname==='/api/documents'){
+    if(documentCountsFail){await route.fulfill({status:500,json:{message:'test failure'}});return;}
+    data={items:url.searchParams.get('pageNumber')==='2'?[{id:'12660000-0000-0000-0000-000000001266',totalGoals:3,totalTasks:5}]:[{id:'26290000-0000-0000-0000-000000002629',totalGoals:0,totalTasks:75}],totalCount:2};
+   }
+
    else if(url.pathname==='/api/dashboard/metrics'){
     if(fail){await route.fulfill({status:500,json:{message:'test failure'}});return;}
     if(url.searchParams.has('detailMode'))data={items:[{id:'22222222-2222-2222-2222-222222222222',code:'MT-01',title:'Chi tiết mục tiêu đã chọn',leadAgencyName:'Bộ Công an',itemType:type,calculatedStatus:url.searchParams.get('detailStatus')||'Completed',latestProgressPercent:100}],totalCount:1,totalPages:1};
@@ -39,6 +44,7 @@ try{
   assert.equal(await root.locator('.executive-kpi').count(),8);
   const grouped=root.getByRole('region',{name:'Thống kê theo nhóm',exact:true});
   assert.equal(await grouped.locator('canvas').count(),0);
+  await grouped.getByRole('button',{name:'Mục tiêu',exact:true}).click();
   await grouped.getByRole('listitem').filter({hasText:'Phát triển nhân lực'}).waitFor();
   assert((await grouped.getByRole('listitem').filter({hasText:'Phát triển nhân lực'}).innerText()).includes('27'));
   await grouped.getByRole('button',{name:'Nhiệm vụ',exact:true}).click();
@@ -63,6 +69,7 @@ try{
 
   await root.getByRole('button',{name:'Chọn chiến lược',exact:true}).click();
   const picker=page.getByRole('group',{name:'Danh sách chiến lược',exact:true});await picker.waitFor();
+  await picker.getByText('3 mục tiêu',{exact:true}).waitFor();await picker.getByText('5 nhiệm vụ',{exact:true}).waitFor();await picker.getByText('0 mục tiêu',{exact:true}).waitFor();assert.equal(await picker.getByText('27 mục tiêu',{exact:true}).count(),0);
   const chosen=picker.locator('[aria-pressed="true"]');assert((await chosen.innerText()).includes('Đang chọn'));
   const palette=await chosen.evaluate(el=>({background:getComputedStyle(el).backgroundColor,text:getComputedStyle(el.querySelector('p')).color}));assert.equal(palette.text,'rgb(255, 255, 255)');assert.notEqual(palette.background,'rgb(255, 255, 255)');assert.equal(await chosen.locator('.strategy-meta').evaluate(el=>getComputedStyle(el).color),'rgb(255, 255, 255)');
   await page.screenshot({path:`${process.env.TEMP}/strategy-contrast-${width}.png`,fullPage:true});
@@ -70,6 +77,14 @@ try{
   await page.waitForFunction(()=>localStorage.getItem('cdsqg_active_doc_code')==='2629');
   await root.getByRole('button',{name:'Chọn chiến lược',exact:true}).click();await picker.getByRole('button').first().click();
   await page.waitForFunction(()=>localStorage.getItem('cdsqg_active_doc_code')==='1266');
+  documentCountsFail=true;
+  await root.getByRole('button',{name:'Chọn chiến lược',exact:true}).click();
+  await page.getByText('Chưa tải được số lượng mục tiêu, nhiệm vụ.',{exact:true}).waitFor();
+  assert.equal(await picker.getByText('3 mục tiêu',{exact:true}).count(),0);
+  documentCountsFail=false;await page.getByRole('button',{name:'Thử lại',exact:true}).click();
+  await picker.getByText('3 mục tiêu',{exact:true}).waitFor();
+  await picker.getByRole('button').first().click();
+
 
   if(width>=1280){const positions=await root.locator('.executive-kpi').evaluateAll(cards=>cards.map(card=>Math.round(card.getBoundingClientRect().top)));assert.equal(new Set(positions).size,1,'All eight KPI cards must share a row on desktop');}
 

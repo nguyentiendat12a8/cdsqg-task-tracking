@@ -20,13 +20,17 @@ public class AiAlertsTests
     [Theory]
     [InlineData("https://www.google.com/alerts/feeds/123/456",true)]
     [InlineData("https://www.google.com/alerts/feeds/123/456/",true)]
+    [InlineData("https://news.google.com/rss",true)]
+    [InlineData("https://news.google.com/rss/search?q=Kinh+t%E1%BA%BF+s%E1%BB%91&hl=vi&gl=VN&ceid=VN:vi",true)]
+    [InlineData("https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNREpxYW5RU0FtVnVHZ0pWVXlnQVAB",true)]
+    [InlineData("https://news.google.com/not-rss",false)]
     [InlineData("https://www.google.com.evil.test/alerts/feeds/123/456",false)]
     [InlineData("https://www.google.com/url?q=https://127.0.0.1",false)]
     [InlineData("https://user@www.google.com/alerts/feeds/123/456",false)]
     [InlineData("http://www.google.com/alerts/feeds/123/456",false)]
-    public void FeedUrlIsGoogleAlertsOnly(string url,bool allowed)
+    public void FeedUrlIsGoogleAlertsOrNewsOnly(string url,bool allowed)
     {
-        if(allowed)Assert.StartsWith("https://www.google.com/alerts/feeds/",AiAlertFeedReader.ValidateUrl(url));
+        if(allowed)Assert.True(AiAlertFeedReader.ValidateUrl(url).StartsWith("https://www.google.com/alerts/feeds/") || AiAlertFeedReader.ValidateUrl(url).StartsWith("https://news.google.com/rss"));
         else Assert.Throws<InvalidOperationException>(()=>AiAlertFeedReader.ValidateUrl(url));
     }
     [Theory]
@@ -105,7 +109,12 @@ public class AiAlertsTests
             var pausedInbox=new AiInboxService(db,null!,sourceReader,collection,clients,Options.Create(new AiDataOptions()));
             foreach(var item in titles)await pausedInbox.ProcessQueuedAsync(item.Id,default);
             Assert.All(titles,i=>Assert.Equal("TitleQueued",i.Status));Assert.Equal(0,clients.Calls);Assert.Equal(0,sourceReader.Calls);
-            foreach(var item in titles)await inbox.ProcessQueuedAsync(item.Id,default);
+            foreach(var item in titles)
+            {
+                // This pipeline fixture advances the queue between items; cadence has separate coverage.
+                await db.Set<AiInboxQueueState>().Where(s=>s.Id==1).ExecuteUpdateAsync(s=>s.SetProperty(x=>x.NextReadAt,DateTime.UtcNow.AddMinutes(-2)));
+                await inbox.ProcessQueuedAsync(item.Id,default);
+            }
             Assert.Equal(3,clients.Calls);Assert.Equal(1,sourceReader.Calls);Assert.Equal(1,extractor.Calls);
             Assert.Equal("Read",titles.Single(i=>i.Title.StartsWith("Liên quan")).Status);
             Assert.Equal("NeedsReview",titles.Single(i=>i.Title.StartsWith("Chưa rõ")).Status);
@@ -116,7 +125,12 @@ public class AiAlertsTests
             var nextScan=await service.EnqueueAsync(feed.Id,"Manual","Admin",default);await service.RunAsync(nextScan!.Id,default);
             Assert.Equal(0,nextScan.Added);Assert.Equal(4,nextScan.Duplicates);Assert.Equal(1,nextScan.Blocked);
             await service.RunAsync(nextScan.Id,default);Assert.Equal(2,feedReader.Calls); // Completed run cannot execute again.
-            foreach(var item in titles)await inbox.ProcessQueuedAsync(item.Id,default);Assert.Equal(3,clients.Calls);
+            foreach(var item in titles)
+            {
+                // This pipeline fixture advances the queue between items; cadence has separate coverage.
+                await db.Set<AiInboxQueueState>().Where(s=>s.Id==1).ExecuteUpdateAsync(s=>s.SetProperty(x=>x.NextReadAt,DateTime.UtcNow.AddMinutes(-2)));
+                await inbox.ProcessQueuedAsync(item.Id,default);
+            }Assert.Equal(3,clients.Calls);
             feed=await service.SaveAsync(feed.Id,new("Nguồn đã tắt lịch","https://www.google.com/alerts/feeds/123/456",false,"09:00"),"Admin",default);
             Assert.Null(feed.NextScanAt);Assert.Null(await service.EnqueueAsync(feed.Id,"Scheduled","Lịch",default));
             await using var secondDb=new AppDbContext(options);

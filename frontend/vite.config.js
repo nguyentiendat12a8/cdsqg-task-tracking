@@ -9,6 +9,11 @@ export default defineConfig({
   optimizeDeps: { esbuildOptions: { plugins: [excelWriterDependencyPlugin()] } },
   server: {
     port: 5173,
-    host: true
+    host: true,
+    // Windows sync folders may not emit native file events; poll to avoid serving stale modules.
+    watch: {
+      usePolling: process.env.CDSQG_VITE_USE_POLLING !== 'false' && process.platform === 'win32',
+      interval: 500
+    }
   }
 });

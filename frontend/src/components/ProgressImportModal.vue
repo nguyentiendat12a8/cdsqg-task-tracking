@@ -158,7 +158,7 @@
             <div>
               <h4 class="text-sm font-bold text-emerald-900">Nhập tiến độ hàng loạt hoàn tất!</h4>
               <p class="text-xs text-emerald-700 font-medium">
-                Đã xử lý thành công {{ formatNumber(importResults.successCount) }} mục, {{ formatNumber(importResults.pendingCount) }} mục đã gửi chờ cấp 2 phê duyệt, {{ formatNumber(importResults.failureCount) }} mục lỗi/bỏ qua.
+                Đã xử lý thành công {{ formatNumber(importResults.successCount) }} mục, {{ formatNumber(importResults.pendingCount) }} mục đã gửi chờ phê duyệt, {{ formatNumber(importResults.failureCount) }} mục lỗi/bỏ qua.
               </p>
             </div>
           </div>
@@ -169,26 +169,26 @@
           <table class="w-full text-left border-collapse text-xs">
             <thead class="bg-slate-100 sticky top-0 font-bold text-slate-700 border-b border-slate-200">
               <tr>
-                <th class="p-2.5 text-center w-10">STT</th>
-                <th class="p-2.5 w-24">Mã</th>
-                <th class="p-2.5">Mục tiêu / Nhiệm vụ</th>
-                <th class="p-2.5 text-center w-36">Trạng thái xử lý</th>
-                <th class="p-2.5">Thông báo hệ thống</th>
+                <th class="p-2.5 text-center w-10 shrink-0">STT</th>
+                <th class="p-2.5 w-24 shrink-0">Mã</th>
+                <th class="p-2.5 min-w-[200px]">Mục tiêu / Nhiệm vụ</th>
+                <th class="p-2.5 text-center w-32 shrink-0">Trạng thái xử lý</th>
+                <th class="p-2.5 min-w-[240px] w-2/5">Thông báo hệ thống</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-slate-200">
               <tr v-for="(res, idx) in importResults.results" :key="idx" class="hover:bg-slate-50 transition">
                 <td class="p-2.5 text-center font-bold text-slate-500">{{ idx + 1 }}</td>
-                <td class="p-2.5 font-bold text-blue-700">{{ res.code }}</td>
+                <td class="p-2.5 font-bold text-blue-700 whitespace-nowrap">{{ res.code }}</td>
                 <td class="p-2.5 font-semibold text-slate-800 leading-snug">{{ res.title }}</td>
-                <td class="p-2.5 text-center">
-                  <span v-if="res.success && res.approvalStatus === 'Pending'" class="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200">
-                    ⏳ Chờ cấp 2 duyệt
+                <td class="p-2.5 text-center whitespace-nowrap">
+                  <span v-if="res.success && res.approvalStatus === 'Pending'" class="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-200 whitespace-nowrap">
+                    ⏳ Chờ duyệt
                   </span>
-                  <span v-else-if="res.success" class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                  <span v-else-if="res.success" class="px-2 py-0.5 rounded-full text-xs font-bold bg-emerald-50 text-emerald-800 border border-emerald-200 whitespace-nowrap">
                     ✅ Đã cập nhật
                   </span>
-                  <span v-else class="px-2 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-800 border border-rose-200">
+                  <span v-else class="px-2 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-800 border border-rose-200 whitespace-nowrap">
                     ❌ Thất bại
                   </span>
                 </td>

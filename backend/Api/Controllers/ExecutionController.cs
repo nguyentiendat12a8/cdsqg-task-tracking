@@ -69,11 +69,12 @@ namespace Cdsqg.Api.Controllers
         public async Task<IActionResult> GetProgress(
             Guid taskId, 
             [FromQuery] int year = 2026, 
-            [FromQuery] Guid? agencyId = null)
+            [FromQuery] Guid? agencyId = null,
+            [FromQuery] bool preferPending = false)
         {
             try
             {
-                var log = await _executionService.GetProgressLogAsync(taskId, year, agencyId);
+                var log = await _executionService.GetProgressLogAsync(taskId, year, agencyId, preferPending);
                 if (log == null)
                 {
                     return Ok(null);
