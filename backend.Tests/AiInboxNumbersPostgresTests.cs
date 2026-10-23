@@ -115,6 +115,12 @@ public class AiInboxNumbersPostgresTests
             Assert.Equal(1,await dedup.ProcessAsync(source,metric,repeated,default,reprocess:true,inboxId:version.Id));
             var feed=new AiAlertFeed{Name="Failure test",FeedUrl="https://www.google.com/alerts/feeds/1/2"};db.Add(feed);
             var failedInput=new AiInboxItem{AlertFeedId=feed.Id,Url="https://www.nso.gov.vn/report",UrlHash="failure-test",Status="ReadQueued",MetricKeysJson="[\"DIGITAL_GDP_SHARE\"]"};db.Add(failedInput);await db.SaveChangesAsync();
+            var sourceRow=Assert.IsType<Microsoft.AspNetCore.Mvc.OkObjectResult>(await listController.List(alertsOnly:true));
+            using(var sourceJson=System.Text.Json.JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(sourceRow.Value))){
+                var row=sourceJson.RootElement.GetProperty("items")[0];
+                Assert.Equal(feed.Name,row.GetProperty("feedName").GetString());
+                Assert.Equal(feed.FeedUrl,row.GetProperty("feedUrl").GetString());
+            }
             var inbox=new Cdsqg.Application.AI.AiInboxService(db,null!,new FailingReader(db),null!,null!,Microsoft.Extensions.Options.Options.Create(new Cdsqg.Application.AI.AiDataOptions{Enabled=true,ApiKey="fixture",Model="fixture"}));
             await inbox.ProcessQueuedAsync(failedInput.Id,default);
             var terminal=await db.AiInboxItems.AsNoTracking().SingleAsync(i=>i.Id==failedInput.Id);

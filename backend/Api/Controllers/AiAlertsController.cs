@@ -10,17 +10,24 @@ namespace Cdsqg.Api.Controllers;
 public sealed class AiAlertsController(AppDbContext db,AiAlertService service,AiSettingsStore settings):ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> List(bool deleted=false,CancellationToken ct=default)
+    public async Task<IActionResult> List(bool deleted=false,int page=1,CancellationToken ct=default)
     {
-        var feeds=await db.AiAlertFeeds.AsNoTracking().Where(f=>deleted?f.DeletedAt!=null:f.DeletedAt==null).OrderBy(f=>f.Name).Select(f=>new{f.Id,f.Name,f.FeedUrl,f.Enabled,scanTime=(f.ScanMinute/60).ToString().PadLeft(2,'0')+":"+(f.ScanMinute%60).ToString().PadLeft(2,'0'),f.NextScanAt,f.UpdatedBy,
-            lastScan=db.AiAlertScans.Where(s=>s.FeedId==f.Id).OrderByDescending(s=>s.QueuedAt).Select(s=>new{s.Id,s.Status,s.QueuedAt,s.CompletedAt,s.Added,s.Duplicates,s.Blocked,s.Received,s.Error}).FirstOrDefault()}).ToListAsync(ct);
-        return Ok(new{feeds,configured=(await settings.GetAsync(ct)).Ready,allowedHosts=AiMetricCatalog.AllowedHosts});
+        const int pageSize=5;
+        var query=db.AiAlertFeeds.AsNoTracking().Where(f=>deleted?f.DeletedAt!=null:f.DeletedAt==null);
+        var total=await query.CountAsync(ct);
+        page=Math.Clamp(page,1,Math.Max(1,(total+pageSize-1)/pageSize));
+        var feeds=await query.OrderByDescending(f=>f.CreatedAt).ThenByDescending(f=>f.Id).Skip((page-1)*pageSize).Take(pageSize).Select(f=>new{f.Id,f.Name,f.FeedUrl,f.Enabled,scanTime=(f.ScanMinute/60).ToString().PadLeft(2,'0')+":"+(f.ScanMinute%60).ToString().PadLeft(2,'0'),f.NextScanAt,f.UpdatedBy,
+            lastScan=db.AiAlertScans.Where(s=>s.FeedId==f.Id).OrderByDescending(s=>s.QueuedAt).ThenByDescending(s=>s.Id).Select(s=>new{s.Id,s.Status,s.QueuedAt,s.CompletedAt,s.Added,s.Duplicates,s.Blocked,s.Received,s.Error}).FirstOrDefault()}).ToListAsync(ct);
+        return Ok(new{page,pageSize,total,feeds,configured=(await settings.GetAsync(ct)).Ready,allowedHosts=AiMetricCatalog.AllowedHosts});
     }
     [HttpGet("scans")]
     public async Task<IActionResult> Scans(Guid? feedId=null,int page=1,CancellationToken ct=default,int pageSize=5)
     {
-        page=Math.Clamp(page,1,100000);var query=db.AiAlertScans.AsNoTracking();if(feedId.HasValue)query=query.Where(s=>s.FeedId==feedId);
-        return Ok(new{pageSize,total=await query.CountAsync(ct),items=await (from scan in query join feed in db.AiAlertFeeds on scan.FeedId equals feed.Id orderby scan.QueuedAt descending,scan.Id descending select new{scan.Id,scan.FeedId,feedName=feed.Name,scan.Status,scan.Trigger,scan.RequestedBy,scan.QueuedAt,scan.StartedAt,scan.CompletedAt,scan.Received,scan.Added,scan.Duplicates,scan.Blocked,scan.Error}).Skip((page-1)*pageSize).Take(pageSize).ToListAsync(ct)});
+        const int fixedPageSize=5;
+        var query=db.AiAlertScans.AsNoTracking();if(feedId.HasValue)query=query.Where(s=>s.FeedId==feedId);
+        var total=await query.CountAsync(ct);
+        page=Math.Clamp(page,1,Math.Max(1,(total+fixedPageSize-1)/fixedPageSize));
+        return Ok(new{page,pageSize=fixedPageSize,total,items=await (from scan in query join feed in db.AiAlertFeeds on scan.FeedId equals feed.Id orderby scan.QueuedAt descending,scan.Id descending select new{scan.Id,scan.FeedId,feedName=feed.Name,scan.Status,scan.Trigger,scan.RequestedBy,scan.QueuedAt,scan.StartedAt,scan.CompletedAt,scan.Received,scan.Added,scan.Duplicates,scan.Blocked,scan.Error}).Skip((page-1)*fixedPageSize).Take(fixedPageSize).ToListAsync(ct)});
     }
     private string Actor=>User.FindFirstValue("FullName")??User.Identity?.Name??"Admin";
     [HttpPost,RequestSizeLimit(8192)]

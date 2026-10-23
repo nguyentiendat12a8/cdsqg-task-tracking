@@ -5,9 +5,9 @@
    <div class="ai-toolbar ai-inbox-toolbar"><div class="ai-list-filters flex flex-wrap gap-4 items-end flex-1"><div v-if="mode==='all'" class="w-full sm:w-52"><SearchableSelect v-model="sourceFilter" label="Loại nguồn" :options="sourceOptions" :is-multi="false" :clearable="false" :disabled="busy"/></div><div class="w-full sm:w-60"><SearchableSelect v-model="statusFilter" label="Trạng thái xử lý" :is-multi="false" :clearable="false" :disabled="busy" :options="visibleStatusOptions" /></div></div><div class="ai-list-actions flex items-center gap-3"><button type="button" class="ui-btn ui-btn-secondary" :disabled="loading||busy" @click="load">Tải lại hàng đợi</button><ActionButton v-if="mode==='uploads'" kind="create" :disabled="busy" @click="openUpload">Nạp tài liệu</ActionButton></div></div>
    <LoadingSpinner v-if="loading" text="Đang tải hộp tiếp nhận..." />
    <div v-else class="ai-records-layout">
-    <div class="ai-wide-list ai-table-scroll"><table class="ai-table"><colgroup><col class="ai-stt-column"/><col style="width:38%"/><col style="width:30%"/><col style="width:18%"/><col style="width:14%"/></colgroup><thead><tr><th scope="col" class="ai-stt">STT</th><th>Tài liệu / Bài viết</th><th>{{ mode==='uploads'?'Mục tiêu':'Chỉ số' }}</th><th class="text-center">Trạng thái</th><th class="text-center">Thao tác</th></tr></thead><tbody><tr v-for="(item,index) in rows" :key="item.id"><td class="ai-stt">{{ (page-1)*pageSize+index+1 }}</td><td><p class="ai-input-code">{{ inputCode(item) }}</p><p class="font-semibold">{{ item.title }}</p><p class="ai-muted mt-1">{{ item.isUpload?'Tài liệu tải lên':item.origin?.startsWith('RSS trực tiếp')?'RSS trực tiếp':'Google Alerts' }} · {{ formatDateTime(item.receivedAt) }}</p></td><td>{{ metricNames(item.metricKeysJson) || 'Chưa xác định' }}</td><td class="text-center"><span class="ai-badge" :class="badge(item)">{{ item.processing?'Đang xử lý':statusLabel(item.status) }}</span></td><td class="text-center"><button type="button" class="ui-btn ui-btn-secondary" @click="openDetails(item)">Chi tiết</button></td></tr></tbody></table></div>
-    <div class="ai-compact-list"><article v-for="(item,index) in rows" :key="item.id" class="ai-record"><p class="ai-muted mb-2">STT {{ (page-1)*pageSize+index+1 }}</p><p class="ai-input-code">{{ inputCode(item) }}</p><p class="ai-record-title">{{ item.title }}</p><p class="ai-muted mt-1">{{ item.isUpload?'Tài liệu tải lên':item.origin?.startsWith('RSS trực tiếp')?'RSS trực tiếp':'Google Alerts' }} · {{ formatDateTime(item.receivedAt) }}</p><p class="mt-3">{{ metricNames(item.metricKeysJson) || 'Chưa xác định chỉ số' }}</p><div class="flex justify-between items-center gap-3 mt-4"><span class="ai-badge" :class="badge(item)">{{ item.processing?'Đang xử lý':statusLabel(item.status) }}</span><button type="button" class="ui-btn ui-btn-secondary" @click="openDetails(item)">Chi tiết</button></div></article></div>
-    <div v-if="!rows.length" class="ai-empty"><strong>{{ statusFilter?'Không có kết quả phù hợp':mode==='uploads'?'Chưa có tài liệu':'Chưa có bài viết' }}</strong><p>Tải tài liệu hoặc thêm nguồn Google Alerts để AI đề xuất số liệu.</p><button v-if="statusFilter" type="button" class="ui-btn ui-btn-secondary mt-2" @click="statusFilter=''">Xóa bộ lọc</button><ActionButton v-else-if="mode!=='alerts'" kind="create" class="mt-2" @click="openUpload">Nạp tài liệu</ActionButton></div>
+    <div class="ai-wide-list ai-table-scroll"><table class="ai-table"><colgroup><col class="ai-stt-column"/><col style="width:31%"/><col style="width:22%"/><col style="width:21%"/><col style="width:14%"/><col style="width:12%"/></colgroup><thead><tr><th scope="col" class="ai-stt">STT</th><th>Tài liệu / Bài viết</th><th>Nguồn</th><th>{{ mode==='uploads'?'Mục tiêu':'Chỉ số' }}</th><th class="text-center">Trạng thái</th><th class="text-center">Thao tác</th></tr></thead><tbody><tr v-for="(item,index) in rows" :key="item.id"><td class="ai-stt">{{ (page-1)*pageSize+index+1 }}</td><td><p class="ai-input-code">{{ inputCode(item) }}</p><p class="font-semibold">{{ item.title }}</p><p class="ai-muted mt-1">{{ formatDateTime(item.receivedAt) }}</p></td><td><p class="font-semibold break-words">{{ sourceName(item) }}</p><p class="ai-muted mt-1">{{ sourceType(item) }}</p></td><td>{{ metricNames(item.metricKeysJson) || 'Chưa xác định' }}</td><td class="text-center"><span class="ai-badge" :class="badge(item)">{{ item.processing?'Đang xử lý':statusLabel(item.status) }}</span></td><td class="text-center"><button type="button" class="ui-btn ui-btn-secondary" @click="openDetails(item)">Chi tiết</button></td></tr></tbody></table></div>
+    <div class="ai-compact-list"><article v-for="(item,index) in rows" :key="item.id" class="ai-record"><p class="ai-muted mb-2">STT {{ (page-1)*pageSize+index+1 }}</p><p class="ai-input-code">{{ inputCode(item) }}</p><p class="ai-record-title">{{ item.title }}</p><p class="ai-muted mt-1">{{ formatDateTime(item.receivedAt) }}</p><p class="mt-2"><strong>Nguồn: {{ sourceName(item) }}</strong><span class="ai-muted"> · {{ sourceType(item) }}</span></p><p class="mt-3">{{ metricNames(item.metricKeysJson) || 'Chưa xác định chỉ số' }}</p><div class="flex justify-between items-center gap-3 mt-4"><span class="ai-badge" :class="badge(item)">{{ item.processing?'Đang xử lý':statusLabel(item.status) }}</span><button type="button" class="ui-btn ui-btn-secondary" @click="openDetails(item)">Chi tiết</button></div></article></div>
+    <div v-if="!rows.length" class="ai-empty"><strong>{{ statusFilter?'Không có kết quả phù hợp':mode==='uploads'?'Chưa có tài liệu':'Chưa có bài viết' }}</strong><p>Tải tài liệu hoặc thêm nguồn RSS để AI đề xuất số liệu.</p><button v-if="statusFilter" type="button" class="ui-btn ui-btn-secondary mt-2" @click="statusFilter=''">Xóa bộ lọc</button><ActionButton v-else-if="mode!=='alerts'" kind="create" class="mt-2" @click="openUpload">Nạp tài liệu</ActionButton></div>
    </div>
    <AiListPagination v-model:page="page" v-model:page-size="pageSize" :total="total" :disabled="busy||loading"/>
   </div>
@@ -22,7 +22,7 @@
               {{ inputCode(selectedItem) }}
             </span>
             <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-slate-100 text-slate-600">
-              {{ selectedItem.isUpload ? 'Nạp tĩnh · Tài liệu' : 'Nạp động · Google Alerts' }}
+              {{ selectedItem.isUpload ? 'Nạp tĩnh · Tài liệu' : 'Nạp động · ' + sourceType(selectedItem) }}
             </span>
           </div>
           <h3 class="ui-title text-xl sm:text-2xl font-bold text-slate-900 truncate">
@@ -227,6 +227,7 @@ import {getApiUrl} from '../config/api';
 import {aiInputCode} from '../shared/aiInputCode';
 import {formatNumber,formatDateTime} from '../shared/formatters';
 import {getStatusBadgeClass} from '../shared/statusPresentation';
+import {aiFeedType} from '../shared/aiFeedSource';
 import '../features/ai/ai.css';
 import SearchableSelect from './SearchableSelect.vue';
 import ActionButton from './ActionButton.vue';
@@ -247,7 +248,11 @@ const pageSize=ref(5);
 const rows=ref([]),total=ref(0),page=ref(1),loading=ref(true),busy=ref(false),error=ref(''),message=ref(''),metric=ref(props.metrics[0]?.key||'EGDI_RANK'),documentFile=ref(null),choices=ref({});
 const inputCode=item=>aiInputCode(item.sequenceNumber,item.receivedAt,item.isUpload)||'Chưa cấp mã';
 const statusFilter=ref(''),sourceFilter=ref('');
-const sourceOptions=[{value:'',label:'Tất cả nguồn'},{value:'uploads',label:'Nạp tĩnh — Tài liệu'},{value:'alerts',label:'Nạp động — Google Alerts'}];
+const sourceOptions=[{value:'',label:'Tất cả nguồn'},{value:'uploads',label:'Nạp tĩnh — Tài liệu'},{value:'alerts',label:'Nạp động — Nguồn RSS'}];
+function sourceType(item){
+ return item.isUpload?'Tài liệu tải lên':aiFeedType(item.feedUrl,item.origin||'');
+}
+const sourceName=item=>item.isUpload?'Tài liệu tải lên':item.feedName||'Nguồn RSS không còn tên';
 const alertStatusOptions=[{value:'',label:'Tất cả'},{value:'TitleQueued',label:'Chờ đánh giá'},{value:'NeedsReview',label:'Cần xem lại'},{value:'NotRelevant',label:'Không liên quan'},{value:'ReadQueued',label:'Chờ đọc'},{value:'Read',label:'Đã đọc'},{value:'ReadNoData',label:'Chưa có số liệu'},{value:'Error',label:'Lỗi xử lý'}];
 watch(page,()=>load());watch(pageSize,()=>{page.value=1;load();});
 watch([statusFilter,sourceFilter],()=>{page.value=1;load();});

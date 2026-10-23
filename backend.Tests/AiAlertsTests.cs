@@ -142,6 +142,21 @@ public class AiAlertsTests
             await db.Entry(pending).ReloadAsync();Assert.Equal("Error",pending.Status);Assert.Null(pending.LeaseUntil);
             Assert.Equal(0,await db.ProgressLogs.CountAsync());
             Assert.IsType<OkObjectResult>(await controller.Scans(ct:default));
+            var baseTime=DateTime.UtcNow.AddDays(-1);
+            for(var n=0;n<11;n++)db.AiAlertFeeds.Add(new AiAlertFeed{Name="Page "+n,FeedUrl=$"https://news.google.com/rss/search?q=page{n}",CreatedAt=baseTime.AddMinutes(n)});
+            await db.SaveChangesAsync();
+            var expected=await db.AiAlertFeeds.AsNoTracking().OrderByDescending(f=>f.CreatedAt).ThenByDescending(f=>f.Id).Select(f=>f.Id).ToListAsync();
+            var seen=new List<Guid>();
+            for(var p=1;p<=3;p++){
+                var result=Assert.IsType<OkObjectResult>(await controller.List(page:p));
+                using var json=System.Text.Json.JsonDocument.Parse(System.Text.Json.JsonSerializer.Serialize(result.Value));
+                Assert.Equal(5,json.RootElement.GetProperty("pageSize").GetInt32());
+                Assert.Equal(expected.Count,json.RootElement.GetProperty("total").GetInt32());
+                var pageItems=json.RootElement.GetProperty("feeds");
+                Assert.Equal(p==3?2:5,pageItems.GetArrayLength());
+                seen.AddRange(pageItems.EnumerateArray().Select(x=>x.GetProperty("Id").GetGuid()));
+            }
+            Assert.Equal(expected,seen);
         }
         finally{await using var command=new NpgsqlCommand($"DROP SCHEMA \"{schema}\" CASCADE",admin);await command.ExecuteNonQueryAsync();}
     }

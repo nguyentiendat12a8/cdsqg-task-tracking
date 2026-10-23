@@ -31,7 +31,7 @@
             <td class="text-center"><button class="ui-btn ui-btn-secondary whitespace-nowrap" @click="openReview(s)">{{ s.status==='Pending'?'Kiểm chứng':'Xem chi tiết' }}</button></td>
           </tr>
         </tbody></table>
-      </div><div class="ai-compact-list"><article v-for="(s,index) in rows" :key="s.id" class="ai-record"><p class="ai-muted mb-2">STT {{ (page-1)*pageSize+index+1 }}</p><p class="ai-record-title">{{ metricName(s.metricKey) }}</p><div class="flex justify-between items-center gap-3 mt-3"><span class="ai-badge" :class="getStatusBadgeClass(s.status)">{{ reviewStatus(s.status) }}</span><strong>{{ formatNumber(s.status==='Approved'?(s.acceptedValue??s.value):s.value) }} {{ unitLabel(s.unit) }}</strong></div><dl class="ai-record-meta"><div><dt>Năm số liệu</dt><dd>{{ s.dataYear }}</dd></div><div><dt>Nguồn</dt><dd><span>{{ shortSource(s) }}</span><p v-if="sourceCode(s)" class="ai-input-code mt-1">{{ sourceCode(s) }}</p></dd></div></dl><div class="ai-record-actions"><button type="button" class="ui-btn ui-btn-secondary" @click="openReview(s)">{{ s.status==='Pending'?'Kiểm chứng':'Xem chi tiết' }}</button></div></article></div><div v-if="!rows.length" class="ai-empty"><strong>Không có số liệu phù hợp</strong><p>Đề xuất từ tài liệu và Google Alerts đều được kiểm chứng tại đây.</p></div></div>
+      </div><div class="ai-compact-list"><article v-for="(s,index) in rows" :key="s.id" class="ai-record"><p class="ai-muted mb-2">STT {{ (page-1)*pageSize+index+1 }}</p><p class="ai-record-title">{{ metricName(s.metricKey) }}</p><div class="flex justify-between items-center gap-3 mt-3"><span class="ai-badge" :class="getStatusBadgeClass(s.status)">{{ reviewStatus(s.status) }}</span><strong>{{ formatNumber(s.status==='Approved'?(s.acceptedValue??s.value):s.value) }} {{ unitLabel(s.unit) }}</strong></div><dl class="ai-record-meta"><div><dt>Năm số liệu</dt><dd>{{ s.dataYear }}</dd></div><div><dt>Nguồn</dt><dd><span>{{ shortSource(s) }}</span><p v-if="sourceCode(s)" class="ai-input-code mt-1">{{ sourceCode(s) }}</p></dd></div></dl><div class="ai-record-actions"><button type="button" class="ui-btn ui-btn-secondary" @click="openReview(s)">{{ s.status==='Pending'?'Kiểm chứng':'Xem chi tiết' }}</button></div></article></div><div v-if="!rows.length" class="ai-empty"><strong>Không có số liệu phù hợp</strong><p>Đề xuất từ tài liệu và nguồn RSS đều được kiểm chứng tại đây.</p></div></div>
       <AiListPagination v-model:page="page" v-model:page-size="pageSize" :total="total" :disabled="loading||busy"/>
     </section>
   </div>
@@ -104,7 +104,7 @@ async function refreshWorkspace(){await refresh(true);inboxPanel.value?.refresh(
 
 const uploadMetrics=computed(()=>catalog.value?.uploadMetrics||catalog.value?.metrics||[]);
 const showingSuggestions=computed(()=>tab.value==='suggestions'||(tab.value==='internet'&&fileTab.value==='review'));
-const fileTabs=computed(()=>tab.value==='internet'?[{key:'sources',label:'Google Alerts'},{key:'review',label:'Kiểm chứng số liệu'},{key:'history',label:'Lịch sử xử lý'}]:[]);
+const fileTabs=computed(()=>tab.value==='internet'?[{key:'sources',label:'Nguồn RSS'},{key:'review',label:'Kiểm chứng số liệu'},{key:'history',label:'Lịch sử xử lý'}]:[]);
 const pageSize=ref(10);
 watch(pageSize,()=>{page.value=1;refresh();});
 const currentYear=new Date().getFullYear();let version=0;
