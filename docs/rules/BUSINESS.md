@@ -1,5 +1,7 @@
 # Rule nghiệp vụ và hợp đồng dữ liệu
 
+23/10/2026 — Menu chọn văn bản trên thanh trên có thêm “Tổng” khi ở trang chủ, gồm đúng Chiến lược 1266/QĐ-TTg và Chương trình 2629/QĐ-TTg. Các màn quản lý vẫn dùng văn bản riêng đã chọn. API dashboard nhận `documentIds` để giới hạn cùng một tập văn bản cho thống kê, công việc đơn vị, chi tiết và Excel. Số mục tiêu/nhiệm vụ vẫn đếm từng mục gốc một lần; lượt giao giữ theo từng mục–đơn vị. Khoảng năm ở chế độ Tổng là hợp của hai văn bản (2025–2030).
+
 ## Báo cáo năm và tiến độ
 
 Trang chủ Admin (thiết kế lại 22/10/2026): bốn thẻ chỉ số dùng overviewMetrics, đếm mỗi mục tiêu/nhiệm vụ một lần (gồm giao riêng và giao chung), không dùng tổng lượt giao thay số mục gốc. Dải thống kê lượt giao dùng statusSummary; số giao riêng/chung lấy createdMetrics. Giữ bản đồ 34 tỉnh/thành. Cảnh báo thời hạn, phân bổ theo khối, đơn vị có tỷ lệ hoàn thành cao và bảng so sánh dùng DTO thống kê từng cơ quan. Sắp xếp/tìm đơn vị chỉ trình bày lại tập thống kê đã lọc; FE không tính lại trạng thái hay tỷ lệ thực hiện chính thức. Bảng có phân trang riêng cho tập cơ quan đã tải, không gọi lại dữ liệu từng dòng. Thiết kế mới thay yêu cầu bố cục hai biểu đồ tròn trước đó theo chỉ đạo trực tiếp của người dùng; ưu tiên mật độ gọn, không lặp số liệu trong khối lớn. Bộ chọn thanh trên dùng nhãn Chiến lược, chuyển context chung cho toàn hệ thống.

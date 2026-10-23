@@ -1,11 +1,10 @@
 import { fetchWithAuth } from '../../services/auth';
 import { ref, computed, watch, onUnmounted } from 'vue';
-import { activeDocumentId } from '../../services/documentContext';
 import { buildDashboardQuery } from './queries';
 import { getApiUrl } from '../../config/api';
 import { authState } from '../../services/auth';
 
-export function useDashboardMetrics({ assignmentRole, dashboardFilter, selectedAgencyIds, selectedSubAgencyIds, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly,reportFromYear,reportToYear,executionFrom,executionTo, agencies, isSpecialAgencyCode }) {
+export function useDashboardMetrics({ assignmentRole, dashboardFilter, documentIds, selectedAgencyIds, selectedSubAgencyIds, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly,reportFromYear,reportToYear,executionFrom,executionTo, agencies, isSpecialAgencyCode }) {
   const isLoading = ref(true);
   const metricsQuery = ref('');
   const metrics = ref({
@@ -248,7 +247,7 @@ export function useDashboardMetrics({ assignmentRole, dashboardFilter, selectedA
     const filters = {
       assignmentRole: assignmentRole?.value || 'Lead',
       dashboardFilter: dashboardFilter.value,
-      documentId: activeDocumentId.value,
+      documentIds: documentIds.value,
       selectedScopes: selectedScopes.value,
       selectedSections: selectedSections.value,
       selectedGroups: selectedGroups.value,
@@ -298,7 +297,7 @@ export function useDashboardMetrics({ assignmentRole, dashboardFilter, selectedA
     }
   }
 
-  watch(activeDocumentId, () => {
+  watch(documentIds, () => {
     loadDashboardMetrics();
   });
 

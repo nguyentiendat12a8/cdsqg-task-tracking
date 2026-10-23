@@ -10,8 +10,9 @@ export async function exportDashboardReport(options) {
 
   options.isExportingExcel.value = true;
   // Capture filters before asynchronous work, so changing the UI cannot mix decisions.
-  const document = { ...activeDocument.value };
-  const filters = { documentId: document.id };
+  const isCombined = options.documentIds?.value?.length > 1;
+  const document = isCombined ? { code: 'tong', name: 'Chiến lược và Chương trình', title: 'Chiến lược và Chương trình', shortTitle: 'Tổng', documentNumber: '1266/QĐ-TTg & 2629/QĐ-TTg' } : { ...activeDocument.value };
+  const filters = { documentIds: [...(options.documentIds?.value || [document.id])] };
   for (const key of ['assignmentRole', 'dashboardFilter', 'selectedScopes', 'selectedSections', 'selectedGroups', 'fromYear', 'toYear', 'isOngoingOnly', 'reportFromYear', 'reportToYear', 'executionFrom', 'executionTo']) {
     const value = options[key]?.value;
     filters[key] = Array.isArray(value) ? [...value] : value;

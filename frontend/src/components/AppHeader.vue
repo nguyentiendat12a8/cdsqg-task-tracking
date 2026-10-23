@@ -16,7 +16,7 @@
     <!-- Center/Right: Document Mode Switcher and Actions -->
     <div class="flex items-center gap-2 sm:gap-3 shrink-0">
       <!-- Document Mode Switcher (1266 vs 2629) -->
-      <DocumentModeSwitcher />
+      <DocumentModeSwitcher :is-dashboard="activeTab === 'dashboard'" />
 
       <!-- 1. Notification Bell Button (Right next to user icon) -->
       <NotificationCenter />
@@ -87,6 +87,7 @@ import { authState } from '../services/auth';
 
 const props = defineProps({
   menuOpen: { type: Boolean, default: false },
+  activeTab: { type: String, default: 'dashboard' },
   user: { type: Object, default: null }
 });
 

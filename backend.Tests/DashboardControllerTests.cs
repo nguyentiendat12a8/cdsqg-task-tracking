@@ -131,6 +131,26 @@ namespace Cdsqg.Tests
         }
 
         [Fact]
+        public async Task GetDashboardMetrics_DocumentIds_CombinesOnlySelectedDocuments()
+        {
+            using var context = GetInMemoryDbContext();
+            var first = Guid.NewGuid();
+            var second = Guid.NewGuid();
+            var third = Guid.NewGuid();
+            var items = context.GoalTaskItems.OrderBy(item => item.Code).ToArray();
+            items[0].DocumentId = first;
+            items[1].DocumentId = third;
+            items[2].DocumentId = second;
+            items[3].DocumentId = third;
+            context.SaveChanges();
+
+            var data = GetResponseDto(await new DashboardController(context).GetDashboardMetrics(documentIds: new[] { first, second }));
+            Assert.Equal(2, data.TotalGoals + data.TotalTasks);
+            Assert.Equal(1, data.TotalGoals);
+            Assert.Equal(1, data.TotalTasks);
+        }
+
+        [Fact]
         public async Task GetDashboardMetrics_NoFilters_ReturnsAllItems()
         {
             using var context = GetInMemoryDbContext();

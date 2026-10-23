@@ -25,8 +25,8 @@
             <img src="/logo-cds.jpg" alt="Logo Cục Chuyển đổi số" class="w-10 h-10 rounded-xl object-cover shrink-0 shadow-lg border border-slate-700/50 bg-white" />
             <div class="flex flex-col whitespace-nowrap overflow-hidden">
               <span class="font-bold text-white text-xs tracking-wider">CĐS QUỐC GIA</span>
-              <span class="text-xs font-bold truncate" :class="activeDocument.code === '1266' ? 'text-blue-400' : 'text-emerald-400'" :title="activeDocument.title">
-                {{ activeDocument.documentNumber }}
+              <span class="text-xs font-bold truncate" :class="activeTab === 'dashboard' && dashboardDocumentScope === 'all' || activeDocument.code === '1266' ? 'text-blue-400' : 'text-emerald-400'" :title="activeTab === 'dashboard' && dashboardDocumentScope === 'all' ? 'Chiến lược 1266 và Chương trình 2629' : activeDocument.title">
+                {{ activeTab === 'dashboard' && dashboardDocumentScope === 'all' ? 'Tổng quan 1266 + 2629' : activeDocument.documentNumber }}
               </span>
             </div>
           </div>
@@ -270,7 +270,7 @@
 <script setup>
 import { ref, computed, watch, onUnmounted } from 'vue';
 import { authState } from '../services/auth';
-import { activeDocument } from '../services/documentContext';
+import { activeDocument, dashboardDocumentScope } from '../services/documentContext';
 import { AI_MENU, isAiRoute, aiMenuRoute } from '../shared/aiNavigation';
 
 const props = defineProps({

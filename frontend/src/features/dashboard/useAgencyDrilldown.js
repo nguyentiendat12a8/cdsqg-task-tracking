@@ -2,10 +2,9 @@ import { fetchDashboardAgencyItems } from './agencyItemsApi';
 import { appendDashboardTimeFilters } from './queries';
 import { fetchWithAuth } from '../../services/auth';
 import { ref, computed } from 'vue';
-import { activeDocumentId } from '../../services/documentContext';
 import { getApiUrl } from '../../config/api';
 
-export function useAgencyDrilldown({ assignmentRole, dashboardFilter, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly,reportFromYear,reportToYear,executionFrom,executionTo, agencies, metrics }) {
+export function useAgencyDrilldown({ assignmentRole, dashboardFilter, documentIds, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly,reportFromYear,reportToYear,executionFrom,executionTo, agencies, metrics }) {
   const selectedDrilldownAgency = ref(null);
   const subAgenciesList = ref([]);
   const isSubAgenciesLoading = ref(false);
@@ -92,7 +91,7 @@ export function useAgencyDrilldown({ assignmentRole, dashboardFilter, selectedSc
     isAgencyItemsLoading.value = true;
     try {
       const params = new URLSearchParams();
-      if (activeDocumentId.value) params.set('documentId', activeDocumentId.value);
+      for (const id of documentIds.value) params.append('documentIds', id);
       params.set('assignmentRole', assignmentRole?.value || 'Lead');
       params.append('agencyId', agencyId);
       if (selectedScopes.value && selectedScopes.value.length === 1) {
@@ -121,7 +120,7 @@ export function useAgencyDrilldown({ assignmentRole, dashboardFilter, selectedSc
     isSubAgenciesLoading.value = true;
     try {
       const params = new URLSearchParams();
-      if (activeDocumentId.value) params.set('documentId', activeDocumentId.value);
+      for (const id of documentIds.value) params.append('documentIds', id);
       params.set('assignmentRole', assignmentRole?.value || 'Lead');
       params.append('parentAgencyId', parentAgencyId);
       if (dashboardFilter.value && dashboardFilter.value !== 'all') {

@@ -24,6 +24,7 @@
         <!-- Fixed Top Header -->
         <AppHeader 
           :user="authState.user.value" 
+          :active-tab="currentTab"
           @logout="handleLogout" @toggle-menu="mobileMenuOpen = !mobileMenuOpen" :menu-open="mobileMenuOpen"
           class="shrink-0 sticky top-0 z-40"
         />

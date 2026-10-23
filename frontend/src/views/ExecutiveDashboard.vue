@@ -1,7 +1,7 @@
 <template>
   <div class="executive-dashboard w-full space-y-3 min-w-0" :aria-busy="isLoading">
-    <DashboardHeader :active-dashboard-filter-count="activeDashboardFilterCount" :reset-dashboard-filters="resetDashboardFilters" :year-options="yearOptions" :load-dashboard-metrics="loadDashboardMetrics" :is-exporting-excel="isExportingExcel" :is-loading="isLoading" :export-dashboard-excel-report="exportDashboardExcelReport"
-      v-model:reportFromYear="reportFromYear" v-model:reportToYear="reportToYear" v-model:executionFrom="executionFrom" v-model:executionTo="executionTo" v-model:isOngoingOnly="isOngoingOnly" />
+    <DashboardHeader :active-dashboard-filter-count="activeDashboardFilterCount" :reset-dashboard-filters="resetDashboardFilters" :year-options="dashboardYearOptions" :load-dashboard-metrics="loadDashboardMetrics" :is-exporting-excel="isExportingExcel" :is-loading="isLoading" :export-dashboard-excel-report="exportDashboardExcelReport"
+      v-model:scope="dashboardScope" v-model:reportFromYear="reportFromYear" v-model:reportToYear="reportToYear" v-model:executionFrom="executionFrom" v-model:executionTo="executionTo" v-model:isOngoingOnly="isOngoingOnly" />
 
 
     <div v-if="loadError" role="alert" class="flex items-center justify-between gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800">{{ loadError }}<button type="button" class="ui-btn ui-btn-secondary" @click="loadDashboardMetrics">Thử lại</button></div>
@@ -70,6 +70,7 @@
 import { computed, defineAsyncComponent, onMounted, ref } from 'vue';
 import { toast } from 'vue3-toastify';
 import { authState } from '../services/auth';
+import { activeDocumentId, dashboardDocumentScope, SUPPORTED_DOCUMENTS } from '../services/documentContext';
 import { formatNumber } from '../shared/formatters';
 import DashboardHeader from '../features/dashboard/DashboardHeader.vue';
 import DashboardTypeSwitch from '../features/dashboard/DashboardTypeSwitch.vue';
@@ -88,6 +89,9 @@ const SummaryStatusDialog=defineAsyncComponent(()=>import('../features/dashboard
 const AgencyDrilldownDialog=defineAsyncComponent(()=>import('../features/dashboard/AgencyDrilldownDialog.vue'));
 const ItemDetailModal=defineAsyncComponent(()=>import('../components/ItemDetailModal.vue'));
 const mapFilter=ref('tasks'),drilldownFilter=ref('tasks');
+const dashboardScope=dashboardDocumentScope;
+const documentIds=computed(()=>dashboardScope.value==='all'?SUPPORTED_DOCUMENTS.map(doc=>doc.id):[activeDocumentId.value]);
+const dashboardYearOptions=computed(()=>dashboardScope.value==='all'?Array.from({length:Math.max(...SUPPORTED_DOCUMENTS.map(doc=>doc.endYear))-Math.min(...SUPPORTED_DOCUMENTS.map(doc=>doc.startYear))+1},(_,index)=>{const year=Math.min(...SUPPORTED_DOCUMENTS.map(doc=>doc.startYear))+index;return {value:year,label:String(year)};}):yearOptions.value);
 const dashboardKinds=[{value:'goals',prefix:'goal',total:'totalGoals',noun:'mục tiêu',itemType:'Goal'},{value:'tasks',prefix:'task',total:'totalTasks',noun:'nhiệm vụ',itemType:'Task'}];
 const agencies=ref([]),summarySelection=ref(null),isExportingExcel=ref(false);
 const {
@@ -101,11 +105,11 @@ const {
  userSubAgenciesPerformance,filteredMinistriesPerformance,filteredProvincesPerformance,filteredOthersPerformance,
  filteredMostSubAgenciesPerformance,loggedUserAgency,isSubAgencyUser,isBKHCNAgency,isBKHCNItem,
  singleSubAgencyPerformance,filterOutSpecialAgencies,loadAgencies,loadDashboardMetrics
-}=useDashboardMetrics({assignmentRole,dashboardFilter,selectedAgencyIds,selectedSubAgencyIds,selectedScopes,selectedSections,selectedGroups,fromYear,toYear,isOngoingOnly,reportFromYear,reportToYear,executionFrom,executionTo,agencies,isSpecialAgencyCode});
+}=useDashboardMetrics({assignmentRole,dashboardFilter,documentIds,selectedAgencyIds,selectedSubAgencyIds,selectedScopes,selectedSections,selectedGroups,fromYear,toYear,isOngoingOnly,reportFromYear,reportToYear,executionFrom,executionTo,agencies,isSpecialAgencyCode});
 const {
  selectedDrilldownAgency,subAgenciesList,isSubAgenciesLoading,drilldownTab,selectedDetailItem,isAgencyItemsLoading,
  modalSearchKeyword,modalStatusFilter,modalDeadlineFilter,modalGoalsList,modalTasksList,filteredAgencyItems,allDrilldownContacts,switchDrilldownTab,drilldownAgency
-}=useAgencyDrilldown({assignmentRole,dashboardFilter:drilldownFilter,selectedScopes,selectedSections,selectedGroups,fromYear,toYear,isOngoingOnly,reportFromYear,reportToYear,executionFrom,executionTo,agencies,metrics});
+}=useAgencyDrilldown({assignmentRole,dashboardFilter:drilldownFilter,documentIds,selectedScopes,selectedSections,selectedGroups,fromYear,toYear,isOngoingOnly,reportFromYear,reportToYear,executionFrom,executionTo,agencies,metrics});
 const hasDashboardData=computed(()=>!!metrics.value.overviewMetrics||!!metrics.value.createdMetrics);
 const performanceAgencies=computed(()=>[...filteredMinistriesPerformance.value,...filteredProvincesPerformance.value,...filteredOthersPerformance.value].map(a=>({...a,completionRate:a.completionRateOverall})));
 const assignedAgencies=computed(()=>performanceAgencies.value.filter(a=>a.totalItems>0));
@@ -122,7 +126,7 @@ async function openStatistic(selection){
 async function exportDashboardExcelReport(){
  if(isExportingExcel.value||isLoading.value||loadError.value)return;
  isExportingExcel.value=true;
- try{const {exportDashboardReport}=await import('../features/dashboard/dashboardReport');await exportDashboardReport({assignmentRole,dashboardFilter,selectedScopes,selectedSections,selectedGroups,fromYear,toYear,isOngoingOnly,reportFromYear,reportToYear,executionFrom,executionTo,agencies,metrics,metricsQuery,filterOutSpecialAgencies,filteredMinistriesPerformance,filteredProvincesPerformance,filteredOthersPerformance,formatDate,formatItemProgressDisplay,isExportingExcel});}
+ try{const {exportDashboardReport}=await import('../features/dashboard/dashboardReport');await exportDashboardReport({assignmentRole,dashboardFilter,documentIds,selectedScopes,selectedSections,selectedGroups,fromYear,toYear,isOngoingOnly,reportFromYear,reportToYear,executionFrom,executionTo,agencies,metrics,metricsQuery,filterOutSpecialAgencies,filteredMinistriesPerformance,filteredProvincesPerformance,filteredOthersPerformance,formatDate,formatItemProgressDisplay,isExportingExcel});}
  catch{toast.error('Không thể tải chức năng xuất Excel. Vui lòng thử lại.');}
  finally{isExportingExcel.value=false;}
 }

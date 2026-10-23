@@ -29,6 +29,7 @@ namespace Cdsqg.Api.Controllers
             [FromQuery] Guid[]? agencyId = null,
             [FromQuery] Guid? parentAgencyId = null,
             [FromQuery] Guid? documentId = null,
+            [FromQuery] Guid[]? documentIds = null,
             [FromQuery] string[]? section = null,
             [FromQuery] string[]? group = null,
             [FromQuery] int? reportYear = null,
@@ -71,7 +72,11 @@ namespace Cdsqg.Api.Controllers
                     .AsSplitQuery()
                     .AsQueryable();
 
-                if (documentId.HasValue && documentId.Value != Guid.Empty)
+                if (documentIds is { Length: > 0 })
+                {
+                    query = query.Where(i => documentIds.Contains(i.DocumentId));
+                }
+                else if (documentId.HasValue && documentId.Value != Guid.Empty)
                 {
                     query = query.Where(i => i.DocumentId == documentId.Value);
                 }
@@ -412,6 +417,7 @@ namespace Cdsqg.Api.Controllers
             [FromQuery] int? reportFromYear = null, [FromQuery] int? reportToYear = null,
             [FromQuery] DateTime? executionFrom = null, [FromQuery] DateTime? executionTo = null,
             [FromQuery] Guid? documentId = null,
+            [FromQuery] Guid[]? documentIds = null,
             [FromQuery] int? pageNumber = null,
             [FromQuery] int? pageSize = null)
         {
@@ -431,7 +437,8 @@ namespace Cdsqg.Api.Controllers
                     .AsSplitQuery()
                     .AsQueryable();
 
-                if (documentId.HasValue) query = query.Where(i => i.DocumentId == documentId.Value);
+                if (documentIds is { Length: > 0 }) query = query.Where(i => documentIds.Contains(i.DocumentId));
+                else if (documentId.HasValue) query = query.Where(i => i.DocumentId == documentId.Value);
 
                 if (!string.IsNullOrWhiteSpace(scope) && !scope.Equals("all", StringComparison.OrdinalIgnoreCase))
                 {

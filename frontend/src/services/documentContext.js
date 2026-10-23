@@ -48,6 +48,8 @@ function getInitialDocumentCode() {
 }
 
 const activeDocCode = ref(getInitialDocumentCode());
+// Trang chủ có thể xem đồng thời hai văn bản; các màn quản lý vẫn dùng activeDocument.
+export const dashboardDocumentScope = ref('current');
 
 export const activeDocument = computed(() => {
   return SUPPORTED_DOCUMENTS.find(d => d.code === activeDocCode.value || d.id === activeDocCode.value) || SUPPORTED_DOCUMENTS[0];
@@ -59,6 +61,7 @@ export const activeDocumentCode = computed(() => activeDocument.value.code);
 export function switchDocument(codeOrId) {
   const found = SUPPORTED_DOCUMENTS.find(d => d.code === codeOrId || d.id === codeOrId);
   if (found) {
+    dashboardDocumentScope.value = 'current';
     activeDocCode.value = found.code;
     try {
       localStorage.setItem(STORAGE_KEY, found.code);

@@ -2,7 +2,7 @@
   <header class="flex flex-wrap items-center justify-between gap-x-6 gap-y-3 rounded-2xl border border-blue-200 bg-blue-700 px-4 py-3">
     <div class="flex min-w-0 items-center gap-3">
       <span class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-blue-600 text-white"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M4 19V9m5 10V5m6 14v-7m5 7V3M2 21h20" stroke-linecap="round" /></svg></span>
-      <div class="min-w-0"><h2 class="ui-page-title text-white">Toàn cảnh thực hiện {{ activeDocument.shortTitle }}</h2></div>
+      <div class="min-w-0"><h2 class="ui-page-title text-white">Toàn cảnh thực hiện {{ scope === 'all' ? 'Chiến lược & Chương trình' : activeDocument.shortTitle }}</h2></div>
     </div>
     <div class="flex min-w-0 flex-wrap items-center gap-2">
       <ActionButton kind="export" @click="exportDashboardExcelReport" :disabled="isExportingExcel || isLoading">{{ isExportingExcel ? 'Đang xuất...' : 'Xuất báo cáo Excel' }}</ActionButton>
@@ -46,6 +46,7 @@ import SearchableSelect from '../../components/SearchableSelect.vue';
 import DatePicker from '../../components/DatePicker.vue';
 import OverlayPanel from '../../components/OverlayPanel.vue';
 const props = defineProps(['activeDashboardFilterCount', 'resetDashboardFilters', 'yearOptions', 'loadDashboardMetrics', 'isExportingExcel', 'isLoading', 'exportDashboardExcelReport']);
+const scope = defineModel('scope', { default: 'current' });
 const reportFromYear = defineModel('reportFromYear', { default: null });
 const reportToYear = defineModel('reportToYear', { default: null });
 const executionFrom = defineModel('executionFrom', { default: '' });

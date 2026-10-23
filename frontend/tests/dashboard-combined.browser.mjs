@@ -63,7 +63,7 @@ try{
   assert.equal(await page.getByText('Nhiệm vụ đã hoàn thành muộn',{exact:true}).count(),0);
   await page.getByRole('button',{name:'Xem tất cả công việc',exact:true}).click();
   await page.getByText('Nhiệm vụ đã hoàn thành muộn',{exact:true}).waitFor();
-  assert(requests.some(u=>u.pathname==='/api/dashboard/agency-items'&&u.searchParams.get('documentId')==='12660000-0000-0000-0000-000000001266'));
+  assert(requests.some(u=>u.pathname==='/api/dashboard/agency-items'&&u.searchParams.getAll('documentIds').includes('12660000-0000-0000-0000-000000001266')));
   await page.getByRole('button',{name:'Đóng chi tiết đơn vị',exact:true}).click();
 
 
@@ -110,6 +110,14 @@ try{
   await page.getByRole('button',{name:'Đóng chi tiết đơn vị',exact:true}).click();
 
   assert.equal(await board.getByRole('button',{name:'Trang đơn vị sau'}).count(),0);
+  await root.getByRole('group',{name:'Phạm vi trang chủ'}).getByRole('button',{name:'Tổng',exact:true}).click();
+  await root.getByRole('heading',{name:'Toàn cảnh thực hiện Chiến lược & Chương trình'}).waitFor();
+  await page.waitForLoadState('networkidle');
+  assert(requests.some(u=>u.pathname==='/api/dashboard/metrics' && u.searchParams.getAll('documentIds').length===2));
+  await board.getByRole('listitem').first().click();
+  await page.getByText('Nhiệm vụ đã hoàn thành muộn',{exact:true}).waitFor();
+  assert(requests.some(u=>u.pathname==='/api/dashboard/agency-items' && u.searchParams.getAll('documentIds').length===2));
+  await page.getByRole('button',{name:'Đóng chi tiết đơn vị',exact:true}).click();
   const scroll=board.getByRole('region',{name:'Cuộn ngang để xem tất cả đơn vị'});const scrollBox=await scroll.boundingBox(),boardBox=await board.boundingBox();assert(scrollBox.x-boardBox.x>=12);assert(boardBox.x+boardBox.width-scrollBox.x-scrollBox.width>=12);if(width<640)assert(await scroll.evaluate(el=>el.scrollWidth>el.clientWidth));
   assert(!(await page.evaluate(()=>document.documentElement.scrollWidth>innerWidth+1)),`Overflow ${width}`);
   await page.screenshot({path:`${process.env.TEMP}/dashboard-combined-${width}.png`,fullPage:true});

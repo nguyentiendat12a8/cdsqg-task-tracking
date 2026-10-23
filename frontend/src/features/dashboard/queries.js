@@ -2,6 +2,7 @@ export function buildDashboardQuery(filters, { agencyIds = [], parentAgencyId, i
   const params = new URLSearchParams();
   params.set('assignmentRole', filters.assignmentRole || 'Lead');
   if (filters.documentId) params.set('documentId', filters.documentId);
+  for (const id of filters.documentIds || []) params.append('documentIds', id);
   if (includeItemType && filters.dashboardFilter && filters.dashboardFilter !== 'all') {
     params.set('itemType', filters.dashboardFilter === 'goals' ? 'Goal' : 'Task');
   }
