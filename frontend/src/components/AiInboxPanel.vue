@@ -11,7 +11,7 @@
    </div>
    <AiListPagination v-model:page="page" v-model:page-size="pageSize" :total="total" :disabled="busy||loading"/>
   </div>
-  <div v-if="uploadOpen" v-accessible-dialog="closeUpload" class="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-3" @click.self="closeUpload"><form class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90dvh] flex flex-col overflow-hidden" @submit.prevent="upload"><header class="flex justify-between items-center gap-4 p-4 sm:p-6 border-b border-slate-200"><h3 class="ui-title">Nạp tài liệu</h3></header><div class="p-4 sm:p-6 overflow-y-auto min-h-0 space-y-5"><p v-if="error" role="alert" class="rounded-xl bg-rose-50 text-rose-800 p-3">{{ error }}</p><SearchableSelect v-model="metric" :options="metricOptions" label="Mục tiêu cần bóc tách" :is-multi="false" :clearable="false" :disabled="busy"/><div class="ai-upload-file"><label for="ai-document" class="block font-semibold mb-2">Tài liệu</label><input id="ai-document" class="document-input block w-full max-w-full rounded-lg border border-slate-300 file:mr-3 file:rounded-md file:border-0 file:bg-blue-50 file:px-3 file:text-blue-800" aria-describedby="ai-upload-help" type="file" accept=".pdf,.docx,.txt" :disabled="busy" required @change="documentFile=$event.target.files[0]"/><p id="ai-upload-help" class="ai-muted mt-2">PDF có chữ, DOCX hoặc TXT UTF-8 · Tối đa 12 MB</p></div><p v-if="!configured" class="text-amber-900 rounded-xl bg-amber-50 p-3">Tài liệu sẽ chờ xử lý đến khi cấu hình AI sẵn sàng.</p></div><footer class="p-4 sm:px-6 bg-slate-50 border-t border-slate-200 flex justify-end gap-2"><button type="button" class="ui-btn ui-btn-secondary" :disabled="busy" @click="closeUpload">Đóng</button><button type="submit" class="ui-btn ui-btn-primary" :disabled="busy||!documentFile">{{ busy?'Đang nạp…':'Nạp tài liệu để AI đọc' }}</button></footer></form></div>
+  <div v-if="uploadOpen" v-accessible-dialog="closeUpload" class="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-3" @click.self="closeUpload"><form class="bg-white rounded-2xl shadow-xl w-full max-w-2xl max-h-[90dvh] flex flex-col overflow-hidden" @submit.prevent="upload"><header class="flex justify-between items-center gap-4 p-4 sm:p-6 border-b border-slate-200"><h3 class="ui-title">Nạp tài liệu</h3></header><div class="p-4 sm:p-6 overflow-y-auto min-h-0 space-y-5"><p v-if="error" role="alert" class="rounded-xl bg-rose-50 text-rose-800 p-3">{{ error }}</p><div class="space-y-2"><SearchableSelect v-model="metric" :options="metricOptions" label="Mục tiêu cần bóc tách" :is-multi="false" :clearable="false" :disabled="busy"/><p v-if="metric==='ALL_GOALS'" class="text-xs text-blue-800 bg-blue-50 p-2.5 rounded-lg border border-blue-200">✨ <strong>Chế độ quét toàn diện:</strong> AI sẽ tự động đối soát nội dung với toàn bộ bộ từ khóa mục tiêu của văn bản để phát hiện và bóc tách mọi chỉ số có xuất hiện trong tài liệu.</p><p v-else class="text-xs text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-200">🎯 <strong>Chế độ đọc đơn lẻ:</strong> AI chỉ tập trung tìm kiếm và bóc tách số liệu cho riêng mục tiêu đã chọn.</p></div><div class="ai-upload-file"><label for="ai-document" class="block font-semibold mb-2">Tài liệu</label><input id="ai-document" class="document-input block w-full max-w-full rounded-lg border border-slate-300 file:mr-3 file:rounded-md file:border-0 file:bg-blue-50 file:px-3 file:text-blue-800" aria-describedby="ai-upload-help" type="file" accept=".pdf,.docx,.txt" :disabled="busy" required @change="documentFile=$event.target.files[0]"/><p id="ai-upload-help" class="ai-muted mt-2">PDF có chữ, DOCX hoặc TXT UTF-8 · Tối đa 12 MB</p></div><p v-if="!configured" class="text-amber-900 rounded-xl bg-amber-50 p-3">Tài liệu sẽ chờ xử lý đến khi cấu hình AI sẵn sàng.</p></div><footer class="p-4 sm:px-6 bg-slate-50 border-t border-slate-200 flex justify-end gap-2"><button type="button" class="ui-btn ui-btn-secondary" :disabled="busy" @click="closeUpload">Đóng</button><button type="submit" class="ui-btn ui-btn-primary" :disabled="busy||!documentFile">{{ busy?'Đang nạp…':'Nạp tài liệu để AI đọc' }}</button></footer></form></div>
   <div v-if="selectedItem" v-accessible-dialog="closeDetails" class="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-3 sm:p-4 lg:p-6" @click.self="closeDetails">
     <section class="bg-white rounded-2xl shadow-2xl w-full max-w-4xl lg:max-w-5xl max-h-[92dvh] flex flex-col overflow-hidden border border-slate-200">
       <!-- Modal Header -->
@@ -201,8 +201,11 @@
           </div>
         </div>
 
-        <div v-if="reread" class="border-t border-slate-200 pt-4">
+        <div v-if="reread" class="border-t border-slate-200 pt-4 space-y-2">
           <SearchableSelect v-model="choices[selectedItem.id]" :options="metricOptions" label="Mục tiêu đọc lại" :is-multi="false" :clearable="false" :disabled="busy||isQueued(selectedItem)"/>
+          <p v-if="choices[selectedItem.id]==='ALL_GOALS'" class="text-xs text-blue-800 bg-blue-50 p-2.5 rounded-lg border border-blue-200">
+            ✨ AI sẽ đọc lại văn bản và đối soát với toàn bộ bộ từ khóa mục tiêu của văn bản để tìm tất cả các chỉ số.
+          </p>
         </div>
       </div>
 
@@ -219,6 +222,7 @@
  </section>
 </template>
 <script setup>
+import {withActiveDocument} from '../services/documentContext';
 import AiListPagination from './AiListPagination.vue';
 
 import {ref,computed,watch,onMounted,onUnmounted} from 'vue';
@@ -234,12 +238,12 @@ import ActionButton from './ActionButton.vue';
 import LoadingSpinner from './LoadingSpinner.vue';
 const emit=defineEmits(['view-suggestions','view-result']);
 const selected=ref(null),reread=ref(false),uploadOpen=ref(false),results=ref([]),resultsLoading=ref(false),resultsError=ref('');
-function openUpload(){if(!busy.value){documentFile.value=null;uploadOpen.value=true;error.value='';}}
+function openUpload(){if(!busy.value){documentFile.value=null;metric.value='ALL_GOALS';uploadOpen.value=true;error.value='';}}
 function closeUpload(){if(!busy.value)uploadOpen.value=false;}
 defineExpose({openUpload,refresh:load});
 const selectedItem=computed(()=>selected.value?(rows.value.find(item=>item.id===selected.value.id)||selected.value):null);
 function openDetails(item){results.value=[];resultsError.value='';if(item.isUpload)loadResults(item);selected.value=item;reread.value=false;try{choices.value[item.id]=JSON.parse(item.metricKeysJson)[0]||props.metrics[0]?.key;}catch{choices.value[item.id]=props.metrics[0]?.key;}}
-async function loadResults(item){resultsLoading.value=true;try{const res=await fetchWithAuth(getApiUrl('/api/ai-data/suggestions?inboxId='+item.id+'&pageSize=100'));if(!res.ok)throw new Error('Không tải được kết quả bóc tách.');const data=await res.json();if(selected.value?.id===item.id)results.value=Array.isArray(data.items)?data.items:[];}catch(e){resultsError.value=e.message;}finally{resultsLoading.value=false;}}
+async function loadResults(item){resultsLoading.value=true;try{const res=await fetchWithAuth(getApiUrl(withActiveDocument('/api/ai-data/suggestions?inboxId='+item.id+'&pageSize=100')));if(!res.ok)throw new Error('Không tải được kết quả bóc tách.');const data=await res.json();if(selected.value?.id===item.id)results.value=Array.isArray(data.items)?data.items:[];}catch(e){resultsError.value=e.message;}finally{resultsLoading.value=false;}}
 function confirmResult(result){selected.value=null;emit('view-result',result);}
 function closeDetails(){if(!busy.value)selected.value=null;}
 function viewSuggestions(){const item=selectedItem.value;selected.value=null;emit('view-suggestions',item);}
@@ -256,7 +260,10 @@ const sourceName=item=>item.isUpload?'Tài liệu tải lên':item.feedName||'Ng
 const alertStatusOptions=[{value:'',label:'Tất cả'},{value:'TitleQueued',label:'Chờ đánh giá'},{value:'NeedsReview',label:'Cần xem lại'},{value:'NotRelevant',label:'Không liên quan'},{value:'ReadQueued',label:'Chờ đọc'},{value:'Read',label:'Đã đọc'},{value:'ReadNoData',label:'Chưa có số liệu'},{value:'Error',label:'Lỗi xử lý'}];
 watch(page,()=>load());watch(pageSize,()=>{page.value=1;load();});
 watch([statusFilter,sourceFilter],()=>{page.value=1;load();});
-const metricOptions=computed(()=>props.metrics.map(m=>({value:m.key,label:m.name})));
+const metricOptions=computed(()=>[
+  {value:'ALL_GOALS',label:'✨ Tất cả mục tiêu (Tự động nạp toàn bộ từ khóa)'},
+  ...props.metrics.map(m=>({value:m.key,label:m.name}))
+]);
 const visibleStatusOptions=computed(()=>props.mode==='uploads'?alertStatusOptions.filter(o=>!['TitleQueued','NeedsReview','NotRelevant'].includes(o.value)):alertStatusOptions);
 function readExplanation(item){
  if(item.status==='ReadNoData')return item.processingDetails||(item.error&&!item.error.includes('Xem Lịch sử xử lý')?item.error:'AI không tìm thấy số liệu thực tế có đủ dẫn chứng phù hợp với mục tiêu đã chọn trong các phần tài liệu được đọc. Không có số liệu nào được ghi vào mục tiêu.');
@@ -265,8 +272,14 @@ function readExplanation(item){
 const isQueued=item=>item.processing||['TitleQueued','ReadQueued'].includes(item.status);
 const badge=item=>getStatusBadgeClass(item.processing?'InProgressOnTime':(item.status==='Error'||item.status==='NotRelevant')?'Rejected':item.status==='Read'?'Approved':item.status==='NeedsReview'?'Pending':'NotStarted');
 const statusLabel=s=>({TitleQueued:'Chờ đánh giá',ReadQueued:'Chờ đọc',NeedsReview:'Cần xem lại',NotRelevant:'Không liên quan',Read:'Đã đọc',ReadNoData:'Chưa có số liệu',Error:'Lỗi xử lý'}[s]||s);
-function metricNames(json){try{return JSON.parse(json).map(key=>props.metrics.find(m=>m.key===key)?.name||key).join(', ');}catch{return '';}}
-async function api(path='',options){const res=await fetchWithAuth(getApiUrl('/api/ai-inbox'+path),options);if(!res.ok){const d=await res.json().catch(()=>({}));throw new Error(d.message||`HTTP ${res.status}`);}return res.json();}
+function metricNames(json){
+  try{
+    const arr=JSON.parse(json);
+    if(arr.some(key=>key==='ALL_GOALS'||key.startsWith('ALL_GOALS_')))return '✨ Tất cả mục tiêu';
+    return arr.map(key=>props.metrics.find(m=>m.key===key)?.name||key).join(', ');
+  }catch{return '';}
+}
+async function api(path='',options){const res=await fetchWithAuth(getApiUrl(withActiveDocument('/api/ai-inbox'+path)),options);if(!res.ok){const d=await res.json().catch(()=>({}));throw new Error(d.message||`HTTP ${res.status}`);}return res.json();}
 let version=0,timer;
 async function load(){const v=++version;if(!rows.value.length)loading.value=true;try{const d=await api('?page='+page.value+'&pageSize='+pageSize.value+'&uploadsOnly='+(props.mode==='uploads'||sourceFilter.value==='uploads')+'&alertsOnly='+(props.mode==='alerts'||sourceFilter.value==='alerts')+'&status='+encodeURIComponent(statusFilter.value));if(v===version){rows.value=d.items;total.value=d.total;if(selectedItem.value?.isUpload)loadResults(selectedItem.value);}}catch(e){if(v===version)error.value=e.message;}finally{if(v===version)loading.value=false;}}
 async function act(fn){if(busy.value)return;busy.value=true;error.value='';message.value='';try{await fn();await load();}catch(e){error.value=e.message;}finally{busy.value=false;}}

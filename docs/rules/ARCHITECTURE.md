@@ -77,3 +77,9 @@ Chẩn đoán lỗi nhà cung cấp AI: `AiProviderRequest.FailureAsync` dùng c
 22/10/2026 — GoalResultPlan là nguồn chia mặc định kết quả mục tiêu theo năm và chuyển thành mốc lũy kế. ProgressCalculator.ResolveBaseline gọi quy tắc này sau các chỉ tiêu đã khai báo; PlanningService trả ResultTarget/YearlyAllocations cùng YearlyTargets để FE trình bày, không chia lại ở frontend.
 
 22/10/2026 — DashboardTimeFilter dùng chung cho metrics và agency-items: kiểm tra khoảng, lọc giao ngày thực hiện và giới hạn snapshot báo cáo trên dữ liệu AsNoTracking. queries.appendDashboardTimeFilters dùng chung cho request; dashboardTimeFilters cung cấp mặc định cho trạng thái áp dụng và bản nháp, tránh đọc props chưa cập nhật khi đặt lại.
+
+25/10/2026 — Keyring AI dùng provider DataProtection.EntityFrameworkCore qua AiCredentialProtection và bảng DataProtectionKeys trong AppDbContext, giữ discriminator/purpose ổn định. Startup nhập keyring file cũ sau migration, idempotent có khóa giao dịch PostgreSQL. AiSettingsStore phân biệt Missing/Available/Unreadable, không trả secret qua GET và không ghi đè ciphertext không đọc được khi lưu khóa trống.
+
+25/10/2026 — AiInternetTracking sở hữu cấu hình/phạm vi internet theo metric hoặc ID mục tiêu và snapshot đơn vị chủ trì. AiMetricExtractor kiểm tra dẫn chứng/phạm vi; AiCollectionService lưu đề xuất TargetAgencyId; AiReviewService revalidate phân giao khi duyệt. Verified dùng ProgressCalculator thay ngưỡng hardcode theo mã MT. FE chỉ chọn phạm vi, hiển thị dữ liệu và gửi xác nhận.
+
+RSS: AiInternetTracking.ContextAsync nạp mục tiêu/từ khóa theo DocumentId nguồn tại mỗi lượt phân loại; ResolveAsync gắn phạm vi phân giao cho các mục tiêu liên quan. Không dùng lựa chọn mục tiêu/đơn vị cũ của từng nguồn. AiAlertFeed.DocumentId tách sở hữu nguồn khỏi danh mục từ khóa thay đổi.

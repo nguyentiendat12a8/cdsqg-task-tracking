@@ -20,17 +20,17 @@ public class AiAlertsTests
     [Theory]
     [InlineData("https://www.google.com/alerts/feeds/123/456",true)]
     [InlineData("https://www.google.com/alerts/feeds/123/456/",true)]
-    [InlineData("https://news.google.com/rss",true)]
-    [InlineData("https://news.google.com/rss/search?q=Kinh+t%E1%BA%BF+s%E1%BB%91&hl=vi&gl=VN&ceid=VN:vi",true)]
-    [InlineData("https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNREpxYW5RU0FtVnVHZ0pWVXlnQVAB",true)]
+    [InlineData("https://news.google.com/rss",false)]
+    [InlineData("https://news.google.com/rss/search?q=Kinh+t%E1%BA%BF+s%E1%BB%91&hl=vi&gl=VN&ceid=VN:vi",false)]
+    [InlineData("https://news.google.com/rss/topics/CAAqJggKIiBDQkFTRWdvSUwyMHZNREpxYW5RU0FtVnVHZ0pWVXlnQVAB",false)]
     [InlineData("https://news.google.com/not-rss",false)]
     [InlineData("https://www.google.com.evil.test/alerts/feeds/123/456",false)]
     [InlineData("https://www.google.com/url?q=https://127.0.0.1",false)]
     [InlineData("https://user@www.google.com/alerts/feeds/123/456",false)]
     [InlineData("http://www.google.com/alerts/feeds/123/456",false)]
-    public void FeedUrlIsGoogleAlertsOrNewsOnly(string url,bool allowed)
+    public void FeedUrlRejectsGoogleNews(string url,bool allowed)
     {
-        if(allowed)Assert.True(AiAlertFeedReader.ValidateUrl(url).StartsWith("https://www.google.com/alerts/feeds/") || AiAlertFeedReader.ValidateUrl(url).StartsWith("https://news.google.com/rss"));
+        if(allowed)Assert.StartsWith("https://www.google.com/alerts/feeds/",AiAlertFeedReader.ValidateUrl(url));
         else Assert.Throws<InvalidOperationException>(()=>AiAlertFeedReader.ValidateUrl(url));
     }
     [Theory]
@@ -85,7 +85,12 @@ public class AiAlertsTests
         {
             var options=new DbContextOptionsBuilder<AppDbContext>().UseNpgsql(new NpgsqlConnectionStringBuilder(connection){SearchPath=schema}.ConnectionString).Options;
             await using var db=new AppDbContext(options);await db.Database.MigrateAsync();
-            var clients=new TitlesClient();var sourceReader=new SourceReader();var extractor=new Extractor();
+            var priorityDoc=AiDocumentScope.PriorityDocument;
+            if(!await db.Documents.AnyAsync(d=>d.Id==priorityDoc)){db.Add(new Cdsqg.Core.Entities.Document{Id=priorityDoc,DocumentNumber="1266/QĐ-TTg"});await db.SaveChangesAsync();}
+            var lead=new Cdsqg.Core.Entities.Agency{Name="Fixture lead",Code="FIXTURE_LEAD"};db.Add(lead);await db.SaveChangesAsync();
+            var goal=new Cdsqg.Core.Entities.GoalTaskItem{LeadAgencyId=lead.Id,DocumentId=priorityDoc,Code="MT-13",Title="Tỷ trọng kinh tế số",ItemType=Cdsqg.Core.Enums.ItemTypeEnum.Goal,EvaluationType=Cdsqg.Core.Enums.EvaluationTypeEnum.Quantitative};db.Add(goal);await db.SaveChangesAsync();
+            var secondGoal=new Cdsqg.Core.Entities.GoalTaskItem{LeadAgencyId=lead.Id,DocumentId=priorityDoc,Code="MT-26",Title="Kinh tế số giai đoạn sau",ItemType=Cdsqg.Core.Enums.ItemTypeEnum.Goal,EvaluationType=Cdsqg.Core.Enums.EvaluationTypeEnum.Quantitative};db.Add(secondGoal);await db.SaveChangesAsync();
+            var clients=new TitlesClient{GoalKeys=["GOAL_"+goal.Id,"GOAL_"+secondGoal.Id]};var sourceReader=new SourceReader();var extractor=new Extractor();
             var aiOptions=Options.Create(new AiDataOptions{Enabled=true,ApiKey="unit-test-not-real",Model="fixture",BaseUrl="https://provider.test/v1"});
             var settings=new AiSettingsStore(db,new EphemeralDataProtectionProvider(),aiOptions);
             var collection=new AiCollectionService(db,sourceReader,extractor,aiOptions);
@@ -115,13 +120,13 @@ public class AiAlertsTests
                 await db.Set<AiInboxQueueState>().Where(s=>s.Id==1).ExecuteUpdateAsync(s=>s.SetProperty(x=>x.NextReadAt,DateTime.UtcNow.AddMinutes(-2)));
                 await inbox.ProcessQueuedAsync(item.Id,default);
             }
-            Assert.Equal(3,clients.Calls);Assert.Equal(1,sourceReader.Calls);Assert.Equal(1,extractor.Calls);
+            Assert.Equal(3,clients.Calls);Assert.Equal(1,sourceReader.Calls);Assert.Equal(2,extractor.Calls);
             Assert.Equal("Read",titles.Single(i=>i.Title.StartsWith("Liên quan")).Status);
             Assert.Equal("NeedsReview",titles.Single(i=>i.Title.StartsWith("Chưa rõ")).Status);
             Assert.Equal("NotRelevant",titles.Single(i=>i.Title.StartsWith("Không liên quan")).Status);
             foreach(var item in titles)await db.Entry(item).ReloadAsync();
             Assert.All(titles,i=>Assert.Null(i.LeaseUntil));Assert.Equal(0,await db.ProgressLogs.CountAsync());
-            Assert.Equal("Pending",(await db.AiDataSuggestions.SingleAsync()).Status);
+            Assert.Equal(2,await db.AiDataSuggestions.CountAsync());Assert.All(await db.AiDataSuggestions.ToListAsync(),s=>Assert.Equal("Pending",s.Status));
             var nextScan=await service.EnqueueAsync(feed.Id,"Manual","Admin",default);await service.RunAsync(nextScan!.Id,default);
             Assert.Equal(0,nextScan.Added);Assert.Equal(4,nextScan.Duplicates);Assert.Equal(1,nextScan.Blocked);
             await service.RunAsync(nextScan.Id,default);Assert.Equal(2,feedReader.Calls); // Completed run cannot execute again.
@@ -181,14 +186,17 @@ public class AiAlertsTests
     }
     private sealed class TitlesClient:HttpMessageHandler,IHttpClientFactory
     {
-        public int Calls;
+        public int Calls;public string[] GoalKeys=["DIGITAL_GDP_SHARE"];
         public HttpClient CreateClient(string name)=>new(this,false);
         protected override async Task<HttpResponseMessage> SendAsync(HttpRequestMessage request,CancellationToken ct)
         {
             Calls++;using var body=JsonDocument.Parse(await request.Content!.ReadAsStringAsync(ct));var title=body.RootElement.GetProperty("messages")[1].GetProperty("content").GetString()!;
             Assert.DoesNotContain("https://www.nso.gov.vn",title);
+            Assert.Equal(2,body.RootElement.GetProperty("messages").GetArrayLength());
+            var context=body.RootElement.GetProperty("messages")[0].GetProperty("content").GetString()!;
+            Assert.Contains("Từ khóa Việt:",context);Assert.All(GoalKeys,k=>Assert.Contains(k,context));
             var uncertain=title.StartsWith("Chưa rõ");var related=title.StartsWith("Liên quan");
-            var content=JsonSerializer.Serialize(new{metricKeys=related?new[]{"DIGITAL_GDP_SHARE"}:Array.Empty<string>(),uncertain,reason="Phân loại kiểm thử"});
+            var content=JsonSerializer.Serialize(new{metricKeys=related?GoalKeys:Array.Empty<string>(),uncertain,reason="Phân loại kiểm thử"});
             return new(HttpStatusCode.OK){Content=JsonContent.Create(new{choices=new[]{new{finish_reason="stop",message=new{content}}}})};
         }
     }

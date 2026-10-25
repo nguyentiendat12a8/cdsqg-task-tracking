@@ -2,15 +2,15 @@
  <div class="ai-workspace ai-admin-shell">
   <AiPageHeader :title="sectionTitle"><template #tabs v-if="fileTabs.length>0"><nav role="tablist" aria-label="Nguồn dữ liệu AI" class="ai-tabs"><button v-for="item in fileTabs" :id="'ai-file-tab-'+item.key" :key="item.key" role="tab" type="button" :aria-selected="fileTab===item.key" :aria-controls="'ai-file-panel-'+item.key" :tabindex="fileTab===item.key?0:-1" @click="fileTab=item.key" @keydown="handleFileTabKey($event,item.key)">{{ item.label }}</button></nav></template></AiPageHeader>
   <div class="ai-admin-body space-y-4">
-    <details v-if="tab==='internet' && catalog" class="ai-panel p-4 sm:p-5"><summary class="cursor-pointer font-semibold text-slate-700">Chỉ số và mục tiêu áp dụng ({{ catalogGoals.length }})</summary><div class="grid xl:grid-cols-3 gap-4 mt-4"><article v-for="metric in activeMetrics" :key="metric.key" class="ai-goal-card"><h3 class="ui-section-title">{{ metric.name }}</h3><p class="ai-muted mb-4">{{ metric.definition }}</p><ul><li v-for="goal in catalogGoals.filter(g=>g.metric.key===metric.key)" :key="goal.id"><span class="ai-goal-code">{{ goal.code }}</span><span>{{ goal.title }}</span></li></ul></article></div></details>
+
   <p v-if="catalog && !catalog.configured" role="status" class="rounded-xl p-3 border border-amber-200 bg-amber-50 text-amber-900">AI chưa sẵn sàng. Dữ liệu vẫn được tiếp nhận. <a href="#ai-settings" class="font-semibold underline">Cấu hình AI</a></p>
   <p v-if="error" role="alert" class="rounded-xl p-3 bg-rose-50 text-rose-800">{{ error }}</p>
   <LoadingSpinner v-if="loading" text="Đang tải dữ liệu AI..."/>
   <section v-else-if="!showingSuggestions">
-   <div v-show="fileTab==='files'||tab==='uploads'" id="ai-file-panel-files" role="tabpanel" aria-labelledby="ai-file-tab-files"><AiInboxPanel ref="inboxPanel" mode="uploads" :metrics="uploadMetrics" :configured="catalog.configured" @view-suggestions="viewInputResults" @view-result="openReview"/></div>
-   <div v-if="fileTab==='sources'" id="ai-file-panel-sources" role="tabpanel" aria-labelledby="ai-file-tab-sources" class="space-y-4"><details class="ai-panel p-4"><summary class="cursor-pointer font-semibold">Nguồn RSS và lịch quét</summary><div class="mt-4"><AiAlertsView ref="rssPanel" embedded @navigate="$emit('navigate',$event)"/></div></details><AiInboxPanel ref="alertsInbox" mode="alerts" :metrics="catalog.metrics" :configured="catalog.configured" @view-suggestions="viewInputResults"/></div>
+   <div v-show="fileTab==='files'||tab==='uploads'" id="ai-file-panel-files" role="tabpanel" aria-labelledby="ai-file-tab-files"><AiInboxPanel :key="activeDocumentId" ref="inboxPanel" mode="uploads" :metrics="uploadMetrics" :configured="catalog.configured" @view-suggestions="viewInputResults" @view-result="openReview"/></div>
+   <div v-if="fileTab==='sources'" id="ai-file-panel-sources" role="tabpanel" aria-labelledby="ai-file-tab-sources" class="space-y-4"><details class="ai-panel p-4"><summary class="cursor-pointer font-semibold">Nguồn RSS và lịch quét</summary><div class="mt-4"><AiAlertsView :key="activeDocumentId" ref="rssPanel" embedded @navigate="$emit('navigate',$event)"/></div></details><AiInboxPanel :key="activeDocumentId" ref="alertsInbox" mode="alerts" :metrics="internetMetrics" :configured="catalog.configured" @view-suggestions="viewInputResults"/></div>
    <div v-if="fileTab==='history'&&tab==='internet'" id="ai-file-panel-history" role="tabpanel" aria-labelledby="ai-file-tab-history" class="space-y-4">
-      <AiAlertsView ref="rssHistory" embedded initial-tab="history"/>
+      <AiAlertsView :key="activeDocumentId" ref="rssHistory" embedded initial-tab="history"/>
     </div>
   
   </section>
@@ -18,13 +18,13 @@
       <div v-if="resultInput" class="ai-toolbar flex justify-between items-center gap-3"><p>Kết quả của: <strong>{{ resultInput.title }}</strong></p><button type="button" class="ui-btn ui-btn-secondary" @click="resultInput=null;page=1;refresh()">Xem tất cả tài liệu</button></div>
       <div v-if="showingSuggestions" class="ai-toolbar ai-review-filters">
         <div class="min-w-0"><SearchableSelect v-model="status" label="Trạng thái" :is-multi="false" :clearable="false" :options="[{value:'Pending',label:'Chờ kiểm chứng'},{value:'Approved',label:'Đã duyệt'},{value:'Rejected',label:'Đã từ chối'},{value:'',label:'Tất cả'}]" /></div>
-        <div class="min-w-0"><SearchableSelect v-model="metricFilter" label="Chỉ số" :is-multi="false" :clearable="false" :options="[{value:'',label:'Tất cả chỉ số'},...catalog.metrics.map(m=>({value:m.key,label:m.name}))]" /></div>
+        <div class="min-w-0"><SearchableSelect v-model="metricFilter" label="Chỉ số" :is-multi="false" :clearable="false" :options="[{value:'',label:'Tất cả chỉ số'},...internetMetrics.map(m=>({value:m.key,label:m.name}))]" /></div>
         <label class="font-semibold">Năm số liệu<input v-model="year" type="number" min="2000" :max="currentYear" class="field" placeholder="Tất cả" @change="page=1;refresh()" /></label>
       </div>
       <div class="ai-records-layout"><div class="ai-wide-list ai-table-scroll">
         <table class="ai-table"><colgroup><col class="ai-stt-column"/><col style="width:30%" /><col style="width:7%" /><col style="width:10%" /><col style="width:25%" /><col style="width:16%" /><col style="width:12%" /></colgroup><thead><tr><th scope="col" class="ai-stt">STT</th><th>Chỉ số</th><th>Năm</th><th class="text-right">Giá trị</th><th>Nguồn</th><th class="text-center">Trạng thái</th><th class="text-center">Thao tác</th></tr></thead><tbody>
           <tr v-for="(s,index) in rows" :key="s.id" class="hover:bg-slate-50/60"><td class="ai-stt">{{ (page-1)*pageSize+index+1 }}</td>
-            <td>{{ metricName(s.metricKey) }}</td><td class="tabular-nums">{{ s.dataYear }}</td>
+            <td>{{ metricName(s.metricKey) }}<p class="mt-1 text-slate-600">{{ s.scope }}</p></td><td class="tabular-nums">{{ s.dataYear }}</td>
             <td class="text-right tabular-nums whitespace-nowrap"><strong>{{ formatNumber(s.status==='Approved'?(s.acceptedValue??s.value):s.value) }}</strong> {{ unitLabel(s.unit) }}</td>
             <td><span class="break-words">{{ shortSource(s) }}</span><p v-if="sourceCode(s)" class="ai-input-code mt-1">{{ sourceCode(s) }}</p></td>
             <td class="text-center"><span class="ai-badge" :class="getStatusBadgeClass(s.status)">{{ reviewStatus(s.status) }}</span></td>
@@ -44,7 +44,7 @@
           <div v-if="reviewError" role="alert" class="text-rose-800 bg-rose-50 p-3 rounded-xl">{{ reviewError }}</div>
           <dl class="grid grid-cols-2 sm:grid-cols-4 gap-4 rounded-xl bg-slate-50 p-4">
             <div><dt class="text-slate-600">Năm số liệu</dt><dd class="mt-1 font-semibold">{{ selected.dataYear }}</dd></div>
-            <div><dt class="text-slate-600">Phạm vi</dt><dd class="mt-1 font-semibold">{{ selected.scope }}</dd></div>
+            <div v-if="selected.publishedAt"><dt class="text-slate-600">Ngày đăng bài</dt><dd class="mt-1 font-semibold">{{ formatDateTime(selected.publishedAt) }}</dd></div><div><dt class="text-slate-600">Phạm vi</dt><dd class="mt-1 font-semibold">{{ selected.scope }}</dd></div>
             <div><dt class="text-slate-600">Trang / đoạn</dt><dd class="mt-1 font-semibold">{{ selected.page }}</dd></div>
             <div><dt class="text-slate-600">Mục tiêu liên kết</dt><dd class="mt-1 font-semibold">{{ linkedGoals.map(g=>g.code).join(', ') || 'Chưa có' }}</dd></div>
           </dl>
@@ -71,6 +71,7 @@
   </div>
 </template>
 <script setup>
+import {activeDocumentId,withActiveDocument} from '../services/documentContext';
 import AiListPagination from '../components/AiListPagination.vue';
 
 import {ref,computed,watch,onMounted,onUnmounted,nextTick} from 'vue';
@@ -102,6 +103,7 @@ const activeMetrics=computed(()=>catalog.value?.metrics.filter(m=>catalogGoals.v
 async function openUpload(){fileTab.value='files';await nextTick();inboxPanel.value?.openUpload();}
 async function refreshWorkspace(){await refresh(true);inboxPanel.value?.refresh();rssPanel.value?.refresh();alertsInbox.value?.refresh();if(fileTab.value==='history'&&tab.value==='internet')rssHistory.value?.refresh();}
 
+const internetMetrics=computed(()=>catalog.value?.internetMetrics||[]);
 const uploadMetrics=computed(()=>catalog.value?.uploadMetrics||catalog.value?.metrics||[]);
 const showingSuggestions=computed(()=>tab.value==='suggestions'||(tab.value==='internet'&&fileTab.value==='review'));
 const fileTabs=computed(()=>tab.value==='internet'?[{key:'sources',label:'Nguồn RSS'},{key:'review',label:'Kiểm chứng số liệu'},{key:'history',label:'Lịch sử xử lý'}]:[]);
@@ -114,11 +116,11 @@ function shortSource(source){
  if(source.inputType==='upload'||source.sourceUrl?.startsWith('/api/ai-inbox/'))return source.sourceTitle;
  try{return new URL(source.sourceUrl).hostname;}catch{return 'Nguồn web';}
 }
-const metricName=key=>[...(catalog.value?.metrics||[]),...uploadMetrics.value].find(m=>m.key===key)?.name||key;
+const metricName=key=>[...internetMetrics.value,...uploadMetrics.value].find(m=>m.key===key)?.name||key;
 const unitLabel=unit=>unit==='rank'?'hạng':unit;
 const date=value=>value?formatDateTime(value):'Chưa có';
 const reviewStatus=s=>({Pending:'Chờ kiểm chứng',Approved:'Đã duyệt',Rejected:'Đã từ chối'}[s]||s);
-async function api(path,options){const res=await fetchWithAuth(getApiUrl('/api/ai-data/'+path),options);if(!res.ok){const data=await res.json().catch(()=>({}));throw new Error(data.message||`Không tải được dữ liệu (HTTP ${res.status}).`);}return res.status===204?null:await res.text().then(t=>t?JSON.parse(t):null);}
+async function api(path,options){const res=await fetchWithAuth(getApiUrl(withActiveDocument('/api/ai-data/'+path)),options);if(!res.ok){const data=await res.json().catch(()=>({}));throw new Error(data.message||`Không tải được dữ liệu (HTTP ${res.status}).`);}return res.status===204?null:await res.text().then(t=>t?JSON.parse(t):null);}
 async function refresh(silent=false){const request=++version;if(!catalog.value)loading.value=true;error.value='';try{if(!catalog.value||!silent){const next=await api('catalog');if(request!==version)return;catalog.value=next;}if(showingSuggestions.value){const q=new URLSearchParams({page:String(page.value),pageSize:String(pageSize.value)});if(resultInput.value)q.set('inboxId',resultInput.value.id);if(showingSuggestions.value){if(status.value)q.set('status',status.value);if(metricFilter.value)q.set('metricKey',metricFilter.value);if(year.value){if(Number(year.value)>currentYear||Number(year.value)<2000)throw new Error('Năm số liệu không hợp lệ.');q.set('year',year.value);}}q.set('internetOnly','true');const data=await api('suggestions?'+q);if(request!==version)return;rows.value=Array.isArray(data)?data:data.items;total.value=data.total??rows.value.length;}}catch(e){if(request===version)error.value=e.message;}finally{if(request===version)loading.value=false;}}
 watch(fileTab,value=>{if(value==='history'&&tab.value==='internet')rssHistory.value?.refresh();else if(value==='review')refresh();});
 watch([tab,()=>props.initialTab],([value,initial])=>{fileTab.value=value==='internet'?(initial==='review'?'review':'sources'):'files';resultInput.value=null;refresh();});
@@ -139,6 +141,7 @@ function closeReview(){if(!busy.value)selected.value=null;}
 async function downloadPrivate(path,name){await act(async()=>{const res=await fetchWithAuth(getApiUrl(path));if(!res.ok)throw new Error('Không tải được tài liệu gốc.');const url=URL.createObjectURL(await res.blob());const a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);});}
 async function review(approve){busy.value=true;reviewError.value='';try{await api(`suggestions/${selected.value.id}/review`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({approve,acceptedValue:approve?Number(acceptedValue.value):null,note:reviewNote.value,verified:checked.value})});selected.value=null;message.value=approve?'Đã duyệt và tạo báo cáo mới cho các mục tiêu liên kết theo đúng năm số liệu.':'Đã từ chối đề xuất.';await refresh(true);}catch(e){reviewError.value=e.message;}finally{busy.value=false;}}
 watch([tab,status,metricFilter],()=>{page.value=1;refresh();});watch(page,()=>refresh());
+watch(activeDocumentId,()=>{version++;catalog.value=null;rows.value=[];selected.value=null;resultInput.value=null;metricFilter.value='';page.value=1;refresh();});
 onMounted(()=>refresh());onUnmounted(()=>{version++;});
 </script>
 <style scoped>

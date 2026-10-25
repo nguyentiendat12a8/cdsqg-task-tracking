@@ -13,9 +13,9 @@ public sealed class AiInboxController(AppDbContext db,AiInboxService inbox):Cont
 {
     
     [HttpGet]
-    public async Task<IActionResult> List(int page=1,bool uploadsOnly=false,bool alertsOnly=false,string? status=null,CancellationToken ct=default,int pageSize=5)
+    public async Task<IActionResult> List(int page=1,bool uploadsOnly=false,bool alertsOnly=false,string? status=null,CancellationToken ct=default,int pageSize=5,Guid? documentId=null)
     {
-        page=Math.Clamp(page,1,100000);pageSize=Math.Clamp(pageSize,1,100);var q=db.AiInboxItems.AsNoTracking();
+        page=Math.Clamp(page,1,100000);pageSize=Math.Clamp(pageSize,1,100);var q=(documentId.HasValue?await AiDocumentScope.InboxAsync(db,documentId.Value,ct):db.AiInboxItems).AsNoTracking();
         if(uploadsOnly)q=q.Where(i=>i.StorageKey!="");
         if(alertsOnly)q=q.Where(i=>i.AlertFeedId!=null);
         if(!string.IsNullOrEmpty(status))q=q.Where(i=>i.Status==status);
@@ -27,10 +27,11 @@ public sealed class AiInboxController(AppDbContext db,AiInboxService inbox):Cont
         try{return Ok(new{added=await inbox.ImportAsync(rows,ct)});}catch(InvalidOperationException e){return BadRequest(new{message=e.Message});}catch(DbUpdateException){return Conflict(new{message="Danh sách vừa được đồng bộ; thử nhập lại để bỏ qua các dòng trùng."});}
     }
     [HttpPost("upload"),RequestSizeLimit(13000000)]
-    public async Task<IActionResult> Upload(IFormFile file,[FromForm]string metricKey,CancellationToken ct)
+    public async Task<IActionResult> Upload(IFormFile file,[FromForm]string metricKey,CancellationToken ct,Guid? documentId=null)
     {
         try
         {
+            if(documentId.HasValue){var keys=await AiDocumentScope.KeysAsync(db,documentId.Value,ct);if(metricKey=="ALL_GOALS")metricKey="ALL_GOALS_"+documentId.Value;else if(!keys.Contains(metricKey))throw new InvalidOperationException("Mục tiêu không thuộc văn bản đang chọn.");}
             var startedAt=DateTime.UtcNow;
             var item=await inbox.UploadAsync(file,metricKey,User.FindFirstValue("FullName")??User.Identity?.Name??"Admin",ct);
             var duplicate=item.ReceivedAt<startedAt;
@@ -45,19 +46,23 @@ public sealed class AiInboxController(AppDbContext db,AiInboxService inbox):Cont
     }
     public sealed record QueueInput(string MetricKey="",bool TitleOnly=false);
     [HttpPost("{id:guid}/queue")]
-    public async Task<IActionResult> Queue(Guid id,QueueInput input,CancellationToken ct)
+    public async Task<IActionResult> Queue(Guid id,QueueInput input,CancellationToken ct,Guid? documentId=null)
     {
         var item=await db.AiInboxItems.FindAsync([id],ct);if(item==null)return NotFound();
         if(item.StorageKey.Length==0&&item.AlertFeedId==null)return Conflict(new{message="Link cần được tiếp nhận từ nguồn RSS đã cấu hình."});
         if(item.StorageKey.Length==0){try{AiInboxService.CanonicalUrl(item.Url);}catch(InvalidOperationException e){return BadRequest(new{message=e.Message});}}
         if(item.Status=="ReadQueued"||item.Status=="TitleQueued")return Conflict(new{message="Tài liệu đang chờ hoặc đang xử lý; không thể đọc lại lúc này."});
+        if(documentId.HasValue&&item.StorageKey.Length>0){var keys=await AiDocumentScope.KeysAsync(db,documentId.Value,ct);if(input.MetricKey=="ALL_GOALS")input=input with{MetricKey="ALL_GOALS_"+documentId.Value};else if(!keys.Contains(input.MetricKey)&&input.MetricKey!="ALL_GOALS_"+documentId.Value)return BadRequest(new{message="Mục tiêu không thuộc văn bản đang chọn."});}
         if(input.TitleOnly&&item.StorageKey.Length==0)
         {
             item.Status="TitleQueued";item.LeaseUntil=null;item.Error="";
         }
         else
         {
-            try{if(item.StorageKey.Length>0)await AiMetricCatalog.ResolveAsync(db,input.MetricKey,ct);else AiMetricCatalog.Get(input.MetricKey);}catch(InvalidOperationException e){return BadRequest(new{message=e.Message});}
+            if(!AiDocumentScope.IsAll(input.MetricKey))
+            {
+                try{if(item.StorageKey.Length>0)await AiMetricCatalog.ResolveAsync(db,input.MetricKey,ct);else {var feed=item.AlertFeedId.HasValue?await db.AiAlertFeeds.AsNoTracking().SingleOrDefaultAsync(f=>f.Id==item.AlertFeedId,ct):null;var allowed=await AiInternetTracking.ContextAsync(db,feed,ct);if(!allowed.Any(m=>m.Key==input.MetricKey))throw new InvalidOperationException("Mục tiêu chưa có Thiết lập từ khóa trong văn bản của nguồn RSS.");}}catch(InvalidOperationException e){return BadRequest(new{message=e.Message});}
+            }
             // An explicit reread is a new input version; preserve the original and its reviews.
             item=new Cdsqg.Core.Entities.AiInboxItem{Title=item.Title,Url=item.Url,UrlHash="reread:"+Guid.NewGuid().ToString("N"),Origin="Đọc lại từ "+item.Id,
                 StorageKey=item.StorageKey,AlertFeedId=item.AlertFeedId,PublishedAt=item.PublishedAt,

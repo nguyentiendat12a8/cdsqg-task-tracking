@@ -11,12 +11,12 @@ public sealed class AiAlertFeedReader(IHttpClientFactory clients):IAiAlertFeedRe
     public static string ValidateUrl(string url)
     {
         if(url.Length>1000||!Uri.TryCreate(url,UriKind.Absolute,out var uri)||uri.Scheme!="https"||uri.Port!=443||uri.UserInfo!=""||uri.Fragment!="")
-            throw new InvalidOperationException("URL RSS cần HTTPS từ Google Alerts, Google News hoặc RSS chính thức Cục Thống kê.");
+            throw new InvalidOperationException("URL RSS cần HTTPS từ Google Alerts, cổng thông tin nhà nước hoặc báo chí được phép.");
         var googleAlerts=(uri.IdnHost is "www.google.com" or "google.com")&&uri.Query==""&&Regex.IsMatch(uri.AbsolutePath,@"^/alerts/feeds/[0-9]+/[0-9]+/?$",RegexOptions.None,TimeSpan.FromSeconds(1));
-        var googleNews=uri.IdnHost=="news.google.com"&&(uri.AbsolutePath=="/rss"||uri.AbsolutePath.StartsWith("/rss/"));
         var query=Microsoft.AspNetCore.WebUtilities.QueryHelpers.ParseQuery(uri.Query);
         var nso=uri.IdnHost=="www.nso.gov.vn"&&uri.AbsolutePath=="/feed/"&&(query.Count==0 || query.Count==1&&query.TryGetValue("s",out var term)&&term.Count==1&&term.ToString().Length is >0 and <=100);
-        if(!googleAlerts&&!googleNews&&!nso)throw new InvalidOperationException("Chỉ nhận RSS Google Alerts, Google News (news.google.com/rss) hoặc https://www.nso.gov.vn/feed/ (có thể kèm từ khóa s).");
+        var official=AiMetricCatalog.IsAllowedUrl(url)&&uri.IdnHost is not ("news.google.com" or "www.nso.gov.vn" or "nso.gov.vn");
+        if(!googleAlerts&&!nso&&!official)throw new InvalidOperationException("Chỉ nhận RSS Google Alerts, cổng thông tin .gov.vn hoặc báo chí trong danh sách nguồn tin cho phép.");
         return googleAlerts?$"https://www.google.com{uri.AbsolutePath.TrimEnd('/')}":uri.AbsoluteUri;
     }
     public async Task<List<AlertFeedEntry>> ReadAsync(string url,CancellationToken ct)

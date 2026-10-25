@@ -16,6 +16,7 @@ Version cài thực tế theo lockfile/assets; bảng dưới là dependency đ�
 | PDF có lớp chữ / AI | PdfPig 0.1.16; DOCX đọc XML giới hạn bằng thư viện .NET có sẵn; không OCR |
 | BE | .NET 9 / ASP.NET Core, EF Core 9.0.2, Npgsql provider 9.0.3 |
 | Auth / API docs | JwtBearer 9.0.2, IdentityModel 8.5, Swashbuckle 7.2 |
+| Keyring AI | Microsoft.AspNetCore.DataProtection.EntityFrameworkCore 9.0.2; PostgreSQL DataProtectionKeys, tùy chọn chứng chỉ PFX từ secret môi trường |
 | Test | xUnit, PostgreSQL integration, Playwright scripts hiện có |
 
 PrimeVue/core 5, themes 4 và xlsx 0.18 đang được khai báo, chưa quyết định sử dụng làm chuẩn control mới. Trước khi gỡ/nâng phải kiểm kê cả src, build, tests và lockfile; không kết luận unused chỉ dựa vào một grep. Không thêm thêm thư viện HTTP/date/icon/UI để giải một màn hình đã có capability tương đương. Compatibility và security review khi nâng package dùng tài liệu chính thức tại thời điểm nâng.
@@ -34,3 +35,7 @@ Không import Excel engine vào view eager. Feature được lazy import trướ
 
 Build/tests không chứng minh mọi UI accessible hoặc mọi endpoint đúng quyền. Báo rõ test nào đã chạy, nào chưa, warning có sẵn và ảnh hưởng. EF InMemory không thay thế PostgreSQL cho SQL/constraint/migration.
 
+
+25/10/2026 — Keyring persistence: `AiCredentialPersistenceTests` kiểm thử migration PostgreSQL, chuyển file legacy idempotent/đồng thời, restart không có file, nhiều instance và chứng chỉ. `frontend/tests/ai-key-persistence.browser.mjs` kiểm thử chẩn đoán/nhập lại/xóa có chủ đích trên desktop/mobile.
+
+25/10/2026 — InternetTrackingTests + AiAlertsTests kiểm tra URL, scope, migration, đề xuất đa đơn vị và duyệt trong PostgreSQL; frontend/tests/internet-tracking.browser.mjs kiểm tra tạo nguồn, multi-select mục tiêu/đơn vị, lưu và mở lại ở desktop/mobile.

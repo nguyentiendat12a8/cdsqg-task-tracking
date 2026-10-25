@@ -1,9 +1,10 @@
+using System.Text.Json;
 using Cdsqg.Core.Entities;
 using Cdsqg.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
 
 namespace Cdsqg.Application.AI;
-public sealed record AlertFeedInput(string Name,string FeedUrl,bool Enabled,string ScanTime);
+public sealed record AlertFeedInput(string Name,string FeedUrl,bool Enabled,string ScanTime,string[]? MetricKeys=null,Guid[]? AgencyIds=null,Guid? DocumentId=null);
 public sealed class AiAlertService(AppDbContext db,IAiAlertFeedReader reader,AiInboxService inbox)
 {
     public static int ParseMinute(string time)
@@ -24,11 +25,14 @@ public sealed class AiAlertService(AppDbContext db,IAiAlertFeedReader reader,AiI
         var url=AiAlertFeedReader.ValidateUrl(input.FeedUrl.Trim());var minute=ParseMinute(input.ScanTime);
         await using var tx=await db.Database.BeginTransactionAsync(ct);
         var feed=id.HasValue?await db.AiAlertFeeds.FromSqlInterpolated($"SELECT * FROM \"AiAlertFeeds\" WHERE \"Id\"={id.Value} FOR UPDATE").SingleOrDefaultAsync(ct)??throw new KeyNotFoundException():new AiAlertFeed();
+        var documentId=input.DocumentId??feed.DocumentId;
+        if(!await db.Documents.AnyAsync(d=>d.Id==documentId,ct))throw new InvalidOperationException("Văn bản không tồn tại.");
+        if(id.HasValue&&feed.DocumentId!=documentId)throw new InvalidOperationException("Không thể đổi văn bản của nguồn đã có dữ liệu.");
         if(feed.DeletedAt!=null)throw new InvalidOperationException("Nguồn đã xóa; cần khôi phục trước khi sửa.");
         if(id.HasValue&&await db.AiAlertScans.AnyAsync(s=>s.FeedId==id&&(s.Status=="Queued"||s.Status=="Running"),ct))throw new InvalidOperationException("Nguồn đang có lượt quét. Chờ hoàn tất trước khi sửa.");
-        if(await db.AiAlertFeeds.AnyAsync(f=>f.FeedUrl==url&&f.Id!=feed.Id,ct))throw new InvalidOperationException("URL RSS đã có trong danh sách.");
+        if(await db.AiAlertFeeds.AnyAsync(f=>f.FeedUrl==url&&f.DocumentId==documentId&&f.Id!=feed.Id,ct))throw new InvalidOperationException("URL RSS đã có trong danh sách.");
         var scheduleChanged=feed.Enabled!=input.Enabled||feed.ScanMinute!=minute;
-        feed.Name=name;feed.FeedUrl=url;feed.Enabled=input.Enabled;feed.ScanMinute=minute;feed.UpdatedBy=actor;
+        feed.DocumentId=documentId;feed.Name=name;feed.FeedUrl=url;feed.Enabled=input.Enabled;feed.ScanMinute=minute;feed.UpdatedBy=actor;
         if(!id.HasValue||scheduleChanged)feed.NextScanAt=input.Enabled?NextDaily(DateTime.UtcNow,minute):null;
         if(!id.HasValue)db.Add(feed);await db.SaveChangesAsync(ct);await tx.CommitAsync(ct);return feed;
     }
@@ -71,7 +75,6 @@ public sealed class AiAlertService(AppDbContext db,IAiAlertFeedReader reader,AiI
                 // Validate targets before AI or HTTP access. Google wrapper URLs are never followed.
                 if(entry.Title.Length is <3 or >1000||!AiMetricCatalog.IsAllowedUrl(entry.Url)){scan.Blocked++;continue;}
                 var originPrefix = new Uri(feed.FeedUrl).Host switch {
-                    "news.google.com" => "Google News · ",
                     "www.google.com" or "google.com" => "Google Alerts · ",
                     _ => "RSS trực tiếp · "
                 };

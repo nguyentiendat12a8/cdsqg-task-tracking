@@ -3,7 +3,10 @@ public class AiAlertFeed
 {
     public DateTime? DeletedAt { get; set; }
     public Guid Id {get;set;}=Guid.NewGuid();
+    public Guid DocumentId {get;set;}=Guid.Parse("12660000-0000-0000-0000-000000001266");
     public string Name {get;set;}="";
+    public string MetricKeysJson { get; set; } = "[]";
+    public string AgencyIdsJson { get; set; } = "[]";
     public string FeedUrl {get;set;}="";
     public bool Enabled {get;set;}
     public int ScanMinute {get;set;}=480;

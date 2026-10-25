@@ -66,6 +66,7 @@
           <AgencyPlansView v-else-if="currentTab === 'agency-plans'" />
 
           <!-- Thiết lập chung (Submenus) -->
+          <AiGoalKeywordsView v-else-if="currentTab === 'ai-keywords' && authState.isAdmin.value" @navigate="switchTab" />
           <AiSettingsView v-else-if="currentTab === 'ai-settings' && authState.isAdmin.value" />
           <MasterDataView v-else-if="['settings', 'master-data'].includes(currentTab)" />
           <AgencyManagement v-else-if="currentTab === 'agencies'" />
@@ -96,6 +97,7 @@ function loadView(loader) {
 const ExecutiveDashboard = loadView(() => import('./views/ExecutiveDashboard.vue'));
 const DocumentDetailView = loadView(() => import('./views/DocumentDetailView.vue'));
 const AiSettingsView = loadView(() => import('./views/AiSettingsView.vue'));
+const AiGoalKeywordsView = loadView(() => import('./views/AiGoalKeywordsView.vue'));
 const AiDataView = loadView(() => import('./views/AiDataView.vue'));
 const ExecutiveReportsView = loadView(() => import('./views/ExecutiveReportsView.vue'));
 const LegalDocumentsView = loadView(() => import('./views/LegalDocumentsView.vue'));
