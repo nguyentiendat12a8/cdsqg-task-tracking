@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using System.Net;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Text.Json.Nodes;
 namespace Cdsqg.Application.AI;
 public static class AiProviderRequest
 {
@@ -15,6 +16,21 @@ public static class AiProviderRequest
         {
             payload["reasoning_effort"]="low";
             if(payload["max_completion_tokens"]?.GetValue<int>()==3500)payload["max_completion_tokens"]=8000;
+        }
+        if(endpoint.Host.Equals("oxionai.com",StringComparison.OrdinalIgnoreCase)||endpoint.Host.Equals("www.oxionai.com",StringComparison.OrdinalIgnoreCase))
+        {
+            if(payload["max_completion_tokens"] is JsonNode budget)
+            {
+                payload["max_tokens"]=budget.DeepClone();
+                payload.AsObject().Remove("max_completion_tokens");
+            }
+            if(payload["response_format"]?["type"]?.GetValue<string>()=="json_schema")
+            {
+                var schema=payload["response_format"]?["json_schema"]?["schema"];
+                if(schema!=null && payload["messages"] is JsonArray messages)
+                    messages.Insert(0,new JsonObject { ["role"]="system",["content"]="Chỉ trả JSON hợp lệ đúng cấu trúc sau, không thêm văn bản ngoài JSON: "+schema.ToJsonString() });
+                payload["response_format"]=new JsonObject { ["type"]="json_object" };
+            }
         }
         for(var attempt=0;;attempt++)
         {
@@ -33,6 +49,8 @@ public static class AiProviderRequest
         if(response.StatusCode!=HttpStatusCode.TooManyRequests)
             return new(response.StatusCode is HttpStatusCode.BadGateway or HttpStatusCode.ServiceUnavailable or HttpStatusCode.GatewayTimeout
                 ? $"Nhà cung cấp AI trả HTTP {code}: dịch vụ tạm thời không đáp ứng. Tài liệu được giữ lại; hãy đọc lại sau."
+                : response.StatusCode==HttpStatusCode.InternalServerError
+                ? "Nhà cung cấp AI trả HTTP 500: yêu cầu đã tới dịch vụ nhưng không được xử lý. Có thể do lỗi phía nhà cung cấp hoặc định dạng request/model chưa tương thích; hãy kiểm tra lại sau khi cập nhật cấu hình. Tài liệu được giữ lại."
                 : $"Nhà cung cấp AI trả HTTP {code}; kiểm tra cấu hình và quyền truy cập của model. Tài liệu được giữ lại.");
         var zero=false;var daily=false;var minute=false;var tokens=false;var billing=false;
         double? retrySeconds=response.Headers.RetryAfter?.Delta?.TotalSeconds;
