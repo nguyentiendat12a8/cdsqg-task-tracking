@@ -35,6 +35,30 @@ public class AiProviderRequestTests
         Assert.Equal(google?8000:3500,json.RootElement.GetProperty("max_completion_tokens").GetInt32());
         Assert.Equal(google,json.RootElement.TryGetProperty("reasoning_effort",out _));
     }
+    [Theory]
+    [InlineData("https://www.oxionai.com/v1/chat/completions",true)]
+    [InlineData("https://api.openai.com/v1/chat/completions",false)]
+    public async Task OxionUsesDocumentedJsonModeAndTokenField(string endpoint,bool oxion)
+    {
+        var handler=new Capture();using var client=new HttpClient(handler);
+        var body=new {model="qwen3.8-max",max_completion_tokens=1500,messages=new[]{new {role="user",content="Return JSON"}},response_format=new{type="json_schema",json_schema=new{name="test",schema=new{type="object",properties=new{ok=new{type="boolean"}}}}}};
+        using var response=await AiProviderRequest.SendAsync(client,new Uri(endpoint),"fixture",body,default);
+        using var json=System.Text.Json.JsonDocument.Parse(handler.Body);
+        var root=json.RootElement;
+        Assert.Equal(oxion,root.TryGetProperty("max_tokens",out _));
+        Assert.Equal(!oxion,root.TryGetProperty("max_completion_tokens",out _));
+        Assert.Equal(oxion?"json_object":"json_schema",root.GetProperty("response_format").GetProperty("type").GetString());
+        Assert.Equal(oxion?2:1,root.GetProperty("messages").GetArrayLength());
+        if(oxion)Assert.Contains("ok",root.GetProperty("messages")[0].GetProperty("content").GetString());
+    }
+    [Fact]
+    public async Task InternalServerErrorDoesNotClaimTheKeyOrModelIsWrong()
+    {
+        using var response=new HttpResponseMessage(HttpStatusCode.InternalServerError);
+        var failure=await AiProviderRequest.FailureAsync(response,"qwen3.8-max",default);
+        Assert.Contains("không được xử lý",failure.Message);
+        Assert.DoesNotContain("quyền truy cập",failure.Message);
+    }
 
     [Theory]
     [InlineData("GenerateRequestsPerDayPerProjectPerModel-FreeTier","20","theo ngày")]

@@ -74,9 +74,7 @@ public sealed class AiSettingsStore(AppDbContext db,IDataProtectionProvider prot
         var options=await PreviewAsync(input,ct);
         if(string.IsNullOrWhiteSpace(options.ApiKey)||string.IsNullOrWhiteSpace(options.Model))throw new InvalidOperationException("Cần model và API key để kiểm tra kết nối.");
         var body=new{model=options.Model,max_completion_tokens=1500,messages=new[]{new{role="user",content="Return JSON with ok=true."}},response_format=new{type="json_schema",json_schema=new{name="connection_test",strict=true,schema=new{type="object",properties=new{ok=new{type="boolean"}},required=new[]{"ok"},additionalProperties=false}}}};
-        using var request=new HttpRequestMessage(HttpMethod.Post,options.BaseUrl+"/chat/completions"){Content=JsonContent.Create(body)};
-        request.Headers.Authorization=new("Bearer",options.ApiKey);
-        using var response=await clients.CreateClient("ai-provider").SendAsync(request,ct);
+        using var response=await AiProviderRequest.SendAsync(clients.CreateClient("ai-provider"),new Uri(options.BaseUrl+"/chat/completions"),options.ApiKey,body,ct);
         if(!response.IsSuccessStatusCode)throw await AiProviderRequest.FailureAsync(response,options.Model,ct);
         using var data=JsonDocument.Parse(await response.Content.ReadAsStringAsync(ct));
         var choice=data.RootElement.GetProperty("choices")[0];
