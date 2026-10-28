@@ -1391,6 +1391,133 @@ namespace Cdsqg.Infrastructure.Data.Migrations
                     b.ToTable("DataImportLogs");
                 });
 
+            modelBuilder.Entity("Cdsqg.Core.Entities.DigitalNewsItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AgencyName")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("character varying(300)");
+
+                    b.Property<DateTime>("ImportedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<int>("SourceRow")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("SourceSheetUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Url")
+                        .IsRequired()
+                        .HasMaxLength(3000)
+                        .HasColumnType("character varying(3000)");
+
+                    b.Property<string>("UrlHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UrlHash")
+                        .IsUnique();
+
+                    b.HasIndex("ImportedAt", "Id");
+
+                    b.ToTable("DigitalNewsItems");
+                });
+
+            modelBuilder.Entity("Cdsqg.Core.Entities.DigitalNewsSyncSettings", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("Added")
+                        .HasColumnType("integer");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<int>("IntervalHours")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime?>("LastCompletedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("LastError")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("LastStartedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("LastStatus")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("LeaseToken")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("LeaseUntil")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime?>("NextRunAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("SheetUrl")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("Skipped")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Unchanged")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("Updated")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("UpdatedBy")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DigitalNewsSyncSettings");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            Added = 0,
+                            Enabled = true,
+                            IntervalHours = 2,
+                            LastError = "",
+                            LastStatus = "NotStarted",
+                            SheetUrl = "https://docs.google.com/spreadsheets/d/1fOGT8aBm6X5ul2pk8p7zxzixEMklpqLVXEgsSCFrEDI/edit?gid=731708878",
+                            Skipped = 0,
+                            Unchanged = 0,
+                            Updated = 0,
+                            UpdatedBy = ""
+                        });
+                });
+
             modelBuilder.Entity("Cdsqg.Core.Entities.Document", b =>
                 {
                     b.Property<Guid>("Id")

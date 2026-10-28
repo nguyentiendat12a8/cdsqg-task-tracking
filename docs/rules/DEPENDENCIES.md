@@ -39,3 +39,5 @@ Build/tests không chứng minh mọi UI accessible hoặc mọi endpoint đúng
 25/10/2026 — Keyring persistence: `AiCredentialPersistenceTests` kiểm thử migration PostgreSQL, chuyển file legacy idempotent/đồng thời, restart không có file, nhiều instance và chứng chỉ. `frontend/tests/ai-key-persistence.browser.mjs` kiểm thử chẩn đoán/nhập lại/xóa có chủ đích trên desktop/mobile.
 
 25/10/2026 — InternetTrackingTests + AiAlertsTests kiểm tra URL, scope, migration, đề xuất đa đơn vị và duyệt trong PostgreSQL; frontend/tests/internet-tracking.browser.mjs kiểm tra tạo nguồn, multi-select mục tiêu/đơn vị, lưu và mở lại ở desktop/mobile.
+
+Đồng bộ sheet dùng CSV công khai và Microsoft.VisualBasic.FileIO.TextFieldParser có sẵn trong .NET, không thêm package/CDN. Kiểm thử: backend.Tests/DigitalNewsTests.cs (PostgreSQL qua CDSQG_TEST_POSTGRES), frontend/tests/digital-news.browser.mjs (Playwright/Edge).

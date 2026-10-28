@@ -83,3 +83,5 @@ Chẩn đoán lỗi nhà cung cấp AI: `AiProviderRequest.FailureAsync` dùng c
 25/10/2026 — AiInternetTracking sở hữu cấu hình/phạm vi internet theo metric hoặc ID mục tiêu và snapshot đơn vị chủ trì. AiMetricExtractor kiểm tra dẫn chứng/phạm vi; AiCollectionService lưu đề xuất TargetAgencyId; AiReviewService revalidate phân giao khi duyệt. Verified dùng ProgressCalculator thay ngưỡng hardcode theo mã MT. FE chỉ chọn phạm vi, hiển thị dữ liệu và gửi xác nhận.
 
 RSS: AiInternetTracking.ContextAsync nạp mục tiêu/từ khóa theo DocumentId nguồn tại mỗi lượt phân loại; ResolveAsync gắn phạm vi phân giao cho các mục tiêu liên quan. Không dùng lựa chọn mục tiêu/đơn vị cũ của từng nguồn. AiAlertFeed.DocumentId tách sở hữu nguồn khỏi danh mục từ khóa thay đổi.
+
+Thông tin chuyển đổi số: DigitalNewsSheetReader sở hữu URL/CSV và định danh link; DigitalNewsSyncService sở hữu lease, chống trùng, commit và lịch PostgreSQL. DigitalNewsController lọc/phân trang trên server; DigitalNewsView trình bày. Đây là tiện ích dữ liệu dùng chung, độc lập với RSS/AI và mode văn bản.

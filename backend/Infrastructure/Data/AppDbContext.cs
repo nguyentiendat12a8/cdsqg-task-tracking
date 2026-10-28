@@ -32,6 +32,9 @@ namespace Cdsqg.Infrastructure.Data
 
 
 
+        public DbSet<DigitalNewsItem> DigitalNewsItems => Set<DigitalNewsItem>();
+        public DbSet<DigitalNewsSyncSettings> DigitalNewsSyncSettings => Set<DigitalNewsSyncSettings>();
+
         public DbSet<Agency> Agencies => Set<Agency>();
 
         public DbSet<UnitDictionary> Units => Set<UnitDictionary>();
@@ -85,6 +88,14 @@ namespace Cdsqg.Infrastructure.Data
         {
 
             base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<DigitalNewsItem>().HasIndex(i=>i.UrlHash).IsUnique();
+            modelBuilder.Entity<DigitalNewsItem>().Property(i=>i.UrlHash).HasMaxLength(64);
+            modelBuilder.Entity<DigitalNewsItem>().Property(i=>i.AgencyName).HasMaxLength(300);
+            modelBuilder.Entity<DigitalNewsItem>().Property(i=>i.Title).HasMaxLength(2000);
+            modelBuilder.Entity<DigitalNewsItem>().Property(i=>i.Url).HasMaxLength(3000);
+            modelBuilder.Entity<DigitalNewsItem>().HasIndex(i=>new{i.ImportedAt,i.Id});
+            modelBuilder.Entity<DigitalNewsSyncSettings>().HasData(new DigitalNewsSyncSettings{Id=1});
+
 
             modelBuilder.Entity<AiAlertFeed>().HasIndex(x=>new{x.DocumentId,x.FeedUrl}).IsUnique();
 
@@ -1874,4 +1885,3 @@ namespace Cdsqg.Infrastructure.Data
     }
 
 }
-

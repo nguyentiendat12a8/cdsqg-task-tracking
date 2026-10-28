@@ -64,6 +64,7 @@
 
           <!-- Thông tin Kế hoạch & Đầu mối của các đơn vị -->
           <AgencyPlansView v-else-if="currentTab === 'agency-plans'" />
+          <DigitalNewsView v-else-if="currentTab === 'digital-news'" />
 
           <!-- Thiết lập chung (Submenus) -->
           <AiGoalKeywordsView v-else-if="currentTab === 'ai-keywords' && authState.isAdmin.value" @navigate="switchTab" />
@@ -101,6 +102,7 @@ const AiGoalKeywordsView = loadView(() => import('./views/AiGoalKeywordsView.vue
 const AiDataView = loadView(() => import('./views/AiDataView.vue'));
 const ExecutiveReportsView = loadView(() => import('./views/ExecutiveReportsView.vue'));
 const LegalDocumentsView = loadView(() => import('./views/LegalDocumentsView.vue'));
+const DigitalNewsView = loadView(() => import('./views/DigitalNewsView.vue'));
 const AgencyPlansView = loadView(() => import('./views/AgencyPlansView.vue'));
 const MasterDataView = loadView(() => import('./views/MasterDataView.vue'));
 const AgencyManagement = loadView(() => import('./components/AgencyManagement.vue'));
@@ -141,7 +143,7 @@ function parseHashRoute() {
     return;
   }
 
-  if (['goals', 'goals-list', 'goals-grid', 'tasks', 'tasks-list', 'tasks-grid', 'reports', 'legal-documents', 'agency-plans', 'agencies', 'units', 'users', 'import-history', 'settings', 'master-data', 'ai-settings', 'ai-alerts', 'ai-review', ...AI_MENU.map(item => item.route)].includes(route)) {
+  if (['goals', 'goals-list', 'goals-grid', 'tasks', 'tasks-list', 'tasks-grid', 'reports', 'legal-documents', 'agency-plans', 'digital-news', 'agencies', 'units', 'users', 'import-history', 'settings', 'master-data', 'ai-settings', 'ai-alerts', 'ai-review', ...AI_MENU.map(item => item.route)].includes(route)) {
     currentTab.value = route;
   } else {
     currentTab.value = 'dashboard';

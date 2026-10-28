@@ -176,7 +176,7 @@
             :class="[
               'nav-link w-full flex items-center justify-between py-3 rounded-xl font-bold text-xs transition-all duration-200 whitespace-nowrap overflow-hidden cursor-pointer',
               isCollapsed ? 'justify-center px-0 w-12 h-12 mx-auto' : 'px-3',
-              ['legal-documents', 'agency-plans'].includes(activeTab) ? 'is-active' : 'nav-idle'
+              ['legal-documents', 'agency-plans', 'digital-news'].includes(activeTab) ? 'is-active' : 'nav-idle'
             ]"
             :title="isCollapsed ? 'Tiện ích' : ''"
           >
@@ -203,6 +203,7 @@
             >
               Đầu mối liên hệ và KH CĐS
             </button>
+            <button @click="selectTab('digital-news')" :class="['nav-sublink w-full text-left py-2 px-3 rounded-lg text-xs font-semibold transition whitespace-nowrap cursor-pointer', activeTab === 'digital-news' ? 'is-active' : 'nav-idle']">Thông tin chuyển đổi số</button>
           </div>
         </div>
 
@@ -286,7 +287,7 @@ let hoverTimer = null;
 
 const isAiOpen = ref(isAiRoute(props.activeTab));
 const isGoalsOpen = ref(props.activeTab.startsWith('goals'));
-const isUtilitiesOpen = ref(['legal-documents', 'agency-plans'].includes(props.activeTab));
+const isUtilitiesOpen = ref(['legal-documents', 'agency-plans', 'digital-news'].includes(props.activeTab));
 const isSettingsOpen = ref(['agencies', 'units', 'users', 'import-history'].includes(props.activeTab));
 
 const isCollapsed = computed(() => {
@@ -296,7 +297,7 @@ const isCollapsed = computed(() => {
 watch(() => props.activeTab, (newTab) => {
   if (isAiRoute(newTab)) isAiOpen.value = true;
   if (newTab.startsWith('goals')) isGoalsOpen.value = true;
-  if (['legal-documents', 'agency-plans'].includes(newTab)) isUtilitiesOpen.value = true;
+  if (['legal-documents', 'agency-plans', 'digital-news'].includes(newTab)) isUtilitiesOpen.value = true;
   if (['agencies', 'units', 'users', 'import-history'].includes(newTab)) isSettingsOpen.value = true;
 }, { immediate: true });
 

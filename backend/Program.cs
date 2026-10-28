@@ -95,6 +95,13 @@ static string ConvertPostgresConnectionString(string connStr)
     return connStr;
 }
 
+// Public Google Sheets export, fixed host and no automatic redirects/cookies.
+builder.Services.AddHttpClient("digital-news-sheet",c=>c.Timeout=TimeSpan.FromSeconds(30))
+    .ConfigurePrimaryHttpMessageHandler(()=>new HttpClientHandler{AllowAutoRedirect=false,UseCookies=false});
+builder.Services.AddScoped<IDigitalNewsSheetReader,DigitalNewsSheetReader>();
+builder.Services.AddScoped<DigitalNewsSyncService>();
+builder.Services.AddHostedService<DigitalNewsSyncWorker>();
+
 // Register Application & Auth Services
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IJwtService, JwtService>();
