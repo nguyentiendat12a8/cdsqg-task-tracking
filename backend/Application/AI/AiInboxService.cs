@@ -178,7 +178,20 @@ public sealed class AiInboxService(AppDbContext db,IWebHostEnvironment environme
             var bytes=await File.ReadAllBytesAsync(PrivatePath(item.StorageKey),ct);
             doc=new("/api/ai-inbox/"+item.Id+"/file",item.Title,bytes,ParseFile(bytes,Path.GetExtension(item.Title).ToLowerInvariant()),[]);
         }
-        else {CanonicalUrl(item.Url);doc=await reader.ReadAsync(item.Url,ct);} // Only this exact URL; no crawling/following links.
+        else
+        {
+            if(item.Url.Contains("news.google.com"))
+            {
+                var decoded=await GoogleNewsDecoder.DecodeUrlAsync(item.Url,null,ct);
+                if(decoded!=item.Url&&Uri.TryCreate(decoded,UriKind.Absolute,out var u)&&u.Scheme=="https")
+                {
+                    item.Url=decoded;
+                    await db.SaveChangesAsync(ct);
+                }
+            }
+            CanonicalUrl(item.Url);
+            doc=await reader.ReadAsync(item.Url,ct);
+        } // Only this exact URL; no crawling/following links.
         var feed=item.StorageKey.Length==0&&item.AlertFeedId.HasValue?await db.AiAlertFeeds.AsNoTracking().SingleOrDefaultAsync(f=>f.Id==item.AlertFeedId,ct):null;
         var internetMetrics=item.StorageKey.Length==0?await AiInternetTracking.ResolveAsync(db,feed,ct,metrics.ToArray()):[];
         var accepted=0;

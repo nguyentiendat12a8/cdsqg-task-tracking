@@ -62,17 +62,6 @@ public sealed class DigitalNewsController(AppDbContext db,DigitalNewsSyncService
         if(item==null)return NotFound();
         try
         {
-            if(item.Url.Contains("news.google.com"))
-            {
-                var decoded=await Cdsqg.Application.AI.GoogleNewsDecoder.DecodeUrlAsync(item.Url,null,ct);
-                if(decoded!=item.Url&&Uri.TryCreate(decoded,UriKind.Absolute,out var u)&&u.Scheme=="https")
-                {
-                    item.Url=decoded;
-                    item.UrlHash=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(decoded)));
-                    item.UpdatedAt=DateTime.UtcNow;
-                    await db.SaveChangesAsync(ct);
-                }
-            }
             var url=Cdsqg.Application.AI.AiInboxService.CanonicalUrl(item.Url);
             var hash=Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(url)));
             var existing=await db.AiInboxItems.FirstOrDefaultAsync(i=>i.UrlHash==hash,ct);
@@ -87,7 +76,7 @@ public sealed class DigitalNewsController(AppDbContext db,DigitalNewsSyncService
             {
                 await inbox.ImportEntryAsync(new Cdsqg.Application.AI.AlertInput(item.Title,item.Url),null,item.ImportedAt,"Google Sheets: "+item.AgencyName,ct);
             }
-            return Ok(new{message=$"Đã đưa bài viết “{item.Title}” vào hàng đợi AI đọc và bóc tách số liệu."});
+            return Ok(new{message=$"Đã đưa bài viết “{item.Title}” vào hàng đợi AI đánh giá tiêu đề."});
         }
         catch(InvalidOperationException ex){return BadRequest(new{message=ex.Message});}
     }
