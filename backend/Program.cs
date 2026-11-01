@@ -1,3 +1,4 @@
+using Cdsqg.Application.AI;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -94,6 +95,13 @@ static string ConvertPostgresConnectionString(string connStr)
     return connStr;
 }
 
+// Public Google Sheets export, fixed host and no automatic redirects/cookies.
+builder.Services.AddHttpClient("digital-news-sheet",c=>c.Timeout=TimeSpan.FromSeconds(30))
+    .ConfigurePrimaryHttpMessageHandler(()=>new HttpClientHandler{AllowAutoRedirect=false,UseCookies=false});
+builder.Services.AddScoped<IDigitalNewsSheetReader,DigitalNewsSheetReader>();
+builder.Services.AddScoped<DigitalNewsSyncService>();
+builder.Services.AddHostedService<DigitalNewsSyncWorker>();
+
 // Register Application & Auth Services
 builder.Services.AddScoped<IPasswordHasher, PasswordHasher>();
 builder.Services.AddScoped<IJwtService, JwtService>();
@@ -102,9 +110,7 @@ builder.Services.AddScoped<IPlanningService, PlanningService>();
 builder.Services.AddScoped<IExecutionService, ExecutionService>();
 builder.Services.AddScoped<IRecoveryEmailSender, SmtpRecoveryEmailSender>();
 builder.Services.AddScoped<PasswordRecoveryService>();
-var aiProtectionDirectory = builder.Configuration["AiData:ProtectionKeyDirectory"];
-if (string.IsNullOrWhiteSpace(aiProtectionDirectory)) aiProtectionDirectory = System.IO.Path.Combine(builder.Environment.ContentRootPath, "App_Data", "ai-keys");
-builder.Services.AddDataProtection().SetApplicationName("CDSQG.AiCredentials").PersistKeysToFileSystem(new System.IO.DirectoryInfo(aiProtectionDirectory));
+builder.Services.AddAiCredentialProtection(builder.Configuration);
 builder.Services.AddScoped<Cdsqg.Application.AI.AiSettingsStore>();
 builder.Services.Configure<Cdsqg.Application.AI.AiDataOptions>(builder.Configuration.GetSection("AiData"));
 builder.Services.AddHttpClient("ai-provider", client => client.Timeout = TimeSpan.FromSeconds(90)).ConfigurePrimaryHttpMessageHandler(Cdsqg.Application.AI.AiSourceReader.CreatePublicHandler);
@@ -191,6 +197,16 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Nén JSON (danh sách/thống kê có thể vài trăm KB) để giảm thời gian tải qua mạng.
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProvider>();
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.GzipCompressionProvider>();
+});
+builder.Services.Configure<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProviderOptions>(o => o.Level = System.IO.Compression.CompressionLevel.Fastest);
+builder.Services.Configure<Microsoft.AspNetCore.ResponseCompression.GzipCompressionProviderOptions>(o => o.Level = System.IO.Compression.CompressionLevel.Fastest);
+
 var app = builder.Build();
 
 // Explicit repair preserves reports, decisions and execution IDs; no destructive seed replay.
@@ -212,6 +228,21 @@ if (args.Contains("--backfill-missing-assignments"))
     return;
 }
 
+// Apply the credential upgrade without starting HTTP listeners, AI workers or seeds.
+if (args.Contains("--migrate-ai-keyring"))
+{
+    using var keyScope = app.Services.CreateScope();
+    var keyDb = keyScope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await keyDb.Database.MigrateAsync();
+    var imported = await AiCredentialProtection.ImportLegacyKeysAsync(keyDb, builder.Configuration, app.Environment.ContentRootPath);
+    var credential = await keyScope.ServiceProvider.GetRequiredService<AiSettingsStore>().GetAsync();
+    Console.WriteLine($"AI keyring migration complete. Imported keys: {imported}. Credential readable: {!string.IsNullOrEmpty(credential.ApiKey)}.");
+    return;
+}
+
+// Không nén phản hồi xác thực (chứa token) để tránh rủi ro kiểu BREACH; các API còn lại được nén.
+app.UseWhen(ctx => !ctx.Request.Path.StartsWithSegments("/api/auth"), branch => branch.UseResponseCompression());
+
 app.UseCors("AllowFrontend");
 
 // Ensure Database Clean Recreation & Seed Initial Data (Fail-safe wrapper)
@@ -225,6 +256,8 @@ using (var scope = app.Services.CreateScope())
         {
             EnsurePostgresSchemaUpToDate(context);
         }
+        var importedKeys = await AiCredentialProtection.ImportLegacyKeysAsync(context, builder.Configuration, app.Environment.ContentRootPath);
+        if (importedKeys > 0) app.Logger.LogInformation("Imported {Count} existing AI protection keys into the database.", importedKeys);
         SeedInitialData(context, hasher);
         await AgencyAssignments.InitializeMissingAsync(context);
         EnsureSampleFilesExist(app.Environment);

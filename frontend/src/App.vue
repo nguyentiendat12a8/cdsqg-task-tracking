@@ -64,8 +64,10 @@
 
           <!-- Thông tin Kế hoạch & Đầu mối của các đơn vị -->
           <AgencyPlansView v-else-if="currentTab === 'agency-plans'" />
+          <DigitalNewsView v-else-if="currentTab === 'digital-news'" />
 
           <!-- Thiết lập chung (Submenus) -->
+          <AiGoalKeywordsView v-else-if="currentTab === 'ai-keywords' && authState.isAdmin.value" @navigate="switchTab" />
           <AiSettingsView v-else-if="currentTab === 'ai-settings' && authState.isAdmin.value" />
           <MasterDataView v-else-if="['settings', 'master-data'].includes(currentTab)" />
           <AgencyManagement v-else-if="currentTab === 'agencies'" />
@@ -96,9 +98,11 @@ function loadView(loader) {
 const ExecutiveDashboard = loadView(() => import('./views/ExecutiveDashboard.vue'));
 const DocumentDetailView = loadView(() => import('./views/DocumentDetailView.vue'));
 const AiSettingsView = loadView(() => import('./views/AiSettingsView.vue'));
+const AiGoalKeywordsView = loadView(() => import('./views/AiGoalKeywordsView.vue'));
 const AiDataView = loadView(() => import('./views/AiDataView.vue'));
 const ExecutiveReportsView = loadView(() => import('./views/ExecutiveReportsView.vue'));
 const LegalDocumentsView = loadView(() => import('./views/LegalDocumentsView.vue'));
+const DigitalNewsView = loadView(() => import('./views/DigitalNewsView.vue'));
 const AgencyPlansView = loadView(() => import('./views/AgencyPlansView.vue'));
 const MasterDataView = loadView(() => import('./views/MasterDataView.vue'));
 const AgencyManagement = loadView(() => import('./components/AgencyManagement.vue'));
@@ -108,6 +112,7 @@ const ImportHistoryAudit = loadView(() => import('./components/ImportHistoryAudi
 import ConfirmModal from './components/ConfirmModal.vue';
 import { authState, logout } from './services/auth';
 import { getApiUrl } from './config/api';
+import { SUPPORTED_DOCUMENTS, activeDocumentId, switchDocument } from './services/documentContext';
 import { AI_MENU, isAiDataRoute, aiSectionFor } from './shared/aiNavigation';
 
 const mobileMenuOpen = ref(false);
@@ -139,7 +144,7 @@ function parseHashRoute() {
     return;
   }
 
-  if (['goals', 'goals-list', 'goals-grid', 'tasks', 'tasks-list', 'tasks-grid', 'reports', 'legal-documents', 'agency-plans', 'agencies', 'units', 'users', 'import-history', 'settings', 'master-data', 'ai-settings', 'ai-alerts', 'ai-review', ...AI_MENU.map(item => item.route)].includes(route)) {
+  if (['goals', 'goals-list', 'goals-grid', 'tasks', 'tasks-list', 'tasks-grid', 'reports', 'legal-documents', 'agency-plans', 'digital-news', 'agencies', 'units', 'users', 'import-history', 'settings', 'master-data', 'ai-settings', 'ai-alerts', 'ai-review', ...AI_MENU.map(item => item.route)].includes(route)) {
     currentTab.value = route;
   } else {
     currentTab.value = 'dashboard';
@@ -211,15 +216,46 @@ async function handleOpenNotificationDetail(event) {
   }
 
   try {
-    const docId = '12660000-0000-0000-0000-000000001266';
+    // Thông báo có thể thuộc 1266 hoặc 2629: tìm ở văn bản đang chọn trước, không thấy mới tìm văn bản còn lại.
     const currentAgencyId = authState.user.value?.agencyId || '';
     const agencyParam = currentAgencyId ? `?agencyId=${currentAgencyId}` : '';
-    const res = await fetchWithAuth(getApiUrl(`/api/planning/documents/${docId}/grid${agencyParam}`));
-    if (!res.ok) return;
+    const docOrder = [activeDocumentId.value, ...SUPPORTED_DOCUMENTS.map(d => d.id).filter(id => id !== activeDocumentId.value)];
+    let targetItem = null;
+    let targetDocId = null;
+    const loaded = [];
+    // Ưu tiên khớp theo ID (duy nhất toàn hệ thống); mã NV-/MT- có thể trùng giữa hai văn bản nên chỉ dùng khi không có ID.
+    for (const docId of docOrder) {
+      const res = await fetchWithAuth(getApiUrl(`/api/planning/documents/${docId}/grid${agencyParam}`));
+      if (!res.ok) continue;
+      const items = (await res.json()).items || [];
+      loaded.push({ docId, items });
+      targetItem = findNotificationTarget(items, targetId, null);
+      if (targetItem || !targetId) { targetDocId = docId; break; }
+    }
+    if (!targetItem && targetCode) {
+      for (const { docId, items } of loaded) {
+        targetItem = findNotificationTarget(items, null, targetCode);
+        if (targetItem) { targetDocId = docId; break; }
+      }
+    }
 
-    const data = await res.json();
-    const allItems = data.items || [];
+    if (targetItem) {
+      if (targetDocId !== activeDocumentId.value) switchDocument(targetDocId);
+      const isGoal = targetItem.itemType === 'Goal' || targetItem.itemType === 1 || targetItem.itemType === '1';
+      currentTab.value = isGoal ? 'goals' : 'tasks';
 
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent('open-target-item-detail', {
+          detail: { item: targetItem, initialTab: targetTab }
+        }));
+      }, 150);
+    }
+  } catch (e) {
+    console.error('Lỗi khi mở chi tiết thông báo:', e);
+  }
+}
+
+function findNotificationTarget(allItems, targetId, targetCode) {
     let targetItem = null;
     if (targetId) {
       for (const item of allItems) {
@@ -238,20 +274,7 @@ async function handleOpenNotificationDetail(event) {
         }
       }
     }
-
-    if (targetItem) {
-      const isGoal = targetItem.itemType === 'Goal' || targetItem.itemType === 1 || targetItem.itemType === '1';
-      currentTab.value = isGoal ? 'goals' : 'tasks';
-
-      setTimeout(() => {
-        window.dispatchEvent(new CustomEvent('open-target-item-detail', {
-          detail: { item: targetItem, initialTab: targetTab }
-        }));
-      }, 150);
-    }
-  } catch (e) {
-    console.error('Lỗi khi mở chi tiết thông báo:', e);
-  }
+    return targetItem;
 }
 
 onMounted(() => {

@@ -540,6 +540,7 @@ import { toast } from 'vue3-toastify';
 import LoadingSpinner from './LoadingSpinner.vue';
 import SearchableSelect from './SearchableSelect.vue';
 import { getApiUrl } from '../config/api';
+import { loadAgencyCatalog } from '../services/agencyCatalog';
 import { authState } from '../services/auth';
 
 const props = defineProps({
@@ -772,10 +773,8 @@ async function openAssignModal() {
   isLoadingSubAgencies.value = true;
   selectedSubAgencyId.value = props.item.assignedAgencyId || '';
   try {
-    const res = await fetchWithAuth(getApiUrl('/api/agencies'));
-    if (res.ok) {
-      const data = await res.json();
-      const allAgencies = Array.isArray(data) ? data : (data.items || []);
+    {
+      const allAgencies = await loadAgencyCatalog();
       const userAgencyId = authState.user.value?.agencyId || authState.user.value?.agency?.id || authState.currentAgency?.value?.id;
       
       let targetLeadId = props.item.leadAgencyId || props.item.agencyId || (props.item.leadAgency && props.item.leadAgency.id);

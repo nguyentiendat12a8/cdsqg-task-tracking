@@ -4,6 +4,7 @@ import { fetchWithAuth } from '../../services/auth';
 import { ref, watch, onUnmounted } from 'vue';
 import { authState } from '../../services/auth';
 import { getApiUrl } from '../../config/api';
+import { loadAgencyCatalog } from '../../services/agencyCatalog';
 
 export function useDocumentData({ props, getQueryState }) {
   const isLoading = ref(true);
@@ -88,21 +89,21 @@ export function useDocumentData({ props, getQueryState }) {
 
       const params = buildQuery();
 
-      const [itemsRes, agRes] = await Promise.all([
+      const [itemsRes, agData] = await Promise.all([
         fetchWithAuth(getApiUrl(`/api/documents/${docId}/items?${params.toString()}`)),
-        agenciesLoaded ? Promise.resolve(null) : fetchWithAuth(getApiUrl('/api/agencies'))
+        agenciesLoaded ? Promise.resolve(null) : loadAgencyCatalog()
       ]);
 
-      if (!itemsRes.ok || (agRes && !agRes.ok)) throw new Error('Cannot load document data');
-      const [data, agData] = await Promise.all([itemsRes.json(), agRes?.json()]);
+      if (!itemsRes.ok) throw new Error('Cannot load document data');
+      const data = await itemsRes.json();
       if (version !== requestVersion) return;
       if (agData) {
-        agencies.value = Array.isArray(agData) ? agData : (agData.items || []);
+        agencies.value = agData;
         agenciesLoaded = true;
       }
       rawItemsList.value = data.items || [];
       serverTotalCount.value = typeof data.totalCount === 'number' ? data.totalCount : rawItemsList.value.length;
-      serverTotalPages.value = typeof data.totalPages === 'number' ? data.totalPages : (Math.ceil(serverTotalCount.value / pageSize.value) || 1);
+      serverTotalPages.value = typeof data.totalPages === 'number' ? data.totalPages : (Math.ceil(serverTotalCount.value / getQueryState().pageSize.value) || 1);
     } catch (e) {
       if (version === requestVersion) loadError.value = 'Không tải được danh sách. Vui lòng thử lại.';
     } finally {

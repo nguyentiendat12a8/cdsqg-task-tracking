@@ -74,6 +74,7 @@ import { fetchWithAuth } from '../services/auth';
 import { ref, onMounted, onUnmounted, watch } from 'vue';
 import { getApiUrl } from '../config/api';
 import { authState } from '../services/auth';
+import { createVisiblePoller } from '../shared/visiblePolling';
 
 const containerRef = ref(null);
 const isOpen = ref(false);
@@ -117,7 +118,8 @@ async function fetchNotifications() {
         }
       }
       notifications.value = uniqueItems;
-      unreadCount.value = uniqueItems.filter(i => !i.isRead).length;
+      // Danh sách chỉ là trang đầu (15 mục); số chưa đọc lấy từ máy chủ để không bị giới hạn theo trang.
+      unreadCount.value = typeof data.unreadCount === 'number' ? data.unreadCount : uniqueItems.filter(i => !i.isRead).length;
     }
   } catch (e) {
     // Backend offline fallback - fail silently
@@ -158,16 +160,12 @@ async function clickNotification(notif) {
   }));
 }
 
-let pollTimer = null;
+// 15 giây khi tab đang mở; tab ẩn thì dừng, quay lại tab thì tải ngay.
+const NOTIFICATION_POLL_MS = 15000;
+const poller = createVisiblePoller(fetchNotifications, NOTIFICATION_POLL_MS);
 
 function handleNotificationSent() {
   fetchNotifications();
-}
-
-function handleVisibilityChange() {
-  if (!document.hidden) {
-    fetchNotifications();
-  }
 }
 
 watch(isOpen, (newVal) => {
@@ -184,21 +182,13 @@ onMounted(() => {
   fetchNotifications();
   document.addEventListener('click', handleClickOutside);
   window.addEventListener('notification-sent', handleNotificationSent);
-  document.addEventListener('visibilitychange', handleVisibilityChange);
-
-  // Real-time polling every 5 seconds
-  pollTimer = setInterval(fetchNotifications, 5000);
+  poller.start();
 });
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
   window.removeEventListener('notification-sent', handleNotificationSent);
-  document.removeEventListener('visibilitychange', handleVisibilityChange);
-
-  if (pollTimer) {
-    clearInterval(pollTimer);
-    pollTimer = null;
-  }
+  poller.stop();
 });
 </script>
 

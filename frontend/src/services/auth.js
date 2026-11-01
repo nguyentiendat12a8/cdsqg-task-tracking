@@ -43,6 +43,7 @@ export async function login(username, password) {
 }
 
 export function logout() {
+  window.dispatchEvent(new CustomEvent('agency-catalog-stale'));
   token.value = '';
   user.value = null;
   localStorage.removeItem(TOKEN_KEY);
@@ -79,6 +80,11 @@ export async function fetchWithAuth(url, options = {}) {
 
   if (isApi && response.status === 401) {
     logout();
+  }
+
+  const method = String(options.method || (url instanceof Request ? url.method : 'GET')).toUpperCase();
+  if (isApi && response.ok && method !== 'GET' && /^\/api\/(agencies|units)(\/|$)/i.test(target.pathname)) {
+    window.dispatchEvent(new CustomEvent('agency-catalog-stale'));
   }
 
   return response;

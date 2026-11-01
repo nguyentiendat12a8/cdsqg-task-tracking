@@ -258,6 +258,7 @@ import 'vue3-toastify/dist/index.css';
 import SearchableSelect from './SearchableSelect.vue';
 import LoadingSpinner from './LoadingSpinner.vue';
 import { getApiUrl } from '../config/api';
+import { loadAgencyCatalog } from '../services/agencyCatalog';
 import { authState } from '../services/auth';
 import { parseApiError } from '../utils/errorUtils';
 
@@ -287,11 +288,7 @@ async function loadAgenciesCatalog() {
     return;
   }
   try {
-    const res = await fetchWithAuth(getApiUrl('/api/agencies'));
-    if (res.ok) {
-      const data = await res.json();
-      internalAgencies.value = Array.isArray(data) ? data : (data.items || []);
-    }
+    internalAgencies.value = await loadAgencyCatalog();
   } catch (e) {
     console.error('Failed to load agencies in ProgressUpdateModal:', e);
   }

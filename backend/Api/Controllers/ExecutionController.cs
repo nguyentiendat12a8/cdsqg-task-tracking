@@ -263,7 +263,11 @@ namespace Cdsqg.Api.Controllers
         {
             try
             {
+                // Endpoint được polling định kỳ: chỉ đọc nên không tracking, tách query để tránh tích Cartesian
+                // giữa Baselines × ProgressLogs của từng mục.
                 var query = _context.ProgressLogs
+                    .AsNoTrackingWithIdentityResolution()
+                    .AsSplitQuery()
                     .Include(p => p.GoalTaskItem).ThenInclude(t => t!.Baselines)
                     .Include(p => p.GoalTaskItem).ThenInclude(t => t!.ProgressLogs)
                     .Include(p => p.GoalTaskItem).ThenInclude(t => t!.Unit)

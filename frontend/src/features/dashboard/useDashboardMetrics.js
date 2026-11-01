@@ -2,6 +2,7 @@ import { fetchWithAuth } from '../../services/auth';
 import { ref, computed, watch, onUnmounted } from 'vue';
 import { buildDashboardQuery } from './queries';
 import { getApiUrl } from '../../config/api';
+import { loadAgencyCatalog } from '../../services/agencyCatalog';
 import { authState } from '../../services/auth';
 
 export function useDashboardMetrics({ assignmentRole, dashboardFilter, documentIds, selectedAgencyIds, selectedSubAgencyIds, selectedScopes, selectedSections, selectedGroups, fromYear, toYear, isOngoingOnly,reportFromYear,reportToYear,executionFrom,executionTo, agencies, isSpecialAgencyCode }) {
@@ -225,11 +226,7 @@ export function useDashboardMetrics({ assignmentRole, dashboardFilter, documentI
 
   async function loadAgencies() {
     try {
-      const res = await fetchWithAuth(getApiUrl('/api/agencies'));
-      if (res.ok) {
-        const data = await res.json();
-        agencies.value = Array.isArray(data) ? data : (data.items || []);
-      }
+      agencies.value = await loadAgencyCatalog();
     } catch (e) {}
   }
 

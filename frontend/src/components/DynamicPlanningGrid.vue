@@ -379,6 +379,7 @@ import LoadingSpinner from './LoadingSpinner.vue';
 import SearchableSelect from './SearchableSelect.vue';
 import OverlayPanel from './OverlayPanel.vue';
 import { getApiUrl } from '../config/api';
+import { loadAgencyCatalog } from '../services/agencyCatalog';
 import { GOAL_SECTIONS, GOAL_GROUPS, TASK_SECTIONS, TASK_GROUPS } from '../config/planningStructureConfig';
 
 const props = defineProps({
@@ -598,11 +599,7 @@ function showToast(msg) {
 
 async function loadAgencies() {
   try {
-    const res = await fetchWithAuth(getApiUrl('/api/agencies'));
-    if (res.ok) {
-      const data = await res.json();
-      agencies.value = Array.isArray(data) ? data : (data.items || []);
-    }
+    agencies.value = await loadAgencyCatalog();
   } catch (e) {
     // Silent catch
   }
@@ -845,8 +842,10 @@ async function saveYearlyTarget(item, year, val) {
   }
 }
 
+let gridRequestVersion = 0;
 async function loadGridData() {
   if (!props.documentId) return;
+  const version = ++gridRequestVersion;
   isLoading.value = true;
   try {
     const currentAgencyId = authState.user.value?.agencyId || '';
@@ -854,6 +853,7 @@ async function loadGridData() {
     const res = await fetchWithAuth(getApiUrl(`/api/planning/documents/${props.documentId}/grid${agencyParam}`));
     if (res.ok) {
       const data = await res.json();
+      if (version !== gridRequestVersion) return;
       gridData.value = {
         documentId: data.documentId || props.documentId,
         documentNumber: data.documentNumber || '',
@@ -867,22 +867,23 @@ async function loadGridData() {
   } catch (e) {
     console.error('Error fetching planning grid data from backend API:', e);
   } finally {
-    isLoading.value = false;
+    if (version === gridRequestVersion) isLoading.value = false;
   }
 }
 
-watch(() => props.filterItemType, (newType) => {
+// Lần tải đầu do onMounted thực hiện; các watcher chỉ tải lại khi giá trị thực sự đổi (tránh gọi /grid 3 lần khi mount).
+watch(() => props.filterItemType, (newType, oldType) => {
   if (newType === 'Goal' || newType === 'goals' || newType === '1') {
     activeSubTab.value = 'goals';
   } else if (newType === 'Task' || newType === 'tasks' || newType === '2') {
     activeSubTab.value = 'tasks';
   }
-  loadGridData();
+  if (oldType !== undefined) loadGridData();
 }, { immediate: true });
 
 watch(() => props.documentId, () => {
   loadGridData();
-}, { immediate: true });
+});
 
 onMounted(() => {
   loadSavedFilters();

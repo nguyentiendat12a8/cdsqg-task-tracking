@@ -439,6 +439,7 @@ import SearchableSelect from '../components/SearchableSelect.vue';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
 import OverlayPanel from '../components/OverlayPanel.vue';
 import { getApiUrl } from '../config/api';
+import { loadAgencyCatalog } from '../services/agencyCatalog';
 import { GOAL_SECTIONS, GOAL_GROUPS, TASK_SECTIONS, TASK_GROUPS } from '../config/planningStructureConfig';
 import { exportToExcel, exportFormattedReportExcel } from '../utils/excelExport';
 import { authState } from '../services/auth';
@@ -832,12 +833,10 @@ async function loadReportData() {
   allItems.value = [];
   metrics.value = {};
   try {
-    const agRes = await fetchWithAuth(getApiUrl('/api/agencies'));
-    if (agRes.ok) {
-      const agData = await agRes.json();
-      if (currentId !== reportFetchRequestId) return;
-      agencies.value = agData;
-    }
+    // Danh mục cơ quan dùng bộ nhớ đệm chung, không tải lại mỗi lần đổi bộ lọc báo cáo.
+    const agData = await loadAgencyCatalog().catch(() => null);
+    if (currentId !== reportFetchRequestId) return;
+    if (agData) agencies.value = agData;
 
     const params = new URLSearchParams();
     if (docId) params.set('documentId', docId);
