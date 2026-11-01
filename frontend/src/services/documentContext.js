@@ -68,3 +68,5 @@ export function switchDocument(codeOrId) {
     } catch {}
   }
 }
+
+export function withActiveDocument(path) { return path + (path.includes("?") ? "&" : "?") + "documentId=" + encodeURIComponent(activeDocumentId.value); }

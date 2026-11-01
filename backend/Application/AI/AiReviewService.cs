@@ -73,15 +73,19 @@ public sealed class AiReviewService(AppDbContext db, IExecutionService execution
             foreach(var link in links)
             {
                 var goal=await db.GoalTaskItems.Include(g=>g.Unit).SingleAsync(g=>g.Id==link.GoalTaskId,ct);
-                if(goal.ItemType!=ItemTypeEnum.Goal || goal.EvaluationType!=EvaluationTypeEnum.Quantitative || goal.IsGeneralTask)
+                if(goal.ItemType!=ItemTypeEnum.Goal || goal.EvaluationType!=EvaluationTypeEnum.Quantitative || goal.IsGeneralTask && !item.TargetAgencyId.HasValue)
                     throw new InvalidOperationException($"{goal.Code}: cấu hình mục tiêu không phù hợp báo cáo số liệu toàn quốc.");
+                if(item.TargetAgencyId.HasValue) {
+                    if(!await db.AgencyTaskExecutions.AnyAsync(e=>e.GoalTaskId==goal.Id&&e.AgencyId==item.TargetAgencyId&&e.IsLeadAssignment,ct))throw new InvalidOperationException("Đơn vị không còn được phân giao chủ trì mục tiêu; cần kiểm tra lại.");
+                    if((goal.StartDate.HasValue&&goal.StartDate.Value.Year>item.DataYear)||(goal.DueDate.HasValue&&goal.DueDate.Value.Year<item.DataYear))throw new InvalidOperationException("Năm số liệu ngoài thời gian thực hiện mục tiêu.");
+                }
                 var rank=ProgressCalculator.IsLowerBetter(goal);
                 var percent=!goal.UnitId.HasValue || goal.Unit?.Name=="%" || goal.Unit?.Code=="PERCENT";
                 if(metric.Unit=="rank"?!rank:metric.Unit=="%"?!percent:percent)
                     throw new InvalidOperationException($"{goal.Code}: đơn vị mục tiêu không khớp số liệu AI; cần kiểm tra cấu hình trước khi duyệt.");
                 var result=await execution.SubmitProgressAsync(goal.Id,new SubmitProgressRequestDto {
                     PeriodYear=item.DataYear,Value=value,UserRole="Admin",CreatedBy=actor,
-                    AgencyId=goal.AssignedAgencyId??goal.LeadAgencyId,
+                    AgencyId=item.TargetAgencyId??goal.AssignedAgencyId??goal.LeadAgencyId,
                     SummaryNotes=summaryNote,
                     ExistingFiles=new(){fileUrl}
                 });
@@ -90,7 +94,7 @@ public sealed class AiReviewService(AppDbContext db, IExecutionService execution
                 report.ApprovedBy=actor;report.ApprovedAt=DateTime.UtcNow;
             }
             // Keep prior decisions as audit history; only one current accepted measurement per metric/year.
-            var previous=await db.AiDataSuggestions.Where(s=>s.MetricKey==item.MetricKey && s.DataYear==item.DataYear && s.IsCurrent).ToListAsync(ct);
+            var previous=await db.AiDataSuggestions.Where(s=>s.MetricKey==item.MetricKey && s.DataYear==item.DataYear && s.TargetAgencyId==item.TargetAgencyId && s.IsCurrent).ToListAsync(ct);
             foreach(var old in previous)old.IsCurrent=false;
             await db.SaveChangesAsync(ct);
             item.AcceptedValue=value;item.IsCurrent=true;item.Status="Approved";

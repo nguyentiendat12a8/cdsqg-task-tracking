@@ -55,16 +55,26 @@ public sealed class AiCollectionService(AppDbContext db, IAiSourceReader reader,
             foreach(var value in values.Take(20)) {
                 try {AiMetricExtractor.Validate(value,metric,collected.Pages,Cdsqg.Application.Services.ReportingPeriod.CurrentYear);}
                 catch(InvalidOperationException ex) {invalid++;invalidReasons.Add($"Trang PDF AI trả {value.Page}: {ex.Message}");continue;}
+                var targetAgencyId=metric.Scopes?.Single(s=>string.Equals(s.Name,value.Scope,StringComparison.OrdinalIgnoreCase)).AgencyId;
                 var methodology=value.Methodology[..Math.Min(2000,value.Methodology.Length)];
-                if(await db.AiDataSuggestions.AnyAsync(s=>s.DocumentId==document.Id && s.MetricKey==metric.Key && s.DataYear==value.DataYear && s.Value==value.Value,ct))continue;
-                var conflict=await db.AiDataSuggestions.AnyAsync(s=>s.MetricKey==metric.Key && s.DataYear==value.DataYear && s.Status!="Rejected" && (s.AcceptedValue??s.Value)!=value.Value,ct);
+                if(await db.AiDataSuggestions.AnyAsync(s=>s.DocumentId==document.Id && s.MetricKey==metric.Key && s.DataYear==value.DataYear && s.Value==value.Value && s.TargetAgencyId==targetAgencyId,ct))continue;
+                var conflict=await db.AiDataSuggestions.AnyAsync(s=>s.MetricKey==metric.Key && s.DataYear==value.DataYear && s.TargetAgencyId==targetAgencyId && s.Status!="Rejected" && (s.AcceptedValue??s.Value)!=value.Value,ct);
                 var warnings=new List<string>{"Admin phải kiểm tra kỳ cả năm, phạm vi và định nghĩa chỉ tiêu trước khi duyệt."};
+                var sameValueQuotes=await db.AiDataSuggestions.Where(s=>s.MetricKey==metric.Key&&s.DataYear==value.DataYear&&s.TargetAgencyId==targetAgencyId&&s.Value==value.Value).Select(s=>s.Quote).ToListAsync(ct);
+                if(sameValueQuotes.Any(q=>AiMetricExtractor.Normalize(q)==AiMetricExtractor.Normalize(value.Quote)))warnings.Add("Có dẫn chứng/số liệu trùng đã tiếp nhận; không coi các bài đăng lại là kết quả độc lập.");
                 if(conflict)warnings.Add("Có số liệu khác cho cùng chỉ số và năm; cần đối chiếu phương pháp/phiên bản.");
-                if(value.DataYear<2026)warnings.Add("Số liệu trước giai đoạn theo dõi; chỉ dùng làm tham chiếu lịch sử.");
+                if(value.DataYear<2026&&!metric.Internet)warnings.Add("Số liệu trước giai đoạn theo dõi; chỉ dùng làm tham chiếu lịch sử.");
                 if(!string.IsNullOrWhiteSpace(value.Warnings))warnings.Add(value.Warnings[..Math.Min(value.Warnings.Length,1000)]);
-                var suggestion=new AiDataSuggestion{DocumentId=document.Id,MetricKey=metric.Key,DataYear=value.DataYear,PeriodLabel=value.PeriodLabel[..Math.Min(250,value.PeriodLabel.Length)],Value=value.Value,Unit=metric.Unit,Scope="Việt Nam",Quote=value.Quote,Page=value.Page,Methodology=value.Methodology[..Math.Min(2000,value.Methodology.Length)],Warnings=string.Join(" ",warnings)};
+                var suggestion=new AiDataSuggestion{DocumentId=document.Id,MetricKey=metric.Key,DataYear=value.DataYear,PeriodLabel=value.PeriodLabel[..Math.Min(250,value.PeriodLabel.Length)],Value=value.Value,Unit=metric.Unit,Scope=targetAgencyId.HasValue?metric.Scopes!.Single(s=>s.AgencyId==targetAgencyId).Name:"Việt Nam",TargetAgencyId=targetAgencyId,Quote=value.Quote,Page=value.Page,Methodology=value.Methodology[..Math.Min(2000,value.Methodology.Length)],Warnings=string.Join(" ",warnings)};
                 db.Add(suggestion);
-                var goalIds=await db.GoalTaskItems.Where(g=>g.ItemType==Cdsqg.Core.Enums.ItemTypeEnum.Goal&&(metric.Key.StartsWith("GOAL_")?g.Id==Guid.Parse(metric.Key.Substring(5)):metric.GoalCodes.Contains(g.Code))).Select(g=>g.Id).ToListAsync(ct);
+                var goals=db.GoalTaskItems.Where(g=>g.ItemType==Cdsqg.Core.Enums.ItemTypeEnum.Goal&&(metric.Key.StartsWith("GOAL_")?g.Id==Guid.Parse(metric.Key.Substring(5)):metric.GoalCodes.Contains(g.Code)));
+                if(metric.Internet) {
+                    if(!metric.Key.StartsWith("GOAL_"))goals=goals.Where(g=>g.DocumentId==Guid.Parse("12660000-0000-0000-0000-000000001266")||g.Document!.DocumentNumber=="1266/QĐ-TTg");
+                    goals=goals.Where(g=>(!g.StartDate.HasValue||g.StartDate.Value.Year<=value.DataYear)&&(!g.DueDate.HasValue||g.DueDate.Value.Year>=value.DataYear));
+                    if(targetAgencyId.HasValue)goals=goals.Where(g=>g.AgencyExecutions.Any(e=>e.AgencyId==targetAgencyId.Value&&e.IsLeadAssignment));
+                }
+                var goalIds=await goals.Select(g=>g.Id).ToListAsync(ct);
+                if(metric.Internet&&goalIds.Count==0)suggestion.Warnings+=" Năm số liệu hoặc phạm vi ngoài phân giao/thời gian thực hiện mục tiêu; chỉ tham khảo, chưa thể ghi báo cáo.";
                 foreach(var goalId in goalIds)db.Add(new AiGoalDataLink{GoalTaskId=goalId,SuggestionId=suggestion.Id});
                 await db.SaveChangesAsync(ct);
             }

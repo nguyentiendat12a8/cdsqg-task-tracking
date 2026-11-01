@@ -1,8 +1,8 @@
 <template>
-  <div class="w-full space-y-4 font-sans">
+  <div class="w-full font-sans rounded-2xl border border-slate-200/80 bg-white shadow-sm">
     
     <!-- Top Header Bar -->
-    <div class="ui-screen-heading bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/80 space-y-3.5 w-full">
+    <div class="ui-screen-heading bg-[#f1f5fc] p-4 sm:p-5 rounded-t-2xl border-b border-slate-200/80 space-y-3.5 w-full">
       <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div class="flex items-center gap-2.5">
           <span class="p-2 bg-blue-600 text-white rounded-xl shadow-sm font-bold text-sm">
@@ -28,7 +28,7 @@
     </div>
 
     <!-- Main Card Container: Filter + Table + Pagination -->
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden flex flex-col w-full">
+    <div class="bg-white rounded-b-2xl overflow-hidden flex flex-col w-full">
       
       <!-- Filter & Search Bar -->
       <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3 bg-slate-50/60 border-b border-slate-200/80 w-full">

@@ -23,24 +23,42 @@ public sealed class AiSettingsStore(AppDbContext db,IDataProtectionProvider prot
         var row=await db.AiProviderConfigurations.AsNoTracking().SingleOrDefaultAsync(x=>x.Id==1,ct);
         return row==null?Copy(environment.Value):FromRow(row);
     }
+    public const string UnreadableKeyMessage = "Không giải mã được API key đã lưu. Bộ khóa bảo vệ cũ có thể đã mất sau deploy. Nhập lại API key và lưu; hệ thống sẽ giữ khóa bảo vệ mới trong database cho các lần deploy sau.";
+    private bool TryReadKey(string? encrypted, out string key)
+    {
+        key = "";
+        if (string.IsNullOrEmpty(encrypted)) return true;
+        try { key = protector.Unprotect(encrypted); return true; }
+        catch (CryptographicException) { return false; }
+    }
     private AiDataOptions FromRow(AiProviderConfiguration row)
     {
         var options=Copy(environment.Value);options.Enabled=row.Enabled;options.BaseUrl=row.BaseUrl;options.Model=row.Model;
-        try{options.ApiKey=string.IsNullOrEmpty(row.ProtectedApiKey)?"":protector.Unprotect(row.ProtectedApiKey);}
-        catch(CryptographicException){options.ApiKey="";}
+        TryReadKey(row.ProtectedApiKey, out var key); options.ApiKey = key;
         return options;
     }
     private static AiDataOptions Copy(AiDataOptions value)=>new(){Enabled=value.Enabled,BaseUrl=value.BaseUrl,Model=value.Model,ApiKey=value.ApiKey,UploadDirectory=value.UploadDirectory,MaxChunksPerDocument=value.MaxChunksPerDocument,MaxDocumentsPerRun=value.MaxDocumentsPerRun};
     public async Task<AiDataOptions> PreviewAsync(AiProviderInput input,CancellationToken ct)
     {
-        Validate(input);var value=await GetAsync(ct);value.Enabled=input.Enabled;value.BaseUrl=input.BaseUrl.TrimEnd('/');value.Model=input.Model.Trim();
+        Validate(input);
+        var row = await db.AiProviderConfigurations.AsNoTracking().SingleOrDefaultAsync(x => x.Id == 1, ct);
+        if (row != null && !TryReadKey(row.ProtectedApiKey, out _) && !input.RemoveKey && string.IsNullOrWhiteSpace(input.ApiKey))
+            throw new InvalidOperationException(UnreadableKeyMessage);
+        var value = row == null ? Copy(environment.Value) : FromRow(row); value.Enabled=input.Enabled;value.BaseUrl=input.BaseUrl.TrimEnd('/');value.Model=input.Model.Trim();
         if(input.RemoveKey)value.ApiKey="";else if(!string.IsNullOrWhiteSpace(input.ApiKey))value.ApiKey=input.ApiKey.Trim();
         return value;
     }
     public async Task<object> PublicAsync(CancellationToken ct)
     {
-        var options=await GetAsync(ct);var row=await db.AiProviderConfigurations.AsNoTracking().SingleOrDefaultAsync(x=>x.Id==1,ct);
-        return new{options.Enabled,options.BaseUrl,options.Model,hasApiKey=!string.IsNullOrWhiteSpace(options.ApiKey),configured=options.Ready,source=row==null?"Environment":"Database",row?.UpdatedAt,row?.UpdatedBy};
+        var row=await db.AiProviderConfigurations.AsNoTracking().SingleOrDefaultAsync(x=>x.Id==1,ct);
+        var options = row == null ? Copy(environment.Value) : FromRow(row);
+        var unreadable = row != null && !TryReadKey(row.ProtectedApiKey, out _);
+        var available = !string.IsNullOrWhiteSpace(options.ApiKey);
+        return new{options.Enabled,options.BaseUrl,options.Model,hasApiKey=available,
+            hasStoredApiKey = row == null ? available : !string.IsNullOrEmpty(row.ProtectedApiKey),
+            keyStatus = unreadable ? "Unreadable" : available ? "Available" : "Missing",
+            keyError = unreadable ? UnreadableKeyMessage : null,
+            configured=options.Ready,source=row==null?"Environment":"Database",row?.UpdatedAt,row?.UpdatedBy};
     }
     public async Task SaveAsync(AiProviderInput input,string actor,CancellationToken ct)
     {
