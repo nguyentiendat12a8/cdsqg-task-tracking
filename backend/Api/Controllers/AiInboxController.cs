@@ -57,12 +57,42 @@ public sealed class AiInboxController(AppDbContext db,AiInboxService inbox):Cont
         }
         else
         {
-            try{if(item.StorageKey.Length>0)await AiMetricCatalog.ResolveAsync(db,input.MetricKey,ct);else AiMetricCatalog.Get(input.MetricKey);}catch(InvalidOperationException e){return BadRequest(new{message=e.Message});}
-            // An explicit reread is a new input version; preserve the original and its reviews.
-            item=new Cdsqg.Core.Entities.AiInboxItem{Title=item.Title,Url=item.Url,UrlHash="reread:"+Guid.NewGuid().ToString("N"),Origin="Đọc lại từ "+item.Id,
-                StorageKey=item.StorageKey,AlertFeedId=item.AlertFeedId,PublishedAt=item.PublishedAt,
-                MetricKeysJson=System.Text.Json.JsonSerializer.Serialize(new[]{input.MetricKey}),Status="ReadQueued"};
-            db.AiInboxItems.Add(item);
+            var metricKey = string.IsNullOrWhiteSpace(input.MetricKey)
+                ? (System.Text.Json.JsonSerializer.Deserialize<string[]>(item.MetricKeysJson)?.FirstOrDefault() ?? "")
+                : input.MetricKey;
+            if (string.IsNullOrWhiteSpace(metricKey))
+                return BadRequest(new { message = "Chưa xác định được chỉ số để đọc bài. Hãy mở Chi tiết để chọn chỉ số." });
+
+            try { await AiMetricCatalog.ResolveAsync(db, metricKey, ct); }
+            catch (InvalidOperationException e) { return BadRequest(new { message = e.Message }); }
+
+            var targetKeysJson = System.Text.Json.JsonSerializer.Serialize(new[] { metricKey });
+
+            // Nếu bài chưa từng có kết quả đọc (đang ở NeedsReview hoặc NotRelevant) thì cập nhật trực tiếp vào hàng đợi
+            if (item.Status is "NeedsReview" or "NotRelevant")
+            {
+                item.MetricKeysJson = targetKeysJson;
+                item.Status = "ReadQueued";
+                item.LeaseUntil = null;
+                item.Error = "";
+            }
+            else
+            {
+                // Bài đã có kết quả hoặc lỗi trước đó: tạo bản đọc mới để lưu giữ dẫn chứng và đánh giá cũ
+                item = new Cdsqg.Core.Entities.AiInboxItem
+                {
+                    Title = item.Title,
+                    Url = item.Url,
+                    UrlHash = "reread:" + Guid.NewGuid().ToString("N"),
+                    Origin = "Đọc lại từ " + item.Id,
+                    StorageKey = item.StorageKey,
+                    AlertFeedId = item.AlertFeedId,
+                    PublishedAt = item.PublishedAt,
+                    MetricKeysJson = targetKeysJson,
+                    Status = "ReadQueued"
+                };
+                db.AiInboxItems.Add(item);
+            }
         }
         await db.SaveChangesAsync(ct);return Accepted(new{item.Id,message=input.TitleOnly?"Đã xếp hàng đánh giá lại tiêu đề.":"Đã tạo bản đọc mới và xếp hàng xử lý. Dẫn chứng lần trước được giữ nguyên; chưa ghi báo cáo."});
     }

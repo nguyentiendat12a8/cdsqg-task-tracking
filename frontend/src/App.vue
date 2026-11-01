@@ -57,7 +57,7 @@
 
           <!-- Báo cáo - Xuất Excel (Executive Reports Center) -->
           <ExecutiveReportsView v-else-if="currentTab === 'reports'" />
-          <AiDataView v-else-if="isAiDataRoute(currentTab) && authState.isAdmin.value" :section="aiSectionFor(currentTab).key" :initial-tab="currentTab==='ai-review'?'review':currentTab==='ai-alerts'?'sources':'files'" @navigate="switchTab" />
+          <AiDataView v-else-if="isAiDataRoute(currentTab) && authState.isAdmin.value" :section="aiSectionFor(currentTab).key" :initial-tab="currentTab==='ai-review'?'review':currentTab==='ai-alerts'?'alerts':'files'" @navigate="switchTab" />
 
           <!-- Văn bản Quy Phạm Pháp Luật (VB QPPL) -->
           <LegalDocumentsView v-else-if="currentTab === 'legal-documents'" />

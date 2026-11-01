@@ -116,7 +116,9 @@ public sealed class AiInboxService(AppDbContext db,IWebHostEnvironment environme
         var selected=result.RootElement.GetProperty("metricKeys").EnumerateArray().Select(x=>x.GetString()!).Distinct().ToArray();
         if(selected.Any(k=>!keys.Contains(k)))throw new InvalidOperationException("AI chọn chỉ số ngoài danh mục.");
         item.MetricKeysJson=JsonSerializer.Serialize(selected);item.Reason=result.RootElement.GetProperty("reason").GetString()??"";item.Reason=item.Reason[..Math.Min(2000,item.Reason.Length)];
-        item.Model=options.Model;item.Status=result.RootElement.GetProperty("uncertain").GetBoolean()?"NeedsReview":selected.Length>0?"ReadQueued":"NotRelevant";
+        item.Model=options.Model;
+        // Bên Google Alerts khi có tin liên quan sẽ tự động đọc toàn văn
+        item.Status=selected.Length>0?"ReadQueued":"NotRelevant";
     }
     public async Task ProcessQueuedAsync(Guid id,CancellationToken ct)
     {
@@ -126,7 +128,7 @@ public sealed class AiInboxService(AppDbContext db,IWebHostEnvironment environme
         try
         {
         var now=DateTime.UtcNow;
-        var claimed=await db.AiInboxItems.Where(i=>i.Id==id&&(i.StorageKey!=""||i.AlertFeedId!=null)&&(i.Status=="TitleQueued"||i.Status=="ReadQueued")&&(i.LeaseUntil==null||i.LeaseUntil<now))
+        var claimed=await db.AiInboxItems.Where(i=>i.Id==id&&(i.Status=="TitleQueued"||i.Status=="ReadQueued")&&(i.LeaseUntil==null||i.LeaseUntil<now))
             .ExecuteUpdateAsync(s=>s.SetProperty(i=>i.LeaseUntil,now.AddHours(2)),ct);
         if(claimed==0)return;
         var item=await db.AiInboxItems.SingleAsync(i=>i.Id==id,ct);
@@ -184,7 +186,9 @@ public sealed class AiInboxService(AppDbContext db,IWebHostEnvironment environme
         {
             var metric = item.StorageKey.Length>0
                 ? await AiMetricCatalog.ResolveAsync(db,key,ct)
-                : (internetMetrics.FirstOrDefault(m=>m.Key==key) ?? throw new InvalidOperationException("Mục tiêu không còn trong Thiết lập từ khóa của văn bản. Hãy đánh giá lại tiêu đề."));
+                : (internetMetrics.FirstOrDefault(m=>m.Key==key || (AiMetricCatalog.Metrics.Any(l=>l.Key==key&&l.GoalCodes.Intersect(m.GoalCodes).Any())))
+                    ?? (AiMetricCatalog.Metrics.Any(l=>l.Key==key) ? await AiMetricCatalog.ResolveAsync(db,key,ct) : null)
+                    ?? throw new InvalidOperationException("Mục tiêu không còn trong Thiết lập từ khóa của văn bản. Hãy đánh giá lại tiêu đề."));
             var source=await db.AiDataSources.FirstOrDefaultAsync(s=>s.Url==doc.Url&&s.MetricKey==key,ct);
             if(source==null){source=new AiDataSource{Name=item.Title,MetricKey=key,Url=doc.Url,Enabled=false};db.Add(source);await db.SaveChangesAsync(ct);}
             accepted+=await collection.ProcessAsync(source,metric,doc,ct,reprocess:true,inboxId:item.Id);
@@ -211,7 +215,7 @@ public sealed class AiInboxWorker(IServiceScopeFactory scopes,ILogger<AiInboxWor
                 if(effective.Ready)
                 {
                     var db=scope.ServiceProvider.GetRequiredService<AppDbContext>();var now=DateTime.UtcNow;
-                    var ids=await db.AiInboxItems.AsNoTracking().Where(i=>(i.StorageKey!=""||i.AlertFeedId!=null)&&(i.Status=="TitleQueued"||i.Status=="ReadQueued")&&(i.LeaseUntil==null||i.LeaseUntil<now)).OrderBy(i=>i.ReceivedAt).ThenBy(i=>i.SequenceNumber).Select(i=>i.Id).Take(1).ToListAsync(ct);
+                    var ids=await db.AiInboxItems.AsNoTracking().Where(i=>(i.Status=="TitleQueued"||i.Status=="ReadQueued")&&(i.LeaseUntil==null||i.LeaseUntil<now)).OrderBy(i=>i.ReceivedAt).ThenBy(i=>i.SequenceNumber).Select(i=>i.Id).Take(1).ToListAsync(ct);
                     foreach(var id in ids)await scope.ServiceProvider.GetRequiredService<AiInboxService>().ProcessQueuedAsync(id,ct);
                 }
             }

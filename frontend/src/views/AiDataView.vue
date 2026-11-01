@@ -1,17 +1,20 @@
-<template>
+﻿<template>
  <div class="ai-workspace ai-admin-shell">
   <AiPageHeader :title="sectionTitle"><template #tabs v-if="fileTabs.length>0"><nav role="tablist" aria-label="Nguồn dữ liệu AI" class="ai-tabs"><button v-for="item in fileTabs" :id="'ai-file-tab-'+item.key" :key="item.key" role="tab" type="button" :aria-selected="fileTab===item.key" :aria-controls="'ai-file-panel-'+item.key" :tabindex="fileTab===item.key?0:-1" @click="fileTab=item.key" @keydown="handleFileTabKey($event,item.key)">{{ item.label }}</button></nav></template></AiPageHeader>
   <div class="ai-admin-body space-y-4">
-    <details v-if="tab==='internet' && catalog" class="ai-panel p-4 sm:p-5"><summary class="cursor-pointer font-semibold text-slate-700">Chỉ số và mục tiêu áp dụng ({{ catalogGoals.length }})</summary><div class="grid xl:grid-cols-3 gap-4 mt-4"><article v-for="metric in activeMetrics" :key="metric.key" class="ai-goal-card"><h3 class="ui-section-title">{{ metric.name }}</h3><p class="ai-muted mb-4">{{ metric.definition }}</p><ul><li v-for="goal in catalogGoals.filter(g=>g.metric.key===metric.key)" :key="goal.id"><span class="ai-goal-code">{{ goal.code }}</span><span>{{ goal.title }}</span></li></ul></article></div></details>
+    <details v-if="tab==='internet' && fileTab!=='sheets' && catalog" class="ai-panel p-4 sm:p-5"><summary class="cursor-pointer font-semibold text-slate-700">Chỉ số và mục tiêu áp dụng ({{ catalogGoals.length }})</summary><div class="grid xl:grid-cols-3 gap-4 mt-4"><article v-for="metric in activeMetrics" :key="metric.key" class="ai-goal-card"><h3 class="ui-section-title">{{ metric.name }}</h3><p class="ai-muted mb-4">{{ metric.definition }}</p><ul><li v-for="goal in catalogGoals.filter(g=>g.metric.key===metric.key)" :key="goal.id"><span class="ai-goal-code">{{ goal.code }}</span><span>{{ goal.title }}</span></li></ul></article></div></details>
   <p v-if="catalog && !catalog.configured" role="status" class="rounded-xl p-3 border border-amber-200 bg-amber-50 text-amber-900">AI chưa sẵn sàng. Dữ liệu vẫn được tiếp nhận. <a href="#ai-settings" class="font-semibold underline">Cấu hình AI</a></p>
   <p v-if="error" role="alert" class="rounded-xl p-3 bg-rose-50 text-rose-800">{{ error }}</p>
   <LoadingSpinner v-if="loading" text="Đang tải dữ liệu AI..."/>
   <section v-else-if="!showingSuggestions">
    <div v-show="fileTab==='files'||tab==='uploads'" id="ai-file-panel-files" role="tabpanel" aria-labelledby="ai-file-tab-files"><AiInboxPanel ref="inboxPanel" mode="uploads" :metrics="uploadMetrics" :configured="catalog.configured" @view-suggestions="viewInputResults" @view-result="openReview"/></div>
-   <div v-if="fileTab==='sources'" id="ai-file-panel-sources" role="tabpanel" aria-labelledby="ai-file-tab-sources" class="space-y-4"><details class="ai-panel p-4"><summary class="cursor-pointer font-semibold">Nguồn RSS và lịch quét</summary><div class="mt-4"><AiAlertsView ref="rssPanel" embedded @navigate="$emit('navigate',$event)"/></div></details><AiInboxPanel ref="alertsInbox" mode="alerts" :metrics="catalog.metrics" :configured="catalog.configured" @view-suggestions="viewInputResults"/></div>
+   <div v-if="fileTab==='alerts'||fileTab==='sources'" id="ai-file-panel-alerts" role="tabpanel" aria-labelledby="ai-file-tab-alerts" class="space-y-4"><details class="ai-panel p-4"><summary class="cursor-pointer font-semibold text-slate-800">Cấu hình nguồn Google Alerts (RSS) và lịch quét</summary><div class="mt-4"><AiAlertsView ref="rssPanel" embedded @navigate="$emit('navigate',$event)"/></div></details><AiInboxPanel ref="alertsInbox" mode="alerts" :metrics="allMetrics" :configured="catalog.configured" @view-suggestions="viewInputResults"/></div>
+   <div v-if="fileTab==='sheets'" id="ai-file-panel-sheets" role="tabpanel" aria-labelledby="ai-file-tab-sheets">
+      <DigitalNewsView />
+   </div>
    <div v-if="fileTab==='history'&&tab==='internet'" id="ai-file-panel-history" role="tabpanel" aria-labelledby="ai-file-tab-history" class="space-y-4">
       <AiAlertsView ref="rssHistory" embedded initial-tab="history"/>
-    </div>
+   </div>
   
   </section>
     <section v-else id="ai-file-panel-review" role="tabpanel" aria-labelledby="ai-file-tab-review" class="ai-panel">
@@ -81,6 +84,7 @@ import LoadingSpinner from '../components/LoadingSpinner.vue';
 import AiPageHeader from '../components/AiPageHeader.vue';
 import ActionButton from '../components/ActionButton.vue';
 import AiAlertsView from './AiAlertsView.vue';
+import DigitalNewsView from './DigitalNewsView.vue';
 import AiInboxPanel from '../components/AiInboxPanel.vue';
 import SearchableSelect from '../components/SearchableSelect.vue';
 import {getStatusBadgeClass} from '../shared/statusPresentation';
@@ -103,8 +107,9 @@ async function openUpload(){fileTab.value='files';await nextTick();inboxPanel.va
 async function refreshWorkspace(){await refresh(true);inboxPanel.value?.refresh();rssPanel.value?.refresh();alertsInbox.value?.refresh();if(fileTab.value==='history'&&tab.value==='internet')rssHistory.value?.refresh();}
 
 const uploadMetrics=computed(()=>catalog.value?.uploadMetrics||catalog.value?.metrics||[]);
+const allMetrics=computed(()=>[...(catalog.value?.metrics||[]),...(catalog.value?.uploadMetrics||[])]);
 const showingSuggestions=computed(()=>tab.value==='suggestions'||(tab.value==='internet'&&fileTab.value==='review'));
-const fileTabs=computed(()=>tab.value==='internet'?[{key:'sources',label:'Nguồn RSS'},{key:'review',label:'Kiểm chứng số liệu'},{key:'history',label:'Lịch sử xử lý'}]:[]);
+const fileTabs=computed(()=>tab.value==='internet'?[{key:'alerts',label:'Từ Google Alerts'},{key:'sheets',label:'Từ Google Sheets'},{key:'review',label:'Kiểm chứng số liệu'},{key:'history',label:'Lịch sử quét RSS'}]:[]);
 const pageSize=ref(10);
 watch(pageSize,()=>{page.value=1;refresh();});
 const currentYear=new Date().getFullYear();let version=0;
@@ -121,7 +126,7 @@ const reviewStatus=s=>({Pending:'Chờ kiểm chứng',Approved:'Đã duyệt',R
 async function api(path,options){const res=await fetchWithAuth(getApiUrl('/api/ai-data/'+path),options);if(!res.ok){const data=await res.json().catch(()=>({}));throw new Error(data.message||`Không tải được dữ liệu (HTTP ${res.status}).`);}return res.status===204?null:await res.text().then(t=>t?JSON.parse(t):null);}
 async function refresh(silent=false){const request=++version;if(!catalog.value)loading.value=true;error.value='';try{if(!catalog.value||!silent){const next=await api('catalog');if(request!==version)return;catalog.value=next;}if(showingSuggestions.value){const q=new URLSearchParams({page:String(page.value),pageSize:String(pageSize.value)});if(resultInput.value)q.set('inboxId',resultInput.value.id);if(showingSuggestions.value){if(status.value)q.set('status',status.value);if(metricFilter.value)q.set('metricKey',metricFilter.value);if(year.value){if(Number(year.value)>currentYear||Number(year.value)<2000)throw new Error('Năm số liệu không hợp lệ.');q.set('year',year.value);}}q.set('internetOnly','true');const data=await api('suggestions?'+q);if(request!==version)return;rows.value=Array.isArray(data)?data:data.items;total.value=data.total??rows.value.length;}}catch(e){if(request===version)error.value=e.message;}finally{if(request===version)loading.value=false;}}
 watch(fileTab,value=>{if(value==='history'&&tab.value==='internet')rssHistory.value?.refresh();else if(value==='review')refresh();});
-watch([tab,()=>props.initialTab],([value,initial])=>{fileTab.value=value==='internet'?(initial==='review'?'review':'sources'):'files';resultInput.value=null;refresh();});
+watch([tab,()=>props.initialTab],([value,initial])=>{fileTab.value=value==='internet'?(initial==='review'?'review':initial==='sheets'?'sheets':initial==='history'?'history':'alerts'):'files';resultInput.value=null;refresh();});
 function handleFileTabKey(event,key){
   const index=fileTabs.value.findIndex(item=>item.key===key);
   let next;

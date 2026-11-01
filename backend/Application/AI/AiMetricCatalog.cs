@@ -172,7 +172,15 @@ public static class AiMetricCatalog
 
         "mic.gov.vn", "www.mic.gov.vn", "dx.gov.vn", "www.dx.gov.vn", "aita.gov.vn", "www.aita.gov.vn",
 
-        "dangcongsan.vn", "nhandan.vn", "vov.vn", "vtv.vn"
+        "dangcongsan.vn", "nhandan.vn", "vov.vn", "vtv.vn",
+
+        "vietnamnet.vn", "vnexpress.net", "tuoitre.vn", "thanhnien.vn", "dantri.com.vn",
+
+        "tienphong.vn", "laodong.vn", "cand.com.vn", "qdnd.vn", "sggp.org.vn", "plo.vn",
+
+        "vietnamplus.vn", "bnews.vn", "kinhtedothi.vn", "hanoimoi.vn", "baoxaydung.vn", "congluan.vn",
+
+        "tapchicongsan.org.vn", "quochoi.vn", "news.google.com"
 
     ];
 

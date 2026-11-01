@@ -9,6 +9,17 @@ namespace Cdsqg.Api.Controllers;
 [ApiController,Route("api/ai-alerts"),Authorize(Roles="Admin")]
 public sealed class AiAlertsController(AppDbContext db,AiAlertService service,AiSettingsStore settings):ControllerBase
 {
+    public static readonly HashSet<Guid> FixedFeedIds = [
+        Guid.Parse("c4a989de-8c33-4cd0-9139-688eac54b524"), // EGDI -> MT-12, MT-25
+        Guid.Parse("1fdab812-a0b6-498d-a342-2bcafb952f9c"), // Kinh tế số GDP -> MT-13, MT-26
+        Guid.Parse("6799b9b0-d1b4-4a89-81b4-d8718dd7cc6b")  // TMĐT -> MT-16
+    ];
+
+    private static string[] ApplicableGoals(string name) =>
+        name.Contains("EGDI") || name.Contains("chính phủ") ? ["MT-12", "MT-25"] :
+        name.Contains("kinh tế số") || name.Contains("GDP") ? ["MT-13", "MT-26"] :
+        name.Contains("thương mại điện tử") || name.Contains("TMĐT") ? ["MT-16"] : [];
+
     [HttpGet]
     public async Task<IActionResult> List(bool deleted=false,int page=1,CancellationToken ct=default)
     {
@@ -16,8 +27,14 @@ public sealed class AiAlertsController(AppDbContext db,AiAlertService service,Ai
         var query=db.AiAlertFeeds.AsNoTracking().Where(f=>deleted?f.DeletedAt!=null:f.DeletedAt==null);
         var total=await query.CountAsync(ct);
         page=Math.Clamp(page,1,Math.Max(1,(total+pageSize-1)/pageSize));
-        var feeds=await query.OrderByDescending(f=>f.CreatedAt).ThenByDescending(f=>f.Id).Skip((page-1)*pageSize).Take(pageSize).Select(f=>new{f.Id,f.Name,f.FeedUrl,f.Enabled,scanTime=(f.ScanMinute/60).ToString().PadLeft(2,'0')+":"+(f.ScanMinute%60).ToString().PadLeft(2,'0'),f.NextScanAt,f.UpdatedBy,
-            lastScan=db.AiAlertScans.Where(s=>s.FeedId==f.Id).OrderByDescending(s=>s.QueuedAt).ThenByDescending(s=>s.Id).Select(s=>new{s.Id,s.Status,s.QueuedAt,s.CompletedAt,s.Added,s.Duplicates,s.Blocked,s.Received,s.Error}).FirstOrDefault()}).ToListAsync(ct);
+        var feeds=await query.OrderByDescending(f=>f.CreatedAt).ThenByDescending(f=>f.Id).Skip((page-1)*pageSize).Take(pageSize).Select(f=>new{
+            f.Id,f.Name,f.FeedUrl,f.Enabled,
+            scanTime=(f.ScanMinute/60).ToString().PadLeft(2,'0')+":"+(f.ScanMinute%60).ToString().PadLeft(2,'0'),
+            f.NextScanAt,f.UpdatedBy,
+            isFixed=FixedFeedIds.Contains(f.Id),
+            applicableGoals=ApplicableGoals(f.Name),
+            lastScan=db.AiAlertScans.Where(s=>s.FeedId==f.Id).OrderByDescending(s=>s.QueuedAt).ThenByDescending(s=>s.Id).Select(s=>new{s.Id,s.Status,s.QueuedAt,s.CompletedAt,s.Added,s.Duplicates,s.Blocked,s.Received,s.Error}).FirstOrDefault()
+        }).ToListAsync(ct);
         return Ok(new{page,pageSize,total,feeds,configured=(await settings.GetAsync(ct)).Ready,allowedHosts=AiMetricCatalog.AllowedHosts});
     }
     [HttpGet("scans")]
@@ -33,7 +50,12 @@ public sealed class AiAlertsController(AppDbContext db,AiAlertService service,Ai
     [HttpPost,RequestSizeLimit(8192)]
     public Task<IActionResult> Create(AlertFeedInput input,CancellationToken ct)=>Save(null,input,ct);
     [HttpPut("{id:guid}"),RequestSizeLimit(8192)]
-    public Task<IActionResult> Update(Guid id,AlertFeedInput input,CancellationToken ct)=>Save(id,input,ct);
+    public async Task<IActionResult> Update(Guid id,AlertFeedInput input,CancellationToken ct)
+    {
+        if(FixedFeedIds.Contains(id))
+            return BadRequest(new{message="Đây là nguồn Google Alerts cố định hệ thống áp dụng cho 5 chỉ số, không thể chỉnh sửa."});
+        return await Save(id,input,ct);
+    }
     private async Task<IActionResult> Save(Guid? id,AlertFeedInput input,CancellationToken ct)
     {
         try{var feed=await service.SaveAsync(id,input,Actor,ct);return Ok(new{feed.Id,message="Đã lưu nguồn RSS."});}
@@ -42,7 +64,12 @@ public sealed class AiAlertsController(AppDbContext db,AiAlertService service,Ai
         catch(DbUpdateException){return Conflict(new{message="Nguồn hoặc lượt quét vừa thay đổi. Tải lại và thử lại."});}
     }
     [HttpDelete("{id:guid}")]
-    public Task<IActionResult> Delete(Guid id,CancellationToken ct)=>SetDeleted(id,true,ct);
+    public async Task<IActionResult> Delete(Guid id,CancellationToken ct)
+    {
+        if(FixedFeedIds.Contains(id))
+            return BadRequest(new{message="Đây là nguồn Google Alerts cố định hệ thống áp dụng cho 5 chỉ số, không thể xóa."});
+        return await SetDeleted(id,true,ct);
+    }
     [HttpPost("{id:guid}/restore")]
     public Task<IActionResult> Restore(Guid id,CancellationToken ct)=>SetDeleted(id,false,ct);
     private async Task<IActionResult> SetDeleted(Guid id,bool deleted,CancellationToken ct)
