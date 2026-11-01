@@ -21,8 +21,8 @@
    <template v-else>
     <div v-if="!items.length" class="p-8 text-center text-slate-600"><p class="font-semibold">{{ search||agency?'Không có bài viết phù hợp.':'Chưa có thông tin chuyển đổi số.' }}</p><p v-if="!search&&!agency" class="mt-2">Dữ liệu sẽ hiển thị sau lần đồng bộ Google Sheets đầu tiên.</p></div>
     <template v-else>
-     <div class="hidden md:block overflow-x-auto"><table class="w-full text-left border-collapse"><thead class="bg-[#f1f5fc]"><tr><th class="news-cell w-16 text-center" scope="col">STT</th><th class="news-cell w-56" scope="col" :aria-sort="sortBy==='agencyName'?(sortOrder==='asc'?'ascending':'descending'):'none'"><button type="button" class="flex items-center justify-between gap-2 w-full text-left hover:text-blue-700" :disabled="loading" @click="toggleSort('agencyName')" title="Bấm để sắp xếp theo Bộ / tỉnh"><span>Bộ / tỉnh</span><span aria-hidden="true" :class="sortBy==='agencyName'?'text-blue-600':'text-slate-300'">{{ sortBy==='agencyName'?(sortOrder==='asc'?'▲':'▼'):'↕' }}</span></button></th><th class="news-cell " scope="col" :aria-sort="sortBy==='title'?(sortOrder==='asc'?'ascending':'descending'):'none'"><button type="button" class="flex items-center justify-between gap-2 w-full text-left hover:text-blue-700" :disabled="loading" @click="toggleSort('title')" title="Bấm để sắp xếp theo Tên bài viết"><span>Tên bài viết</span><span aria-hidden="true" :class="sortBy==='title'?'text-blue-600':'text-slate-300'">{{ sortBy==='title'?(sortOrder==='asc'?'▲':'▼'):'↕' }}</span></button></th><th class="news-cell w-36" scope="col" :aria-sort="sortBy==='importedAt'?(sortOrder==='asc'?'ascending':'descending'):'none'"><button type="button" class="flex items-center justify-between gap-2 w-full text-left hover:text-blue-700" :disabled="loading" @click="toggleSort('importedAt')" title="Bấm để sắp xếp theo Thời gian nạp"><span>Thời gian nạp</span><span aria-hidden="true" :class="sortBy==='importedAt'?'text-blue-600':'text-slate-300'">{{ sortBy==='importedAt'?(sortOrder==='asc'?'▲':'▼'):'↕' }}</span></button></th><th class="news-cell w-32 text-center" scope="col">Trạng thái đọc</th><th class="news-cell w-44 text-center" scope="col">Thao tác</th></tr></thead><tbody><tr v-for="(item,index) in items" :key="item.id" class="hover:bg-blue-50/40"><td class="news-cell text-center">{{ (page-1)*pageSize+index+1 }}</td><td class="news-cell">{{ item.agencyName }}</td><td class="news-cell"><a :href="item.url" target="_blank" rel="noopener noreferrer" class="font-semibold text-blue-800 hover:underline break-words">{{ item.title }}</a><span class="block mt-1 text-slate-600">{{ sourceHost(item.url) }}</span></td><td class="news-cell">{{ formatDateTime(item.importedAt) }}</td><td class="news-cell text-center"><span :class="statusBadgeClass(item.aiStatus)" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border" :title="item.aiError"><span v-if="item.aiStatus==='Processing'" class="inline-block w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>{{ statusLabel(item.aiStatus) }}</span></td><td class="news-cell text-center"><div class="flex items-center justify-center gap-2"><button v-if="isAdmin" type="button" class="ui-btn whitespace-nowrap" :class="['Read','ReadNoData'].includes(item.aiStatus)?'ui-btn-secondary':'ui-btn-primary'" :disabled="readingId===item.id||item.aiStatus==='Processing'||item.aiStatus==='Queued'" @click="readWithAi(item)">{{ readingId===item.id ? 'Đang gửi…' : (item.aiStatus==='Processing' ? 'Đang đọc…' : (item.aiStatus==='Queued' ? 'Chờ đọc…' : (['Read','ReadNoData'].includes(item.aiStatus) ? 'Đọc lại' : (item.aiStatus==='Error' ? 'Thử lại' : 'Đọc')))) }}</button><a :href="item.url" target="_blank" rel="noopener noreferrer" class="ui-btn ui-btn-secondary whitespace-nowrap">Xem nguồn ↗</a></div></td></tr></tbody></table></div>
-     <div class="md:hidden divide-y divide-slate-200"><article v-for="(item,index) in items" :key="item.id" class="p-4 space-y-3"><p class="text-slate-600">{{ (page-1)*pageSize+index+1 }} · {{ item.agencyName }}</p><h3 class="ui-section-title"><a :href="item.url" target="_blank" rel="noopener noreferrer" class="text-blue-800 hover:underline break-words">{{ item.title }}</a></h3><p class="text-slate-600 break-words">{{ sourceHost(item.url) }} · {{ formatDateTime(item.importedAt) }}</p><div class="flex items-center justify-between gap-2 mt-2"><span :class="statusBadgeClass(item.aiStatus)" class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium border" :title="item.aiError"><span v-if="item.aiStatus==='Processing'" class="inline-block w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>{{ statusLabel(item.aiStatus) }}</span><div class="flex items-center gap-2"><button v-if="isAdmin" type="button" class="ui-btn" :class="['Read','ReadNoData'].includes(item.aiStatus)?'ui-btn-secondary':'ui-btn-primary'" :disabled="readingId===item.id||item.aiStatus==='Processing'||item.aiStatus==='Queued'" @click="readWithAi(item)">{{ readingId===item.id ? 'Đang gửi…' : (item.aiStatus==='Processing' ? 'Đang đọc…' : (item.aiStatus==='Queued' ? 'Chờ đọc…' : (['Read','ReadNoData'].includes(item.aiStatus) ? 'Đọc lại' : (item.aiStatus==='Error' ? 'Thử lại' : 'Đọc')))) }}</button><a :href="item.url" target="_blank" rel="noopener noreferrer" class="ui-btn ui-btn-secondary">Xem nguồn ↗</a></div></div></article></div>
+     <div class="hidden md:block overflow-x-auto"><table class="w-full text-left border-collapse"><thead class="bg-[#f1f5fc]"><tr><th class="news-cell w-14 text-center" scope="col">STT</th><th class="news-cell w-36" scope="col" :aria-sort="sortBy==='agencyName'?(sortOrder==='asc'?'ascending':'descending'):'none'"><button type="button" class="flex items-center justify-between gap-2 w-full text-left hover:text-blue-700" :disabled="loading" @click="toggleSort('agencyName')" title="Bấm để sắp xếp theo Bộ / tỉnh"><span>Bộ / tỉnh</span><span aria-hidden="true" :class="sortBy==='agencyName'?'text-blue-600':'text-slate-300'">{{ sortBy==='agencyName'?(sortOrder==='asc'?'▲':'▼'):'↕' }}</span></button></th><th class="news-cell min-w-[200px]" scope="col" :aria-sort="sortBy==='title'?(sortOrder==='asc'?'ascending':'descending'):'none'"><button type="button" class="flex items-center justify-between gap-2 w-full text-left hover:text-blue-700" :disabled="loading" @click="toggleSort('title')" title="Bấm để sắp xếp theo Tên bài viết"><span>Tên bài viết</span><span aria-hidden="true" :class="sortBy==='title'?'text-blue-600':'text-slate-300'">{{ sortBy==='title'?(sortOrder==='asc'?'▲':'▼'):'↕' }}</span></button></th><th class="news-cell w-36 text-center" scope="col" :aria-sort="sortBy==='importedAt'?(sortOrder==='asc'?'ascending':'descending'):'none'"><button type="button" class="flex items-center justify-between gap-2 w-full text-left hover:text-blue-700" :disabled="loading" @click="toggleSort('importedAt')" title="Bấm để sắp xếp theo Thời gian nạp"><span>Thời gian nạp</span><span aria-hidden="true" :class="sortBy==='importedAt'?'text-blue-600':'text-slate-300'">{{ sortBy==='importedAt'?(sortOrder==='asc'?'▲':'▼'):'↕' }}</span></button></th><th class="news-cell w-44 text-center whitespace-nowrap" scope="col">Trạng thái</th><th class="news-cell w-40 text-center whitespace-nowrap" scope="col">Thao tác</th></tr></thead><tbody><tr v-for="(item,index) in items" :key="item.id" class="hover:bg-blue-50/40"><td class="news-cell text-center">{{ (page-1)*pageSize+index+1 }}</td><td class="news-cell">{{ item.agencyName }}</td><td class="news-cell"><a :href="item.url" target="_blank" rel="noopener noreferrer" class="font-semibold text-blue-800 hover:underline break-words">{{ item.title }}</a><span class="block mt-1 text-slate-600">{{ sourceHost(item.url) }}</span></td><td class="news-cell text-center whitespace-nowrap">{{ formatDateTime(item.importedAt) }}</td><td class="news-cell text-center whitespace-nowrap"><span class="ai-badge whitespace-nowrap" :class="badge(item)" :title="item.aiError">{{ item.processing ? 'Đang xử lý' : statusLabel(item.aiStatus) }}</span></td><td class="news-cell text-center whitespace-nowrap"><div class="flex items-center justify-center gap-2"><button v-if="isAdmin" type="button" class="ui-btn whitespace-nowrap" :class="['Read','ReadNoData'].includes(item.aiStatus)?'ui-btn-secondary':'ui-btn-primary'" :disabled="readingId===item.id||isQueued(item)" @click="readWithAi(item)">{{ readingId===item.id ? 'Đang gửi…' : (item.processing ? 'Đang xử lý…' : (item.aiStatus==='ReadQueued' ? 'Chờ đọc…' : (item.aiStatus==='TitleQueued' ? 'Chờ đánh giá…' : (['Read','ReadNoData'].includes(item.aiStatus) ? 'Đọc lại' : (item.aiStatus==='Error' ? 'Thử lại' : 'Đọc'))))) }}</button><a :href="item.url" target="_blank" rel="noopener noreferrer" class="ui-btn ui-btn-secondary whitespace-nowrap">Xem nguồn ↗</a></div></td></tr></tbody></table></div>
+     <div class="md:hidden divide-y divide-slate-200"><article v-for="(item,index) in items" :key="item.id" class="p-4 space-y-3"><p class="text-slate-600">{{ (page-1)*pageSize+index+1 }} · {{ item.agencyName }}</p><h3 class="ui-section-title"><a :href="item.url" target="_blank" rel="noopener noreferrer" class="text-blue-800 hover:underline break-words">{{ item.title }}</a></h3><p class="text-slate-600 break-words">{{ sourceHost(item.url) }} · {{ formatDateTime(item.importedAt) }}</p><div class="flex items-center justify-between gap-2 mt-2"><span class="ai-badge whitespace-nowrap" :class="badge(item)" :title="item.aiError">{{ item.processing ? 'Đang xử lý' : statusLabel(item.aiStatus) }}</span><div class="flex items-center gap-2"><button v-if="isAdmin" type="button" class="ui-btn" :class="['Read','ReadNoData'].includes(item.aiStatus)?'ui-btn-secondary':'ui-btn-primary'" :disabled="readingId===item.id||isQueued(item)" @click="readWithAi(item)">{{ readingId===item.id ? 'Đang gửi…' : (item.processing ? 'Đang xử lý…' : (item.aiStatus==='ReadQueued' ? 'Chờ đọc…' : (item.aiStatus==='TitleQueued' ? 'Chờ đánh giá…' : (['Read','ReadNoData'].includes(item.aiStatus) ? 'Đọc lại' : (item.aiStatus==='Error' ? 'Thử lại' : 'Đọc'))))) }}</button><a :href="item.url" target="_blank" rel="noopener noreferrer" class="ui-btn ui-btn-secondary">Xem nguồn ↗</a></div></div></article></div>
     </template>
    </template>
    <DocumentPagination v-model:current-page="page" v-model:page-size="pageSize" :total-count="total" :total-pages="Math.max(1,Math.ceil(total/pageSize))" :page-size-options="pageSizes" :change-page="value=>page=value" item-label="bài viết" :disabled="loading" />
@@ -50,33 +50,32 @@ import {formatDateTime} from '../shared/formatters';
 import SearchableSelect from '../components/SearchableSelect.vue';
 import DocumentPagination from '../features/document/DocumentPagination.vue';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
+import {getStatusBadgeClass} from '../shared/statusPresentation';
+import '../features/ai/ai.css';
 const isAdmin=computed(()=>authState.isAdmin.value);
 const items=ref([]),agencies=ref([]),total=ref(0),page=ref(1),pageSize=ref(10),searchDraft=ref(''),agencyDraft=ref(''),search=ref(''),agency=ref('');
 const settings=ref(null),loading=ref(true),busy=ref(false),saving=ref(false),error=ref(''),message=ref(''),configOpen=ref(false),configError=ref(''),form=ref({});
 const readingId=ref(null);
-function statusLabel(status) {
-  switch (status) {
-    case 'Read': return 'Đã có số liệu';
-    case 'ReadNoData': return 'Đã đọc (không số liệu)';
-    case 'Processing': return 'Đang xử lý';
-    case 'Queued': return 'Chờ đọc';
-    case 'Skipped': return 'Bỏ qua (tiêu đề)';
-    case 'Error': return 'Lỗi';
-    default: return 'Chưa đọc';
-  }
-}
+const statusLabel = s => ({
+  TitleQueued: 'Chờ đánh giá',
+  ReadQueued: 'Chờ đọc',
+  NeedsReview: 'Cần xem lại',
+  NotRelevant: 'Không liên quan',
+  Read: 'Đã đọc',
+  ReadNoData: 'Chưa có số liệu',
+  Error: 'Lỗi xử lý',
+  Unread: 'Chưa đọc'
+}[s] || s || 'Chưa đọc');
 
-function statusBadgeClass(status) {
-  switch (status) {
-    case 'Read': return 'bg-emerald-50 text-emerald-800 border-emerald-300';
-    case 'ReadNoData': return 'bg-blue-50 text-blue-800 border-blue-200';
-    case 'Processing': return 'bg-amber-50 text-amber-800 border-amber-200';
-    case 'Queued': return 'bg-amber-50 text-amber-800 border-amber-200';
-    case 'Skipped': return 'bg-slate-100 text-slate-600 border-slate-200';
-    case 'Error': return 'bg-rose-50 text-rose-800 border-rose-200';
-    default: return 'bg-slate-50 text-slate-500 border-slate-200';
-  }
-}
+const isQueued = item => item.processing || ['TitleQueued', 'ReadQueued'].includes(item.aiStatus);
+
+const badge = item => getStatusBadgeClass(
+  item.processing ? 'InProgressOnTime' :
+  (item.aiStatus === 'Error' || item.aiStatus === 'NotRelevant') ? 'Rejected' :
+  item.aiStatus === 'Read' ? 'Approved' :
+  (item.aiStatus === 'NeedsReview' || item.aiStatus === 'ReadQueued' || item.aiStatus === 'TitleQueued') ? 'Pending' :
+  'NotStarted'
+);
 
 async function readWithAi(item){
   if(readingId.value) return;
@@ -111,7 +110,7 @@ function closeSettings(){if(!saving.value)configOpen.value=false;}
 async function saveSettings(){saving.value=true;configError.value='';try{const data=await api('/settings',{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(form.value)});message.value=data.message;configOpen.value=false;await loadSettings();}catch(e){configError.value=e.message;}finally{saving.value=false;}}
 async function syncNow(){if(busy.value)return;busy.value=true;message.value='';error.value='';try{const data=await api('/sync',{method:'POST'});message.value=data.message;await Promise.all([load(),loadAgencies()]);}catch(e){error.value=e.message;}finally{busy.value=false;await loadSettings();}}
 watch(page,()=>load());watch(pageSize,()=>{if(page.value!==1)page.value=1;else load();});
-onMounted(()=>{refresh();timer=setInterval(()=>{if(document.visibilityState==='visible'&&!busy.value&&!configOpen.value){load(true);if(!items.value.some(i=>['Processing','Queued'].includes(i.aiStatus)))loadSettings();}},4000);});onUnmounted(()=>{version++;settingsVersion++;clearInterval(timer);});
+onMounted(()=>{refresh();timer=setInterval(()=>{if(document.visibilityState==='visible'&&!busy.value&&!configOpen.value){load(true);if(!items.value.some(i=>isQueued(i)))loadSettings();}},4000);});onUnmounted(()=>{version++;settingsVersion++;clearInterval(timer);});
 </script>
 <style scoped>
 .news-field{display:block;width:100%;height:var(--ui-control-height);border:1px solid var(--color-slate-300);border-radius:8px;padding:8px 12px;background:white;min-width:0}

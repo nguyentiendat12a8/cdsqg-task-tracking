@@ -36,14 +36,17 @@ public sealed class DigitalNewsController(AppDbContext db,DigitalNewsSyncService
         {
             var inbox=inboxByHash.GetValueOrDefault(i.UrlHash)??inboxByUrl.GetValueOrDefault(i.Url);
             string status;
-            if(inbox==null)status="Unread";
-            else if(inbox.Status is "Read" or "NeedsReview")status="Read";
-            else if(inbox.Status=="ReadNoData")status="ReadNoData";
-            else if(inbox.Status is "TitleQueued" or "ReadQueued")status=inbox.LeaseUntil>now?"Processing":"Queued";
-            else if(inbox.Status is "Skipped" or "NotRelevant")status="Skipped";
-            else if(inbox.Status=="Error")status="Error";
-            else status=inbox.Status;
-            return new{i.Id,i.AgencyName,i.Title,i.Url,i.ImportedAt,i.UpdatedAt,i.SourceRow,AiStatus=status,AiError=inbox?.Error??""};
+            bool processing=false;
+            if(inbox==null)
+            {
+                status="Unread";
+            }
+            else
+            {
+                status=inbox.Status;
+                processing=(inbox.Status is "TitleQueued" or "ReadQueued")&&inbox.LeaseUntil>now;
+            }
+            return new{i.Id,i.AgencyName,i.Title,i.Url,i.ImportedAt,i.UpdatedAt,i.SourceRow,AiStatus=status,Processing=processing,AiError=inbox?.Error??""};
         });
         return Ok(new{items,total,page,pageSize});
     }
