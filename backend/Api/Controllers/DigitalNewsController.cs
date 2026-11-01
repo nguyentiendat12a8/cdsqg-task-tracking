@@ -37,7 +37,8 @@ public sealed class DigitalNewsController(AppDbContext db,DigitalNewsSyncService
             var inbox=inboxByHash.GetValueOrDefault(i.UrlHash)??inboxByUrl.GetValueOrDefault(i.Url);
             string status;
             if(inbox==null)status="Unread";
-            else if(inbox.Status=="Read")status="Read";
+            else if(inbox.Status is "Read" or "NeedsReview")status="Read";
+            else if(inbox.Status=="ReadNoData")status="ReadNoData";
             else if(inbox.Status is "TitleQueued" or "ReadQueued")status=inbox.LeaseUntil>now?"Processing":"Queued";
             else if(inbox.Status is "Skipped" or "NotRelevant")status="Skipped";
             else if(inbox.Status=="Error")status="Error";
