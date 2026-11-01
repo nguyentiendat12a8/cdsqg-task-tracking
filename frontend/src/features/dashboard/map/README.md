@@ -7,3 +7,5 @@ BE AgencyStatusSummaryDto trả GoalCompletionRate, TaskCompletionRate và Compl
 Bản đồ lazy load, dữ liệu đóng gói local, không gọi dịch vụ bản đồ khi người dùng mở trang. Chọn tỉnh bằng chuột, bàn phím hoặc danh sách tìm kiếm; nút chi tiết dùng workflow drilldown hiện có. Bộ lọc và mục tiêu/nhiệm vụ được giữ theo dashboard.
 
 Đã sửa nhãn bị sao chép sai của feature Ma=31 thành Đồng Tháp (đường biên nằm tại 105.18–106.82°E, 10.13–10.97°N), chuẩn hóa tên Hồ Chí Minh; kiểm tra đủ 34 tên duy nhất theo https://baochinhphu.vn/nghi-quyet-cua-quoc-hoi-ve-sap-xep-don-vi-hanh-chinh-cap-tinh-102250612191145158.htm. Không sử dụng các thuộc tính dân số/diện tích từ nguồn.
+
+01/11/2026 — Tối giản hình học để giảm dung lượng tải: bỏ các điểm trùng liên tiếp và đơn giản hóa Douglas–Peucker với dung sai 0,2 đơn vị viewBox (dưới 0,5 px khi phóng to tối đa 4 lần). Bỏ 251 vòng suy biến dưới 3 điểm phân biệt (không có diện tích, không hiển thị). Tệp giảm từ khoảng 490 KB xuống 146 KB (gzip 70 KB → 48 KB); giữ nguyên viewBox, mã/tên 34 tỉnh và thứ tự feature. Đã đối chiếu ảnh render trước/sau ở cỡ gốc và phóng 6 lần.

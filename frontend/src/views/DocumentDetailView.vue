@@ -70,7 +70,8 @@
       <div class="p-3.5 sm:p-4 space-y-3.5 w-full">
 
       <!-- DYNAMIC PLANNING GRID SUB-TAB -->
-      <div v-show="activeSubTab === 'grid'" class="w-full">
+      <!-- Chỉ mount lưới kế hoạch khi người dùng mở tab này lần đầu; sau đó giữ trạng thái bằng v-show. -->
+      <div v-if="gridTabOpened" v-show="activeSubTab === 'grid'" class="w-full">
         <DynamicPlanningGrid ref="planningGridRef" :documentId="activeDocumentId" :filterItemType="filterItemType || 'Task'" />
       </div>
 
@@ -428,6 +429,7 @@ import { activeDocument, activeDocumentId } from '../services/documentContext';
 import { useCreateItem } from '../features/document/useCreateItem';
 import { useEditItem } from '../features/document/useEditItem';
 import { usePendingApprovals } from '../features/document/usePendingApprovals';
+import { createVisiblePoller } from '../shared/visiblePolling';
 
 import DocumentFilters from '../features/document/DocumentFilters.vue';
 import DocumentItemsTable from '../features/document/DocumentItemsTable.vue';
@@ -440,7 +442,7 @@ import { defineAsyncComponent, ref, computed, watch, onMounted, onUnmounted } fr
 import { toast } from 'vue3-toastify';
 import { confirmModal } from '../services/confirm';
 import { authState } from '../services/auth';
-import DynamicPlanningGrid from '../components/DynamicPlanningGrid.vue';
+const DynamicPlanningGrid = defineAsyncComponent(() => import('../components/DynamicPlanningGrid.vue'));
 import SearchableSelect from '../components/SearchableSelect.vue';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
 const ProgressUpdateModal = defineAsyncComponent(() => import('../components/ProgressUpdateModal.vue'));
@@ -464,6 +466,8 @@ import { taskReportStatusLabel } from '../shared/reportStatuses';
 const planningGridRef = ref(null);
 
 const activeSubTab = ref(props.subTab || 'list');
+const gridTabOpened = ref(false);
+watch(activeSubTab, tab => { if (tab === 'grid') gridTabOpened.value = true; }, { immediate: true });
 
 watch(() => [props.subTab, props.filterItemType], ([newSubTab, itemType]) => {
   if (itemType === 'Task') {
@@ -816,7 +820,8 @@ const {
   confirmRejectFromGlobalList
 } = usePendingApprovals({ loadData });
 
-let globalPendingPollTimer = null;
+// Badge chờ duyệt: 15 giây khi tab đang mở, dừng khi tab ẩn.
+const pendingPoller = createVisiblePoller(() => loadGlobalPendingLogs(true), 15000);
 
 function handlePendingLogsUpdate() {
   if (authState.isAdmin.value) {
@@ -847,7 +852,7 @@ onMounted(() => {
   loadData();
   if (authState.isAdmin.value) {
     loadGlobalPendingLogs(false);
-    globalPendingPollTimer = setInterval(() => loadGlobalPendingLogs(true), 5000);
+    pendingPoller.start();
   }
   window.addEventListener('open-target-item-detail', handleTargetItemDetailEvent);
   window.addEventListener('open-pending-approvals-modal', handleOpenPendingApprovalsModalEvent);
@@ -856,10 +861,7 @@ onMounted(() => {
 });
 
 onUnmounted(() => {
-  if (globalPendingPollTimer) {
-    clearInterval(globalPendingPollTimer);
-    globalPendingPollTimer = null;
-  }
+  pendingPoller.stop();
   window.removeEventListener('open-target-item-detail', handleTargetItemDetailEvent);
   window.removeEventListener('open-pending-approvals-modal', handleOpenPendingApprovalsModalEvent);
   window.removeEventListener('notification-sent', handlePendingLogsUpdate);

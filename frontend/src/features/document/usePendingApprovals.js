@@ -35,11 +35,12 @@ export function usePendingApprovals({ loadData }) {
       const res = await fetchWithAuth(getApiUrl('/api/execution/pending-approvals'));
       if (res.ok) {
         globalPendingLogs.value = await res.json();
-      } else {
+      } else if (!isSilent) {
         globalPendingLogs.value = [];
       }
     } catch {
-      globalPendingLogs.value = [];
+      // Lượt polling nền lỗi mạng tạm thời thì giữ danh sách cũ, không làm badge nhảy về 0.
+      if (!isSilent) globalPendingLogs.value = [];
     } finally {
       if (showSpinner) {
         isLoadingPendingLogs.value = false;

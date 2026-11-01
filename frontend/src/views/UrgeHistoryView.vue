@@ -251,6 +251,7 @@ import UrgeDetailModal from '../components/UrgeDetailModal.vue';
 import OverlayPanel from '../components/OverlayPanel.vue';
 import DatePicker from '../components/DatePicker.vue';
 import { getApiUrl } from '../config/api';
+import { loadAgencyCatalog } from '../services/agencyCatalog';
 
 const STORAGE_KEY = 'cdsqg_urge_history_query';
 
@@ -347,11 +348,7 @@ function loadSavedQuery() {
 
 async function loadAgencies() {
   try {
-    const res = await fetchWithAuth(getApiUrl('/api/agencies'));
-    if (res.ok) {
-      const data = await res.json();
-      agencies.value = Array.isArray(data) ? data : (data.items || []);
-    }
+    agencies.value = await loadAgencyCatalog();
   } catch (e) {
     console.error('Failed to load agencies:', e);
   }

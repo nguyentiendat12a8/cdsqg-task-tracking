@@ -363,6 +363,7 @@ import LegalDocumentModal from '../components/LegalDocumentModal.vue';
 import LegalFileViewerModal from '../components/LegalFileViewerModal.vue';
 import { exportFormattedReportExcel, styleWorksheet } from '../utils/excelExport';
 import { getApiUrl } from '../config/api';
+import { loadAgencyCatalog } from '../services/agencyCatalog';
 import { authState } from '../services/auth';
 import { openFileInNewWindow } from '../utils/fileViewer';
 import { confirmModal } from '../services/confirm';
@@ -732,10 +733,7 @@ const userRoleStr = computed(() => authState.user.value?.role || (authState.isAd
 
 async function fetchAgencies() {
   try {
-    const res = await fetchWithAuth(getApiUrl('/api/agencies'));
-    if (res.ok) {
-      agencies.value = await res.json();
-    }
+    agencies.value = await loadAgencyCatalog();
   } catch (err) {
     console.error('Error fetching agencies:', err);
   }

@@ -17,7 +17,10 @@ public static class AiProviderRequest
             payload["reasoning_effort"]="low";
             if(payload["max_completion_tokens"]?.GetValue<int>()==3500)payload["max_completion_tokens"]=8000;
         }
-        if(endpoint.Host.Equals("oxionai.com",StringComparison.OrdinalIgnoreCase)||endpoint.Host.Equals("www.oxionai.com",StringComparison.OrdinalIgnoreCase))
+        // Các provider không hỗ trợ json_schema structured output: fallback sang json_object + system prompt
+        var isThirdPartyProxy=endpoint.Host.Equals("oxionai.com",StringComparison.OrdinalIgnoreCase)||endpoint.Host.Equals("www.oxionai.com",StringComparison.OrdinalIgnoreCase)
+            ||endpoint.Host.Equals("vibi.top",StringComparison.OrdinalIgnoreCase)||endpoint.Host.Equals("www.vibi.top",StringComparison.OrdinalIgnoreCase);
+        if(isThirdPartyProxy)
         {
             if(payload["max_completion_tokens"] is JsonNode budget)
             {
@@ -100,7 +103,7 @@ public static class AiProviderRequest
     private static string Text(JsonElement element,string name)=>element.TryGetProperty(name,out var value)?value.ValueKind==JsonValueKind.String?value.GetString()??"":value.ValueKind==JsonValueKind.Number?value.GetRawText():"":"";
     public static string Error(Exception ex)
     {
-        if(ex is InvalidOperationException && (ex.Message.StartsWith("Nhà cung cấp AI trả HTTP ") || ex.Message.StartsWith("AI chưa trả kết quả") || ex.Message.StartsWith("Chưa bật AI")))return ex.Message;
+        if(ex is InvalidOperationException)return ex.Message;
         if(ex is Microsoft.EntityFrameworkCore.DbUpdateException)return "Không lưu được kết quả vào cơ sở dữ liệu. Tài liệu được giữ lại; cần kiểm tra lỗi dữ liệu trước khi đọc lại.";
         if(ex is OperationCanceledException)return "AI phản hồi quá thời gian chờ. Tài liệu được giữ lại; bạn có thể đọc lại sau.";
         if(ex is HttpRequestException)return "Không kết nối được nhà cung cấp AI. Tài liệu được giữ lại; kiểm tra kết nối và thử lại sau.";

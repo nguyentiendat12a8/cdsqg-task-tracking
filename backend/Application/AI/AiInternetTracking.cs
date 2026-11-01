@@ -35,7 +35,16 @@ public static class AiInternetTracking
             var goalId=Guid.Parse(metric.Key[5..]);
             var goal=await db.GoalTaskItems.AsNoTracking().SingleAsync(g=>g.Id==goalId,ct);
             var national=goal.DocumentId==AiDocumentScope.PriorityDocument&&AiMetricCatalog.Metrics.Any(m=>m.GoalCodes.Contains(goal.Code));
-            if(national){var definition=AiMetricCatalog.Metrics.Single(m=>m.GoalCodes.Contains(goal.Code)).Definition;result.Add(metric with{Definition=definition,ExtractionPrompt=definition+" "+metric.ExtractionPrompt});continue;}
+            if(national)
+            {
+                var legacy=AiMetricCatalog.Metrics.First(m=>m.GoalCodes.Contains(goal.Code));
+                var definition=legacy.Definition;
+                var resolved=metric with{Definition=definition,ExtractionPrompt=definition+" "+metric.ExtractionPrompt};
+                result.Add(resolved);
+                if(selectedKeys!=null&&selectedKeys.Contains(legacy.Key)&&!result.Any(r=>r.Key==legacy.Key))
+                    result.Add(resolved with{Key=legacy.Key});
+                continue;
+            }
             var recipients=db.AgencyTaskExecutions.Where(e=>e.GoalTaskId==goalId&&e.IsLeadAssignment).Select(e=>e.AgencyId);
             var agencies=await db.Agencies.AsNoTracking().Where(a=>a.IsActive&&recipients.Contains(a.Id)&&a.Type!=AgencyTypeEnum.Special).ToListAsync(ct);
             var scopes=agencies.Where(a=>!ReportingAgencyGroups.IsGroup(a)).Select(a=>new AiMetricScope(a.Id,ProvinceCatalog.DisplayName(a),new[]{a.Name,ProvinceCatalog.DisplayName(a)}.Distinct().ToArray())).ToArray();

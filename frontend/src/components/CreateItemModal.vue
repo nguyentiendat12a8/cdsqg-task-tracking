@@ -171,6 +171,7 @@ import { ref, computed, watch, onMounted } from 'vue';
 import SearchableSelect from './SearchableSelect.vue';
 import DatePicker from './DatePicker.vue';
 import { getApiUrl } from '../config/api';
+import { loadAgencyCatalog } from '../services/agencyCatalog';
 import { parseApiError } from '../utils/errorUtils';
 
 const props = defineProps({
@@ -344,11 +345,11 @@ watch(() => props.documentId, (newVal) => {
 
 async function loadCatalogs() {
   try {
-    const [agencyRes, unitRes] = await Promise.all([
-      fetchWithAuth(getApiUrl('/api/agencies')),
+    const [agencyList, unitRes] = await Promise.all([
+      loadAgencyCatalog().catch(() => null),
       fetchWithAuth(getApiUrl('/api/units'))
     ]);
-    if (agencyRes.ok) agencies.value = await agencyRes.json();
+    if (agencyList) agencies.value = agencyList;
     if (unitRes.ok) units.value = await unitRes.json();
 
     if (agencies.value.length > 0 && !form.value.leadAgencyId) {

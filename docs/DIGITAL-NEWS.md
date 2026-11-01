@@ -21,4 +21,6 @@ Nguồn được đọc qua endpoint CSV công khai trên docs.google.com; khôn
 
 Đọc nguồn thật: 80 bản ghi hợp lệ được nạp vào database local; lượt kế tiếp 0 thêm mới, 80 đã có. Số mục tiêu/nhiệm vụ và nguồn RSS cũ giữ nguyên. 8 kiểm thử chức năng đạt, bao gồm PostgreSQL thật: lặp lượt, cập nhật/xóa dòng nguồn, lịch, chạy chồng, lỗi CSV và lọc danh sách. Playwright 1440/390px cho Admin và người xem đạt.
 
+Bộ test chung hiện có lỗi biên dịch ngoài phạm vi: InternetTrackingTests gọi AiDataController.Suggestions(documentId:...) trong khi controller đang có ở working tree không khai báo tham số này. Chạy kiểm thử DigitalNewsTests trong project QA riêng tham chiếu backend và dùng PostgresFactAttribute hiện có; không sửa các thay đổi AI đang dở.
+
 Chưa deploy production. Lần deploy backend cần chạy migration như cơ chế khởi động hiện có, sau đó worker sẽ nhập dữ liệu từ sheet theo cấu hình.

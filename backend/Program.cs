@@ -197,6 +197,16 @@ builder.Services.AddCors(options =>
     });
 });
 
+// Nén JSON (danh sách/thống kê có thể vài trăm KB) để giảm thời gian tải qua mạng.
+builder.Services.AddResponseCompression(options =>
+{
+    options.EnableForHttps = true;
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProvider>();
+    options.Providers.Add<Microsoft.AspNetCore.ResponseCompression.GzipCompressionProvider>();
+});
+builder.Services.Configure<Microsoft.AspNetCore.ResponseCompression.BrotliCompressionProviderOptions>(o => o.Level = System.IO.Compression.CompressionLevel.Fastest);
+builder.Services.Configure<Microsoft.AspNetCore.ResponseCompression.GzipCompressionProviderOptions>(o => o.Level = System.IO.Compression.CompressionLevel.Fastest);
+
 var app = builder.Build();
 
 // Explicit repair preserves reports, decisions and execution IDs; no destructive seed replay.
@@ -229,6 +239,9 @@ if (args.Contains("--migrate-ai-keyring"))
     Console.WriteLine($"AI keyring migration complete. Imported keys: {imported}. Credential readable: {!string.IsNullOrEmpty(credential.ApiKey)}.");
     return;
 }
+
+// Không nén phản hồi xác thực (chứa token) để tránh rủi ro kiểu BREACH; các API còn lại được nén.
+app.UseWhen(ctx => !ctx.Request.Path.StartsWithSegments("/api/auth"), branch => branch.UseResponseCompression());
 
 app.UseCors("AllowFrontend");
 
