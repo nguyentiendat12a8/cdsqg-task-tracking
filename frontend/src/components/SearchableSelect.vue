@@ -207,9 +207,20 @@ const filteredOptions = computed(() => {
 const displaySelectedItems = computed(() => {
   const result = [];
   for (const val of selectedList.value) {
-    const found = props.options.find(o => o.value === val);
-    if (found) result.push(found);
-    else result.push({ value: val, label: String(val) });
+    const valStr = String(val ?? '').trim();
+    const valLower = valStr.toLowerCase();
+    const found = props.options.find(o => String(o.value ?? '').toLowerCase() === valLower);
+    if (found) {
+      result.push(found);
+    } else if (['completed', '4'].includes(valLower)) {
+      result.push({ value: val, label: 'Đã hoàn thành' });
+    } else if (['drafting', 'reviewing', 'submitted', 'in_progress', 'inprogress', '2', '3'].includes(valLower)) {
+      result.push({ value: val, label: 'Đang thực hiện' });
+    } else if (['notstarted', 'not_started', '1'].includes(valLower)) {
+      result.push({ value: val, label: 'Chưa thực hiện' });
+    } else {
+      result.push({ value: val, label: valStr });
+    }
   }
   return result.slice(0, props.maxDisplayTags);
 });
@@ -278,7 +289,8 @@ function handleDropdownKey(event) {
 }
 
 function isSelected(opt) {
-  return selectedList.value.includes(opt.value);
+  const optStr = String(opt.value ?? '').toLowerCase();
+  return selectedList.value.some(val => String(val ?? '').toLowerCase() === optStr);
 }
 
 function toggleOption(opt) {

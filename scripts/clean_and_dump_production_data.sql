@@ -138,7 +138,7 @@ INSERT INTO _completed_tasks VALUES
 UPDATE "AgencyTaskExecutions" e
 SET "CalculatedStatus" = 'Completed', "LatestQualitativeStatus" = 'Completed', "CompletionPercentage" = 100.0,
     "Deliverables" = CASE WHEN i."Deliverables" IS NOT NULL AND jsonb_array_length(i."Deliverables") > 0
-        THEN (SELECT jsonb_agg(jsonb_set(d, '{CurrentStatus}', '"completed"')) FROM jsonb_array_elements(i."Deliverables") d)
+        THEN (SELECT jsonb_agg(jsonb_set(d, '{CurrentStatus}', '"Completed"')) FROM jsonb_array_elements(i."Deliverables") d)
         ELSE '[]'::jsonb END,
     "SummaryNotes" = 'Đã hoàn thành xuất sắc nhiệm vụ theo đúng kế hoạch được giao.',
     "LastReportedAt" = NOW(), "LastReportedBy" = 'Báo cáo Chuyển đổi số quốc gia', "UpdatedAt" = NOW()
@@ -250,7 +250,7 @@ INSERT INTO _inprogress_tasks VALUES
 UPDATE "AgencyTaskExecutions" e
 SET "CalculatedStatus" = 'InProgress', "LatestQualitativeStatus" = 'Reviewing', "CompletionPercentage" = 60.0,
     "Deliverables" = CASE WHEN i."Deliverables" IS NOT NULL AND jsonb_array_length(i."Deliverables") > 0
-        THEN (SELECT jsonb_agg(jsonb_set(d, '{CurrentStatus}', '"reviewing"')) FROM jsonb_array_elements(i."Deliverables") d)
+        THEN (SELECT jsonb_agg(jsonb_set(d, '{CurrentStatus}', '"Drafting"')) FROM jsonb_array_elements(i."Deliverables") d)
         ELSE '[]'::jsonb END,
     "SummaryNotes" = 'Đang tích cực triển khai thực hiện nhiệm vụ theo đúng lộ trình.',
     "LastReportedAt" = NOW(), "LastReportedBy" = 'Báo cáo Chuyển đổi số quốc gia', "UpdatedAt" = NOW()

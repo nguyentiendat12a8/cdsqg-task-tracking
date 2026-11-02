@@ -417,6 +417,13 @@ function removeExistingFile(index) {
   existingFiles.value.splice(index, 1);
 }
 
+function normalizeDeliverableStatus(status) {
+  const s = String(status || '').trim().toLowerCase();
+  if (['completed', '4'].includes(s)) return 'Completed';
+  if (['drafting', 'reviewing', 'submitted', 'in_progress', 'inprogress', '2', '3'].includes(s)) return 'Drafting';
+  return 'NotStarted';
+}
+
 function resetFormFields() {
   isEditingPending.value = false;
   form.value.value = null;
@@ -466,7 +473,7 @@ async function fetchExistingProgress() {
               id: d.id || d.Id || '',
               title: d.title || d.Title || '',
               dueDate: d.dueDate || d.DueDate || null,
-              currentStatus: d.currentStatus || d.CurrentStatus || 'NotStarted',
+              currentStatus: normalizeDeliverableStatus(d.currentStatus || d.CurrentStatus),
               documentNumber: d.documentNumber || d.DocumentNumber || '',
               promulgationDate: d.promulgationDate || d.PromulgationDate || null
             }));
@@ -499,7 +506,7 @@ watch(() => [props.isOpen, props.customBaseline, props.deliverables], async ([ne
         id: d.id || d.Id || '',
         title: d.title || d.Title || '',
         dueDate: d.dueDate || d.DueDate || null,
-        currentStatus: d.currentStatus || d.CurrentStatus || 'NotStarted',
+        currentStatus: normalizeDeliverableStatus(d.currentStatus || d.CurrentStatus),
         documentNumber: d.documentNumber || d.DocumentNumber || '',
         promulgationDate: d.promulgationDate || d.PromulgationDate || null
       }));
