@@ -40,6 +40,54 @@ public class DashboardTimeFilterTests
         Assert.Equal("Completed",product.CurrentStatus);
     }
 
+    [Fact]
+    public void RestrictReportsPreservesCompletedLogsForNonOngoingTasks()
+    {
+        var completedLog = new ProgressLog {
+            PeriodYear = 2026,
+            ApprovalStatus = ApprovalStatusEnum.Approved,
+            QualitativeStatus = TextStatusEnum.Completed
+        };
+        var incompleteLog = new ProgressLog {
+            PeriodYear = 2026,
+            ApprovalStatus = ApprovalStatusEnum.Approved,
+            QualitativeStatus = TextStatusEnum.Drafting
+        };
+
+        var completedTask = new GoalTaskItem {
+            IsOngoing = false,
+            EvaluationType = EvaluationTypeEnum.Qualitative,
+            ProgressLogs = new List<ProgressLog> { completedLog }
+        };
+        var incompleteTask = new GoalTaskItem {
+            IsOngoing = false,
+            EvaluationType = EvaluationTypeEnum.Qualitative,
+            ProgressLogs = new List<ProgressLog> { incompleteLog }
+        };
+        var ongoingTask = new GoalTaskItem {
+            IsOngoing = true,
+            EvaluationType = EvaluationTypeEnum.Qualitative,
+            ProgressLogs = new List<ProgressLog> {
+                new ProgressLog {
+                    PeriodYear = 2026,
+                    ApprovalStatus = ApprovalStatusEnum.Approved,
+                    QualitativeStatus = TextStatusEnum.Completed
+                }
+            }
+        };
+
+        var filter = new DashboardTimeFilter(2027, 2027, null, null);
+        filter.RestrictReports(new[] { completedTask, incompleteTask, ongoingTask });
+
+        Assert.Single(completedTask.ProgressLogs);
+        Assert.Empty(incompleteTask.ProgressLogs);
+        Assert.Empty(ongoingTask.ProgressLogs);
+
+        var result = ProgressCalculator.Evaluate(completedTask, year: 2027);
+        Assert.Equal(ExecutionStatusEnum.Completed, result.Status);
+        Assert.Equal(100m, result.Percentage);
+    }
+
     [PostgresFact]
     public async Task ReportRangeUsesLatestApprovedTotalAndAllViewsShareExecutionWindow()
     {

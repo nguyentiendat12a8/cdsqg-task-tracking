@@ -1,3 +1,6 @@
+import { currentReportingYear } from '../../config/reporting';
+
 export function defaultDashboardTimeFilters() {
-  return { reportFromYear: null, reportToYear: null, executionFrom: '', executionTo: '', isOngoingOnly: false };
+  const current = currentReportingYear();
+  return { reportFromYear: current, reportToYear: current, executionFrom: '', executionTo: '', isOngoingOnly: false };
 }

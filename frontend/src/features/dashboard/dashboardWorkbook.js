@@ -56,17 +56,26 @@ export function buildDashboardWorkbook({ XLSX, document, filters, metrics, agenc
     i + 1, a.name, a.totalItems, a.totalGoals, a.goalNotStarted, a.goalInProgress, a.goalCompleted,
     a.totalTasks, a.taskNotStarted, a.taskInProgress, a.taskCompleted, percent(a.completionRateOverall), a.overdue, a.expiringSoon
   ]), [7, 42, 14, 14, 18, 18, 18, 14, 18, 18, 18, 20, 14, 16], { 11: '0.0%' }, 'Tỷ lệ hoàn thành và các chỉ số lấy từ Dashboard; đơn vị không có lượt giao không có tỷ lệ hoàn thành.');
-  const headers = ['STT', 'Mã', 'Tên', 'Đơn vị nhận giao', 'Khối', 'Phạm vi', 'Cơ quan chủ trì', 'Cơ quan phối hợp', 'Mục', 'Nhóm', 'Bắt đầu', 'Kết thúc', 'Thường xuyên', 'Giá trị báo cáo', 'Đơn vị tính', 'Tiến độ', 'Trạng thái', 'Thời hạn', 'Sản phẩm'];
+  const headersFor = type => type === 'Goal'
+    ? ['STT', 'Mã', 'Tên', 'Đơn vị nhận giao', 'Khối', 'Phạm vi', 'Cơ quan chủ trì', 'Cơ quan phối hợp', 'Mục', 'Nhóm', 'Bắt đầu', 'Kết thúc', 'Thường xuyên', 'Chỉ tiêu kế hoạch', 'Giá trị báo cáo', 'Đơn vị tính', 'Tiến độ', 'Trạng thái', 'Thời hạn', 'Sản phẩm']
+    : ['STT', 'Mã', 'Tên', 'Đơn vị nhận giao', 'Khối', 'Phạm vi', 'Cơ quan chủ trì', 'Cơ quan phối hợp', 'Mục', 'Nhóm', 'Bắt đầu', 'Kết thúc', 'Thường xuyên', 'Giá trị báo cáo', 'Đơn vị tính', 'Tiến độ', 'Trạng thái', 'Thời hạn', 'Sản phẩm'];
   for (const [type, name] of [['Goal', 'Chi tiết mục tiêu'], ['Task', 'Chi tiết nhiệm vụ']]) {
     const selected = items.filter(item => item.itemType === type);
-    sheet(name, headers, selected.map((item, index) => [
+    sheet(name, headersFor(type), selected.map((item, index) => [
       index + 1, item.code, item.title, item.reportAgency.name, blockName(item.reportAgency.type), item.isGeneralTask ? 'Giao chung' : 'Giao riêng',
       item.leadAgencyName, (item.coordinatingAgencyNames || []).join('; '), item.section, item.group,
-      dateValue(item.startDate), dateValue(item.dueDate), item.isOngoing ? 'Có' : 'Không', item.latestProgressValue ?? null, item.unitName,
+      dateValue(item.startDate), dateValue(item.dueDate), item.isOngoing ? 'Có' : 'Không',
+      ...(type === 'Goal' ? [item.targetValue ?? null] : []),
+      item.latestProgressValue ?? null, item.unitName,
       percent(item.latestProgressPercent), getStatusLabel(item.calculatedStatus || item.status),
       ({ Overdue: 'Quá hạn', ExpiringSoon: 'Sắp đến hạn', OnTime: 'Trong hạn', CompletedOnTime: 'Hoàn thành đúng hạn', CompletedOverdue: 'Hoàn thành quá hạn' })[item.deadlineStatus] || item.deadlineStatus || null,
       (item.deliverables || []).map(d => `${d.name || d.title || ''}${d.currentStatus ? ' (' + getStatusLabel(d.currentStatus) + ')' : ''}`).filter(Boolean).join('\n')
-    ]), [7, 16, 65, 40, 18, 16, 40, 40, 24, 34, 16, 16, 18, 20, 18, 16, 22, 20, 55], { 10: 'dd/mm/yyyy', 11: 'dd/mm/yyyy', 13: '#,##0.00', 15: '0.0%' },
+    ]), type === 'Goal'
+      ? [7, 16, 65, 40, 18, 16, 40, 40, 24, 34, 16, 16, 18, 18, 20, 18, 16, 22, 20, 55]
+      : [7, 16, 65, 40, 18, 16, 40, 40, 24, 34, 16, 16, 18, 20, 18, 16, 22, 20, 55],
+    type === 'Goal'
+      ? { 10: 'dd/mm/yyyy', 11: 'dd/mm/yyyy', 13: '#,##0.00', 14: '#,##0.00', 16: '0.0%' }
+      : { 10: 'dd/mm/yyyy', 11: 'dd/mm/yyyy', 13: '#,##0.00', 15: '0.0%' },
     'Mỗi dòng là một lượt giao cho đơn vị; một mã có thể xuất hiện ở nhiều đơn vị. Giá trị trống là chưa có dữ liệu, khác số 0.');
   }
   return wb;

@@ -9,6 +9,24 @@ export function formatProgressDisplay(item) {
     return getStatusLabel(item.calculatedStatus || item.latestProgressStatus || 'NotStarted');
   }
 
+  const target = item.expectedBaselineTarget ?? item.targetValue;
+  const unit = item.unitName || item.unit?.name || '%';
+  const isPercentUnit = !unit || unit === '%' || unit === 'PERCENT';
+
+  if (target != null) {
+    const targetStr = isPercentUnit ? `${formatNumber(target)}%` : `${formatNumber(target)}${unit ? ' ' + unit : ''}`;
+    let actualStr = null;
+    if (item.latestProgressValue !== null && item.latestProgressValue !== undefined) {
+      actualStr = isPercentUnit ? `${formatNumber(item.latestProgressValue)}%` : formatNumber(item.latestProgressValue);
+    } else if (item.completionPercentage !== null && item.completionPercentage !== undefined) {
+      actualStr = formatPercent(item.completionPercentage);
+    }
+    if (actualStr != null) {
+      return `Đạt ${actualStr} / KH ${targetStr}`;
+    }
+    return `Chưa báo cáo / KH ${targetStr}`;
+  }
+
   if (item.completionPercentage !== null && item.completionPercentage !== undefined) {
     return formatPercent(item.completionPercentage);
   }

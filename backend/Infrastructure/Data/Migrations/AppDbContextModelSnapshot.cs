@@ -30,6 +30,10 @@ namespace Cdsqg.Infrastructure.Data.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");
 
+                    b.Property<string>("AnnualPlans")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasColumnType("text");
@@ -40,6 +44,12 @@ namespace Cdsqg.Infrastructure.Data.Migrations
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("DigitalArchitecture")
+                        .HasColumnType("text");
+
+                    b.Property<string>("FiveYearPlan")
+                        .HasColumnType("text");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");
@@ -1405,6 +1415,12 @@ namespace Cdsqg.Infrastructure.Data.Migrations
                     b.Property<DateTime>("ImportedAt")
                         .HasColumnType("timestamp without time zone");
 
+                    b.Property<bool>("OriginalUrlVerified")
+                        .HasColumnType("boolean");
+
+                    b.Property<DateTime?>("PublishedAt")
+                        .HasColumnType("timestamp without time zone");
+
                     b.Property<int>("SourceRow")
                         .HasColumnType("integer");
 
@@ -1416,6 +1432,9 @@ namespace Cdsqg.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasMaxLength(2000)
                         .HasColumnType("character varying(2000)");
+
+                    b.Property<string>("TitleKey")
+                        .HasColumnType("text");
 
                     b.Property<DateTime>("UpdatedAt")
                         .HasColumnType("timestamp without time zone");
@@ -1431,6 +1450,9 @@ namespace Cdsqg.Infrastructure.Data.Migrations
                         .HasColumnType("character varying(64)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("TitleKey")
+                        .IsUnique();
 
                     b.HasIndex("UrlHash")
                         .IsUnique();
@@ -1451,10 +1473,20 @@ namespace Cdsqg.Infrastructure.Data.Migrations
                     b.Property<int>("Added")
                         .HasColumnType("integer");
 
+                    b.Property<int>("BatchSize")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("Enabled")
                         .HasColumnType("boolean");
 
+                    b.Property<string>("EvaluationCriteriaJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<int>("IntervalHours")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("IntervalMinutes")
                         .HasColumnType("integer");
 
                     b.Property<DateTime?>("LastCompletedAt")
@@ -1477,8 +1509,20 @@ namespace Cdsqg.Infrastructure.Data.Migrations
                     b.Property<DateTime?>("LeaseUntil")
                         .HasColumnType("timestamp without time zone");
 
+                    b.Property<int>("LookbackDays")
+                        .HasColumnType("integer");
+
                     b.Property<DateTime?>("NextRunAt")
                         .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateOnly?>("PublishedFrom")
+                        .HasColumnType("date");
+
+                    b.Property<DateOnly?>("PublishedTo")
+                        .HasColumnType("date");
+
+                    b.Property<int>("QueryCursor")
+                        .HasColumnType("integer");
 
                     b.Property<string>("SheetUrl")
                         .IsRequired()
@@ -1506,15 +1550,1314 @@ namespace Cdsqg.Infrastructure.Data.Migrations
                         {
                             Id = 1,
                             Added = 0,
+                            BatchSize = 12,
                             Enabled = true,
+                            EvaluationCriteriaJson = "",
                             IntervalHours = 2,
+                            IntervalMinutes = 30,
                             LastError = "",
                             LastStatus = "NotStarted",
+                            LookbackDays = 365,
+                            QueryCursor = 0,
                             SheetUrl = "https://docs.google.com/spreadsheets/d/1fOGT8aBm6X5ul2pk8p7zxzixEMklpqLVXEgsSCFrEDI/edit?gid=731708878",
                             Skipped = 0,
                             Unchanged = 0,
                             Updated = 0,
                             UpdatedBy = ""
+                        });
+                });
+
+            modelBuilder.Entity("Cdsqg.Core.Entities.DigitalPlanKeyword", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Conditions")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Phrase")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DigitalPlanKeywords");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("b5d4f2e1-dfeb-5efc-9cde-89730f4a944e"),
+                            Conditions = "chuyển đổi số",
+                            Enabled = false,
+                            Name = "Ban hành kế hoạch",
+                            Phrase = "ban hành kế hoạch chuyển đổi số",
+                            SortOrder = 1
+                        },
+                        new
+                        {
+                            Id = new Guid("84491507-1514-5140-a88c-70202ce2036d"),
+                            Conditions = "chuyển đổi số",
+                            Enabled = false,
+                            Name = "Ban hành đề án",
+                            Phrase = "ban hành đề án chuyển đổi số",
+                            SortOrder = 2
+                        },
+                        new
+                        {
+                            Id = new Guid("aa72ab90-2491-551f-942d-8d9b18eaba1d"),
+                            Conditions = "chuyển đổi số",
+                            Enabled = false,
+                            Name = "Ban hành nghị quyết",
+                            Phrase = "ban hành nghị quyết chuyển đổi số",
+                            SortOrder = 3
+                        },
+                        new
+                        {
+                            Id = new Guid("55b6869f-b76b-5e49-8d41-df9b549c5e93"),
+                            Conditions = "chuyển đổi số",
+                            Enabled = false,
+                            Name = "Triển khai kế hoạch",
+                            Phrase = "triển khai kế hoạch",
+                            SortOrder = 4
+                        },
+                        new
+                        {
+                            Id = new Guid("adb5c0c0-3f43-5ef5-82bf-2addfb073888"),
+                            Conditions = "ban hành, phê duyệt, thông qua, công bố",
+                            Enabled = true,
+                            Name = "Văn bản chuyển đổi số",
+                            Phrase = "kế hoạch chuyển đổi số",
+                            SortOrder = 1
+                        },
+                        new
+                        {
+                            Id = new Guid("2d13b6bc-b2b6-54d0-ac6b-18cbb6bf2827"),
+                            Conditions = "chuyển đổi số",
+                            Enabled = false,
+                            Name = "Phê duyệt",
+                            Phrase = "Bộ chỉ số chuyển đổi số",
+                            SortOrder = 6
+                        },
+                        new
+                        {
+                            Id = new Guid("243c6deb-35ca-5304-8a68-e38f4fcc1ba1"),
+                            Conditions = "ban hành, phê duyệt, thông qua, công bố",
+                            Enabled = true,
+                            Name = "Văn bản chuyển đổi số",
+                            Phrase = "chương trình chuyển đổi số",
+                            SortOrder = 3
+                        },
+                        new
+                        {
+                            Id = new Guid("d3eb6d57-b18a-5c4f-89a7-777c6ad63906"),
+                            Conditions = "kinh tế số",
+                            Enabled = false,
+                            Name = "Tỷ trọng kinh tế số",
+                            Phrase = "Tỷ trọng kinh tế số",
+                            SortOrder = 8
+                        },
+                        new
+                        {
+                            Id = new Guid("f306de91-2ae3-56ac-91bf-04676701ec74"),
+                            Conditions = "Dịch vụ công trực tuyến",
+                            Enabled = false,
+                            Name = "Dịch vụ công trực tuyến",
+                            Phrase = "Dịch vụ công trực tuyến",
+                            SortOrder = 9
+                        },
+                        new
+                        {
+                            Id = new Guid("1fd91266-e51e-5516-adee-85db39432675"),
+                            Conditions = "ban hành, phê duyệt, thông qua, công bố",
+                            Enabled = true,
+                            Name = "Kiến trúc số / điện tử",
+                            Phrase = "khung kiến trúc số",
+                            SortOrder = 7
+                        },
+                        new
+                        {
+                            Id = new Guid("187f0486-77ed-5935-800d-0ea538e62380"),
+                            Conditions = "chính phủ số, chính quyền số",
+                            Enabled = false,
+                            Name = " hồ sơ, kết quả giải quyết thủ tục hành chính được số hóa",
+                            Phrase = "hồ sơ, kết quả giải quyết thủ tục hành chính được số hóa",
+                            SortOrder = 11
+                        },
+                        new
+                        {
+                            Id = new Guid("eb93cb04-c498-5c5b-9f3c-f4d909eddc07"),
+                            Conditions = "chính phủ số, chính quyền số",
+                            Enabled = false,
+                            Name = "người dân, doanh nghiệp đánh giá hài lòng khi sử dụng dịch vụ công trực tuyến",
+                            Phrase = "người dân, doanh nghiệp đánh giá hài lòng khi sử dụng dịch vụ công trực tuyến",
+                            SortOrder = 12
+                        },
+                        new
+                        {
+                            Id = new Guid("183112a3-51f1-5f50-8c08-11e3eef20fe5"),
+                            Conditions = "chính phủ số, chính quyền số",
+                            Enabled = false,
+                            Name = "sử dụng thống nhất, hiệu quả các nền tảng số dùng chung quốc gia phục vụ chỉ đạo, điều hành và cung cấp dịch vụ công",
+                            Phrase = "sử dụng thống nhất, hiệu quả các nền tảng số dùng chung quốc gia phục vụ chỉ đạo, điều hành và cung cấp dịch vụ công",
+                            SortOrder = 13
+                        },
+                        new
+                        {
+                            Id = new Guid("ce9b921f-090f-593f-8235-8cb5b5dc50f4"),
+                            Conditions = "chính phủ số, chính quyền số",
+                            Enabled = false,
+                            Name = "hệ thống thông tin được kết nối, chia sẻ dữ liệu qua dịch vụ chia sẻ dữ liệu",
+                            Phrase = "hệ thống thông tin được kết nối, chia sẻ dữ liệu qua dịch vụ chia sẻ dữ liệu",
+                            SortOrder = 14
+                        },
+                        new
+                        {
+                            Id = new Guid("807e04ee-7a01-5070-9842-5df0b25201e1"),
+                            Conditions = "chính phủ số, chính quyền số",
+                            Enabled = false,
+                            Name = "cơ sở dữ liệu dùng chung quốc gia, ngành, lĩnh vực, cấp tỉnh được chuẩn hóa, kết nối, phân quyền và sẵn sàng khai thác cho AI",
+                            Phrase = "cơ sở dữ liệu dùng chung quốc gia, ngành, lĩnh vực, cấp tỉnh được chuẩn hóa, kết nối, phân quyền và sẵn sàng khai thác cho AI",
+                            SortOrder = 15
+                        },
+                        new
+                        {
+                            Id = new Guid("0caf78f5-40c9-5fd6-b2f8-60784be9d946"),
+                            Conditions = "chính phủ số, chính quyền số",
+                            Enabled = false,
+                            Name = "trung tâm điều hành thông minh cấp tỉnh được nâng cấp theo hướng tích hợp AI phục vụ phân tích, dự báo, cảnh báo, giám sát và hỗ trợ ra quyết định",
+                            Phrase = "trung tâm điều hành thông minh cấp tỉnh được nâng cấp theo hướng tích hợp AI phục vụ phân tích, dự báo, cảnh báo, giám sát và hỗ trợ ra quyết định",
+                            SortOrder = 16
+                        },
+                        new
+                        {
+                            Id = new Guid("e20a202e-7637-5bcb-8109-507570b54afe"),
+                            Conditions = "chính phủ số, chính quyền số",
+                            Enabled = false,
+                            Name = "cán bộ, công chức, viên chức trong cơ quan nhà nước có hồ sơ điện tử theo quy định",
+                            Phrase = "cán bộ, công chức, viên chức trong cơ quan nhà nước có hồ sơ điện tử theo quy định",
+                            SortOrder = 17
+                        },
+                        new
+                        {
+                            Id = new Guid("b5989c8d-1086-5141-8cbc-b039826f4ad4"),
+                            Conditions = "chính phủ số, chính quyền số",
+                            Enabled = false,
+                            Name = "số chỉ tiêu thống kê thuộc các hệ thống chỉ tiêu thống kê được biên soạn từ nguồn dữ liệu hành chính",
+                            Phrase = "số chỉ tiêu thống kê thuộc các hệ thống chỉ tiêu thống kê được biên soạn từ nguồn dữ liệu hành chính",
+                            SortOrder = 18
+                        },
+                        new
+                        {
+                            Id = new Guid("87ba5cdf-eeef-5c79-aea6-bc65121a3c0d"),
+                            Conditions = "chính phủ số, chính quyền số",
+                            Enabled = false,
+                            Name = "cán bộ lãnh đạo, cán bộ, công chức, viên chức trong cơ quan nhà nước được đào tạo, bồi dưỡng, cập nhật kiến thức, kỹ năng số",
+                            Phrase = "cán bộ lãnh đạo, cán bộ, công chức, viên chức trong cơ quan nhà nước được đào tạo, bồi dưỡng, cập nhật kiến thức, kỹ năng số",
+                            SortOrder = 19
+                        },
+                        new
+                        {
+                            Id = new Guid("c6fd3b16-c294-57ca-828c-f9f304b894e7"),
+                            Conditions = "chính phủ số, chính quyền số",
+                            Enabled = false,
+                            Name = "cán bộ, công chức, viên chức có tài khoản và được đào tạo sử dụng nền tảng trợ lý AI công vụ",
+                            Phrase = "cán bộ, công chức, viên chức có tài khoản và được đào tạo sử dụng nền tảng trợ lý AI công vụ",
+                            SortOrder = 20
+                        },
+                        new
+                        {
+                            Id = new Guid("bf2a0a2f-03dc-5c5a-99f7-bd1bc0b75548"),
+                            Conditions = "kinh tế số",
+                            Enabled = false,
+                            Name = "Hỗ trợ doanh nghiệp nhỏ và vừa chuyển đổi số",
+                            Phrase = "Hỗ trợ doanh nghiệp nhỏ và vừa chuyển đổi số",
+                            SortOrder = 21
+                        },
+                        new
+                        {
+                            Id = new Guid("ef2ab949-f006-578c-9892-51a70614fc2f"),
+                            Conditions = "ban hành, phê duyệt, thông qua, công bố",
+                            Enabled = true,
+                            Name = "Kiến trúc số / điện tử",
+                            Phrase = "khung kiến trúc chính phủ số",
+                            SortOrder = 8
+                        },
+                        new
+                        {
+                            Id = new Guid("effd0408-b6a6-5ac5-a00c-39b775f401c4"),
+                            Conditions = "ban hành, phê duyệt, thông qua, công bố",
+                            Enabled = true,
+                            Name = "Kiến trúc số / điện tử",
+                            Phrase = "khung kiến trúc chính quyền số",
+                            SortOrder = 9
+                        },
+                        new
+                        {
+                            Id = new Guid("d5de8572-f8a9-5584-9739-5c5f436412a2"),
+                            Conditions = "ban hành, phê duyệt, thông qua, công bố",
+                            Enabled = true,
+                            Name = "Văn bản chuyển đổi số",
+                            Phrase = "đề án chuyển đổi số",
+                            SortOrder = 2
+                        },
+                        new
+                        {
+                            Id = new Guid("204beec3-e301-5b25-a9b4-6e801a3883ca"),
+                            Conditions = "ban hành, phê duyệt, thông qua, công bố",
+                            Enabled = true,
+                            Name = "Văn bản chuyển đổi số",
+                            Phrase = "chuyển đổi số",
+                            SortOrder = 4
+                        },
+                        new
+                        {
+                            Id = new Guid("51a94e1f-77f9-5567-943e-2ab2daf8b9f5"),
+                            Conditions = "ban hành, phê duyệt, thông qua, công bố",
+                            Enabled = true,
+                            Name = "Văn bản chuyển đổi số",
+                            Phrase = "chính phủ số",
+                            SortOrder = 5
+                        },
+                        new
+                        {
+                            Id = new Guid("35a7c6b8-7234-5184-975c-f9fc550c993f"),
+                            Conditions = "ban hành, phê duyệt, thông qua, công bố",
+                            Enabled = true,
+                            Name = "Văn bản chuyển đổi số",
+                            Phrase = "chính quyền số",
+                            SortOrder = 6
+                        },
+                        new
+                        {
+                            Id = new Guid("9db91247-b265-54fe-9b21-9a3e9a7c0449"),
+                            Conditions = "ban hành, phê duyệt, thông qua, công bố",
+                            Enabled = true,
+                            Name = "Kiến trúc số / điện tử",
+                            Phrase = "khung kiến trúc chính phủ điện tử",
+                            SortOrder = 10
+                        },
+                        new
+                        {
+                            Id = new Guid("52396fc9-0fc9-55c3-b356-74c836533e09"),
+                            Conditions = "ban hành, phê duyệt, thông qua, công bố",
+                            Enabled = true,
+                            Name = "Kiến trúc số / điện tử",
+                            Phrase = "khung kiến trúc chính quyền điện tử",
+                            SortOrder = 11
+                        },
+                        new
+                        {
+                            Id = new Guid("0b2fcd67-ca73-5f85-8b36-f6fe119292ab"),
+                            Conditions = "ban hành, phê duyệt, thông qua, công bố",
+                            Enabled = true,
+                            Name = "Kiến trúc số / điện tử",
+                            Phrase = "kiến trúc chính phủ số",
+                            SortOrder = 12
+                        },
+                        new
+                        {
+                            Id = new Guid("6c7764bb-8492-5e9d-9708-b69309c91416"),
+                            Conditions = "ban hành, phê duyệt, thông qua, công bố",
+                            Enabled = true,
+                            Name = "Kiến trúc số / điện tử",
+                            Phrase = "kiến trúc chính quyền số",
+                            SortOrder = 13
+                        },
+                        new
+                        {
+                            Id = new Guid("2a61f1c8-0b85-547e-8420-9954513f3bb5"),
+                            Conditions = "ban hành, phê duyệt, thông qua, công bố",
+                            Enabled = true,
+                            Name = "Kiến trúc số / điện tử",
+                            Phrase = "kiến trúc chính phủ điện tử",
+                            SortOrder = 14
+                        },
+                        new
+                        {
+                            Id = new Guid("8e19f3ef-7a44-5eb4-8185-897f7bcd78c6"),
+                            Conditions = "ban hành, phê duyệt, thông qua, công bố",
+                            Enabled = true,
+                            Name = "Kiến trúc số / điện tử",
+                            Phrase = "kiến trúc chính quyền điện tử",
+                            SortOrder = 15
+                        });
+                });
+
+            modelBuilder.Entity("Cdsqg.Core.Entities.DigitalPlanRead", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AgencyName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("CompletedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("CriteriaHash")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("CriteriaJson")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int?>("EndYear")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Evidence")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid?>("LeaseToken")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("LeaseUntil")
+                        .HasColumnType("timestamp without time zone");
+
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("NotificationId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PlanKind")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid?>("RequestedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<int?>("StartYear")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TitleHash")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ItemId", "TitleHash", "CriteriaHash")
+                        .IsUnique();
+
+                    b.ToTable("DigitalPlanReads");
+                });
+
+            modelBuilder.Entity("Cdsqg.Core.Entities.DigitalPlanSource", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("AgencyName")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("Domain")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<bool>("Enabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("RequiredTerms")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("DigitalPlanSources");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = new Guid("93eee9bb-9c0c-527c-97ee-580ee2e5418e"),
+                            AgencyName = "Bộ Quốc phòng",
+                            Domain = "mod.gov.vn",
+                            Enabled = true,
+                            Name = "Bộ Quốc phòng",
+                            RequiredTerms = "",
+                            SortOrder = 1
+                        },
+                        new
+                        {
+                            Id = new Guid("4890bbb6-bb8f-5e8e-b3a8-a3bbfa46dc8d"),
+                            AgencyName = "Bộ Công an",
+                            Domain = "mps.gov.vn",
+                            Enabled = true,
+                            Name = "Bộ Công an",
+                            RequiredTerms = "",
+                            SortOrder = 2
+                        },
+                        new
+                        {
+                            Id = new Guid("a111c80c-4520-535c-9481-8a263de36cf4"),
+                            AgencyName = "Bộ Ngoại giao",
+                            Domain = "mofa.gov.vn",
+                            Enabled = true,
+                            Name = "Bộ Ngoại giao",
+                            RequiredTerms = "",
+                            SortOrder = 3
+                        },
+                        new
+                        {
+                            Id = new Guid("e9a14935-9d87-50c1-a3ab-62845a1d3ff2"),
+                            AgencyName = "Bộ Nội vụ",
+                            Domain = "moha.gov.vn",
+                            Enabled = true,
+                            Name = "Bộ Nội vụ",
+                            RequiredTerms = "",
+                            SortOrder = 4
+                        },
+                        new
+                        {
+                            Id = new Guid("d44909b3-9f88-5dec-bdce-70840cd76582"),
+                            AgencyName = "Bộ Tư pháp",
+                            Domain = "moj.gov.vn",
+                            Enabled = true,
+                            Name = "Bộ Tư pháp",
+                            RequiredTerms = "",
+                            SortOrder = 5
+                        },
+                        new
+                        {
+                            Id = new Guid("c72ac9f2-92ba-5479-9407-4ec3fb5402f1"),
+                            AgencyName = "Bộ Tài chính",
+                            Domain = "mof.gov.vn",
+                            Enabled = true,
+                            Name = "Bộ Tài chính",
+                            RequiredTerms = "",
+                            SortOrder = 6
+                        },
+                        new
+                        {
+                            Id = new Guid("394da1e9-6c21-57c6-a22f-b73c1b7726b5"),
+                            AgencyName = "Bộ Công Thương",
+                            Domain = "moit.gov.vn",
+                            Enabled = true,
+                            Name = "Bộ Công Thương",
+                            RequiredTerms = "",
+                            SortOrder = 7
+                        },
+                        new
+                        {
+                            Id = new Guid("8c2508a5-aaa2-5c8f-9164-e3375bcc69d9"),
+                            AgencyName = "Bộ Nông nghiệp và Môi trường",
+                            Domain = "mae.gov.vn",
+                            Enabled = true,
+                            Name = "Bộ Nông nghiệp và Môi trường",
+                            RequiredTerms = "",
+                            SortOrder = 8
+                        },
+                        new
+                        {
+                            Id = new Guid("5d28f892-f051-5925-b60d-fa0b5a1863ab"),
+                            AgencyName = "Bộ Xây dựng",
+                            Domain = "moc.gov.vn",
+                            Enabled = true,
+                            Name = "Bộ Xây dựng",
+                            RequiredTerms = "",
+                            SortOrder = 9
+                        },
+                        new
+                        {
+                            Id = new Guid("6878a2c2-698b-56b5-aef8-3bc114421b2f"),
+                            AgencyName = "Bộ Văn hóa, Thể thao và Du lịch",
+                            Domain = "bvhttdl.gov.vn",
+                            Enabled = true,
+                            Name = "Bộ Văn hóa, Thể thao và Du lịch",
+                            RequiredTerms = "",
+                            SortOrder = 10
+                        },
+                        new
+                        {
+                            Id = new Guid("932b67cc-a632-5dbf-ac62-afb303954ba7"),
+                            AgencyName = "Bộ Khoa học và Công nghệ",
+                            Domain = "mst.gov.vn",
+                            Enabled = true,
+                            Name = "Bộ Khoa học và Công nghệ",
+                            RequiredTerms = "",
+                            SortOrder = 11
+                        },
+                        new
+                        {
+                            Id = new Guid("03b89e3d-e325-50eb-912c-3eeedab3164b"),
+                            AgencyName = "Bộ Giáo dục và Đào tạo",
+                            Domain = "moet.gov.vn",
+                            Enabled = true,
+                            Name = "Bộ Giáo dục và Đào tạo",
+                            RequiredTerms = "",
+                            SortOrder = 12
+                        },
+                        new
+                        {
+                            Id = new Guid("f53492b1-0c26-5ee0-8686-993c5536b2e1"),
+                            AgencyName = "Bộ Y tế",
+                            Domain = "moh.gov.vn",
+                            Enabled = true,
+                            Name = "Bộ Y tế",
+                            RequiredTerms = "",
+                            SortOrder = 13
+                        },
+                        new
+                        {
+                            Id = new Guid("02538116-b9d5-5713-8f0b-ec96dccca168"),
+                            AgencyName = "Bộ Dân tộc và Tôn giáo",
+                            Domain = "bdttg.gov.vn",
+                            Enabled = true,
+                            Name = "Bộ Dân tộc và Tôn giáo",
+                            RequiredTerms = "",
+                            SortOrder = 14
+                        },
+                        new
+                        {
+                            Id = new Guid("9c95440b-6a88-5d51-ac6d-4425d4c018c6"),
+                            AgencyName = "Văn phòng Chính phủ",
+                            Domain = "vpcp.chinhphu.vn",
+                            Enabled = true,
+                            Name = "Văn phòng Chính phủ",
+                            RequiredTerms = "",
+                            SortOrder = 15
+                        },
+                        new
+                        {
+                            Id = new Guid("815f7fda-1890-5000-b8b8-79ad0a570ee5"),
+                            AgencyName = "Ngân hàng Nhà nước Việt Nam",
+                            Domain = "sbv.gov.vn",
+                            Enabled = true,
+                            Name = "Ngân hàng Nhà nước Việt Nam",
+                            RequiredTerms = "",
+                            SortOrder = 16
+                        },
+                        new
+                        {
+                            Id = new Guid("6cd1ceeb-0001-5cc4-88cd-5db7dcaf4fc5"),
+                            AgencyName = "Thanh tra Chính phủ",
+                            Domain = "thanhtra.gov.vn",
+                            Enabled = true,
+                            Name = "Thanh tra Chính phủ",
+                            RequiredTerms = "",
+                            SortOrder = 17
+                        },
+                        new
+                        {
+                            Id = new Guid("7c2d6e0b-0da7-50e6-8c59-a90853bb2669"),
+                            AgencyName = "Thành phố Hà Nội",
+                            Domain = "hanoi.gov.vn",
+                            Enabled = true,
+                            Name = "Hà Nội",
+                            RequiredTerms = "",
+                            SortOrder = 18
+                        },
+                        new
+                        {
+                            Id = new Guid("c69f02ca-c2d3-5e10-9cdc-eac190b4c3b4"),
+                            AgencyName = "Thành phố Hồ Chí Minh",
+                            Domain = "hochiminhcity.gov.vn",
+                            Enabled = true,
+                            Name = "TP. Hồ Chí Minh",
+                            RequiredTerms = "",
+                            SortOrder = 19
+                        },
+                        new
+                        {
+                            Id = new Guid("ac9a188e-5a9e-528d-afb5-d0fc611459b3"),
+                            AgencyName = "Thành phố Hải Phòng",
+                            Domain = "haiphong.gov.vn",
+                            Enabled = true,
+                            Name = "Hải Phòng",
+                            RequiredTerms = "",
+                            SortOrder = 20
+                        },
+                        new
+                        {
+                            Id = new Guid("bcd5330f-2b01-59bd-a166-7a12085c58cd"),
+                            AgencyName = "Thành phố Đà Nẵng",
+                            Domain = "danang.gov.vn",
+                            Enabled = true,
+                            Name = "Đà Nẵng",
+                            RequiredTerms = "",
+                            SortOrder = 21
+                        },
+                        new
+                        {
+                            Id = new Guid("29340d21-7626-58a8-b06c-214129571489"),
+                            AgencyName = "Thành phố Cần Thơ",
+                            Domain = "cantho.gov.vn",
+                            Enabled = true,
+                            Name = "Cần Thơ",
+                            RequiredTerms = "",
+                            SortOrder = 22
+                        },
+                        new
+                        {
+                            Id = new Guid("b1cd0a74-2657-5943-b309-a753d6926c26"),
+                            AgencyName = "Thành phố Huế",
+                            Domain = "thuathienhue.gov.vn",
+                            Enabled = true,
+                            Name = "Huế",
+                            RequiredTerms = "",
+                            SortOrder = 23
+                        },
+                        new
+                        {
+                            Id = new Guid("6044d071-7dc8-55f9-ae71-218c4f6c8479"),
+                            AgencyName = "Thành phố Đồng Nai",
+                            Domain = "dongnai.gov.vn",
+                            Enabled = true,
+                            Name = "Đồng Nai",
+                            RequiredTerms = "",
+                            SortOrder = 24
+                        },
+                        new
+                        {
+                            Id = new Guid("8d15f7c7-9b96-5e14-8df5-ace6c61d9e64"),
+                            AgencyName = "Thành phố Quảng Ninh",
+                            Domain = "quangninh.gov.vn",
+                            Enabled = true,
+                            Name = "Quảng Ninh",
+                            RequiredTerms = "",
+                            SortOrder = 25
+                        },
+                        new
+                        {
+                            Id = new Guid("5c1a2cbb-778d-5a6d-976b-f1ac7c86bef9"),
+                            AgencyName = "Thành phố Bắc Ninh",
+                            Domain = "bacninh.gov.vn",
+                            Enabled = true,
+                            Name = "Bắc Ninh",
+                            RequiredTerms = "",
+                            SortOrder = 26
+                        },
+                        new
+                        {
+                            Id = new Guid("f081615d-e321-5869-9d96-b59d3435fd3f"),
+                            AgencyName = "Tỉnh An Giang",
+                            Domain = "angiang.gov.vn",
+                            Enabled = true,
+                            Name = "An Giang",
+                            RequiredTerms = "",
+                            SortOrder = 27
+                        },
+                        new
+                        {
+                            Id = new Guid("122ad42e-e858-5fb7-950e-cc14baf17c61"),
+                            AgencyName = "Tỉnh Cao Bằng",
+                            Domain = "caobang.gov.vn",
+                            Enabled = true,
+                            Name = "Cao Bằng",
+                            RequiredTerms = "",
+                            SortOrder = 28
+                        },
+                        new
+                        {
+                            Id = new Guid("86faf33d-897e-5f13-b359-f0ace0174cb5"),
+                            AgencyName = "Tỉnh Cà Mau",
+                            Domain = "camau.gov.vn",
+                            Enabled = true,
+                            Name = "Cà Mau",
+                            RequiredTerms = "",
+                            SortOrder = 29
+                        },
+                        new
+                        {
+                            Id = new Guid("5458bf9d-f2d9-5443-964d-225182d4eacb"),
+                            AgencyName = "Tỉnh Điện Biên",
+                            Domain = "dienbien.gov.vn",
+                            Enabled = true,
+                            Name = "Điện Biên",
+                            RequiredTerms = "",
+                            SortOrder = 30
+                        },
+                        new
+                        {
+                            Id = new Guid("bd33ace7-a541-5a80-b4fa-66a5ccc14102"),
+                            AgencyName = "Tỉnh Đắk Lắk",
+                            Domain = "daklak.gov.vn",
+                            Enabled = true,
+                            Name = "Đắk Lắk",
+                            RequiredTerms = "",
+                            SortOrder = 31
+                        },
+                        new
+                        {
+                            Id = new Guid("f11286ef-4f9b-5108-a3a0-a9d65cdac76d"),
+                            AgencyName = "Tỉnh Đồng Tháp",
+                            Domain = "dongthap.gov.vn",
+                            Enabled = true,
+                            Name = "Đồng Tháp",
+                            RequiredTerms = "",
+                            SortOrder = 32
+                        },
+                        new
+                        {
+                            Id = new Guid("a2924ba5-60b7-5b9d-aef3-4277cd56e2a7"),
+                            AgencyName = "Tỉnh Gia Lai",
+                            Domain = "gialai.gov.vn",
+                            Enabled = true,
+                            Name = "Gia Lai",
+                            RequiredTerms = "",
+                            SortOrder = 33
+                        },
+                        new
+                        {
+                            Id = new Guid("0ac7c65c-b7b6-5dba-8ce7-b18b4ae3f70c"),
+                            AgencyName = "Tỉnh Hà Tĩnh",
+                            Domain = "hatinh.gov.vn",
+                            Enabled = true,
+                            Name = "Hà Tĩnh",
+                            RequiredTerms = "",
+                            SortOrder = 34
+                        },
+                        new
+                        {
+                            Id = new Guid("e825f0b7-e243-5d45-a578-d48bde3113d9"),
+                            AgencyName = "Tỉnh Hưng Yên",
+                            Domain = "hungyen.gov.vn",
+                            Enabled = true,
+                            Name = "Hưng Yên",
+                            RequiredTerms = "",
+                            SortOrder = 35
+                        },
+                        new
+                        {
+                            Id = new Guid("e49ffee0-1e8a-5442-84ac-27b1e7b4dfd8"),
+                            AgencyName = "Tỉnh Khánh Hòa",
+                            Domain = "khanhhoa.gov.vn",
+                            Enabled = true,
+                            Name = "Khánh Hòa",
+                            RequiredTerms = "",
+                            SortOrder = 36
+                        },
+                        new
+                        {
+                            Id = new Guid("8f3d5e11-7754-526c-8178-9bc75154372c"),
+                            AgencyName = "Tỉnh Lai Châu",
+                            Domain = "laichau.gov.vn",
+                            Enabled = true,
+                            Name = "Lai Châu",
+                            RequiredTerms = "",
+                            SortOrder = 37
+                        },
+                        new
+                        {
+                            Id = new Guid("e556e219-102e-5401-a65e-da8e5be84d0a"),
+                            AgencyName = "Tỉnh Lào Cai",
+                            Domain = "laocai.gov.vn",
+                            Enabled = true,
+                            Name = "Lào Cai",
+                            RequiredTerms = "",
+                            SortOrder = 38
+                        },
+                        new
+                        {
+                            Id = new Guid("b4b9ae3d-e09c-56ff-ab1d-ac8a3b8459e8"),
+                            AgencyName = "Tỉnh Lâm Đồng",
+                            Domain = "lamdong.gov.vn",
+                            Enabled = true,
+                            Name = "Lâm Đồng",
+                            RequiredTerms = "",
+                            SortOrder = 39
+                        },
+                        new
+                        {
+                            Id = new Guid("5e31f60f-21fd-5273-9a40-0c866c429570"),
+                            AgencyName = "Tỉnh Lạng Sơn",
+                            Domain = "langson.gov.vn",
+                            Enabled = true,
+                            Name = "Lạng Sơn",
+                            RequiredTerms = "",
+                            SortOrder = 40
+                        },
+                        new
+                        {
+                            Id = new Guid("1c4e467b-2c2b-5512-af8f-abf74175614c"),
+                            AgencyName = "Tỉnh Nghệ An",
+                            Domain = "nghean.gov.vn",
+                            Enabled = true,
+                            Name = "Nghệ An",
+                            RequiredTerms = "",
+                            SortOrder = 41
+                        },
+                        new
+                        {
+                            Id = new Guid("65f4623d-7d9c-5b30-934e-bb7c4eec61da"),
+                            AgencyName = "Tỉnh Ninh Bình",
+                            Domain = "ninhbinh.gov.vn",
+                            Enabled = true,
+                            Name = "Ninh Bình",
+                            RequiredTerms = "",
+                            SortOrder = 42
+                        },
+                        new
+                        {
+                            Id = new Guid("bdc40b5f-e4b2-5b17-9eb0-ec1b05179da6"),
+                            AgencyName = "Tỉnh Phú Thọ",
+                            Domain = "phutho.gov.vn",
+                            Enabled = true,
+                            Name = "Phú Thọ",
+                            RequiredTerms = "",
+                            SortOrder = 43
+                        },
+                        new
+                        {
+                            Id = new Guid("b6d04da9-fc49-547b-bbd0-8ec6395828c9"),
+                            AgencyName = "Tỉnh Quảng Ngãi",
+                            Domain = "quangngai.gov.vn",
+                            Enabled = true,
+                            Name = "Quảng Ngãi",
+                            RequiredTerms = "",
+                            SortOrder = 44
+                        },
+                        new
+                        {
+                            Id = new Guid("b3420df3-7a07-5280-8ca8-e023cb27561b"),
+                            AgencyName = "Tỉnh Quảng Trị",
+                            Domain = "quangtri.gov.vn",
+                            Enabled = true,
+                            Name = "Quảng Trị",
+                            RequiredTerms = "",
+                            SortOrder = 45
+                        },
+                        new
+                        {
+                            Id = new Guid("b0f8a3a6-086e-532b-b2cc-b09708e5a688"),
+                            AgencyName = "Tỉnh Sơn La",
+                            Domain = "sonla.gov.vn",
+                            Enabled = true,
+                            Name = "Sơn La",
+                            RequiredTerms = "",
+                            SortOrder = 46
+                        },
+                        new
+                        {
+                            Id = new Guid("cfad0509-b69f-5ae1-a243-7c592b5ec77f"),
+                            AgencyName = "Tỉnh Thanh Hóa",
+                            Domain = "thanhhoa.gov.vn",
+                            Enabled = true,
+                            Name = "Thanh Hóa",
+                            RequiredTerms = "",
+                            SortOrder = 47
+                        },
+                        new
+                        {
+                            Id = new Guid("58fbd8f6-ef30-5fad-8ea8-e877f41b3eb9"),
+                            AgencyName = "Tỉnh Thái Nguyên",
+                            Domain = "thainguyen.gov.vn",
+                            Enabled = true,
+                            Name = "Thái Nguyên",
+                            RequiredTerms = "",
+                            SortOrder = 48
+                        },
+                        new
+                        {
+                            Id = new Guid("0fa332e5-f255-53d7-a66b-38f9bc3d2564"),
+                            AgencyName = "Tỉnh Tuyên Quang",
+                            Domain = "tuyenquang.gov.vn",
+                            Enabled = true,
+                            Name = "Tuyên Quang",
+                            RequiredTerms = "",
+                            SortOrder = 49
+                        },
+                        new
+                        {
+                            Id = new Guid("ebf9a805-8eb4-508b-b686-ce7e0d6e9128"),
+                            AgencyName = "Tỉnh Tây Ninh",
+                            Domain = "tayninh.gov.vn",
+                            Enabled = true,
+                            Name = "Tây Ninh",
+                            RequiredTerms = "",
+                            SortOrder = 50
+                        },
+                        new
+                        {
+                            Id = new Guid("e5d6ca53-f593-5de0-8d06-ada571bb8cc1"),
+                            AgencyName = "Tỉnh Vĩnh Long",
+                            Domain = "vinhlong.gov.vn",
+                            Enabled = true,
+                            Name = "Vĩnh Long",
+                            RequiredTerms = "",
+                            SortOrder = 51
+                        },
+                        new
+                        {
+                            Id = new Guid("79ab5f06-70f0-5d2b-b7fc-ea20d4dab159"),
+                            AgencyName = "Thành phố Hà Nội",
+                            Domain = "sokhcn.hanoi.gov.vn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Thành phố Hà Nội",
+                            RequiredTerms = "",
+                            SortOrder = 52
+                        },
+                        new
+                        {
+                            Id = new Guid("8577c11d-82a6-56f9-9547-d626050677ab"),
+                            AgencyName = "Thành phố Hải Phòng",
+                            Domain = "sokhcn.haiphong.gov.vn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Thành phố Hải Phòng",
+                            RequiredTerms = "",
+                            SortOrder = 53
+                        },
+                        new
+                        {
+                            Id = new Guid("209991d0-4a02-514a-aa26-480b80b80590"),
+                            AgencyName = "Tỉnh Bắc Ninh",
+                            Domain = "skhcn.bacninh.gov.vn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Tỉnh Bắc Ninh",
+                            RequiredTerms = "",
+                            SortOrder = 54
+                        },
+                        new
+                        {
+                            Id = new Guid("e163644e-110c-5c05-8fd9-e1486f233871"),
+                            AgencyName = "Tỉnh Cao Bằng",
+                            Domain = "sokhcn.caobang.gov.vn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Tỉnh Cao Bằng",
+                            RequiredTerms = "",
+                            SortOrder = 55
+                        },
+                        new
+                        {
+                            Id = new Guid("4360becc-4e57-5212-9c7a-97f5de34ceee"),
+                            AgencyName = "Tỉnh Điện Biên",
+                            Domain = "skhcn.dienbien.gov.vn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Tỉnh Điện Biên",
+                            RequiredTerms = "",
+                            SortOrder = 56
+                        },
+                        new
+                        {
+                            Id = new Guid("d9b4f85c-b687-5965-9754-ad8a88c8b773"),
+                            AgencyName = "Tỉnh Hưng Yên",
+                            Domain = "sokhcn.hungyen.gov.vn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Tỉnh Hưng Yên",
+                            RequiredTerms = "",
+                            SortOrder = 57
+                        },
+                        new
+                        {
+                            Id = new Guid("5ef3314a-7797-54b8-985c-8905284e254d"),
+                            AgencyName = "Tỉnh Lai Châu",
+                            Domain = "skhcn.laichau.gov.vn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Tỉnh Lai Châu",
+                            RequiredTerms = "",
+                            SortOrder = 58
+                        },
+                        new
+                        {
+                            Id = new Guid("df23df18-b437-588b-adc5-dfdf4c0fb4b3"),
+                            AgencyName = "Tỉnh Lào Cai",
+                            Domain = "skhcn.laocai.gov.vn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Tỉnh Lào Cai",
+                            RequiredTerms = "",
+                            SortOrder = 59
+                        },
+                        new
+                        {
+                            Id = new Guid("1951ab7a-c764-5a0c-be62-e33f2aaf4f84"),
+                            AgencyName = "Tỉnh Lạng Sơn",
+                            Domain = "sokhcn.langson.gov.vn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Tỉnh Lạng Sơn",
+                            RequiredTerms = "",
+                            SortOrder = 60
+                        },
+                        new
+                        {
+                            Id = new Guid("1c0fc95b-652b-5d00-ab18-36fab8461cc5"),
+                            AgencyName = "Tỉnh Ninh Bình",
+                            Domain = "sokhcn.ninhbinh.gov.vn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Tỉnh Ninh Bình",
+                            RequiredTerms = "",
+                            SortOrder = 61
+                        },
+                        new
+                        {
+                            Id = new Guid("254574ad-9046-55f5-9ccc-2c5b8b9a5fb2"),
+                            AgencyName = "Tỉnh Phú Thọ",
+                            Domain = "sokhoahoccongnghe.phutho.gov.vn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Tỉnh Phú Thọ",
+                            RequiredTerms = "",
+                            SortOrder = 62
+                        },
+                        new
+                        {
+                            Id = new Guid("f886e4af-c109-582e-8ea7-97f11ad9eb11"),
+                            AgencyName = "Tỉnh Quảng Ninh",
+                            Domain = "quangninh.gov.vn/so/sokhoahoccongnghe",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Tỉnh Quảng Ninh",
+                            RequiredTerms = "",
+                            SortOrder = 63
+                        },
+                        new
+                        {
+                            Id = new Guid("62ffc86a-e07b-5bf9-b7c9-5da30250e09b"),
+                            AgencyName = "Tỉnh Sơn La",
+                            Domain = "sokhcn.sonla.gov.vn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Tỉnh Sơn La",
+                            RequiredTerms = "",
+                            SortOrder = 64
+                        },
+                        new
+                        {
+                            Id = new Guid("5465973c-2bd8-57e7-9c0d-f5142ef3be36"),
+                            AgencyName = "Tỉnh Tuyên Quang",
+                            Domain = "skhcn.tuyenquang.gov.vn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Tỉnh Tuyên Quang",
+                            RequiredTerms = "",
+                            SortOrder = 65
+                        },
+                        new
+                        {
+                            Id = new Guid("67274292-db38-593e-9ef8-8ec8031b4e2e"),
+                            AgencyName = "Tỉnh Thái Nguyên",
+                            Domain = "dosttn.gov.vn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Tỉnh Thái Nguyên",
+                            RequiredTerms = "",
+                            SortOrder = 66
+                        },
+                        new
+                        {
+                            Id = new Guid("8c5978ae-000b-5dec-ab70-c33dbea8e007"),
+                            AgencyName = "Thành phố Đà Nẵng",
+                            Domain = "dost.danang.gov.vn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Thành phố Đà Nẵng",
+                            RequiredTerms = "",
+                            SortOrder = 67
+                        },
+                        new
+                        {
+                            Id = new Guid("1384a0d5-a894-5f33-a016-b9efa6c6d13f"),
+                            AgencyName = "Tỉnh Đắk Lắk",
+                            Domain = "skhcn.daklak.gov.vn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Tỉnh Đắk Lắk",
+                            RequiredTerms = "",
+                            SortOrder = 68
+                        },
+                        new
+                        {
+                            Id = new Guid("74fa9b50-2edf-5e80-b22a-b9e411ab8108"),
+                            AgencyName = "Tỉnh Đắk Nông",
+                            Domain = "skhcn.daknong.gov.vn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Tỉnh Đắk Nông",
+                            RequiredTerms = "",
+                            SortOrder = 69
+                        },
+                        new
+                        {
+                            Id = new Guid("db686756-3229-5147-a370-8abdd4fad69c"),
+                            AgencyName = "Tỉnh Gia Lai",
+                            Domain = "skhcn.gialai.gov.vn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Tỉnh Gia Lai",
+                            RequiredTerms = "",
+                            SortOrder = 70
+                        },
+                        new
+                        {
+                            Id = new Guid("86931764-ecd4-5e49-9b0b-0fca5f1cd906"),
+                            AgencyName = "Tỉnh Hà Tĩnh",
+                            Domain = "skhcn.hatinh.gov.vn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Tỉnh Hà Tĩnh",
+                            RequiredTerms = "",
+                            SortOrder = 71
+                        },
+                        new
+                        {
+                            Id = new Guid("4d67d277-ef95-58f5-873b-0f08462af33f"),
+                            AgencyName = "Tỉnh Thừa Thiên Huế",
+                            Domain = "skhcn.hue.gov.vn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Tỉnh Thừa Thiên Huế",
+                            RequiredTerms = "",
+                            SortOrder = 72
+                        },
+                        new
+                        {
+                            Id = new Guid("fb0686a2-8297-5bab-9491-3e803f80f18c"),
+                            AgencyName = "Tỉnh Khánh Hòa",
+                            Domain = "skhcn.khanhhoa.gov.vn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Tỉnh Khánh Hòa",
+                            RequiredTerms = "",
+                            SortOrder = 73
+                        },
+                        new
+                        {
+                            Id = new Guid("09e8da05-062b-59cc-9566-21b96f3d4c6d"),
+                            AgencyName = "Tỉnh Nghệ An",
+                            Domain = "ngheandost.gov.vn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Tỉnh Nghệ An",
+                            RequiredTerms = "",
+                            SortOrder = 74
+                        },
+                        new
+                        {
+                            Id = new Guid("3b1d123e-28d5-51ec-a4d5-d89a79883670"),
+                            AgencyName = "Thành phố Hồ Chí Minh",
+                            Domain = "dost.hochiminhcity.gov.vn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Thành phố Hồ Chí Minh",
+                            RequiredTerms = "",
+                            SortOrder = 75
+                        },
+                        new
+                        {
+                            Id = new Guid("b505201d-dd98-5687-ad0b-ee9d1861526a"),
+                            AgencyName = "Thành phố Cần Thơ",
+                            Domain = "sokhcn.cantho.gov.vn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Thành phố Cần Thơ",
+                            RequiredTerms = "",
+                            SortOrder = 76
+                        },
+                        new
+                        {
+                            Id = new Guid("c886cf3f-8a96-5aeb-b0c7-cb68169cb280"),
+                            AgencyName = "Tỉnh An Giang",
+                            Domain = "sokhcn.angiang.gov.vn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Tỉnh An Giang",
+                            RequiredTerms = "",
+                            SortOrder = 77
+                        },
+                        new
+                        {
+                            Id = new Guid("e1b97440-7401-500c-b54f-afe39f30319e"),
+                            AgencyName = "Tỉnh Bến Tre",
+                            Domain = "dost-bentre.gov.vn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Tỉnh Bến Tre",
+                            RequiredTerms = "",
+                            SortOrder = 78
+                        },
+                        new
+                        {
+                            Id = new Guid("be618a84-5f0c-5dd8-aafe-47a141fbdd2d"),
+                            AgencyName = "Tỉnh Bình Phước",
+                            Domain = "skhcn.binhphuoc.gov.vn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Tỉnh Bình Phước",
+                            RequiredTerms = "",
+                            SortOrder = 79
+                        },
+                        new
+                        {
+                            Id = new Guid("f862ea29-b6b6-5020-86a4-4d4a3492a734"),
+                            AgencyName = "Tỉnh Cà Mau",
+                            Domain = "sokhcn.camau.gov.vn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Tỉnh Cà Mau",
+                            RequiredTerms = "",
+                            SortOrder = 80
+                        },
+                        new
+                        {
+                            Id = new Guid("bb51fda7-aa41-53df-b2d3-b26145457d4a"),
+                            AgencyName = "Tỉnh Đồng Nai",
+                            Domain = "dost-dongnai.gov.vn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Tỉnh Đồng Nai",
+                            RequiredTerms = "",
+                            SortOrder = 81
+                        },
+                        new
+                        {
+                            Id = new Guid("581ed27c-0633-5157-b979-36358b48263e"),
+                            AgencyName = "Tỉnh Đồng Tháp",
+                            Domain = "skhcn.dongthap.gov.vn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Tỉnh Đồng Tháp",
+                            RequiredTerms = "",
+                            SortOrder = 82
+                        },
+                        new
+                        {
+                            Id = new Guid("b44ef28b-de69-555a-9aba-dffff1c9c88c"),
+                            AgencyName = "Tỉnh Tây Ninh",
+                            Domain = "sokhcn.tayninh.gov.vn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Tỉnh Tây Ninh",
+                            RequiredTerms = "",
+                            SortOrder = 83
+                        },
+                        new
+                        {
+                            Id = new Guid("fbda2393-816a-5208-8393-43903b296409"),
+                            AgencyName = "Tỉnh Vĩnh Long",
+                            Domain = "skhcn.vinhlong.gov.vn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Tỉnh Vĩnh Long",
+                            RequiredTerms = "",
+                            SortOrder = 84
+                        },
+                        new
+                        {
+                            Id = new Guid("7a6ee44a-de07-5328-aa1a-500ca3f61ba4"),
+                            AgencyName = "Tỉnh Lâm Đồng",
+                            Domain = "lamdong.gov.vn/sites/skhcn",
+                            Enabled = true,
+                            Name = "Sở Khoa học và Công Nghệ Tỉnh Lâm Đồng",
+                            RequiredTerms = "",
+                            SortOrder = 85
                         });
                 });
 
@@ -2145,6 +3488,15 @@ namespace Cdsqg.Infrastructure.Data.Migrations
                     b.HasOne("Cdsqg.Core.Entities.AiDataSource", null)
                         .WithMany()
                         .HasForeignKey("SourceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Cdsqg.Core.Entities.DigitalPlanRead", b =>
+                {
+                    b.HasOne("Cdsqg.Core.Entities.DigitalNewsItem", null)
+                        .WithMany()
+                        .HasForeignKey("ItemId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });

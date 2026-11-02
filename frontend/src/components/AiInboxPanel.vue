@@ -258,7 +258,7 @@ function sourceType(item){
  return item.isUpload?'Tài liệu tải lên':aiFeedType(item.feedUrl,item.origin||'');
 }
 const sourceName=item=>item.isUpload?'Tài liệu tải lên':item.feedName||'Nguồn RSS không còn tên';
-const alertStatusOptions=[{value:'',label:'Tất cả'},{value:'TitleQueued',label:'Chờ đánh giá'},{value:'NeedsReview',label:'Cần xem lại'},{value:'NotRelevant',label:'Không liên quan'},{value:'ReadQueued',label:'Chờ đọc'},{value:'Read',label:'Đã đọc'},{value:'ReadNoData',label:'Chưa có số liệu'},{value:'Error',label:'Lỗi xử lý'}];
+const alertStatusOptions=[{value:'',label:'Tất cả'},{value:'TitleQueued',label:'Chờ đánh giá'},{value:'NeedsReview',label:'Cần xem lại'},{value:'NotRelevant',label:'Không liên quan'},{value:'ReadQueued',label:'Chờ đọc'},{value:'Read',label:'Có liên quan'},{value:'ReadNoData',label:'Chưa có số liệu'},{value:'Error',label:'Lỗi xử lý'}];
 watch(page,()=>load());watch(pageSize,()=>{page.value=1;load();});
 watch([statusFilter,sourceFilter],()=>{page.value=1;load();});
 const metricOptions=computed(()=>[
@@ -272,7 +272,7 @@ function readExplanation(item){
 }
 const isQueued=item=>item.processing||['TitleQueued','ReadQueued'].includes(item.status);
 const badge=item=>getStatusBadgeClass(item.processing?'InProgressOnTime':(item.status==='Error'||item.status==='NotRelevant')?'Rejected':item.status==='Read'?'Approved':item.status==='NeedsReview'?'Pending':'NotStarted');
-const statusLabel=s=>({TitleQueued:'Chờ đánh giá',ReadQueued:'Chờ đọc',NeedsReview:'Cần xem lại',NotRelevant:'Không liên quan',Read:'Đã đọc',ReadNoData:'Chưa có số liệu',Error:'Lỗi xử lý'}[s]||s);
+const statusLabel=s=>({TitleQueued:'Chờ đánh giá',ReadQueued:'Chờ đọc',NeedsReview:'Cần xem lại',NotRelevant:'Không liên quan',Read:'Có liên quan',ReadNoData:'Chưa có số liệu',Error:'Lỗi xử lý'}[s]||s);
 function metricNames(json){
   try{
     const arr=JSON.parse(json);

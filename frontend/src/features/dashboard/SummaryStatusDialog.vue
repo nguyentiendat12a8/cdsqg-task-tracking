@@ -2,7 +2,15 @@
   <div v-accessible-dialog="() => emit('close')" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4" @click.self="emit('close')">
     <section class="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-7xl max-h-[90vh] flex flex-col p-4 sm:p-5 gap-3 min-w-0">
       <header class="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
-        <div><h3 class="text-sm font-semibold text-slate-900">{{ title }}</h3><p class="text-xs text-slate-500 mt-1">{{ selection.mode === 'assignments' ? 'Mỗi dòng là một lượt giao cho một cơ quan; cùng mã có thể xuất hiện nhiều lần.' : 'Mỗi mục tiêu hoặc nhiệm vụ hiển thị một lần.' }}</p></div>
+        <div>
+          <div class="flex flex-wrap items-center gap-2">
+            <h3 class="text-sm font-semibold text-slate-900">{{ title }}</h3>
+            <span class="inline-flex items-center rounded-full bg-blue-50 px-2.5 py-0.5 text-xs font-bold text-blue-700 border border-blue-200">
+              📅 {{ reportingYearLabel }}
+            </span>
+          </div>
+          <p class="text-xs text-slate-500 mt-1">{{ selection.mode === 'assignments' ? 'Mỗi dòng là một lượt giao cho một cơ quan; cùng mã có thể xuất hiện nhiều lần.' : 'Mỗi mục tiêu hoặc nhiệm vụ hiển thị một lần.' }}</p>
+        </div>
         <button type="button" aria-label="Đóng danh sách thống kê" class="ui-btn ui-btn-secondary shrink-0" @click="emit('close')">Đóng</button>
       </header>
       <div class="flex flex-wrap items-center gap-3">
@@ -35,11 +43,21 @@ import { computed, ref, watch, onUnmounted } from 'vue';
 import LoadingSpinner from '../../components/LoadingSpinner.vue';
 import { fetchWithAuth } from '../../services/auth';
 import { getApiUrl } from '../../config/api';
+import { currentReportingYear } from '../../config/reporting';
 import { formatNumber } from '../../shared/formatters';
 import { getStatusLabel, getStatusBadgeClass, formatItemProgressDisplay } from './presentation';
 const props = defineProps({ selection:{type:Object,required:true}, query:{type:String,default:''}, itemType:{type:String,default:'Goal'} });
 const emit = defineEmits(['close','select-item']);
 const title = computed(() => props.selection.mode==='assignments'?'Lượt giao theo cơ quan':'Danh sách '+(props.itemType==='Goal'?'mục tiêu':'nhiệm vụ')+(props.selection.scope==='general'?' giao chung':props.selection.scope==='specific'?' giao riêng':''));
+const reportingYearLabel = computed(() => {
+  const params = new URLSearchParams(props.query);
+  const toYear = params.get('reportToYear') || params.get('reportYear');
+  const fromYear = params.get('reportFromYear');
+  if (fromYear && toYear && fromYear === toYear) return `Năm ${toYear}`;
+  if (fromYear && toYear) return `Năm ${fromYear} - ${toYear}`;
+  if (toYear) return `Năm ${toYear}`;
+  return `Năm ${currentReportingYear()}`;
+});
 const pageSize=10;
 const loading=ref(true), error=ref(''), rows=ref([]), total=ref(0), totalPages=ref(0), page=ref(1), search=ref(''), searchQuery=ref('');
 let controller, version=0, timer;

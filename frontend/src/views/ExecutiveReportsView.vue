@@ -1,16 +1,16 @@
 <template>
-  <div class="w-full space-y-4 font-sans">
+  <div class="w-full min-w-0 font-sans rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
 
     <!-- Header Bar -->
-    <div class="ui-screen-heading bg-white p-4 sm:p-5 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col md:flex-row md:items-center justify-between gap-3 w-full">
+    <div class="ui-screen-heading p-4 sm:p-5 border-b border-slate-200/80 flex flex-col md:flex-row md:items-center justify-between gap-3 w-full">
       <div>
-        <div class="flex items-center gap-2.5">
-          <span class="p-2 bg-blue-600 text-white rounded-xl shadow-sm">
+        <div class="flex items-center gap-3 min-w-0">
+          <span class="ui-screen-icon w-10 h-10 flex items-center justify-center shrink-0 rounded-2xl">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
           </span>
           <div>
             <div class="flex flex-wrap items-center gap-2">
-              <h2 class="text-sm sm:text-base font-bold text-slate-800">
+              <h2 class="ui-page-title tracking-tight">
                 Trung tâm báo cáo và xuất dữ liệu Excel
               </h2>
               <span 
@@ -36,62 +36,64 @@
       </div>
     </div>
 
+    <div class="p-3.5 sm:p-4 space-y-3.5 w-full">
     <!-- REPORT TYPE SELECTOR TABS -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2.5 w-full">
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-2.5 w-full">
       <button
-        @click="activeReportType = 'summary'"
+        type="button" :aria-pressed="activeReportType==='summary'" @click="activeReportType = 'summary'"
         :class="[
           'p-3 rounded-2xl border text-left transition space-y-0.5 cursor-pointer',
           activeReportType === 'summary' ? 'bg-blue-600 text-white border-blue-600 shadow-md' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
         ]"
       >
         <div class="text-xs font-semibold opacity-80">Báo cáo 1</div>
-        <div class="text-xs font-bold truncate">📊 Tiến độ các bộ, ngành và địa phương</div>
+        <div class="text-xs font-bold leading-relaxed">📊 Tiến độ các bộ, ngành và địa phương</div>
       </button>
 
       <button
-        @click="activeReportType = 'urgent'"
+        type="button" :aria-pressed="activeReportType==='urgent'" @click="activeReportType = 'urgent'"
         :class="[
           'p-3 rounded-2xl border text-left transition space-y-0.5 cursor-pointer',
-          activeReportType === 'urgent' ? 'bg-rose-600 text-white border-rose-600 shadow-md' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+          activeReportType === 'urgent' ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
         ]"
       >
         <div class="text-xs font-semibold opacity-80">Báo cáo 2</div>
-        <div class="text-xs font-bold truncate">⚠️ Cảnh báo sắp hết hạn và quá hạn</div>
+        <div class="text-xs font-bold leading-relaxed">⚠️ Cảnh báo sắp hết hạn và quá hạn</div>
       </button>
 
       <button
-        @click="activeReportType = 'governance'"
+        type="button" :aria-pressed="activeReportType==='governance'" @click="activeReportType = 'governance'"
         :class="[
           'p-3 rounded-2xl border text-left transition space-y-0.5 cursor-pointer',
-          activeReportType === 'governance' ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+          activeReportType === 'governance' ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
         ]"
       >
         <div class="text-xs font-semibold opacity-80">Báo cáo 3</div>
-        <div class="text-xs font-bold truncate">🏛️ Thống kê đôn đốc và tuân thủ báo cáo</div>
+        <div class="text-xs font-bold leading-relaxed">🏛️ Thống kê đôn đốc và tuân thủ báo cáo</div>
       </button>
 
       <button
-        @click="activeReportType = 'domain'"
+        type="button" :aria-pressed="activeReportType==='domain'" @click="activeReportType = 'domain'"
         :class="[
           'p-3 rounded-2xl border text-left transition space-y-0.5 cursor-pointer',
-          activeReportType === 'domain' ? 'bg-purple-600 text-white border-purple-600 shadow-md' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+          activeReportType === 'domain' ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
         ]"
       >
         <div class="text-xs font-semibold opacity-80">Báo cáo 4</div>
-        <div class="text-xs font-bold truncate">📈 Tiến độ theo lĩnh vực và nhóm trọng tâm</div>
+        <div class="text-xs font-bold leading-relaxed">📈 Tiến độ theo lĩnh vực và nhóm trọng tâm</div>
       </button>
     </div>
 
+    <div class="w-full border border-slate-200/80 rounded-2xl bg-white overflow-hidden shadow-sm flex flex-col">
     <!-- FILTER BAR WITH OVERLAY PANEL -->
-    <div class="bg-white p-3 rounded-2xl shadow-sm border border-slate-200/80 flex flex-col sm:flex-row items-center justify-between gap-3 w-full">
+    <div class="bg-slate-50/60 p-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full">
       <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto flex-1">
-        <div class="relative flex-1 min-w-[200px] max-w-md">
+        <div class="relative flex-1 min-w-0 basis-full sm:basis-0 max-w-xl">
           <input
             :value="filterDraft.searchQuery"
             @input="filterDraft.searchQuery = $event.target.value"
             placeholder="Tìm theo mã, tên mục tiêu / nhiệm vụ..."
-            class="ui-single-line ui-toolbar-control w-full font-medium pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
+            class="ui-single-line ui-toolbar-control w-full font-medium pl-9 pr-3 py-2 bg-white rounded-xl border border-slate-200 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
           />
           <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
         </div>
@@ -202,13 +204,13 @@
         <div class="w-36 shrink-0">
           <SearchableSelect v-model="quickItemType" :options="itemTypeOptions" :isMulti="false" :clearable="false" label="Loại đối tượng" label-class="sr-only" @change="onQuickItemTypeChange" />
         </div>
-        <ReportYearSelect v-if="isGoalOnlyReport" />
+        <ReportYearSelect v-if="showYearSelect" />
       </div>
 
     </div>
 
     <!-- REPORT TABLE VIEW CONTAINER -->
-    <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden w-full">
+    <div class="min-w-0 w-full">
       <LoadingSpinner v-if="isLoading" text="Đang tải dữ liệu báo cáo từ máy chủ..." />
       <template v-else>
 
@@ -217,14 +219,14 @@
         <table class="w-full text-left text-xs text-slate-700 border-collapse">
           <thead class="bg-slate-100 font-semibold text-slate-700 border-b border-slate-200 sticky top-0 z-10 shadow-2xs">
             <tr>
-              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center w-12">STT</th>
-              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-xs sm:text-sm font-semibold min-w-[250px]">Tên cơ quan / địa phương</th>
-              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center min-w-[110px]">Tổng mục tiêu</th>
-              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center min-w-[110px]">Tổng nhiệm vụ</th>
-              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center text-emerald-700 min-w-[150px]">Đã hoàn thành</th>
-              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center min-w-[120px]">Đang thực hiện</th>
-              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center min-w-[110px]">Chưa thực hiện</th>
-              <th class="p-3 bg-slate-100 sticky top-0 z-10 text-center min-w-[130px]">Tỷ lệ hoàn thành</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 last:border-r-0 bg-slate-100 sticky top-0 z-10 text-center w-12">STT</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 last:border-r-0 bg-slate-100 sticky top-0 z-10 text-xs sm:text-sm font-semibold min-w-[250px]">Tên cơ quan / địa phương</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 last:border-r-0 bg-slate-100 sticky top-0 z-10 text-center min-w-[110px]">Tổng mục tiêu</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 last:border-r-0 bg-slate-100 sticky top-0 z-10 text-center min-w-[110px]">Tổng nhiệm vụ</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 last:border-r-0 bg-slate-100 sticky top-0 z-10 text-center text-emerald-700 min-w-[150px]">Đã hoàn thành</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 last:border-r-0 bg-slate-100 sticky top-0 z-10 text-center min-w-[120px]">Đang thực hiện</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 last:border-r-0 bg-slate-100 sticky top-0 z-10 text-center min-w-[110px]">Chưa thực hiện</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 last:border-r-0 bg-slate-100 sticky top-0 z-10 text-center min-w-[130px]">Tỷ lệ hoàn thành</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-200">
@@ -250,14 +252,14 @@
       <!-- BÁO CÁO 2: DANH SÁCH NHIỆM VỤ SẮP HẾT HẠN & QUÁ HẠN -->
       <div v-else-if="activeReportType === 'urgent'" class="overflow-x-auto max-h-[560px] overflow-y-auto custom-scrollbar">
         <table class="w-full text-left text-xs text-slate-700 border-collapse">
-          <thead class="bg-rose-100 text-rose-950 font-semibold border-b border-rose-200 sticky top-0 z-10 shadow-2xs">
+          <thead class="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200 sticky top-0 z-10 shadow-2xs">
             <tr>
-              <th class="p-3 bg-rose-100 sticky top-0 z-10 min-w-[90px]">Mã</th>
-              <th class="p-3 bg-rose-100 sticky top-0 z-10 min-w-[110px]">Phân loại</th>
-              <th class="p-3 bg-rose-100 sticky top-0 z-10 min-w-[280px]">Tiêu đề mục tiêu / nhiệm vụ</th>
-              <th class="p-3 bg-rose-100 sticky top-0 z-10 text-xs sm:text-sm font-semibold min-w-[220px]">Đơn vị chủ trì</th>
-              <th class="p-3 bg-rose-100 sticky top-0 z-10 min-w-[110px]">Hạn chót</th>
-              <th class="p-3 bg-rose-100 sticky top-0 z-10 text-center min-w-[140px]">Trạng thái cảnh báo</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 last:border-r-0 bg-slate-100 sticky top-0 z-10 min-w-[90px]">Mã</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 last:border-r-0 bg-slate-100 sticky top-0 z-10 min-w-[110px]">Phân loại</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 last:border-r-0 bg-slate-100 sticky top-0 z-10 min-w-[280px]">Tiêu đề mục tiêu / nhiệm vụ</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 last:border-r-0 bg-slate-100 sticky top-0 z-10 text-xs sm:text-sm font-semibold min-w-[220px]">Đơn vị chủ trì</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 last:border-r-0 bg-slate-100 sticky top-0 z-10 min-w-[110px]">Hạn chót</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 last:border-r-0 bg-slate-100 sticky top-0 z-10 text-center min-w-[140px]">Trạng thái cảnh báo</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-200">
@@ -299,17 +301,17 @@
       <!-- BÁO CÁO 3 MỚI: THỐNG KÊ ĐÔN ĐỐC & TÍNH TUÂN THỦ BÁO CÁO -->
       <div v-else-if="activeReportType === 'governance'" class="overflow-x-auto max-h-[560px] overflow-y-auto custom-scrollbar">
         <table class="w-full text-left text-xs text-slate-700 border-collapse">
-          <thead class="bg-indigo-100 text-indigo-950 font-semibold border-b border-indigo-200 sticky top-0 z-10 shadow-2xs">
+          <thead class="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200 sticky top-0 z-10 shadow-2xs">
             <tr>
-              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-center w-12">STT</th>
-              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-xs sm:text-sm font-semibold min-w-[250px]">Tên cơ quan / địa phương</th>
-              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-center min-w-[120px]">Tổng NV được giao</th>
-              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-center text-amber-900 min-w-[110px]">Số lần đã đôn đốc</th>
-              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-center min-w-[120px]">Báo cáo đã nạp</th>
-              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-center text-emerald-900 min-w-[120px]">Báo cáo đúng hạn</th>
-              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-center text-rose-900 min-w-[120px]">Trễ báo cáo / chưa nạp</th>
-              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-center min-w-[140px]">Tỷ lệ tuân thủ (%)</th>
-              <th class="p-3 bg-indigo-100 sticky top-0 z-10 text-center min-w-[130px]">Đánh giá tuân thủ</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 last:border-r-0 bg-slate-100 sticky top-0 z-10 text-center w-12">STT</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 last:border-r-0 bg-slate-100 sticky top-0 z-10 text-xs sm:text-sm font-semibold min-w-[250px]">Tên cơ quan / địa phương</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 last:border-r-0 bg-slate-100 sticky top-0 z-10 text-center min-w-[120px]">Tổng NV được giao</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 last:border-r-0 bg-slate-100 sticky top-0 z-10 text-center text-amber-900 min-w-[110px]">Số lần đã đôn đốc</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 last:border-r-0 bg-slate-100 sticky top-0 z-10 text-center min-w-[120px]">Báo cáo đã nạp</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 last:border-r-0 bg-slate-100 sticky top-0 z-10 text-center text-emerald-900 min-w-[120px]">Báo cáo đúng hạn</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 last:border-r-0 bg-slate-100 sticky top-0 z-10 text-center text-rose-900 min-w-[120px]">Trễ báo cáo / chưa nạp</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 last:border-r-0 bg-slate-100 sticky top-0 z-10 text-center min-w-[140px]">Tỷ lệ tuân thủ (%)</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 last:border-r-0 bg-slate-100 sticky top-0 z-10 text-center min-w-[130px]">Đánh giá tuân thủ</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-200">
@@ -345,15 +347,15 @@
       <!-- BÁO CÁO 4 MỚI: PHÂN LOẠI THEO LĨNH VỰC & TRỤ CỘT CHIẾN LƯỢC -->
       <div v-else-if="activeReportType === 'domain'" class="overflow-x-auto max-h-[560px] overflow-y-auto custom-scrollbar">
         <table class="w-full text-left text-xs text-slate-700 border-collapse">
-          <thead class="bg-purple-100 text-purple-950 font-semibold border-b border-purple-200 sticky top-0 z-10 shadow-2xs">
+          <thead class="bg-slate-100 text-slate-700 font-semibold border-b border-slate-200 sticky top-0 z-10 shadow-2xs">
             <tr>
-              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center w-12">STT</th>
-              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-xs sm:text-sm font-semibold min-w-[220px]">Lĩnh vực / trụ cột chiến lược</th>
-              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center min-w-[100px]">Tổng số</th>
-              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center text-emerald-900 min-w-[150px]">Đã hoàn thành</th>
-              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center text-blue-900 min-w-[110px]">Đang thực hiện</th>
-              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center text-slate-600 min-w-[100px]">Chưa thực hiện</th>
-              <th class="p-3 bg-purple-100 sticky top-0 z-10 text-center min-w-[150px]">Tỷ lệ hoàn thành (%)</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 last:border-r-0 bg-slate-100 sticky top-0 z-10 text-center w-12">STT</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 last:border-r-0 bg-slate-100 sticky top-0 z-10 text-xs sm:text-sm font-semibold min-w-[220px]">Lĩnh vực / trụ cột chiến lược</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 last:border-r-0 bg-slate-100 sticky top-0 z-10 text-center min-w-[100px]">Tổng số</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 last:border-r-0 bg-slate-100 sticky top-0 z-10 text-center text-emerald-900 min-w-[150px]">Đã hoàn thành</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 last:border-r-0 bg-slate-100 sticky top-0 z-10 text-center text-blue-900 min-w-[110px]">Đang thực hiện</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 last:border-r-0 bg-slate-100 sticky top-0 z-10 text-center text-slate-600 min-w-[100px]">Chưa thực hiện</th>
+              <th class="px-3 py-2.5 border-r border-slate-200 last:border-r-0 bg-slate-100 sticky top-0 z-10 text-center min-w-[150px]">Tỷ lệ hoàn thành (%)</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-200">
@@ -383,49 +385,18 @@
         </table>
       </div>
 
-      <!-- Server Pagination Controls Footer -->
-      <div class="flex flex-col sm:flex-row items-center justify-between gap-3 bg-slate-50/70 p-4 border-t border-slate-200/80 text-xs text-slate-600 font-semibold">
-        <div class="flex flex-wrap items-center gap-3">
-          <span>Hiển thị <strong class="text-slate-900">{{ formatNumber(currentActiveTotalCount > 0 ? (currentPage - 1) * pageSize + 1 : 0) }} - {{ formatNumber(Math.min(currentPage * pageSize, currentActiveTotalCount)) }}</strong> trên tổng số <strong class="text-slate-900">{{ formatNumber(currentActiveTotalCount) }}</strong> bản ghi</span>
-          <div class="flex items-center gap-1.5 ml-2">
-            <span class="text-slate-500 font-normal">Kích thước trang:</span>
-            <div class="w-40">
-              <SearchableSelect v-model="pageSize" :options="[10, 25, 50, 100].map(value => ({ value, label: `${value} dòng/trang` }))" :isMulti="false" :clearable="false" label="Kích thước trang" label-class="sr-only" @change="currentPage = 1" />
-            </div>
-          </div>
-        </div>
-
-        <div class="flex items-center gap-2">
-          <button
-            @click="changePage(currentPage - 1)"
-            :disabled="currentPage <= 1"
-            class="ui-single-line px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl disabled:opacity-40 font-bold transition shadow-2xs cursor-pointer disabled:cursor-not-allowed"
-          >
-            ‹ Trang trước
-          </button>
-
-          <span class="px-3 py-1.5 bg-blue-50 text-blue-800 border border-blue-200 rounded-xl font-bold">
-            Trang {{ currentPage }} / {{ currentActiveTotalPages }}
-          </span>
-
-          <button
-            @click="changePage(currentPage + 1)"
-            :disabled="currentPage >= currentActiveTotalPages"
-            class="px-3 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 rounded-xl disabled:opacity-40 font-bold transition shadow-2xs cursor-pointer disabled:cursor-not-allowed"
-          >
-            Trang sau ›
-          </button>
-        </div>
-      </div>
+      <DocumentPagination v-model:current-page="currentPage" v-model:page-size="pageSize" :total-count="currentActiveTotalCount" :total-pages="currentActiveTotalPages" :page-size-options="[10,25,50,100].map(value=>({value,label:String(value)}))" :change-page="changePage" :disabled="isLoading" item-label="bản ghi" />
 
       </template>
     </div>
-
+    </div>
+    </div>
   </div>
 </template>
 
 <script setup>
 import ActionButton from "../components/ActionButton.vue";
+import DocumentPagination from "../features/document/DocumentPagination.vue";
 import { formatNumber } from "../shared/formatters";
 import { formatDate, formatDateRange, formatFileName as getFileName } from '../shared/formatters';
 import { getStatusLabel } from '../shared/statusPresentation';
@@ -478,7 +449,7 @@ const appliedFilters = ref({
   onlyOngoing: false
 });
 
-const isGoalOnlyReport = computed(() => appliedFilters.value.selectedItemTypes?.length === 1 && appliedFilters.value.selectedItemTypes[0] === 'Goal');
+const showYearSelect = computed(() => activeReportType.value === 'summary' || (appliedFilters.value.selectedItemTypes?.length === 1 && appliedFilters.value.selectedItemTypes[0] === 'Goal'));
 
 const reportScopeOptions = computed(() => [
   { value: 'general', label: 'Phạm vi chung (tất cả đơn vị)' },
@@ -819,7 +790,7 @@ const paginatedDomainSummaries = computed(() => {
 });
 
 
-watch(reportYear, () => { if (isGoalOnlyReport.value) { currentPage.value = 1; loadReportData(); } });
+watch(reportYear, () => { if (showYearSelect.value) { currentPage.value = 1; loadReportData(); } });
 
 watch(activeReportType, () => {
   currentPage.value = 1;
@@ -828,7 +799,7 @@ watch(activeReportType, () => {
 async function loadReportData() {
   const currentId = ++reportFetchRequestId;
   const docId = activeDocumentId.value;
-  const selectedYear = isGoalOnlyReport.value ? reportYear.value : null;
+  const selectedYear = showYearSelect.value ? reportYear.value : null;
   isLoading.value = true;
   allItems.value = [];
   metrics.value = {};
@@ -912,7 +883,7 @@ function exportCurrentReportToExcel() {
   let minColWidths = {};
 
   const now = new Date();
-  const timeStr = `${isGoalOnlyReport.value ? 'Năm báo cáo: ' + reportYear.value + ' | ' : ''}${now.toLocaleDateString('vi-VN')} ${now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
+  const timeStr = `${showYearSelect.value ? 'Năm báo cáo: ' + reportYear.value + ' | ' : ''}${now.toLocaleDateString('vi-VN')} ${now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}`;
 
   if (activeReportType.value === 'summary') {
     title = `BÁO CÁO TỔNG HỢP TIẾN ĐỘ THEO CƠ QUAN / ĐƠN VỊ - ${activeDocument.value.name.toUpperCase()}`;

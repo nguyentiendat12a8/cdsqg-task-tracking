@@ -32,6 +32,9 @@ namespace Cdsqg.Infrastructure.Data
 
 
 
+        public DbSet<DigitalPlanSource> DigitalPlanSources => Set<DigitalPlanSource>();
+        public DbSet<DigitalPlanKeyword> DigitalPlanKeywords => Set<DigitalPlanKeyword>();
+        public DbSet<DigitalPlanRead> DigitalPlanReads => Set<DigitalPlanRead>();
         public DbSet<DigitalNewsItem> DigitalNewsItems => Set<DigitalNewsItem>();
         public DbSet<DigitalNewsSyncSettings> DigitalNewsSyncSettings => Set<DigitalNewsSyncSettings>();
 
@@ -88,6 +91,11 @@ namespace Cdsqg.Infrastructure.Data
         {
 
             base.OnModelCreating(modelBuilder);
+            modelBuilder.Entity<DigitalPlanSource>().HasData(Cdsqg.Application.Services.DigitalPlanMonitoringDefaults.Sources());
+            modelBuilder.Entity<DigitalPlanKeyword>().HasData(Cdsqg.Application.Services.DigitalPlanMonitoringDefaults.Keywords());
+            modelBuilder.Entity<DigitalNewsItem>().HasIndex(i=>i.TitleKey).IsUnique();
+            modelBuilder.Entity<DigitalPlanRead>().HasIndex(i=>new{i.ItemId,i.TitleHash,i.CriteriaHash}).IsUnique();
+            modelBuilder.Entity<DigitalPlanRead>().HasOne<DigitalNewsItem>().WithMany().HasForeignKey(i=>i.ItemId).OnDelete(DeleteBehavior.Restrict);
             modelBuilder.Entity<DigitalNewsItem>().HasIndex(i=>i.UrlHash).IsUnique();
             modelBuilder.Entity<DigitalNewsItem>().Property(i=>i.UrlHash).HasMaxLength(64);
             modelBuilder.Entity<DigitalNewsItem>().Property(i=>i.AgencyName).HasMaxLength(300);
@@ -1541,6 +1549,31 @@ namespace Cdsqg.Infrastructure.Data
                       );
 
 
+
+                
+                entity.Property(e => e.FiveYearPlan)
+                      .HasConversion(
+                          v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                          v => string.IsNullOrWhiteSpace(v)
+                              ? null
+                              : JsonSerializer.Deserialize<AgencyFiveYearPlan>(v, (JsonSerializerOptions?)null)
+                      );
+
+                entity.Property(e => e.AnnualPlans)
+                      .HasConversion(
+                          v => JsonSerializer.Serialize(v ?? new List<AgencyAnnualPlan>(), (JsonSerializerOptions?)null),
+                          v => string.IsNullOrWhiteSpace(v)
+                              ? new List<AgencyAnnualPlan>()
+                              : JsonSerializer.Deserialize<List<AgencyAnnualPlan>>(v, (JsonSerializerOptions?)null) ?? new List<AgencyAnnualPlan>()
+                      );
+
+                entity.Property(e => e.DigitalArchitecture)
+                      .HasConversion(
+                          v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+                          v => string.IsNullOrWhiteSpace(v)
+                              ? null
+                              : JsonSerializer.Deserialize<AgencyDigitalArchitecture>(v, (JsonSerializerOptions?)null)
+                      );
 
                 entity.HasOne(e => e.ParentAgency)
 

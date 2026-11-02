@@ -85,3 +85,5 @@ Quản trị AI — đã gom file và RSS vào Nguồn dữ liệu chung, bỏ s
 25/10/2026: đã bỏ phạm vi mục tiêu/đơn vị thủ công ở RSS; danh mục AI dùng chung Thiết lập từ khóa, tách nguồn bằng DocumentId. Kiểm thử PostgreSQL chứng minh một bài tạo hai đề xuất, không tự ghi báo cáo; request mới không mang lịch sử hội thoại và cấu hình từ khóa cập nhật được nạp ở lần đọc kế tiếp.
 
 28/10/2026: thêm Tiện ích → Thông tin chuyển đổi số. Đồng bộ sheet phía backend có lease, URL hash duy nhất, migration additive; không phụ thuộc browser và không ghi tiến độ mục tiêu. Xem docs/DIGITAL-NEWS.md về kiểm thử và giới hạn môi trường.
+
+- 02/11/2026: Tiện ích thông tin chuyển đổi số đã tách khỏi AI Internet và đồng bộ Sheet. Nguồn/từ khóa/lịch, hàng đợi đánh giá tiêu đề, kết quả và thông báo lưu PostgreSQL; đọc thủ công không ghi đề xuất số liệu hoặc tiến độ. Chủ sở hữu và kiểm thử: docs/DIGITAL-PLAN-MONITORING.md.

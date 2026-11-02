@@ -5,15 +5,26 @@
       <div class="min-w-0"><h2 class="ui-page-title text-white">Toàn cảnh thực hiện {{ scope === 'all' ? 'Chiến lược & Chương trình' : activeDocument.shortTitle }}</h2></div>
     </div>
     <div class="flex min-w-0 flex-wrap items-center gap-2">
+      <div class="w-36 sm:w-40 shrink-0">
+        <SearchableSelect
+          v-model="quickYearModel"
+          :options="computedYearOptions"
+          :is-multi="false"
+          :clearable="false"
+          label="Năm báo cáo"
+          label-class="sr-only"
+          placeholder="Năm báo cáo"
+        />
+      </div>
       <ActionButton kind="export" @click="exportDashboardExcelReport" :disabled="isExportingExcel || isLoading">{{ isExportingExcel ? 'Đang xuất...' : 'Xuất báo cáo Excel' }}</ActionButton>
       <OverlayPanel title="Lọc dữ liệu bảng điều khiển" button-text="Bộ lọc nâng cao" :active-count="activeDashboardFilterCount" placement="bottom-end" :overflow-padding="16" width-class="w-[calc(100vw-2rem)] sm:w-[480px]" :apply-disabled="!!filterError" @show="prepareFilterDraft" @apply="applyFilterDraft" @reset="resetFilterDraft">
         <div class="space-y-4" data-testid="dashboard-time-filters">
           <div>
             <label class="text-xs font-semibold text-slate-700 block mb-1">Thời gian báo cáo (từ năm ➔ đến năm)</label>
             <div class="flex items-center gap-2">
-              <SearchableSelect v-model="filterDraft.reportFromYear" :options="yearOptions" :is-multi="false" label="Từ năm" label-class="sr-only" placeholder="Từ năm" class="w-full" />
+              <SearchableSelect v-model="filterDraft.reportFromYear" :options="computedYearOptions" :is-multi="false" label="Từ năm" label-class="sr-only" placeholder="Từ năm" class="w-full" />
               <span class="text-xs font-bold text-slate-400 shrink-0">➔</span>
-              <SearchableSelect v-model="filterDraft.reportToYear" :options="yearOptions" :is-multi="false" label="Đến năm" label-class="sr-only" placeholder="Đến năm" class="w-full" />
+              <SearchableSelect v-model="filterDraft.reportToYear" :options="computedYearOptions" :is-multi="false" label="Đến năm" label-class="sr-only" placeholder="Đến năm" class="w-full" />
             </div>
           </div>
           <div>
@@ -38,8 +49,10 @@
   </header>
 </template>
 <script setup>
-import { computed, ref, useId } from 'vue';
+import { computed, ref, useId, watch } from 'vue';
 import { defaultDashboardTimeFilters } from './dashboardTimeFilters';
+import { currentReportingYear } from '../../config/reporting';
+import { reportYearOptions, getReportYearOptions } from '../../shared/reportYear';
 import { activeDocument } from '../../services/documentContext';
 import ActionButton from '../../components/ActionButton.vue';
 import SearchableSelect from '../../components/SearchableSelect.vue';
@@ -53,6 +66,38 @@ const executionFrom = defineModel('executionFrom', { default: '' });
 const executionTo = defineModel('executionTo', { default: '' });
 const isOngoingOnly = defineModel('isOngoingOnly', { default: false });
 const filterId = `dashboard-filter-${useId()}`;
+
+const computedYearOptions = computed(() => {
+  if (props.yearOptions?.length) return props.yearOptions;
+  const minYear = (scope.value === 'all' || activeDocument.value?.code === '2629' || activeDocument.value?.startYear === 2025) ? 2025 : 2026;
+  return getReportYearOptions(minYear);
+});
+
+watch(computedYearOptions, (opts) => {
+  if (opts?.length) {
+    const min = opts[0].value;
+    if (reportToYear.value && Number(reportToYear.value) < min) {
+      reportToYear.value = min;
+      if (reportFromYear.value && Number(reportFromYear.value) < min) {
+        reportFromYear.value = min;
+      }
+      props.loadDashboardMetrics();
+    }
+  }
+});
+const quickYearModel = computed({
+  get() {
+    return reportToYear.value ? Number(reportToYear.value) : (reportFromYear.value ? Number(reportFromYear.value) : currentReportingYear());
+  },
+  set(val) {
+    if (val) {
+      const y = Number(val);
+      reportFromYear.value = y;
+      reportToYear.value = y;
+      props.loadDashboardMetrics();
+    }
+  }
+});
 const filterDraft = ref({});
 const filterModels = { reportFromYear, reportToYear, executionFrom, executionTo, isOngoingOnly };
 const filterError = computed(() => {

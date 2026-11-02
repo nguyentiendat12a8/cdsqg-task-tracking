@@ -12,6 +12,19 @@
               />
             </div>
 
+            <!-- Quick Year Select Dropdown -->
+            <div class="w-36 shrink-0">
+              <SearchableSelect
+                v-model="quickYearValue"
+                :options="displayYearOptions"
+                :is-multi="false"
+                :clearable="false"
+                label="Năm báo cáo"
+                label-class="sr-only"
+                placeholder="Năm báo cáo"
+              />
+            </div>
+
             <!-- OverlayPanel Advanced Filter Popover -->
             <OverlayPanel
               title="Bộ lọc tìm kiếm nâng cao"
@@ -92,7 +105,7 @@
                   <div class="flex items-center gap-2">
                     <SearchableSelect
                       v-model="filterDraft.reportFromYear"
-                      :options="yearOptions"
+                      :options="displayYearOptions"
                       :isMulti="false"
                       label="Từ năm"
                       label-class="sr-only"
@@ -102,7 +115,7 @@
                     <span class="text-xs font-bold text-slate-400 shrink-0">➔</span>
                     <SearchableSelect
                       v-model="filterDraft.reportToYear"
-                      :options="yearOptions"
+                      :options="displayYearOptions"
                       :isMulti="false"
                       label="Đến năm"
                       label-class="sr-only"
@@ -141,11 +154,14 @@
 
 <script setup>
 import { computed, useId } from 'vue';
+import { currentReportingYear } from '../../config/reporting';
+import { reportYearOptions, getReportYearOptions } from '../../shared/reportYear';
+import { activeDocument } from '../../services/documentContext';
 import SearchableSelect from '../../components/SearchableSelect.vue';
 import DatePicker from '../../components/DatePicker.vue';
 import OverlayPanel from '../../components/OverlayPanel.vue';
 
-defineProps([
+const props = defineProps([
   'activeFilterCount',
   'execFilterSearch',
   'resetFilterSearch',
@@ -160,6 +176,27 @@ defineProps([
 ]);
 const filterDraft = defineModel('filterDraft', { required: true });
 const filterId = `doc-filter-${useId()}`;
+
+const displayYearOptions = computed(() => {
+  if (props.yearOptions?.length) return props.yearOptions;
+  const minYear = (activeDocument.value?.code === '2629' || activeDocument.value?.startYear === 2025) ? 2025 : 2026;
+  return getReportYearOptions(minYear);
+});
+
+const quickYearValue = computed({
+  get() {
+    const d = filterDraft.value;
+    return d.reportToYear ? Number(d.reportToYear) : (d.reportFromYear ? Number(d.reportFromYear) : currentReportingYear());
+  },
+  set(val) {
+    if (val) {
+      const y = Number(val);
+      filterDraft.value.reportFromYear = y;
+      filterDraft.value.reportToYear = y;
+      props.execFilterSearch();
+    }
+  }
+});
 
 const filterError = computed(() => {
   const draft = filterDraft.value;

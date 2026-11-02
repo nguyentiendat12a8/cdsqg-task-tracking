@@ -46,6 +46,21 @@ namespace Cdsqg.Core.Entities
         /// </summary>
         public List<AgencyPlanFile> PlanFiles { get; set; } = new List<AgencyPlanFile>();
 
+        /// <summary>
+        /// Kế hoạch CĐS 5 năm (2026-2030)
+        /// </summary>
+        public AgencyFiveYearPlan? FiveYearPlan { get; set; }
+
+        /// <summary>
+        /// Kế hoạch CĐS hàng năm
+        /// </summary>
+        public List<AgencyAnnualPlan> AnnualPlans { get; set; } = new List<AgencyAnnualPlan>();
+
+        /// <summary>
+        /// Khung kiến trúc số
+        /// </summary>
+        public AgencyDigitalArchitecture? DigitalArchitecture { get; set; }
+
         // Tập hợp các Cơ quan trực thuộc
         public ICollection<Agency> ChildAgencies { get; set; } = new List<Agency>();
     }

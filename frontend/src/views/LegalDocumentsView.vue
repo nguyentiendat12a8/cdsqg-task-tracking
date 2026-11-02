@@ -1,15 +1,13 @@
 <template>
-  <div class="w-full font-sans rounded-2xl border border-slate-200/80 bg-white shadow-sm">
+  <div class="w-full min-w-0 font-sans rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
     
     <!-- Top Header Bar -->
     <div class="ui-screen-heading bg-[#f1f5fc] p-4 sm:p-5 rounded-t-2xl border-b border-slate-200/80 space-y-3.5 w-full">
       <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div class="flex items-center gap-2.5">
-          <span class="p-2 bg-blue-600 text-white rounded-xl shadow-sm font-bold text-sm">
-            📜
-          </span>
+        <div class="flex items-center gap-3 min-w-0">
+          <div class="ui-screen-icon w-10 h-10 rounded-2xl flex items-center justify-center shrink-0" aria-hidden="true"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M14 3H6a2 2 0 00-2 2v14a2 2 0 002 2h12a2 2 0 002-2V9zM14 3v6h6M8 13h8M8 17h6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
           <div>
-            <h2 class="text-sm sm:text-base font-bold text-slate-800">
+            <h2 class="ui-page-title tracking-tight">
               Hệ thống văn bản chuyển đổi số
             </h2>
             <p class="text-xs text-slate-500">Lưu trữ, đính kèm tệp và theo dõi hiệu lực văn bản pháp luật</p>
@@ -45,13 +43,14 @@
     </div>
 
     <!-- Main Card Container: Filter + Table + Pagination -->
-    <div class="bg-white rounded-b-2xl overflow-hidden flex flex-col w-full">
+    <div class="p-3.5 sm:p-4 w-full">
+      <div class="w-full border border-slate-200/80 rounded-2xl bg-white overflow-hidden shadow-sm flex flex-col">
       
       <!-- Filter & Search Bar -->
-      <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3 bg-slate-50/60 border-b border-slate-200/80 w-full">
-        <div class="flex items-center gap-2 flex-1 max-w-xl min-w-0">
+      <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3 bg-slate-50/60 w-full">
+        <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 flex-1 max-w-xl min-w-0">
           <!-- Search Input -->
-          <div class="relative flex-1 min-w-[200px]">
+          <div class="relative flex-1 min-w-0 basis-full sm:basis-0">
             <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
             <input 
               v-model="filterDraft.searchQuery" 
@@ -147,15 +146,15 @@
         <table v-else class="w-full min-w-[1100px] text-left text-sm text-slate-700 border-collapse">
           <thead class="bg-slate-100 text-xs text-slate-700 font-semibold border-b border-slate-200 sticky top-0 z-10 shadow-2xs">
             <tr>
-              <th class="px-3.5 py-3 border-r border-slate-200 min-w-[130px] bg-slate-100">Số ký hiệu</th>
-              <th class="px-3.5 py-3 border-r border-slate-200 min-w-[280px] bg-slate-100">Trích yếu nội dung</th>
-              <th class="px-3.5 py-3 border-r border-slate-200 text-center min-w-[110px] bg-slate-100 whitespace-nowrap">Loại VB</th>
-              <th class="px-3.5 py-3 border-r border-slate-200 min-w-[180px] bg-slate-100">Cơ quan ban hành</th>
-              <th class="px-3.5 py-3 border-r border-slate-200 min-w-[180px] bg-slate-100">Cơ quan dự thảo</th>
-              <th class="px-3.5 py-3 border-r border-slate-200 text-center min-w-[110px] bg-slate-100 whitespace-nowrap">Ngày ban hành</th>
-              <th class="px-3.5 py-3 border-r border-slate-200 text-center min-w-[145px] bg-slate-100 whitespace-nowrap">Trạng thái</th>
-              <th class="px-3.5 py-3 border-r border-slate-200 min-w-[200px] bg-slate-100">File đính kèm</th>
-              <th class="px-3.5 py-3 text-center min-w-[100px] bg-slate-100 whitespace-nowrap">Thao tác</th>
+              <th class="px-3.5 py-2.5 border-r border-slate-200 min-w-[130px] bg-slate-100">Số ký hiệu</th>
+              <th class="px-3.5 py-2.5 border-r border-slate-200 min-w-[280px] bg-slate-100">Trích yếu nội dung</th>
+              <th class="px-3.5 py-2.5 border-r border-slate-200 text-center min-w-[110px] bg-slate-100 whitespace-nowrap">Loại VB</th>
+              <th class="px-3.5 py-2.5 border-r border-slate-200 min-w-[180px] bg-slate-100">Cơ quan ban hành</th>
+              <th class="px-3.5 py-2.5 border-r border-slate-200 min-w-[180px] bg-slate-100">Cơ quan dự thảo</th>
+              <th class="px-3.5 py-2.5 border-r border-slate-200 text-center min-w-[110px] bg-slate-100 whitespace-nowrap">Ngày ban hành</th>
+              <th class="px-3.5 py-2.5 border-r border-slate-200 text-center min-w-[145px] bg-slate-100 whitespace-nowrap">Trạng thái</th>
+              <th class="px-3.5 py-2.5 border-r border-slate-200 min-w-[200px] bg-slate-100">File đính kèm</th>
+              <th class="px-3.5 py-2.5 text-center min-w-[100px] bg-slate-100 whitespace-nowrap">Thao tác</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-100 text-xs">
@@ -270,47 +269,8 @@
         </table>
       </div>
 
-      <!-- Pagination Bar -->
-      <div class="flex flex-col md:flex-row items-center justify-between gap-3 bg-slate-50/70 p-3.5 border-t border-slate-200/80 text-xs text-slate-600 font-semibold w-full">
-        <div class="flex items-center gap-3 whitespace-nowrap flex-wrap justify-center sm:justify-start">
-          <span class="whitespace-nowrap">Hiển thị <span class="font-bold text-slate-900">{{ formatNumber(totalCount > 0 ? (pageNumber - 1) * pageSize + 1 : 0) }} - {{ formatNumber(Math.min(pageNumber * pageSize, totalCount)) }}</span> trên tổng số <span class="font-bold text-slate-900">{{ formatNumber(totalCount) }}</span> văn bản QPPL</span>
-          
-          <div class="flex items-center gap-1.5 border-l border-slate-200 pl-3 whitespace-nowrap">
-            <span class="whitespace-nowrap">Số bản ghi/trang:</span>
-            <SearchableSelect 
-              v-model="pageSize" 
-              :options="[10, 25, 50, 100].map(n => ({ value: n, label: String(n) }))" 
-              :isMulti="false" 
-              :clearable="false" 
-              @change="execSearch" 
-              class="w-20"
-            />
-          </div>
-        </div>
-
-        <div class="flex items-center gap-2 shrink-0 whitespace-nowrap flex-wrap justify-center">
-          <button 
-            @click="changePage(pageNumber - 1)" 
-            :disabled="pageNumber <= 1"
-            class="ui-single-line px-3.5 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg disabled:opacity-40 font-bold transition shadow-2xs cursor-pointer"
-          >
-            ‹ Trang trước
-          </button>
-          
-          <span class="px-3 py-1.5 bg-blue-50 text-blue-800 border border-blue-200 rounded-lg font-bold">
-            Trang {{ pageNumber }} / {{ Math.max(1, totalPages) }}
-          </span>
-
-          <button 
-            @click="changePage(pageNumber + 1)" 
-            :disabled="pageNumber >= totalPages"
-            class="px-3.5 py-1.5 bg-white hover:bg-slate-100 border border-slate-300 rounded-lg disabled:opacity-40 font-bold transition shadow-2xs cursor-pointer"
-          >
-            Trang sau ›
-          </button>
-        </div>
+      <DocumentPagination v-model:current-page="pageNumber" v-model:page-size="pageSize" :total-count="totalCount" :total-pages="Math.max(1,totalPages)" :page-size-options="[10,25,50,100].map(value=>({value,label:String(value)}))" :change-page="changePage" :disabled="isLoading" item-label="văn bản" @update:page-size="execSearch" />
       </div>
-
     </div>
 
     <!-- Modals -->
@@ -334,6 +294,7 @@
 
 <script setup>
 import ActionButton from "../components/ActionButton.vue";
+import DocumentPagination from "../features/document/DocumentPagination.vue";
 import { legalDocumentTypeOptions as documentTypeFilterOptions } from '../config/legalDocumentTypes';
 import { formatLegalDocumentReference } from '../shared/legalDocumentText';
 

@@ -1,4 +1,5 @@
 using Cdsqg.Core.Entities;
+using Cdsqg.Core.Enums;
 
 namespace Cdsqg.Application.Services;
 
@@ -35,10 +36,14 @@ public sealed record DashboardTimeFilter(int? ReportFromYear, int? ReportToYear,
         // Only mutate no-tracking snapshots. Reports outside the range cannot affect totals/statuses.
         foreach (var item in items)
         {
-            item.Deliverables = ProgressCalculator.AnnualDeliverables(item, null);
             item.ProgressLogs = item.ProgressLogs.Where(log =>
-                (!ReportFromYear.HasValue || log.PeriodYear >= ReportFromYear.Value)
-                && (!ReportToYear.HasValue || log.PeriodYear <= ReportToYear.Value)).ToList();
+                (!ReportToYear.HasValue || log.PeriodYear <= ReportToYear.Value)
+                && (item.IsOngoing
+                    ? (!ReportFromYear.HasValue || log.PeriodYear >= ReportFromYear.Value)
+                    : (!ReportFromYear.HasValue || log.PeriodYear >= ReportFromYear.Value
+                        || (log.ApprovalStatus == ApprovalStatusEnum.Approved && ProgressCalculator.HasReachedFinalCompletion(item, log))))
+            ).ToList();
+            item.Deliverables = ProgressCalculator.AnnualDeliverables(item, null);
         }
     }
 }

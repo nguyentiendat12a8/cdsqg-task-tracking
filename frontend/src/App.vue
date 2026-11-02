@@ -154,6 +154,7 @@ function parseHashRoute() {
 function syncHashRoute() {
   if (!authState.isLoggedIn.value) return;
   const targetHash = `#${currentTab.value}`;
+  if(currentTab.value==='digital-news'&&window.location.hash.split('?')[0]===targetHash)return;
   if (window.location.hash !== targetHash) {
     window.location.hash = targetHash;
   }
@@ -180,6 +181,19 @@ async function handleOpenNotificationDetail(event) {
   if (!notif) return;
 
   const linkUrl = notif.linkUrl || notif.LinkUrl || '';
+  if(linkUrl.split('?')[0]==='#digital-news'){
+    const query=new URLSearchParams(linkUrl.split('?')[1]||'');
+    const article=query.get('article');
+    if(article&&/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/i.test(article)){
+      const notificationId=notif.id||notif.Id;
+      if(notificationId)query.set('notification',notificationId);
+      const target='#digital-news?'+query.toString();
+      if(window.location.hash===target)window.dispatchEvent(new CustomEvent('open-digital-news-result'));
+      else window.location.hash=target;
+      currentTab.value='digital-news';
+      return;
+    }
+  }
   const notifType = notif.type || notif.Type || '';
   const notifTitle = notif.title || notif.Title || '';
   const notifMsg = notif.message || notif.Message || '';

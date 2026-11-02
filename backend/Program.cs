@@ -95,10 +95,12 @@ static string ConvertPostgresConnectionString(string connStr)
     return connStr;
 }
 
-// Public Google Sheets export, fixed host and no automatic redirects/cookies.
-builder.Services.AddHttpClient("digital-news-sheet",c=>c.Timeout=TimeSpan.FromSeconds(30))
-    .ConfigurePrimaryHttpMessageHandler(()=>new HttpClientHandler{AllowAutoRedirect=false,UseCookies=false});
-builder.Services.AddScoped<IDigitalNewsSheetReader,DigitalNewsSheetReader>();
+// Native scheduled discovery; fixed public RSS endpoint, no redirects or cookies.
+builder.Services.AddHttpClient("digital-plan-discovery",c=>c.Timeout=TimeSpan.FromSeconds(25)).ConfigurePrimaryHttpMessageHandler(()=>new HttpClientHandler{AllowAutoRedirect=false,UseCookies=false});
+builder.Services.AddScoped<IDigitalPlanDiscoveryReader,DigitalPlanDiscoveryReader>();
+builder.Services.AddScoped<IDigitalPlanTitleClassifier,DigitalPlanTitleClassifier>();
+builder.Services.AddScoped<DigitalPlanReadService>();
+builder.Services.AddHostedService<DigitalPlanReadWorker>();
 builder.Services.AddScoped<DigitalNewsSyncService>();
 builder.Services.AddHostedService<DigitalNewsSyncWorker>();
 

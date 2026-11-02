@@ -8,9 +8,26 @@ export function formatItemProgressDisplay(item) {
   if (item.itemType === 'Task' || item.itemType === 2 || item.itemType === '2') {
     return getStatusLabel(item.calculatedStatus || item.latestProgressStatus || 'NotStarted');
   }
-  if (item.latestProgressPercent != null) return formatPercent(item.latestProgressPercent);
 
   const unit = item.unitName || item.unit?.name;
+  const isPercentUnit = !unit || unit === '%' || unit === 'PERCENT';
+
+  if (item.targetValue != null) {
+    const targetStr = isPercentUnit ? `${formatNumber(item.targetValue)}%` : `${formatNumber(item.targetValue)}${unit ? ' ' + unit : ''}`;
+    let actualStr = null;
+    if (item.latestProgressValue !== null && item.latestProgressValue !== undefined) {
+      actualStr = isPercentUnit ? `${formatNumber(item.latestProgressValue)}%` : formatNumber(item.latestProgressValue);
+    } else if (item.latestProgressPercent !== null && item.latestProgressPercent !== undefined) {
+      actualStr = formatPercent(item.latestProgressPercent);
+    }
+
+    if (actualStr != null) {
+      return `Đạt ${actualStr} / KH ${targetStr}`;
+    }
+    return `Chưa báo cáo / KH ${targetStr}`;
+  }
+
+  if (item.latestProgressPercent != null) return formatPercent(item.latestProgressPercent);
 
   if (unit === 'Số lượng') {
     if (item.latestProgressValue !== null && item.latestProgressValue !== undefined) {

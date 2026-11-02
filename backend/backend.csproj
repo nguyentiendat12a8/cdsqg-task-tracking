@@ -25,4 +25,5 @@
     <PackageReference Include="Swashbuckle.AspNetCore" Version="7.2.0" />
   </ItemGroup>
 
+<ItemGroup><EmbeddedResource Include="Infrastructure/Data/Seeds/DigitalPlanMonitoring.json" LogicalName="Cdsqg.DigitalPlanMonitoring.json" /></ItemGroup>
 </Project>

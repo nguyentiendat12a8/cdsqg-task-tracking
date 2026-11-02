@@ -4,6 +4,24 @@ import { formatDate, formatDateTime, formatPercent, formatFileName, formatMeasur
 import { getStatusLabel, getStatusBadgeClass, executionStatusOptions } from '../src/shared/statusPresentation.js';
 import { isAdminRole } from '../src/shared/roles.js';
 import { isGeneralTaskItem } from '../src/shared/agencyPresentation.js';
+import { getReportYearOptions, getReportYearMin } from '../src/shared/reportYear.js';
+
+assert.equal(getReportYearMin('2629'), 2025);
+assert.equal(getReportYearMin('1266'), 2026);
+assert.equal(getReportYearMin({ code: '2629', startYear: 2025 }), 2025);
+assert.equal(getReportYearMin({ code: '1266', startYear: 2026 }), 2026);
+
+const opts2629 = getReportYearOptions('2629');
+assert.equal(opts2629[0].value, 2025);
+assert.equal(opts2629[0].label, 'Năm 2025');
+assert.equal(opts2629[opts2629.length - 1].value, 2045);
+assert.equal(opts2629[opts2629.length - 1].label, 'Năm 2045');
+
+const opts1266 = getReportYearOptions('1266');
+assert.equal(opts1266[0].value, 2026);
+assert.equal(opts1266[0].label, 'Năm 2026');
+assert.equal(opts1266[opts1266.length - 1].value, 2045);
+assert.equal(opts1266[opts1266.length - 1].label, 'Năm 2045');
 
 assert.equal(formatDate('2026-10-09'), '09/10/2026');
 assert.equal(formatDate('2026-10-09T23:00:00Z'), '09/10/2026');

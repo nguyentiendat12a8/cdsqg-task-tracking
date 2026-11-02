@@ -1,0 +1,1035 @@
+{
+  "Sources": [
+    {
+      "Id": "93eee9bb-9c0c-527c-97ee-580ee2e5418e",
+      "SortOrder": 1,
+      "AgencyName": "Bộ Quốc phòng",
+      "Name": "Bộ Quốc phòng",
+      "Domain": "mod.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "4890bbb6-bb8f-5e8e-b3a8-a3bbfa46dc8d",
+      "SortOrder": 2,
+      "AgencyName": "Bộ Công an",
+      "Name": "Bộ Công an",
+      "Domain": "mps.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "a111c80c-4520-535c-9481-8a263de36cf4",
+      "SortOrder": 3,
+      "AgencyName": "Bộ Ngoại giao",
+      "Name": "Bộ Ngoại giao",
+      "Domain": "mofa.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "e9a14935-9d87-50c1-a3ab-62845a1d3ff2",
+      "SortOrder": 4,
+      "AgencyName": "Bộ Nội vụ",
+      "Name": "Bộ Nội vụ",
+      "Domain": "moha.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "d44909b3-9f88-5dec-bdce-70840cd76582",
+      "SortOrder": 5,
+      "AgencyName": "Bộ Tư pháp",
+      "Name": "Bộ Tư pháp",
+      "Domain": "moj.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "c72ac9f2-92ba-5479-9407-4ec3fb5402f1",
+      "SortOrder": 6,
+      "AgencyName": "Bộ Tài chính",
+      "Name": "Bộ Tài chính",
+      "Domain": "mof.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "394da1e9-6c21-57c6-a22f-b73c1b7726b5",
+      "SortOrder": 7,
+      "AgencyName": "Bộ Công Thương",
+      "Name": "Bộ Công Thương",
+      "Domain": "moit.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "8c2508a5-aaa2-5c8f-9164-e3375bcc69d9",
+      "SortOrder": 8,
+      "AgencyName": "Bộ Nông nghiệp và Môi trường",
+      "Name": "Bộ Nông nghiệp và Môi trường",
+      "Domain": "mae.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "5d28f892-f051-5925-b60d-fa0b5a1863ab",
+      "SortOrder": 9,
+      "AgencyName": "Bộ Xây dựng",
+      "Name": "Bộ Xây dựng",
+      "Domain": "moc.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "6878a2c2-698b-56b5-aef8-3bc114421b2f",
+      "SortOrder": 10,
+      "AgencyName": "Bộ Văn hóa, Thể thao và Du lịch",
+      "Name": "Bộ Văn hóa, Thể thao và Du lịch",
+      "Domain": "bvhttdl.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "932b67cc-a632-5dbf-ac62-afb303954ba7",
+      "SortOrder": 11,
+      "AgencyName": "Bộ Khoa học và Công nghệ",
+      "Name": "Bộ Khoa học và Công nghệ",
+      "Domain": "mst.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "03b89e3d-e325-50eb-912c-3eeedab3164b",
+      "SortOrder": 12,
+      "AgencyName": "Bộ Giáo dục và Đào tạo",
+      "Name": "Bộ Giáo dục và Đào tạo",
+      "Domain": "moet.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "f53492b1-0c26-5ee0-8686-993c5536b2e1",
+      "SortOrder": 13,
+      "AgencyName": "Bộ Y tế",
+      "Name": "Bộ Y tế",
+      "Domain": "moh.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "02538116-b9d5-5713-8f0b-ec96dccca168",
+      "SortOrder": 14,
+      "AgencyName": "Bộ Dân tộc và Tôn giáo",
+      "Name": "Bộ Dân tộc và Tôn giáo",
+      "Domain": "bdttg.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "9c95440b-6a88-5d51-ac6d-4425d4c018c6",
+      "SortOrder": 15,
+      "AgencyName": "Văn phòng Chính phủ",
+      "Name": "Văn phòng Chính phủ",
+      "Domain": "vpcp.chinhphu.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "815f7fda-1890-5000-b8b8-79ad0a570ee5",
+      "SortOrder": 16,
+      "AgencyName": "Ngân hàng Nhà nước Việt Nam",
+      "Name": "Ngân hàng Nhà nước Việt Nam",
+      "Domain": "sbv.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "6cd1ceeb-0001-5cc4-88cd-5db7dcaf4fc5",
+      "SortOrder": 17,
+      "AgencyName": "Thanh tra Chính phủ",
+      "Name": "Thanh tra Chính phủ",
+      "Domain": "thanhtra.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "7c2d6e0b-0da7-50e6-8c59-a90853bb2669",
+      "SortOrder": 18,
+      "AgencyName": "Thành phố Hà Nội",
+      "Name": "Hà Nội",
+      "Domain": "hanoi.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "c69f02ca-c2d3-5e10-9cdc-eac190b4c3b4",
+      "SortOrder": 19,
+      "AgencyName": "Thành phố Hồ Chí Minh",
+      "Name": "TP. Hồ Chí Minh",
+      "Domain": "hochiminhcity.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "ac9a188e-5a9e-528d-afb5-d0fc611459b3",
+      "SortOrder": 20,
+      "AgencyName": "Thành phố Hải Phòng",
+      "Name": "Hải Phòng",
+      "Domain": "haiphong.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "bcd5330f-2b01-59bd-a166-7a12085c58cd",
+      "SortOrder": 21,
+      "AgencyName": "Thành phố Đà Nẵng",
+      "Name": "Đà Nẵng",
+      "Domain": "danang.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "29340d21-7626-58a8-b06c-214129571489",
+      "SortOrder": 22,
+      "AgencyName": "Thành phố Cần Thơ",
+      "Name": "Cần Thơ",
+      "Domain": "cantho.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "b1cd0a74-2657-5943-b309-a753d6926c26",
+      "SortOrder": 23,
+      "AgencyName": "Thành phố Huế",
+      "Name": "Huế",
+      "Domain": "thuathienhue.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "6044d071-7dc8-55f9-ae71-218c4f6c8479",
+      "SortOrder": 24,
+      "AgencyName": "Thành phố Đồng Nai",
+      "Name": "Đồng Nai",
+      "Domain": "dongnai.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "8d15f7c7-9b96-5e14-8df5-ace6c61d9e64",
+      "SortOrder": 25,
+      "AgencyName": "Thành phố Quảng Ninh",
+      "Name": "Quảng Ninh",
+      "Domain": "quangninh.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "5c1a2cbb-778d-5a6d-976b-f1ac7c86bef9",
+      "SortOrder": 26,
+      "AgencyName": "Thành phố Bắc Ninh",
+      "Name": "Bắc Ninh",
+      "Domain": "bacninh.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "f081615d-e321-5869-9d96-b59d3435fd3f",
+      "SortOrder": 27,
+      "AgencyName": "Tỉnh An Giang",
+      "Name": "An Giang",
+      "Domain": "angiang.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "122ad42e-e858-5fb7-950e-cc14baf17c61",
+      "SortOrder": 28,
+      "AgencyName": "Tỉnh Cao Bằng",
+      "Name": "Cao Bằng",
+      "Domain": "caobang.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "86faf33d-897e-5f13-b359-f0ace0174cb5",
+      "SortOrder": 29,
+      "AgencyName": "Tỉnh Cà Mau",
+      "Name": "Cà Mau",
+      "Domain": "camau.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "5458bf9d-f2d9-5443-964d-225182d4eacb",
+      "SortOrder": 30,
+      "AgencyName": "Tỉnh Điện Biên",
+      "Name": "Điện Biên",
+      "Domain": "dienbien.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "bd33ace7-a541-5a80-b4fa-66a5ccc14102",
+      "SortOrder": 31,
+      "AgencyName": "Tỉnh Đắk Lắk",
+      "Name": "Đắk Lắk",
+      "Domain": "daklak.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "f11286ef-4f9b-5108-a3a0-a9d65cdac76d",
+      "SortOrder": 32,
+      "AgencyName": "Tỉnh Đồng Tháp",
+      "Name": "Đồng Tháp",
+      "Domain": "dongthap.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "a2924ba5-60b7-5b9d-aef3-4277cd56e2a7",
+      "SortOrder": 33,
+      "AgencyName": "Tỉnh Gia Lai",
+      "Name": "Gia Lai",
+      "Domain": "gialai.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "0ac7c65c-b7b6-5dba-8ce7-b18b4ae3f70c",
+      "SortOrder": 34,
+      "AgencyName": "Tỉnh Hà Tĩnh",
+      "Name": "Hà Tĩnh",
+      "Domain": "hatinh.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "e825f0b7-e243-5d45-a578-d48bde3113d9",
+      "SortOrder": 35,
+      "AgencyName": "Tỉnh Hưng Yên",
+      "Name": "Hưng Yên",
+      "Domain": "hungyen.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "e49ffee0-1e8a-5442-84ac-27b1e7b4dfd8",
+      "SortOrder": 36,
+      "AgencyName": "Tỉnh Khánh Hòa",
+      "Name": "Khánh Hòa",
+      "Domain": "khanhhoa.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "8f3d5e11-7754-526c-8178-9bc75154372c",
+      "SortOrder": 37,
+      "AgencyName": "Tỉnh Lai Châu",
+      "Name": "Lai Châu",
+      "Domain": "laichau.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "e556e219-102e-5401-a65e-da8e5be84d0a",
+      "SortOrder": 38,
+      "AgencyName": "Tỉnh Lào Cai",
+      "Name": "Lào Cai",
+      "Domain": "laocai.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "b4b9ae3d-e09c-56ff-ab1d-ac8a3b8459e8",
+      "SortOrder": 39,
+      "AgencyName": "Tỉnh Lâm Đồng",
+      "Name": "Lâm Đồng",
+      "Domain": "lamdong.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "5e31f60f-21fd-5273-9a40-0c866c429570",
+      "SortOrder": 40,
+      "AgencyName": "Tỉnh Lạng Sơn",
+      "Name": "Lạng Sơn",
+      "Domain": "langson.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "1c4e467b-2c2b-5512-af8f-abf74175614c",
+      "SortOrder": 41,
+      "AgencyName": "Tỉnh Nghệ An",
+      "Name": "Nghệ An",
+      "Domain": "nghean.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "65f4623d-7d9c-5b30-934e-bb7c4eec61da",
+      "SortOrder": 42,
+      "AgencyName": "Tỉnh Ninh Bình",
+      "Name": "Ninh Bình",
+      "Domain": "ninhbinh.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "bdc40b5f-e4b2-5b17-9eb0-ec1b05179da6",
+      "SortOrder": 43,
+      "AgencyName": "Tỉnh Phú Thọ",
+      "Name": "Phú Thọ",
+      "Domain": "phutho.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "b6d04da9-fc49-547b-bbd0-8ec6395828c9",
+      "SortOrder": 44,
+      "AgencyName": "Tỉnh Quảng Ngãi",
+      "Name": "Quảng Ngãi",
+      "Domain": "quangngai.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "b3420df3-7a07-5280-8ca8-e023cb27561b",
+      "SortOrder": 45,
+      "AgencyName": "Tỉnh Quảng Trị",
+      "Name": "Quảng Trị",
+      "Domain": "quangtri.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "b0f8a3a6-086e-532b-b2cc-b09708e5a688",
+      "SortOrder": 46,
+      "AgencyName": "Tỉnh Sơn La",
+      "Name": "Sơn La",
+      "Domain": "sonla.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "cfad0509-b69f-5ae1-a243-7c592b5ec77f",
+      "SortOrder": 47,
+      "AgencyName": "Tỉnh Thanh Hóa",
+      "Name": "Thanh Hóa",
+      "Domain": "thanhhoa.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "58fbd8f6-ef30-5fad-8ea8-e877f41b3eb9",
+      "SortOrder": 48,
+      "AgencyName": "Tỉnh Thái Nguyên",
+      "Name": "Thái Nguyên",
+      "Domain": "thainguyen.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "0fa332e5-f255-53d7-a66b-38f9bc3d2564",
+      "SortOrder": 49,
+      "AgencyName": "Tỉnh Tuyên Quang",
+      "Name": "Tuyên Quang",
+      "Domain": "tuyenquang.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "ebf9a805-8eb4-508b-b686-ce7e0d6e9128",
+      "SortOrder": 50,
+      "AgencyName": "Tỉnh Tây Ninh",
+      "Name": "Tây Ninh",
+      "Domain": "tayninh.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "e5d6ca53-f593-5de0-8d06-ada571bb8cc1",
+      "SortOrder": 51,
+      "AgencyName": "Tỉnh Vĩnh Long",
+      "Name": "Vĩnh Long",
+      "Domain": "vinhlong.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "79ab5f06-70f0-5d2b-b7fc-ea20d4dab159",
+      "SortOrder": 52,
+      "AgencyName": "Thành phố Hà Nội",
+      "Name": "Sở Khoa học và Công Nghệ Thành phố Hà Nội",
+      "Domain": "sokhcn.hanoi.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "8577c11d-82a6-56f9-9547-d626050677ab",
+      "SortOrder": 53,
+      "AgencyName": "Thành phố Hải Phòng",
+      "Name": "Sở Khoa học và Công Nghệ Thành phố Hải Phòng",
+      "Domain": "sokhcn.haiphong.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "209991d0-4a02-514a-aa26-480b80b80590",
+      "SortOrder": 54,
+      "AgencyName": "Tỉnh Bắc Ninh",
+      "Name": "Sở Khoa học và Công Nghệ Tỉnh Bắc Ninh",
+      "Domain": "skhcn.bacninh.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "e163644e-110c-5c05-8fd9-e1486f233871",
+      "SortOrder": 55,
+      "AgencyName": "Tỉnh Cao Bằng",
+      "Name": "Sở Khoa học và Công Nghệ Tỉnh Cao Bằng",
+      "Domain": "sokhcn.caobang.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "4360becc-4e57-5212-9c7a-97f5de34ceee",
+      "SortOrder": 56,
+      "AgencyName": "Tỉnh Điện Biên",
+      "Name": "Sở Khoa học và Công Nghệ Tỉnh Điện Biên",
+      "Domain": "skhcn.dienbien.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "d9b4f85c-b687-5965-9754-ad8a88c8b773",
+      "SortOrder": 57,
+      "AgencyName": "Tỉnh Hưng Yên",
+      "Name": "Sở Khoa học và Công Nghệ Tỉnh Hưng Yên",
+      "Domain": "sokhcn.hungyen.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "5ef3314a-7797-54b8-985c-8905284e254d",
+      "SortOrder": 58,
+      "AgencyName": "Tỉnh Lai Châu",
+      "Name": "Sở Khoa học và Công Nghệ Tỉnh Lai Châu",
+      "Domain": "skhcn.laichau.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "df23df18-b437-588b-adc5-dfdf4c0fb4b3",
+      "SortOrder": 59,
+      "AgencyName": "Tỉnh Lào Cai",
+      "Name": "Sở Khoa học và Công Nghệ Tỉnh Lào Cai",
+      "Domain": "skhcn.laocai.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "1951ab7a-c764-5a0c-be62-e33f2aaf4f84",
+      "SortOrder": 60,
+      "AgencyName": "Tỉnh Lạng Sơn",
+      "Name": "Sở Khoa học và Công Nghệ Tỉnh Lạng Sơn",
+      "Domain": "sokhcn.langson.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "1c0fc95b-652b-5d00-ab18-36fab8461cc5",
+      "SortOrder": 61,
+      "AgencyName": "Tỉnh Ninh Bình",
+      "Name": "Sở Khoa học và Công Nghệ Tỉnh Ninh Bình",
+      "Domain": "sokhcn.ninhbinh.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "254574ad-9046-55f5-9ccc-2c5b8b9a5fb2",
+      "SortOrder": 62,
+      "AgencyName": "Tỉnh Phú Thọ",
+      "Name": "Sở Khoa học và Công Nghệ Tỉnh Phú Thọ",
+      "Domain": "sokhoahoccongnghe.phutho.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "f886e4af-c109-582e-8ea7-97f11ad9eb11",
+      "SortOrder": 63,
+      "AgencyName": "Tỉnh Quảng Ninh",
+      "Name": "Sở Khoa học và Công Nghệ Tỉnh Quảng Ninh",
+      "Domain": "quangninh.gov.vn/so/sokhoahoccongnghe",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "62ffc86a-e07b-5bf9-b7c9-5da30250e09b",
+      "SortOrder": 64,
+      "AgencyName": "Tỉnh Sơn La",
+      "Name": "Sở Khoa học và Công Nghệ Tỉnh Sơn La",
+      "Domain": "sokhcn.sonla.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "5465973c-2bd8-57e7-9c0d-f5142ef3be36",
+      "SortOrder": 65,
+      "AgencyName": "Tỉnh Tuyên Quang",
+      "Name": "Sở Khoa học và Công Nghệ Tỉnh Tuyên Quang",
+      "Domain": "skhcn.tuyenquang.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "67274292-db38-593e-9ef8-8ec8031b4e2e",
+      "SortOrder": 66,
+      "AgencyName": "Tỉnh Thái Nguyên",
+      "Name": "Sở Khoa học và Công Nghệ Tỉnh Thái Nguyên",
+      "Domain": "dosttn.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "8c5978ae-000b-5dec-ab70-c33dbea8e007",
+      "SortOrder": 67,
+      "AgencyName": "Thành phố Đà Nẵng",
+      "Name": "Sở Khoa học và Công Nghệ Thành phố Đà Nẵng",
+      "Domain": "dost.danang.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "1384a0d5-a894-5f33-a016-b9efa6c6d13f",
+      "SortOrder": 68,
+      "AgencyName": "Tỉnh Đắk Lắk",
+      "Name": "Sở Khoa học và Công Nghệ Tỉnh Đắk Lắk",
+      "Domain": "skhcn.daklak.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "74fa9b50-2edf-5e80-b22a-b9e411ab8108",
+      "SortOrder": 69,
+      "AgencyName": "Tỉnh Đắk Nông",
+      "Name": "Sở Khoa học và Công Nghệ Tỉnh Đắk Nông",
+      "Domain": "skhcn.daknong.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "db686756-3229-5147-a370-8abdd4fad69c",
+      "SortOrder": 70,
+      "AgencyName": "Tỉnh Gia Lai",
+      "Name": "Sở Khoa học và Công Nghệ Tỉnh Gia Lai",
+      "Domain": "skhcn.gialai.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "86931764-ecd4-5e49-9b0b-0fca5f1cd906",
+      "SortOrder": 71,
+      "AgencyName": "Tỉnh Hà Tĩnh",
+      "Name": "Sở Khoa học và Công Nghệ Tỉnh Hà Tĩnh",
+      "Domain": "skhcn.hatinh.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "4d67d277-ef95-58f5-873b-0f08462af33f",
+      "SortOrder": 72,
+      "AgencyName": "Tỉnh Thừa Thiên Huế",
+      "Name": "Sở Khoa học và Công Nghệ Tỉnh Thừa Thiên Huế",
+      "Domain": "skhcn.hue.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "fb0686a2-8297-5bab-9491-3e803f80f18c",
+      "SortOrder": 73,
+      "AgencyName": "Tỉnh Khánh Hòa",
+      "Name": "Sở Khoa học và Công Nghệ Tỉnh Khánh Hòa",
+      "Domain": "skhcn.khanhhoa.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "09e8da05-062b-59cc-9566-21b96f3d4c6d",
+      "SortOrder": 74,
+      "AgencyName": "Tỉnh Nghệ An",
+      "Name": "Sở Khoa học và Công Nghệ Tỉnh Nghệ An",
+      "Domain": "ngheandost.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "3b1d123e-28d5-51ec-a4d5-d89a79883670",
+      "SortOrder": 75,
+      "AgencyName": "Thành phố Hồ Chí Minh",
+      "Name": "Sở Khoa học và Công Nghệ Thành phố Hồ Chí Minh",
+      "Domain": "dost.hochiminhcity.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "b505201d-dd98-5687-ad0b-ee9d1861526a",
+      "SortOrder": 76,
+      "AgencyName": "Thành phố Cần Thơ",
+      "Name": "Sở Khoa học và Công Nghệ Thành phố Cần Thơ",
+      "Domain": "sokhcn.cantho.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "c886cf3f-8a96-5aeb-b0c7-cb68169cb280",
+      "SortOrder": 77,
+      "AgencyName": "Tỉnh An Giang",
+      "Name": "Sở Khoa học và Công Nghệ Tỉnh An Giang",
+      "Domain": "sokhcn.angiang.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "e1b97440-7401-500c-b54f-afe39f30319e",
+      "SortOrder": 78,
+      "AgencyName": "Tỉnh Bến Tre",
+      "Name": "Sở Khoa học và Công Nghệ Tỉnh Bến Tre",
+      "Domain": "dost-bentre.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "be618a84-5f0c-5dd8-aafe-47a141fbdd2d",
+      "SortOrder": 79,
+      "AgencyName": "Tỉnh Bình Phước",
+      "Name": "Sở Khoa học và Công Nghệ Tỉnh Bình Phước",
+      "Domain": "skhcn.binhphuoc.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "f862ea29-b6b6-5020-86a4-4d4a3492a734",
+      "SortOrder": 80,
+      "AgencyName": "Tỉnh Cà Mau",
+      "Name": "Sở Khoa học và Công Nghệ Tỉnh Cà Mau",
+      "Domain": "sokhcn.camau.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "bb51fda7-aa41-53df-b2d3-b26145457d4a",
+      "SortOrder": 81,
+      "AgencyName": "Tỉnh Đồng Nai",
+      "Name": "Sở Khoa học và Công Nghệ Tỉnh Đồng Nai",
+      "Domain": "dost-dongnai.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "581ed27c-0633-5157-b979-36358b48263e",
+      "SortOrder": 82,
+      "AgencyName": "Tỉnh Đồng Tháp",
+      "Name": "Sở Khoa học và Công Nghệ Tỉnh Đồng Tháp",
+      "Domain": "skhcn.dongthap.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "b44ef28b-de69-555a-9aba-dffff1c9c88c",
+      "SortOrder": 83,
+      "AgencyName": "Tỉnh Tây Ninh",
+      "Name": "Sở Khoa học và Công Nghệ Tỉnh Tây Ninh",
+      "Domain": "sokhcn.tayninh.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "fbda2393-816a-5208-8393-43903b296409",
+      "SortOrder": 84,
+      "AgencyName": "Tỉnh Vĩnh Long",
+      "Name": "Sở Khoa học và Công Nghệ Tỉnh Vĩnh Long",
+      "Domain": "skhcn.vinhlong.gov.vn",
+      "RequiredTerms": "",
+      "Enabled": true
+    },
+    {
+      "Id": "7a6ee44a-de07-5328-aa1a-500ca3f61ba4",
+      "SortOrder": 85,
+      "AgencyName": "Tỉnh Lâm Đồng",
+      "Name": "Sở Khoa học và Công Nghệ Tỉnh Lâm Đồng",
+      "Domain": "lamdong.gov.vn/sites/skhcn",
+      "RequiredTerms": "",
+      "Enabled": true
+    }
+  ],
+  "Keywords": [
+    {
+      "Id": "b5d4f2e1-dfeb-5efc-9cde-89730f4a944e",
+      "SortOrder": 1,
+      "Name": "Ban hành kế hoạch",
+      "Phrase": "ban hành kế hoạch chuyển đổi số",
+      "Conditions": "chuyển đổi số",
+      "Enabled": false
+    },
+    {
+      "Id": "84491507-1514-5140-a88c-70202ce2036d",
+      "SortOrder": 2,
+      "Name": "Ban hành đề án",
+      "Phrase": "ban hành đề án chuyển đổi số",
+      "Conditions": "chuyển đổi số",
+      "Enabled": false
+    },
+    {
+      "Id": "aa72ab90-2491-551f-942d-8d9b18eaba1d",
+      "SortOrder": 3,
+      "Name": "Ban hành nghị quyết",
+      "Phrase": "ban hành nghị quyết chuyển đổi số",
+      "Conditions": "chuyển đổi số",
+      "Enabled": false
+    },
+    {
+      "Id": "55b6869f-b76b-5e49-8d41-df9b549c5e93",
+      "SortOrder": 4,
+      "Name": "Triển khai kế hoạch",
+      "Phrase": "triển khai kế hoạch",
+      "Conditions": "chuyển đổi số",
+      "Enabled": false
+    },
+    {
+      "Id": "adb5c0c0-3f43-5ef5-82bf-2addfb073888",
+      "SortOrder": 1,
+      "Name": "Văn bản chuyển đổi số",
+      "Phrase": "kế hoạch chuyển đổi số",
+      "Conditions": "ban hành, phê duyệt, thông qua, công bố",
+      "Enabled": true
+    },
+    {
+      "Id": "2d13b6bc-b2b6-54d0-ac6b-18cbb6bf2827",
+      "SortOrder": 6,
+      "Name": "Phê duyệt",
+      "Phrase": "Bộ chỉ số chuyển đổi số",
+      "Conditions": "chuyển đổi số",
+      "Enabled": false
+    },
+    {
+      "Id": "243c6deb-35ca-5304-8a68-e38f4fcc1ba1",
+      "SortOrder": 3,
+      "Name": "Văn bản chuyển đổi số",
+      "Phrase": "chương trình chuyển đổi số",
+      "Conditions": "ban hành, phê duyệt, thông qua, công bố",
+      "Enabled": true
+    },
+    {
+      "Id": "d3eb6d57-b18a-5c4f-89a7-777c6ad63906",
+      "SortOrder": 8,
+      "Name": "Tỷ trọng kinh tế số",
+      "Phrase": "Tỷ trọng kinh tế số",
+      "Conditions": "kinh tế số",
+      "Enabled": false
+    },
+    {
+      "Id": "f306de91-2ae3-56ac-91bf-04676701ec74",
+      "SortOrder": 9,
+      "Name": "Dịch vụ công trực tuyến",
+      "Phrase": "Dịch vụ công trực tuyến",
+      "Conditions": "Dịch vụ công trực tuyến",
+      "Enabled": false
+    },
+    {
+      "Id": "1fd91266-e51e-5516-adee-85db39432675",
+      "SortOrder": 7,
+      "Name": "Kiến trúc số / điện tử",
+      "Phrase": "khung kiến trúc số",
+      "Conditions": "ban hành, phê duyệt, thông qua, công bố",
+      "Enabled": true
+    },
+    {
+      "Id": "187f0486-77ed-5935-800d-0ea538e62380",
+      "SortOrder": 11,
+      "Name": " hồ sơ, kết quả giải quyết thủ tục hành chính được số hóa",
+      "Phrase": "hồ sơ, kết quả giải quyết thủ tục hành chính được số hóa",
+      "Conditions": "chính phủ số, chính quyền số",
+      "Enabled": false
+    },
+    {
+      "Id": "eb93cb04-c498-5c5b-9f3c-f4d909eddc07",
+      "SortOrder": 12,
+      "Name": "người dân, doanh nghiệp đánh giá hài lòng khi sử dụng dịch vụ công trực tuyến",
+      "Phrase": "người dân, doanh nghiệp đánh giá hài lòng khi sử dụng dịch vụ công trực tuyến",
+      "Conditions": "chính phủ số, chính quyền số",
+      "Enabled": false
+    },
+    {
+      "Id": "183112a3-51f1-5f50-8c08-11e3eef20fe5",
+      "SortOrder": 13,
+      "Name": "sử dụng thống nhất, hiệu quả các nền tảng số dùng chung quốc gia phục vụ chỉ đạo, điều hành và cung cấp dịch vụ công",
+      "Phrase": "sử dụng thống nhất, hiệu quả các nền tảng số dùng chung quốc gia phục vụ chỉ đạo, điều hành và cung cấp dịch vụ công",
+      "Conditions": "chính phủ số, chính quyền số",
+      "Enabled": false
+    },
+    {
+      "Id": "ce9b921f-090f-593f-8235-8cb5b5dc50f4",
+      "SortOrder": 14,
+      "Name": "hệ thống thông tin được kết nối, chia sẻ dữ liệu qua dịch vụ chia sẻ dữ liệu",
+      "Phrase": "hệ thống thông tin được kết nối, chia sẻ dữ liệu qua dịch vụ chia sẻ dữ liệu",
+      "Conditions": "chính phủ số, chính quyền số",
+      "Enabled": false
+    },
+    {
+      "Id": "807e04ee-7a01-5070-9842-5df0b25201e1",
+      "SortOrder": 15,
+      "Name": "cơ sở dữ liệu dùng chung quốc gia, ngành, lĩnh vực, cấp tỉnh được chuẩn hóa, kết nối, phân quyền và sẵn sàng khai thác cho AI",
+      "Phrase": "cơ sở dữ liệu dùng chung quốc gia, ngành, lĩnh vực, cấp tỉnh được chuẩn hóa, kết nối, phân quyền và sẵn sàng khai thác cho AI",
+      "Conditions": "chính phủ số, chính quyền số",
+      "Enabled": false
+    },
+    {
+      "Id": "0caf78f5-40c9-5fd6-b2f8-60784be9d946",
+      "SortOrder": 16,
+      "Name": "trung tâm điều hành thông minh cấp tỉnh được nâng cấp theo hướng tích hợp AI phục vụ phân tích, dự báo, cảnh báo, giám sát và hỗ trợ ra quyết định",
+      "Phrase": "trung tâm điều hành thông minh cấp tỉnh được nâng cấp theo hướng tích hợp AI phục vụ phân tích, dự báo, cảnh báo, giám sát và hỗ trợ ra quyết định",
+      "Conditions": "chính phủ số, chính quyền số",
+      "Enabled": false
+    },
+    {
+      "Id": "e20a202e-7637-5bcb-8109-507570b54afe",
+      "SortOrder": 17,
+      "Name": "cán bộ, công chức, viên chức trong cơ quan nhà nước có hồ sơ điện tử theo quy định",
+      "Phrase": "cán bộ, công chức, viên chức trong cơ quan nhà nước có hồ sơ điện tử theo quy định",
+      "Conditions": "chính phủ số, chính quyền số",
+      "Enabled": false
+    },
+    {
+      "Id": "b5989c8d-1086-5141-8cbc-b039826f4ad4",
+      "SortOrder": 18,
+      "Name": "số chỉ tiêu thống kê thuộc các hệ thống chỉ tiêu thống kê được biên soạn từ nguồn dữ liệu hành chính",
+      "Phrase": "số chỉ tiêu thống kê thuộc các hệ thống chỉ tiêu thống kê được biên soạn từ nguồn dữ liệu hành chính",
+      "Conditions": "chính phủ số, chính quyền số",
+      "Enabled": false
+    },
+    {
+      "Id": "87ba5cdf-eeef-5c79-aea6-bc65121a3c0d",
+      "SortOrder": 19,
+      "Name": "cán bộ lãnh đạo, cán bộ, công chức, viên chức trong cơ quan nhà nước được đào tạo, bồi dưỡng, cập nhật kiến thức, kỹ năng số",
+      "Phrase": "cán bộ lãnh đạo, cán bộ, công chức, viên chức trong cơ quan nhà nước được đào tạo, bồi dưỡng, cập nhật kiến thức, kỹ năng số",
+      "Conditions": "chính phủ số, chính quyền số",
+      "Enabled": false
+    },
+    {
+      "Id": "c6fd3b16-c294-57ca-828c-f9f304b894e7",
+      "SortOrder": 20,
+      "Name": "cán bộ, công chức, viên chức có tài khoản và được đào tạo sử dụng nền tảng trợ lý AI công vụ",
+      "Phrase": "cán bộ, công chức, viên chức có tài khoản và được đào tạo sử dụng nền tảng trợ lý AI công vụ",
+      "Conditions": "chính phủ số, chính quyền số",
+      "Enabled": false
+    },
+    {
+      "Id": "bf2a0a2f-03dc-5c5a-99f7-bd1bc0b75548",
+      "SortOrder": 21,
+      "Name": "Hỗ trợ doanh nghiệp nhỏ và vừa chuyển đổi số",
+      "Phrase": "Hỗ trợ doanh nghiệp nhỏ và vừa chuyển đổi số",
+      "Conditions": "kinh tế số",
+      "Enabled": false
+    },
+    {
+      "Id": "ef2ab949-f006-578c-9892-51a70614fc2f",
+      "SortOrder": 8,
+      "Name": "Kiến trúc số / điện tử",
+      "Phrase": "khung kiến trúc chính phủ số",
+      "Conditions": "ban hành, phê duyệt, thông qua, công bố",
+      "Enabled": true
+    },
+    {
+      "Id": "effd0408-b6a6-5ac5-a00c-39b775f401c4",
+      "SortOrder": 9,
+      "Name": "Kiến trúc số / điện tử",
+      "Phrase": "khung kiến trúc chính quyền số",
+      "Conditions": "ban hành, phê duyệt, thông qua, công bố",
+      "Enabled": true
+    },
+    {
+      "Id": "d5de8572-f8a9-5584-9739-5c5f436412a2",
+      "SortOrder": 2,
+      "Name": "Văn bản chuyển đổi số",
+      "Phrase": "đề án chuyển đổi số",
+      "Conditions": "ban hành, phê duyệt, thông qua, công bố",
+      "Enabled": true
+    },
+    {
+      "Id": "204beec3-e301-5b25-a9b4-6e801a3883ca",
+      "SortOrder": 4,
+      "Name": "Văn bản chuyển đổi số",
+      "Phrase": "chuyển đổi số",
+      "Conditions": "ban hành, phê duyệt, thông qua, công bố",
+      "Enabled": true
+    },
+    {
+      "Id": "51a94e1f-77f9-5567-943e-2ab2daf8b9f5",
+      "SortOrder": 5,
+      "Name": "Văn bản chuyển đổi số",
+      "Phrase": "chính phủ số",
+      "Conditions": "ban hành, phê duyệt, thông qua, công bố",
+      "Enabled": true
+    },
+    {
+      "Id": "35a7c6b8-7234-5184-975c-f9fc550c993f",
+      "SortOrder": 6,
+      "Name": "Văn bản chuyển đổi số",
+      "Phrase": "chính quyền số",
+      "Conditions": "ban hành, phê duyệt, thông qua, công bố",
+      "Enabled": true
+    },
+    {
+      "Id": "9db91247-b265-54fe-9b21-9a3e9a7c0449",
+      "SortOrder": 10,
+      "Name": "Kiến trúc số / điện tử",
+      "Phrase": "khung kiến trúc chính phủ điện tử",
+      "Conditions": "ban hành, phê duyệt, thông qua, công bố",
+      "Enabled": true
+    },
+    {
+      "Id": "52396fc9-0fc9-55c3-b356-74c836533e09",
+      "SortOrder": 11,
+      "Name": "Kiến trúc số / điện tử",
+      "Phrase": "khung kiến trúc chính quyền điện tử",
+      "Conditions": "ban hành, phê duyệt, thông qua, công bố",
+      "Enabled": true
+    },
+    {
+      "Id": "0b2fcd67-ca73-5f85-8b36-f6fe119292ab",
+      "SortOrder": 12,
+      "Name": "Kiến trúc số / điện tử",
+      "Phrase": "kiến trúc chính phủ số",
+      "Conditions": "ban hành, phê duyệt, thông qua, công bố",
+      "Enabled": true
+    },
+    {
+      "Id": "6c7764bb-8492-5e9d-9708-b69309c91416",
+      "SortOrder": 13,
+      "Name": "Kiến trúc số / điện tử",
+      "Phrase": "kiến trúc chính quyền số",
+      "Conditions": "ban hành, phê duyệt, thông qua, công bố",
+      "Enabled": true
+    },
+    {
+      "Id": "2a61f1c8-0b85-547e-8420-9954513f3bb5",
+      "SortOrder": 14,
+      "Name": "Kiến trúc số / điện tử",
+      "Phrase": "kiến trúc chính phủ điện tử",
+      "Conditions": "ban hành, phê duyệt, thông qua, công bố",
+      "Enabled": true
+    },
+    {
+      "Id": "8e19f3ef-7a44-5eb4-8185-897f7bcd78c6",
+      "SortOrder": 15,
+      "Name": "Kiến trúc số / điện tử",
+      "Phrase": "kiến trúc chính quyền điện tử",
+      "Conditions": "ban hành, phê duyệt, thông qua, công bố",
+      "Enabled": true
+    }
+  ]
+}

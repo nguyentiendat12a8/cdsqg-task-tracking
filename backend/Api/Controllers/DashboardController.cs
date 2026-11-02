@@ -54,6 +54,7 @@ namespace Cdsqg.Api.Controllers
                 var timeFilter = new DashboardTimeFilter(reportFromYear, reportToYear, executionFrom, executionTo);
                 if (timeFilter.ValidationError() is { } timeError) return BadRequest(timeError);
                 if (reportYear.HasValue && (reportYear < reportFromYear || reportYear > reportToYear)) return BadRequest("Năm báo cáo nằm ngoài khoảng đã chọn.");
+                if (!reportYear.HasValue && reportToYear.HasValue) reportYear = reportToYear.Value;
                 if (detailMode != null && detailMode is not ("items" or "assignments")) return BadRequest("Loại danh sách không hợp lệ.");
                 if (detailMode != null && ControllerContext.HttpContext != null && !User.IsInRole("Admin")) return Forbid();
                 ExecutionStatusEnum? requestedStatus = null;
@@ -212,6 +213,8 @@ namespace Cdsqg.Api.Controllers
                             ProgressAgencyId = recipient?.Id, ProgressAgencyName = recipient == null ? null : ProvinceCatalog.DisplayName(recipient),
                             UnitName = item.Unit?.Name, EvaluationType = item.EvaluationType.ToString(),
                             LatestProgressPercent = (double?)progress.Percentage, LatestProgressValue = (double?)progress.ActualValue,
+                            TargetValue = (double?)progress.Target,
+                            ReportYear = progress.Year,
                             CalculatedStatus = progress.Status.ToString(),
                             DeadlineStatus = progress.DeadlineStatus, Status = progress.Status.ToString(),
                             StartDate = item.StartDate, DueDate = item.DueDate, IsOngoing = item.IsOngoing,
@@ -427,6 +430,7 @@ namespace Cdsqg.Api.Controllers
                 var timeFilter = new DashboardTimeFilter(reportFromYear, reportToYear, executionFrom, executionTo);
                 if (timeFilter.ValidationError() is { } timeError) return BadRequest(timeError);
                 if (reportYear.HasValue && (reportYear < reportFromYear || reportYear > reportToYear)) return BadRequest("Năm báo cáo nằm ngoài khoảng đã chọn.");
+                if (!reportYear.HasValue && reportToYear.HasValue) reportYear = reportToYear.Value;
                 var query = _context.GoalTaskItems
                     .Include(i => i.LeadAgency)
                     .Include(i => i.Unit)
@@ -574,6 +578,8 @@ namespace Cdsqg.Api.Controllers
                         EvaluationType = item.EvaluationType.ToString(),
                         LatestProgressPercent = latestPercent,
                         LatestProgressValue = latestValue,
+                        TargetValue = (double?)progress.Target,
+                        ReportYear = progress.Year,
                         LatestProgressNote = latestLog?.SummaryNotes,
                         LatestProgressDate = latestLog?.LogDate,
                         Status = execStatus.ToString(),
@@ -741,6 +747,8 @@ namespace Cdsqg.Api.Controllers
         public string EvaluationType { get; set; } = "Quantitative";
         public double? LatestProgressPercent { get; set; }
         public double? LatestProgressValue { get; set; }
+        public double? TargetValue { get; set; }
+        public int? ReportYear { get; set; }
         public string? LatestProgressNote { get; set; }
         public DateTime? LatestProgressDate { get; set; }
         public string Status { get; set; } = "NotStarted";

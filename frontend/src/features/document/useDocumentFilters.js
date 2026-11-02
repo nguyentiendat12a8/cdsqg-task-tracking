@@ -1,5 +1,7 @@
 import { executionStatusOptions } from '../../shared/statusPresentation';
 import { REPORTING_YEARS } from '../../config/reporting';
+import { activeDocument } from '../../services/documentContext';
+import { getReportYearOptions } from '../../shared/reportYear';
 import { ref, computed, watch, onUnmounted } from 'vue';
 import { authState } from '../../services/auth';
 import { GOAL_SECTIONS, GOAL_GROUPS, TASK_SECTIONS, TASK_GROUPS } from '../../config/planningStructureConfig';
@@ -180,7 +182,10 @@ export function useDocumentFilters({ props, userAgencyId, agencies, rawItemsList
       });
   });
 
-  const yearOptions = computed(() => REPORTING_YEARS.map(y => ({ value: y, label: String(y) })));
+  const yearOptions = computed(() => {
+    const minYear = (activeDocument.value?.code === '2629' || activeDocument.value?.startYear === 2025) ? 2025 : 2026;
+    return getReportYearOptions(minYear);
+  });
   const pageSizeOptions = ref([10, 25, 50, 100].map(n => ({ value: n, label: String(n) })));
 
   const scopeOptions = computed(() => [

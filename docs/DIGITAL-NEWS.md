@@ -1,3 +1,5 @@
+> Tài liệu lịch sử (28/10/2026). Từ 02/11/2026, workflow hiện hành ở [DIGITAL-PLAN-MONITORING.md](DIGITAL-PLAN-MONITORING.md); runtime không còn đồng bộ Google Sheets.
+
 # Thông tin chuyển đổi số – đồng bộ Google Sheets
 
 Menu: Tiện ích → Thông tin chuyển đổi số (`#digital-news`). Danh sách dùng chung, không phụ thuộc văn bản 1266/2629. Người dùng đã đăng nhập được xem, tìm theo tên bài/bộ tỉnh, lọc bộ/tỉnh và mở link nguồn. Chỉ Admin được lưu lịch và đồng bộ ngay; các endpoint này có Authorize(Roles="Admin"). Không gọi AI, không cập nhật tiến độ mục tiêu.

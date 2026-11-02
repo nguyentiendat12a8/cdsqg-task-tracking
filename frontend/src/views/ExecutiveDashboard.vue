@@ -70,7 +70,7 @@
 import { computed, defineAsyncComponent, onMounted, ref } from 'vue';
 import { toast } from 'vue3-toastify';
 import { authState } from '../services/auth';
-import { activeDocumentId, dashboardDocumentScope, SUPPORTED_DOCUMENTS } from '../services/documentContext';
+import { activeDocument, activeDocumentId, dashboardDocumentScope, SUPPORTED_DOCUMENTS } from '../services/documentContext';
 import { formatNumber } from '../shared/formatters';
 import DashboardHeader from '../features/dashboard/DashboardHeader.vue';
 import DashboardTypeSwitch from '../features/dashboard/DashboardTypeSwitch.vue';
@@ -79,6 +79,7 @@ import LeadershipOverview from '../features/dashboard/LeadershipOverview.vue';
 import LeadershipWatchlist from '../features/dashboard/LeadershipWatchlist.vue';
 import GroupPerformanceBoard from '../features/dashboard/GroupPerformanceBoard.vue';
 import AgencyPerformanceBoard from '../features/dashboard/AgencyPerformanceBoard.vue';
+import { getReportYearOptions } from '../shared/reportYear';
 import { agencyForDashboard } from '../features/dashboard/leadershipPresentation';
 import { getStatusBadgeClass, getStatusLabel, formatDate, formatItemProgressDisplay } from '../features/dashboard/presentation';
 import { useDashboardFilters } from '../features/dashboard/useDashboardFilters';
@@ -91,7 +92,10 @@ const ItemDetailModal=defineAsyncComponent(()=>import('../components/ItemDetailM
 const mapFilter=ref('tasks'),drilldownFilter=ref('tasks');
 const dashboardScope=dashboardDocumentScope;
 const documentIds=computed(()=>dashboardScope.value==='all'?SUPPORTED_DOCUMENTS.map(doc=>doc.id):[activeDocumentId.value]);
-const dashboardYearOptions=computed(()=>dashboardScope.value==='all'?Array.from({length:Math.max(...SUPPORTED_DOCUMENTS.map(doc=>doc.endYear))-Math.min(...SUPPORTED_DOCUMENTS.map(doc=>doc.startYear))+1},(_,index)=>{const year=Math.min(...SUPPORTED_DOCUMENTS.map(doc=>doc.startYear))+index;return {value:year,label:String(year)};}):yearOptions.value);
+const dashboardYearOptions=computed(()=>{
+  const minYear = (dashboardScope.value === 'all' || activeDocument.value?.code === '2629' || activeDocument.value?.startYear === 2025) ? 2025 : 2026;
+  return getReportYearOptions(minYear);
+});
 const dashboardKinds=[{value:'goals',prefix:'goal',total:'totalGoals',noun:'mục tiêu',itemType:'Goal'},{value:'tasks',prefix:'task',total:'totalTasks',noun:'nhiệm vụ',itemType:'Task'}];
 const agencies=ref([]),summarySelection=ref(null),isExportingExcel=ref(false);
 const {
