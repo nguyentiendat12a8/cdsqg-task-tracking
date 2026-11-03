@@ -1,4 +1,4 @@
-import { reportStatusOptions } from '../shared/reportStatuses';
+import { reportStatusOptions } from '../shared/reportStatuses.js';
 
 // The installed XLSX writer omits Excel validation. Add standard worksheet XML
 // through its public CFB ZIP API, retaining every original workbook entry.

@@ -1,4 +1,4 @@
-import { fitPresentationRows } from './worksheetLayout';
+import { fitPresentationRows } from './worksheetLayout.js';
 
 export function styleWorksheet(ws, { numCols = 8, headerRowIndex = 3, titleRowIndex = 0 } = {}, XLSX) {
   if (!ws || !ws['!ref']) return;

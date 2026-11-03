@@ -330,181 +330,229 @@ async function handleFileUpload(e) {
     const XLSX = await loadExcelReader(file.name);
     const data = await file.arrayBuffer();
     const workbook = XLSX.read(data, { type: 'array' });
-    const sheetName = workbook.SheetNames[0];
-    const worksheet = workbook.Sheets[sheetName];
-    const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
 
-    if (!jsonRows || jsonRows.length === 0) {
-      toast.error('File Excel không có dữ liệu.');
+    if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+      toast.error('File Excel không có sheet nào.');
       isParsing.value = false;
       return;
     }
 
-    // Find header row containing STT or Mã
-    let headerRowIdx = -1;
-    for (let r = 0; r < Math.min(jsonRows.length, 10); r++) {
-      const row = jsonRows[r];
-      if (row && row.some(cell => String(cell).toLowerCase().includes('mã') || String(cell).toLowerCase().includes('stt'))) {
-        headerRowIdx = r;
-        break;
-      }
-    }
+    const resultMap = new Map(); // codeKey -> entry
 
-    if (headerRowIdx === -1) throw new Error('Missing headers');
+    // Scan all sheets in the workbook (e.g. Single sheet, or Dual sheet 'Bộ ngành báo cáo' & 'Địa phương báo cáo')
+    for (const sheetName of workbook.SheetNames) {
+      const worksheet = workbook.Sheets[sheetName];
+      if (!worksheet) continue;
+      const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+      if (!jsonRows || jsonRows.length === 0) continue;
 
-    const headerRow = jsonRows[headerRowIdx] || [];
-    let codeColIdx = -1;
-    let newProgressColIdx = -1;
-    let notesColIdx = -1;
-
-    headerRow.forEach((cell, idx) => {
-      const str = String(cell || '').toLowerCase().trim();
-      if (str === 'mã' || str.includes('mã hạng mục') || str.includes('mã mục tiêu')) {
-        codeColIdx = idx;
-      }
-      if (str.includes('tiến độ') && (str.includes('mới') || str.includes('cần điền'))) {
-        newProgressColIdx = idx;
-      }
-      if (str.includes('ghi chú') || str.includes('trích yếu')) {
-        notesColIdx = idx;
-      }
-    });
-
-    if (codeColIdx === -1 || newProgressColIdx === -1) throw new Error('Missing report columns');
-
-    const resultList = [];
-    for (let r = headerRowIdx + 1; r < jsonRows.length; r++) {
-      const row = jsonRows[r];
-      if (!row || row.length === 0) continue;
-
-      const rawCode = String(row[codeColIdx] || '').trim();
-      if (!rawCode || rawCode.toLowerCase().startsWith('hướng dẫn') || rawCode.toLowerCase().startsWith('báo cáo')) continue;
-
-      const rawVal = row[newProgressColIdx] !== undefined && row[newProgressColIdx] !== null ? String(row[newProgressColIdx]).trim() : '';
-      const rawNotes = row[notesColIdx] !== undefined && row[notesColIdx] !== null ? String(row[notesColIdx]).trim() : '';
-
-      // Match item by code in props.items
-      const matchedTask = props.items.find(i => i.code && i.code.trim().toLowerCase() === rawCode.toLowerCase());
-      const productInput = matchedTask && !['Quantitative', '1', 1].includes(matchedTask.evaluationType) && matchedTask.deliverables?.length
-        ? readProductProgress(workbook, matchedTask, XLSX) : null;
-      // A blank new value is an intentional omission, not a validation failure.
-      // For product tasks inspect all merged rows, including non-first products.
-      if (productInput?.skipped || (!productInput && rawVal === '')) continue;
-
-      let hasPerm = false;
-      let isPending = false;
-      let isValid = false;
-      let parsedValue = null;
-      let parsedStatus = null;
-      let parsedDeliverables = null;
-      let newValueDisplay = '—';
-      let statusText = 'Chưa rõ';
-      let statusBadgeClass = 'bg-slate-100 text-slate-700 border-slate-300';
-
-      if (!matchedTask) {
-        statusText = 'Mã không tồn tại';
-        statusBadgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
-      } else {
-        hasPerm = checkUserPermission(matchedTask);
-        if (!hasPerm) {
-          statusText = 'Không có quyền';
-          statusBadgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
-        } else {
-          isPending = checkIsLevel3Pending(matchedTask);
-
-          // Parse value based on evaluation type
-          const isQuantitative = ['Quantitative', '1', 1].includes(matchedTask.evaluationType);
-          
-          if (isQuantitative) {
-            if (rawVal !== '') {
-              const num = typeof row[newProgressColIdx] === 'number' ? row[newProgressColIdx] : parseQuantityInput(rawVal);
-              if (num != null && Number.isFinite(num) && num >= 0) {
-                parsedValue = num;
-                newValueDisplay = formatMeasuredValue(num, matchedTask.unitName || '');
-                isValid = true;
-              } else {
-                statusText = 'Con số không hợp lệ';
-                statusBadgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
-              }
-            } else {
-              statusText = 'Chưa nhập giá trị';
-              statusBadgeClass = 'bg-amber-50 text-amber-700 border-amber-200';
-            }
-          } else if (matchedTask.deliverables?.length) {
-            const products = productInput;
-            if (products.error) {
-              statusText = products.error;
-              statusBadgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
-            } else {
-              parsedDeliverables = products.deliverables;
-              newValueDisplay = parsedDeliverables.map((product, index) => `${index + 1}. ${reportStatusLabel(product.currentStatus)}`).join('; ');
-              isValid = true;
-            }
-          } else {
-            // Direct status only when there are no output products.
-            const mappedSt = mapQualitativeStatus(rawVal);
-            if (mappedSt) {
-              parsedStatus = mappedSt;
-              newValueDisplay = mapQualitativeStatusDisplay(mappedSt);
-              isValid = true;
-            } else if (rawVal !== '') {
-              statusText = 'Trạng thái không hợp lệ';
-              statusBadgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
-            } else {
-              statusText = 'Chưa nhập trạng thái';
-              statusBadgeClass = 'bg-amber-50 text-amber-700 border-amber-200';
-            }
-          }
-
-          if (isValid) {
-            if (isPending) {
-              statusText = 'Hợp lệ (Chờ phê duyệt)';
-              statusBadgeClass = 'bg-amber-50 text-amber-800 border-amber-200';
-            } else {
-              statusText = 'Hợp lệ (Duyệt ngay)';
-              statusBadgeClass = 'bg-emerald-50 text-emerald-800 border-emerald-200';
-            }
-          }
+      // Find header row containing STT or Mã
+      let headerRowIdx = -1;
+      for (let r = 0; r < Math.min(jsonRows.length, 12); r++) {
+        const row = jsonRows[r];
+        if (row && row.some(cell => {
+          const s = String(cell || '').toLowerCase().trim();
+          return s === 'mã' || s.includes('mã mt') || s.includes('mã mục tiêu') || s.includes('mã nhiệm vụ') || s === 'stt';
+        })) {
+          headerRowIdx = r;
+          break;
         }
       }
 
-      resultList.push({
-        code: rawCode,
-        taskTitle: matchedTask?.title || '',
-        unitName: matchedTask?.unitName || '',
-        evaluationType: matchedTask?.evaluationType || 'Quantitative',
-        rawVal,
-        value: parsedValue,
-        status: parsedStatus,
-        deliverables: parsedDeliverables,
-        summaryNotes: rawNotes,
-        newValueDisplay,
-        isValid,
-        hasPerm,
-        isPending,
-        statusText,
-        statusBadgeClass
+      if (headerRowIdx === -1) continue;
+
+      const headerRow = jsonRows[headerRowIdx] || [];
+      let codeColIdx = -1;
+      let newProgressColIdx = -1;
+      let notesColIdx = -1;
+      let statusColIdx = -1;
+
+      headerRow.forEach((cell, idx) => {
+        const str = String(cell || '').toLowerCase().trim();
+        if (
+          str === 'mã' ||
+          str.includes('mã mt') ||
+          str.includes('mã mục tiêu') ||
+          str.includes('mã nhiệm vụ') ||
+          str.includes('mã hạng mục') ||
+          (str.startsWith('mã') && !str.includes('sản phẩm'))
+        ) {
+          codeColIdx = idx;
+        }
+        if (str.includes('tiến độ') && (str.includes('mới') || str.includes('cần điền') || str.includes('thực hiện'))) {
+          newProgressColIdx = idx;
+        }
+        if (str.includes('ghi chú') || str.includes('khó khăn') || str.includes('kiến nghị') || str.includes('trích yếu')) {
+          notesColIdx = idx;
+        }
+        if (str.includes('đánh giá') || str.includes('trạng thái')) {
+          statusColIdx = idx;
+        }
       });
+
+      if (codeColIdx === -1 || newProgressColIdx === -1) continue;
+
+      for (let r = headerRowIdx + 1; r < jsonRows.length; r++) {
+        const row = jsonRows[r];
+        if (!row || row.length === 0) continue;
+
+        const rawCode = String(row[codeColIdx] || '').trim();
+        if (!rawCode || rawCode.toLowerCase().startsWith('hướng dẫn') || rawCode.toLowerCase().startsWith('báo cáo') || rawCode.toLowerCase().startsWith('stt')) {
+          continue;
+        }
+
+        const rawVal = row[newProgressColIdx] !== undefined && row[newProgressColIdx] !== null ? String(row[newProgressColIdx]).trim() : '';
+        const rawNotes = notesColIdx !== -1 && row[notesColIdx] !== undefined && row[notesColIdx] !== null ? String(row[notesColIdx]).trim() : '';
+        const rawStatus = statusColIdx !== -1 && row[statusColIdx] !== undefined && row[statusColIdx] !== null ? String(row[statusColIdx]).trim() : '';
+
+        // Match item by code in props.items
+        const matchedTask = props.items.find(i => i.code && i.code.trim().toLowerCase() === rawCode.toLowerCase());
+        const productInput = matchedTask && !['Quantitative', '1', 1].includes(matchedTask.evaluationType) && matchedTask.deliverables?.length
+          ? readProductProgress(workbook, matchedTask, XLSX) : null;
+
+        // Skip rows where no progress, status or product input was provided
+        if (productInput?.skipped || (!productInput && rawVal === '' && rawStatus === '')) {
+          continue;
+        }
+
+        let hasPerm = false;
+        let isPending = false;
+        let isValid = false;
+        let parsedValue = null;
+        let parsedStatus = null;
+        let parsedDeliverables = null;
+        let newValueDisplay = '—';
+        let statusText = 'Chưa rõ';
+        let statusBadgeClass = 'bg-slate-100 text-slate-700 border-slate-300';
+
+        if (!matchedTask) {
+          statusText = 'Mã không tồn tại';
+          statusBadgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
+        } else {
+          hasPerm = checkUserPermission(matchedTask);
+          if (!hasPerm) {
+            statusText = 'Không có quyền';
+            statusBadgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
+          } else {
+            isPending = checkIsLevel3Pending(matchedTask);
+
+            // Parse value based on evaluation type
+            const isQuantitative = ['Quantitative', '1', 1].includes(matchedTask.evaluationType);
+
+            if (isQuantitative) {
+              if (rawVal !== '') {
+                const num = typeof row[newProgressColIdx] === 'number' ? row[newProgressColIdx] : parseQuantityInput(rawVal);
+                if (num != null && Number.isFinite(num) && num >= 0) {
+                  parsedValue = num;
+                  newValueDisplay = formatMeasuredValue(num, matchedTask.unitName || '');
+                  isValid = true;
+                  if (rawStatus) {
+                    parsedStatus = mapQualitativeStatus(rawStatus);
+                  }
+                } else {
+                  statusText = 'Con số không hợp lệ';
+                  statusBadgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
+                }
+              } else if (rawStatus) {
+                // Quantitative item but only qualitative status was given
+                const mappedSt = mapQualitativeStatus(rawStatus);
+                if (mappedSt) {
+                  parsedStatus = mappedSt;
+                  newValueDisplay = mapQualitativeStatusDisplay(mappedSt);
+                  isValid = true;
+                } else {
+                  statusText = 'Chưa nhập giá trị';
+                  statusBadgeClass = 'bg-amber-50 text-amber-700 border-amber-200';
+                }
+              } else {
+                statusText = 'Chưa nhập giá trị';
+                statusBadgeClass = 'bg-amber-50 text-amber-700 border-amber-200';
+              }
+            } else if (matchedTask.deliverables?.length) {
+              const products = productInput;
+              if (products.error) {
+                statusText = products.error;
+                statusBadgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
+              } else {
+                parsedDeliverables = products.deliverables;
+                newValueDisplay = parsedDeliverables.map((product, index) => `${index + 1}. ${reportStatusLabel(product.currentStatus)}`).join('; ');
+                isValid = true;
+              }
+            } else {
+              // Direct qualitative status
+              const mappedSt = mapQualitativeStatus(rawVal) || (rawStatus ? mapQualitativeStatus(rawStatus) : null);
+              if (mappedSt) {
+                parsedStatus = mappedSt;
+                newValueDisplay = mapQualitativeStatusDisplay(mappedSt);
+                isValid = true;
+              } else if (rawVal !== '' || rawStatus !== '') {
+                statusText = 'Trạng thái không hợp lệ';
+                statusBadgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
+              } else {
+                statusText = 'Chưa nhập trạng thái';
+                statusBadgeClass = 'bg-amber-50 text-amber-700 border-amber-200';
+              }
+            }
+
+            if (isValid) {
+              if (isPending) {
+                statusText = 'Hợp lệ (Chờ phê duyệt)';
+                statusBadgeClass = 'bg-amber-50 text-amber-800 border-amber-200';
+              } else {
+                statusText = 'Hợp lệ (Duyệt ngay)';
+                statusBadgeClass = 'bg-emerald-50 text-emerald-800 border-emerald-200';
+              }
+            }
+          }
+        }
+
+        const entry = {
+          code: rawCode,
+          taskTitle: matchedTask?.title || '',
+          unitName: matchedTask?.unitName || '',
+          evaluationType: matchedTask?.evaluationType || 'Quantitative',
+          rawVal,
+          value: parsedValue,
+          status: parsedStatus,
+          deliverables: parsedDeliverables,
+          summaryNotes: rawNotes,
+          newValueDisplay,
+          isValid,
+          hasPerm,
+          isPending,
+          statusText,
+          statusBadgeClass
+        };
+
+        const codeKey = rawCode.toLowerCase();
+        if (resultMap.has(codeKey)) {
+          const existing = resultMap.get(codeKey);
+          // If existing was invalid or had no value, replace with valid one
+          if (!existing.isValid && entry.isValid) {
+            resultMap.set(codeKey, entry);
+          } else if (existing.isValid && entry.isValid && (existing.value !== entry.value || existing.status !== entry.status)) {
+            // Conflicting inputs in different sheets
+            existing.isValid = false;
+            existing.statusText = 'Mã bị trùng dữ liệu giữa các sheet';
+            existing.statusBadgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
+          }
+        } else {
+          resultMap.set(codeKey, entry);
+        }
+      }
     }
 
-    const counts = new Map();
-    resultList.forEach(row => counts.set(row.code.toLowerCase(), (counts.get(row.code.toLowerCase()) ?? 0) + 1));
-    resultList.forEach(row => {
-      if (counts.get(row.code.toLowerCase()) > 1) {
-        row.isValid = false;
-        row.statusText = 'Mã bị trùng trong file';
-        row.statusBadgeClass = 'bg-rose-50 text-rose-700 border-rose-200';
-      }
-    });
+    const resultList = Array.from(resultMap.values());
     parsedItems.value = resultList;
+
     if (resultList.length === 0) {
-      toast.info('Không có tiến độ mới để nhập. Các mục để trống đã được bỏ qua.');
+      toast.info('Không tìm thấy dữ liệu tiến độ mới trong các sheet. Các ô để trống đã được bỏ qua.');
     } else {
       step.value = 2;
     }
   } catch (err) {
     console.error('Lỗi khi đọc file Excel:', err);
-    toast.error('Không thể đọc báo cáo. Dùng mẫu xuất báo cáo tiến độ có cột Mã và Tiến độ thực hiện mới.');
+    toast.error('Không thể đọc báo cáo. Dùng mẫu xuất báo cáo tiến độ có cột Mã MT và Tiến độ thực hiện mới.');
   } finally {
     isParsing.value = false;
   }

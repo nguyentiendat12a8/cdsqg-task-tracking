@@ -2,19 +2,50 @@ import { authState } from '../../services/auth';
 import { activeDocument } from '../../services/documentContext';
 import { exportToExcel, exportProgressReportTemplate } from '../../utils/excelExport';
 
-export function createDocumentReportActions({ props, userRoleStr, currentUserAgencyObj, formatDateRange, getStatusLabel, formatProgressDisplay, isGeneralTaskOrAllAgencies, loadExportItems }) {
-  async function handleExportProgressReport() {
+export function createDocumentReportActions({
+  props,
+  userRoleStr,
+  currentUserAgencyObj,
+  formatDateRange,
+  getStatusLabel,
+  formatProgressDisplay,
+  isGeneralTaskOrAllAgencies,
+  loadExportItems,
+  appliedFilters,
+  agencies
+}) {
+  function getActiveTargetAgency() {
+    const selectedAgencyIds = appliedFilters?.value?.selectedAgencyIds || [];
+    if (selectedAgencyIds.length === 1 && agencies?.value) {
+      return agencies.value.find(a => String(a.id).toLowerCase() === String(selectedAgencyIds[0]).toLowerCase()) || null;
+    }
+    return null;
+  }
+
+  async function handleExportProgressReport(templateMode = 'auto') {
     const doc = activeDocument.value;
+    const targetAgency = getActiveTargetAgency();
     await exportProgressReportTemplate({
       items: await loadExportItems(),
       itemType: props.filterItemType,
       currentAgency: currentUserAgencyObj.value,
+      targetAgency,
+      templateMode,
       userRole: userRoleStr.value,
       fileName: `Bao_Cao_Tien_Do_${props.filterItemType === 'Goal' ? 'Muc_Tieu' : 'Nhiem_Vu'}_${doc.code || '1266'}`,
       documentTitle: doc.title,
       documentNumber: doc.documentNumber,
-      documentShortTitle: doc.shortTitle
+      documentShortTitle: doc.shortTitle,
+      documentCode: doc.code
     });
+  }
+
+  async function handleExportMinistryReport() {
+    return handleExportProgressReport('ministry');
+  }
+
+  async function handleExportProvinceReport() {
+    return handleExportProgressReport('province');
   }
 
   async function exportDocumentItemsToExcel() {
@@ -86,6 +117,11 @@ export function createDocumentReportActions({ props, userRoleStr, currentUserAge
     });
   }
 
-  return { handleExportProgressReport, exportDocumentItemsToExcel };
+  return {
+    handleExportProgressReport,
+    handleExportMinistryReport,
+    handleExportProvinceReport,
+    exportDocumentItemsToExcel
+  };
 }
 

@@ -48,9 +48,51 @@
             </template>
             <template #default="{ close }">
               <div class="flex flex-col gap-2">
-                <ActionButton kind="export" class="w-full justify-start !bg-blue-600 !border-blue-600 !text-white hover:!bg-blue-700 hover:!border-blue-700 shadow-sm" @click="close(); handleExportProgressReport()" :disabled="isExportingDocument || isLoading">Xuất Excel báo cáo tiến độ</ActionButton>
+                <!-- Specialized Export options for Goal -->
+                <template v-if="props.filterItemType === 'Goal'">
+                  <ActionButton 
+                    kind="export" 
+                    class="w-full justify-start !bg-blue-600 !border-blue-600 !text-white hover:!bg-blue-700 hover:!border-blue-700 shadow-sm" 
+                    @click="close(); handleExportProgressReport()" 
+                    :disabled="isExportingDocument || isLoading"
+                    :title="activeFilteredAgencyName ? `Xuất mẫu báo cáo điền sẵn cho: ${activeFilteredAgencyName}` : 'Xuất mẫu báo cáo tổng hợp (gồm tab Bộ ngành và Địa phương)'"
+                  >
+                    <span class="truncate">{{ activeFilteredAgencyName ? `Xuất mẫu BC: ${activeFilteredAgencyName}` : 'Xuất Excel báo cáo tiến độ' }}</span>
+                  </ActionButton>
+                  <ActionButton 
+                    kind="export" 
+                    class="w-full justify-start !bg-indigo-600 !border-indigo-600 !text-white hover:!bg-indigo-700 hover:!border-indigo-700 shadow-sm" 
+                    @click="close(); handleExportMinistryReport()" 
+                    :disabled="isExportingDocument || isLoading"
+                    title="Xuất biểu mẫu dành riêng cho các Bộ, ngành chủ trì mục tiêu"
+                  >
+                    Xuất biểu mẫu Bộ, ngành báo cáo
+                  </ActionButton>
+                  <ActionButton 
+                    kind="export" 
+                    class="w-full justify-start !bg-teal-600 !border-teal-600 !text-white hover:!bg-teal-700 hover:!border-teal-700 shadow-sm" 
+                    @click="close(); handleExportProvinceReport()" 
+                    :disabled="isExportingDocument || isLoading"
+                    title="Xuất biểu mẫu dành riêng cho các Tỉnh, Thành phố báo cáo"
+                  >
+                    Xuất biểu mẫu Địa phương báo cáo
+                  </ActionButton>
+                </template>
+
+                <!-- Export option for Task or other types -->
+                <template v-else>
+                  <ActionButton 
+                    kind="export" 
+                    class="w-full justify-start !bg-blue-600 !border-blue-600 !text-white hover:!bg-blue-700 hover:!border-blue-700 shadow-sm" 
+                    @click="close(); handleExportProgressReport()" 
+                    :disabled="isExportingDocument || isLoading"
+                  >
+                    Xuất Excel báo cáo tiến độ
+                  </ActionButton>
+                </template>
+
                 <ActionButton kind="import" class="w-full justify-start !bg-blue-600 !border-blue-600 !text-white hover:!bg-blue-700 hover:!border-blue-700 shadow-sm" @click="close(); openProgressImport()" :disabled="isLoadingImport || isLoading" :aria-busy="isLoadingImport">{{ isLoadingImport ? 'Đang tải dữ liệu…' : 'Nhập Excel báo cáo tiến độ' }}</ActionButton>
-                <ActionButton kind="export" class="w-full justify-start !bg-blue-600 !border-blue-600 !text-white hover:!bg-blue-700 hover:!border-blue-700 shadow-sm" @click="close(); exportDocumentItemsToExcel()" :disabled="isExportingDocument" :aria-busy="isExportingDocument">Xuất Excel danh sách</ActionButton>
+                <ActionButton kind="export" class="w-full justify-start !bg-slate-600 !border-slate-600 !text-white hover:!bg-slate-700 hover:!border-slate-700 shadow-sm" @click="close(); exportDocumentItemsToExcel()" :disabled="isExportingDocument" :aria-busy="isExportingDocument">Xuất Excel danh sách</ActionButton>
               </div>
             </template>
           </OverlayPanel>
@@ -556,6 +598,15 @@ const {
   paginatedPrimaryList
 } = useDocumentFilters({ props, userAgencyId, agencies, rawItemsList, serverTotalCount, serverTotalPages, isGeneralTaskOrAllAgencies, loadData });
 
+const activeFilteredAgency = computed(() => {
+  const selected = appliedFilters.value?.selectedAgencyIds || [];
+  if (selected.length === 1 && agencies.value?.length) {
+    return agencies.value.find(a => String(a.id).toLowerCase() === String(selected[0]).toLowerCase()) || null;
+  }
+  return null;
+});
+const activeFilteredAgencyName = computed(() => activeFilteredAgency.value?.name || null);
+
 const {
   isCreateModalOpen,
   createItemType,
@@ -884,7 +935,19 @@ async function runDocumentExport(action) {
   isExportingDocument.value = true;
   try {
     const { createDocumentReportActions } = await import('../features/document/documentReport');
-    const actions = createDocumentReportActions({ props, userRoleStr, currentUserAgencyObj, formatDateRange, getStatusLabel, formatProgressDisplay, isGeneralTaskOrAllAgencies, filteredList, loadExportItems });
+    const actions = createDocumentReportActions({
+      props,
+      userRoleStr,
+      currentUserAgencyObj,
+      formatDateRange,
+      getStatusLabel,
+      formatProgressDisplay,
+      isGeneralTaskOrAllAgencies,
+      filteredList,
+      loadExportItems,
+      appliedFilters,
+      agencies
+    });
     await actions[action]();
   } catch (error) {
     toast.error('Không thể xuất Excel. Vui lòng thử lại.');
@@ -893,6 +956,8 @@ async function runDocumentExport(action) {
 }
 function exportDocumentItemsToExcel() { return runDocumentExport('exportDocumentItemsToExcel'); }
 function handleExportProgressReport() { return runDocumentExport('handleExportProgressReport'); }
+function handleExportMinistryReport() { return runDocumentExport('handleExportMinistryReport'); }
+function handleExportProvinceReport() { return runDocumentExport('handleExportProvinceReport'); }
 </script>
 
 
