@@ -5,6 +5,7 @@ import { formatMeasuredValue } from '../shared/formatters.js';
 import { reportStatusLabel, reportStatusOptions } from '../shared/reportStatuses.js';
 import { downloadProgressWorkbook } from './progressWorkbook.js';
 import { GOAL_GUIDANCE_2629 } from '../config/goalGuidance2629.js';
+import { GOAL_GUIDANCE_1266 } from '../config/goalGuidance1266.js';
 
 /**
  * Export structured Excel report with Title Banner, Subtitle, KPI section, and Data Table.
@@ -194,7 +195,8 @@ function createGoalReportingWorksheet({
   sheetTitle = 'BÁO CÁO TIẾN ĐỘ THỰC HIỆN CÁC MỤC TIÊU CHIẾN LƯỢC',
   agencyName = 'Bộ, Ngành, Địa phương',
   dateStr = '',
-  guideText = 'HƯỚNG DẪN: Điền kết quả thực hiện mới vào cột G (màu vàng); nêu rõ khó khăn, vướng mắc hoặc kiến nghị tại cột H (màu xanh). Chi tiết công thức tính và căn cứ kiểm chứng xem tại Sheet "Hướng dẫn tính toán".'
+  guideText = 'HƯỚNG DẪN: Điền kết quả thực hiện mới vào cột G (màu vàng); nêu rõ khó khăn, vướng mắc hoặc kiến nghị tại cột H (màu xanh). Chi tiết công thức tính và căn cứ kiểm chứng xem tại Sheet "Hướng dẫn tính toán".',
+  guidanceMap = GOAL_GUIDANCE_2629
 }) {
   const headers = [
     'STT',
@@ -215,7 +217,7 @@ function createGoalReportingWorksheet({
   ];
 
   items.forEach((item, idx) => {
-    const guidance = GOAL_GUIDANCE_2629[item.code] || {};
+    const guidance = guidanceMap[item.code] || {};
     const unit = guidance.unit || item.unitName || item.unit?.name || '%';
     const leadAgency = guidance.leadAgency || item.leadAgencyName || item.leadAgency?.name || '—';
 
@@ -336,7 +338,9 @@ function createGoalReportingWorksheet({
 function createGoalGuidanceWorksheet({
   items = [],
   sheetTitle = 'HƯỚNG DẪN CÔNG THỨC TOÁN HỌC VÀ CĂN CỨ ĐO LƯỜNG CÁC MỤC TIÊU CHIẾN LƯỢC',
-  dateStr = ''
+  docSubTitle = '',
+  dateStr = '',
+  guidanceMap = GOAL_GUIDANCE_2629
 }) {
   const headers = [
     'STT',
@@ -353,13 +357,15 @@ function createGoalGuidanceWorksheet({
 
   const rows = [
     [sheetTitle.toUpperCase()],
-    [`Căn cứ Quyết định số 2629/QĐ-TTg của Thủ tướng Chính phủ | Ngày xuất file: ${dateStr}`],
+    [docSubTitle || (guidanceMap === GOAL_GUIDANCE_1266
+      ? `Căn cứ Quyết định số 1266/QĐ-TTg của Thủ tướng Chính phủ | Ngày xuất file: ${dateStr}`
+      : `Căn cứ Quyết định số 2629/QĐ-TTg của Thủ tướng Chính phủ | Ngày xuất file: ${dateStr}`)],
     ['TRA CỨU CÔNG THỨC TOÁN HỌC, ĐỊNH NGHĨA TỬ SỐ, MẪU SỐ VÀ CĂN CỨ ĐỐI SOÁT DỮ LIỆU ĐỊNH KỲ'],
     headers
   ];
 
   items.forEach((item, idx) => {
-    const guidance = GOAL_GUIDANCE_2629[item.code] || {};
+    const guidance = guidanceMap[item.code] || {};
     const target = guidance.target2026Display || (item.targetValue != null ? String(item.targetValue) : '—');
     const leadAgency = guidance.leadAgency || item.leadAgencyName || item.leadAgency?.name || '—';
 
@@ -532,9 +538,12 @@ export function exportProgressReportTemplate({
     templateMode === 'province' ||
     Boolean(targetAgency) ||
     documentCode === '2629' ||
+    documentCode === '1266' ||
     String(documentNumber || '').includes('2629') ||
+    String(documentNumber || '').includes('1266') ||
     String(documentTitle || '').includes('2629') ||
-    items.some(i => GOAL_GUIDANCE_2629[i.code])
+    String(documentTitle || '').includes('1266') ||
+    items.some(i => GOAL_GUIDANCE_2629[i.code] || GOAL_GUIDANCE_1266[i.code])
   );
 
   if (isGoal && !isSpecializedGoalReport) {
@@ -582,11 +591,18 @@ export function exportProgressReportTemplate({
   }
 
   // -------------------------------------------------------------
-  // BRANCH 2B: SPECIALIZED GOAL PROGRESS REPORT (With 2629 formulas & Agency routing)
+  // BRANCH 2B: SPECIALIZED GOAL PROGRESS REPORT (With 2629 & 1266 formulas & Agency routing)
   // -------------------------------------------------------------
   const wb = XLSX.utils.book_new();
   const statusCellsBySheet = [];
-  const docCode = documentCode || (documentNumber ? documentNumber.replace(/\D/g, '') : '2629');
+  const is1266 = String(documentCode || '').includes('1266') ||
+                 String(documentNumber || '').includes('1266') ||
+                 String(documentTitle || '').includes('1266') ||
+                 items.some(i => i.code && GOAL_GUIDANCE_1266[i.code] && !GOAL_GUIDANCE_2629[i.code]);
+  const activeGuidanceMap = is1266 ? GOAL_GUIDANCE_1266 : GOAL_GUIDANCE_2629;
+  const docCode = is1266 ? '1266' : (documentCode || (documentNumber ? documentNumber.replace(/\D/g, '') : '2629'));
+  const docNumberStr = is1266 ? '1266/QĐ-TTg' : (documentNumber || '2629/QĐ-TTg');
+  const totalGoals = is1266 ? 26 : 22;
   const typeText = documentShortTitle ? ` ${documentShortTitle.toUpperCase()}` : '';
   const docSuffix = documentTitle
     ? ` THEO DÕI${typeText} - ${documentTitle.toUpperCase()}${documentNumber ? ` (${documentNumber})` : ''}`
@@ -604,13 +620,20 @@ export function exportProgressReportTemplate({
     const matched = goalList.filter(item => {
       if (item.leadAgencyId && agId && String(item.leadAgencyId).toLowerCase() === agId) return true;
       if (item.leadAgencyCode && agCode && item.leadAgencyCode.toUpperCase() === agCode) return true;
-      const g = GOAL_GUIDANCE_2629[item.code];
+      const g = activeGuidanceMap[item.code];
       if (g && g.leadAgency) {
         const lead = g.leadAgency.toLowerCase();
         if (agCode === 'VPCP' && lead.includes('văn phòng chính phủ')) return true;
         if (agCode === 'BKHCN' && lead.includes('khoa học và công nghệ')) return true;
         if (agCode === 'BCA' && lead.includes('công an')) return true;
         if (agCode === 'BNV' && lead.includes('nội vụ')) return true;
+        if (agCode === 'BTC' && lead.includes('tài chính')) return true;
+        if (agCode === 'BCT' && lead.includes('công thương')) return true;
+        if (agCode === 'NHNN' && (lead.includes('ngân hàng nhà nước') || lead.includes('ngân hàng'))) return true;
+        if (agCode === 'BYT' && lead.includes('y tế')) return true;
+        if (agCode === 'BTP' && lead.includes('tư pháp')) return true;
+        if (agCode === 'BGDDT' && lead.includes('giáo dục')) return true;
+        if (agCode === 'BTTTT' && lead.includes('thông tin và truyền thông')) return true;
         if (lead.includes(agName.replace('bộ ', '').replace('ban ', '').trim())) return true;
       }
       return false;
@@ -621,7 +644,7 @@ export function exportProgressReportTemplate({
   // Helper to filter goals that localities measure & report
   const filterGoalsForLocality = (goalList) => {
     return goalList.filter(item => {
-      const g = GOAL_GUIDANCE_2629[item.code];
+      const g = activeGuidanceMap[item.code];
       if (g) return g.isLocalReporting !== false;
       return true;
     });
@@ -650,7 +673,8 @@ export function exportProgressReportTemplate({
       sheetTitle,
       agencyName: `${effectiveAgency.name} (${agencyRoleTag})`,
       dateStr,
-      guideText: 'HƯỚNG DẪN: Điền kết quả thực hiện mới vào cột G (màu vàng); nêu rõ khó khăn, vướng mắc hoặc kiến nghị tại cột H (màu xanh). Chi tiết công thức tính và căn cứ kiểm chứng xem tại Sheet "Hướng dẫn tính toán".'
+      guideText: 'HƯỚNG DẪN: Điền kết quả thực hiện mới vào cột G (màu vàng); nêu rõ khó khăn, vướng mắc hoặc kiến nghị tại cột H (màu xanh). Chi tiết công thức tính và căn cứ kiểm chứng xem tại Sheet "Hướng dẫn tính toán".',
+      guidanceMap: activeGuidanceMap
     });
 
     const sheetName = `Báo Cáo - ${(effectiveAgency.code || effectiveAgency.name).slice(0, 20)}`;
@@ -661,7 +685,9 @@ export function exportProgressReportTemplate({
     const wsGuide = createGoalGuidanceWorksheet({
       items: filteredItems,
       sheetTitle: `HƯỚNG DẪN CÔNG THỨC TOÁN HỌC VÀ CĂN CỨ ĐO LƯỜNG - ${effectiveAgency.name.toUpperCase()}`,
-      dateStr
+      docSubTitle: `Căn cứ Quyết định số ${docNumberStr} của Thủ tướng Chính phủ | Ngày xuất file: ${dateStr}`,
+      dateStr,
+      guidanceMap: activeGuidanceMap
     });
     XLSX.utils.book_append_sheet(wb, wsGuide, 'Hướng dẫn tính toán');
     statusCellsBySheet.push([]);
@@ -682,7 +708,8 @@ export function exportProgressReportTemplate({
       sheetTitle,
       agencyName: 'Các Bộ, Cơ quan ngang Bộ, Cơ quan thuộc Chính phủ chủ trì mục tiêu',
       dateStr,
-      guideText: 'HƯỚNG DẪN: Điền kết quả đo lường toàn quốc vào cột G (màu vàng); nêu giải pháp, kiến nghị tại cột H (màu xanh). Xem công thức tại Sheet "Hướng dẫn tính toán".'
+      guideText: 'HƯỚNG DẪN: Điền kết quả đo lường toàn quốc vào cột G (màu vàng); nêu giải pháp, kiến nghị tại cột H (màu xanh). Xem công thức tại Sheet "Hướng dẫn tính toán".',
+      guidanceMap: activeGuidanceMap
     });
 
     XLSX.utils.book_append_sheet(wb, wsReport, 'Bộ ngành báo cáo');
@@ -691,7 +718,9 @@ export function exportProgressReportTemplate({
     const wsGuide = createGoalGuidanceWorksheet({
       items,
       sheetTitle: 'HƯỚNG DẪN CÔNG THỨC VÀ CĂN CỨ ĐO LƯỜNG - DÀNH CHO BỘ, NGÀNH CHỦ TRÌ',
-      dateStr
+      docSubTitle: `Căn cứ Quyết định số ${docNumberStr} của Thủ tướng Chính phủ | Ngày xuất file: ${dateStr}`,
+      dateStr,
+      guidanceMap: activeGuidanceMap
     });
     XLSX.utils.book_append_sheet(wb, wsGuide, 'Hướng dẫn tính toán');
     statusCellsBySheet.push([]);
@@ -711,7 +740,8 @@ export function exportProgressReportTemplate({
       sheetTitle,
       agencyName: 'Ủy ban nhân dân các Tỉnh, Thành phố trực thuộc Trung ương',
       dateStr,
-      guideText: 'HƯỚNG DẪN: Điền kết quả thực hiện của địa phương vào cột G (màu vàng); nêu khó khăn, kiến nghị tại cột H (màu xanh). Xem công thức tại Sheet "Hướng dẫn tính toán".'
+      guideText: 'HƯỚNG DẪN: Điền kết quả thực hiện của địa phương vào cột G (màu vàng); nêu khó khăn, kiến nghị tại cột H (màu xanh). Xem công thức tại Sheet "Hướng dẫn tính toán".',
+      guidanceMap: activeGuidanceMap
     });
 
     XLSX.utils.book_append_sheet(wb, wsReport, 'Địa phương báo cáo');
@@ -720,7 +750,9 @@ export function exportProgressReportTemplate({
     const wsGuide = createGoalGuidanceWorksheet({
       items: localityItems,
       sheetTitle: 'HƯỚNG DẪN CÔNG THỨC VÀ CĂN CỨ ĐO LƯỜNG - DÀNH CHO ĐỊA PHƯƠNG',
-      dateStr
+      docSubTitle: `Căn cứ Quyết định số ${docNumberStr} của Thủ tướng Chính phủ | Ngày xuất file: ${dateStr}`,
+      dateStr,
+      guidanceMap: activeGuidanceMap
     });
     XLSX.utils.book_append_sheet(wb, wsGuide, 'Hướng dẫn tính toán');
     statusCellsBySheet.push([]);
@@ -739,7 +771,8 @@ export function exportProgressReportTemplate({
     sheetTitle: ministryTitle,
     agencyName: 'Các Bộ, cơ quan chủ trì theo dõi mục tiêu toàn quốc',
     dateStr,
-    guideText: 'HƯỚNG DẪN: Biểu mẫu dành cho các Bộ, cơ quan chủ trì đầu mối cập nhật số liệu toàn quốc vào cột G (màu vàng); ghi chú tại cột H.'
+    guideText: 'HƯỚNG DẪN: Biểu mẫu dành cho các Bộ, cơ quan chủ trì đầu mối cập nhật số liệu toàn quốc vào cột G (màu vàng); ghi chú tại cột H.',
+    guidanceMap: activeGuidanceMap
   });
   XLSX.utils.book_append_sheet(wb, wsMinistry, 'Bộ ngành báo cáo');
   statusCellsBySheet.push([]);
@@ -752,7 +785,8 @@ export function exportProgressReportTemplate({
     sheetTitle: localityTitle,
     agencyName: 'Ủy ban nhân dân các Tỉnh, Thành phố trực thuộc Trung ương',
     dateStr,
-    guideText: 'HƯỚNG DẪN: Biểu mẫu dành cho các Địa phương (Tỉnh/Thành phố) tự đo lường và đối soát số liệu địa phương vào cột G (màu vàng); ghi chú tại cột H.'
+    guideText: 'HƯỚNG DẪN: Biểu mẫu dành cho các Địa phương (Tỉnh/Thành phố) tự đo lường và đối soát số liệu địa phương vào cột G (màu vàng); ghi chú tại cột H.',
+    guidanceMap: activeGuidanceMap
   });
   XLSX.utils.book_append_sheet(wb, wsLocality, 'Địa phương báo cáo');
   statusCellsBySheet.push([]);
@@ -760,8 +794,10 @@ export function exportProgressReportTemplate({
   // Sheet 3: Hướng dẫn tính toán
   const wsGuideAll = createGoalGuidanceWorksheet({
     items,
-    sheetTitle: 'HƯỚNG DẪN CÔNG THỨC TOÁN HỌC VÀ CĂN CỨ ĐO LƯỜNG TOÀN BỘ 22 MỤC TIÊU',
-    dateStr
+    sheetTitle: `HƯỚNG DẪN CÔNG THỨC TOÁN HỌC VÀ CĂN CỨ ĐO LƯỜNG TOÀN BỘ ${totalGoals} MỤC TIÊU (${docNumberStr})`,
+    docSubTitle: `Căn cứ Quyết định số ${docNumberStr} của Thủ tướng Chính phủ | Ngày xuất file: ${dateStr}`,
+    dateStr,
+    guidanceMap: activeGuidanceMap
   });
   XLSX.utils.book_append_sheet(wb, wsGuideAll, 'Hướng dẫn tính toán');
   statusCellsBySheet.push([]);
