@@ -38,13 +38,22 @@
         </div>
 
         <div class="flex items-center gap-2 flex-wrap">
-          <ActionButton kind="export" @click="handleExportProgressReport" :disabled="isExportingDocument || isLoading">Xuất Excel báo cáo tiến độ</ActionButton>
-          <ActionButton kind="import" @click="openProgressImport" :disabled="isLoadingImport || isLoading" :aria-busy="isLoadingImport">{{ isLoadingImport ? 'Đang tải dữ liệu…' : 'Nhập Excel báo cáo tiến độ' }}</ActionButton>
-          <!-- General List Export (All Users including Admin) -->
-          <ActionButton kind="export"
-            @click="exportDocumentItemsToExcel" :disabled="isExportingDocument" :aria-busy="isExportingDocument"
-            title="Xuất danh sách mục tiêu/nhiệm vụ ra file Excel"
-          ><span>Xuất Excel danh sách</span></ActionButton>
+          <OverlayPanel title="Tính năng Excel" placement="bottom-end" :show-header="false" :show-actions="false" :overflow-padding="16" width-class="w-[320px]" panel-class="bg-blue-50 border border-blue-200 shadow-xl shadow-blue-900/15">
+            <template #trigger="{ isOpen, setTriggerRef }">
+              <button :ref="setTriggerRef" type="button" class="ui-btn ui-btn-secondary" :class="{ '!bg-blue-100 !border-blue-300 !text-blue-800': isOpen }" :aria-expanded="isOpen" aria-haspopup="dialog">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" stroke-width="1.8" stroke-linejoin="round" /></svg>
+                <span>Tính năng</span>
+                <svg class="w-4 h-4 transition-transform" :class="{ 'rotate-180': isOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" /></svg>
+              </button>
+            </template>
+            <template #default="{ close }">
+              <div class="flex flex-col gap-2">
+                <ActionButton kind="export" class="w-full justify-start !bg-blue-600 !border-blue-600 !text-white hover:!bg-blue-700 hover:!border-blue-700 shadow-sm" @click="close(); handleExportProgressReport()" :disabled="isExportingDocument || isLoading">Xuất Excel báo cáo tiến độ</ActionButton>
+                <ActionButton kind="import" class="w-full justify-start !bg-blue-600 !border-blue-600 !text-white hover:!bg-blue-700 hover:!border-blue-700 shadow-sm" @click="close(); openProgressImport()" :disabled="isLoadingImport || isLoading" :aria-busy="isLoadingImport">{{ isLoadingImport ? 'Đang tải dữ liệu…' : 'Nhập Excel báo cáo tiến độ' }}</ActionButton>
+                <ActionButton kind="export" class="w-full justify-start !bg-blue-600 !border-blue-600 !text-white hover:!bg-blue-700 hover:!border-blue-700 shadow-sm" @click="close(); exportDocumentItemsToExcel()" :disabled="isExportingDocument" :aria-busy="isExportingDocument">Xuất Excel danh sách</ActionButton>
+              </div>
+            </template>
+          </OverlayPanel>
 
           <button
             v-if="authState.isAdmin.value"
@@ -423,6 +432,7 @@
 
 <script setup>
 import ActionButton from "../components/ActionButton.vue";
+import OverlayPanel from "../components/OverlayPanel.vue";
 import { formatNumber as formatQuantity } from '../shared/formatters';
 import { REPORTING_DOCUMENT_ID } from '../config/reporting';
 import { activeDocument, activeDocumentId } from '../services/documentContext';

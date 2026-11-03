@@ -15,9 +15,13 @@ public static class AgencyAssignments
         return item.AgencyExecutions.Any(e => HasRole(e, role) && set.Contains(e.AgencyId));
     }
     public static IQueryable<GoalTaskItem> Filter(IQueryable<GoalTaskItem> query, ICollection<Guid> ids, string? role = null)
-        => role == "Any" ? query.Where(i => i.AgencyExecutions.Any(e => (e.IsLeadAssignment || e.IsCoordinatingAssignment) && ids.Contains(e.AgencyId))) : Coordinating(role)
-            ? query.Where(i => i.AgencyExecutions.Any(e => e.IsCoordinatingAssignment && ids.Contains(e.AgencyId)))
-            : query.Where(i => i.AgencyExecutions.Any(e => e.IsLeadAssignment && ids.Contains(e.AgencyId)));
+    {
+        if (role == "Any")
+            return query.Where(i => ids.Contains(i.LeadAgencyId) || i.AgencyExecutions.Any(e => (e.IsLeadAssignment || e.IsCoordinatingAssignment) && ids.Contains(e.AgencyId)));
+        if (Coordinating(role))
+            return query.Where(i => i.AgencyExecutions.Any(e => e.IsCoordinatingAssignment && ids.Contains(e.AgencyId)));
+        return query.Where(i => ids.Contains(i.LeadAgencyId) || i.AgencyExecutions.Any(e => e.IsLeadAssignment && !e.IsLeadGroupAssignment && ids.Contains(e.AgencyId)));
+    }
 
     public static List<Guid> ExpandSelection(IEnumerable<Guid> ids, IReadOnlyCollection<Agency> agencies, bool descendants = false)
     {

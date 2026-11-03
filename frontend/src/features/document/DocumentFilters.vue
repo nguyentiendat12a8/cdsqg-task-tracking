@@ -7,10 +7,22 @@
               <input
                 :value="filterDraft.searchQuery"
                 @input="filterDraft.searchQuery = $event.target.value"
+                @keyup.enter="execFilterSearch"
                 :placeholder="filterItemType === 'Goal' ? 'Tìm theo mã, tên mục tiêu...' : 'Tìm theo mã, tên nhiệm vụ...'"
                 class="ui-single-line w-full text-xs font-semibold pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none "
               />
             </div>
+
+            <!-- Quick Search Button -->
+            <button
+              type="button"
+              @click="execFilterSearch"
+              class="ui-btn ui-btn-primary px-3 py-1.5 text-xs font-bold rounded-xl flex items-center gap-1.5 shrink-0 shadow-xs cursor-pointer"
+              title="Tìm kiếm và áp dụng bộ lọc"
+            >
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+              <span>Tìm kiếm</span>
+            </button>
 
             <!-- Quick Year Select Dropdown -->
             <div class="w-36 shrink-0">

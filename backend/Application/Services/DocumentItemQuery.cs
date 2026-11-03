@@ -85,7 +85,14 @@ public static class DocumentItemQuery
             if (queryDto.SelectedAgencyIds != null && queryDto.SelectedAgencyIds.Count > 0)
             {
                 var ids = queryDto.SelectedAgencyIds.ToHashSet();
-                list = list.Where(i => (AgencyAssignments.Coordinating(queryDto.AssignmentRole) ? i.CoordinatingAssignmentAgencyIds : i.LeadAssignmentAgencyIds).Any(ids.Contains)).ToList();
+                if (AgencyAssignments.Coordinating(queryDto.AssignmentRole))
+                {
+                    list = list.Where(i => i.CoordinatingAssignmentAgencyIds.Any(ids.Contains)).ToList();
+                }
+                else
+                {
+                    list = list.Where(i => ids.Contains(i.LeadAgencyId) || i.LeadAssignmentAgencyIds.Any(aid => ids.Contains(aid) && (!i.IsGeneralTask || ids.Contains(i.LeadAgencyId)))).ToList();
+                }
             }
 
             list = ApplyCommon(list.AsQueryable(), queryDto).ToList();

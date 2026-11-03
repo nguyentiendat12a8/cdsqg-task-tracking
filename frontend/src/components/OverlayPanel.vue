@@ -44,7 +44,7 @@
         :class="[panelWidthClass, heightClass, panelClass || 'bg-white shadow-xl shadow-blue-900/10 border border-blue-200']"
       >
         <!-- Panel Header -->
-        <div class="flex shrink-0 items-center justify-between border-b border-slate-200 pb-2.5">
+        <div v-if="showHeader" class="flex shrink-0 items-center justify-between border-b border-slate-200 pb-2.5">
           <slot name="heading">
           <div class="flex items-center gap-2">
             <div class="w-7 h-7 rounded-lg bg-blue-100 text-blue-700 flex items-center justify-center font-bold">
@@ -118,6 +118,7 @@ const props = defineProps({
   overflowPadding: { type: Number, default: 0 },
   placement: { type: String, default: 'bottom-start' },
   showActions: { type: Boolean, default: true },
+  showHeader: { type: Boolean, default: true },
   panelClass: { type: String, default: '' },
   heightClass: { type: String, default: '' },
   title: {

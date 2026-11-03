@@ -220,6 +220,29 @@ if (args.Contains("--repair-2629-assignment-mapping"))
     return;
 }
 
+// Auto-check and repair 2629 assignment mapping if unmapped items are detected on startup
+try
+{
+    using var startupRepairScope = app.Services.CreateScope();
+    var repairDb = startupRepairScope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var doc2629Id = Guid.Parse("26290000-0000-0000-0000-000000002629");
+    var hasUnmapped2629 = await repairDb.GoalTaskItems.AnyAsync(i =>
+        i.DocumentId == doc2629Id &&
+        i.LeadAgencyDisplayText != null &&
+        i.LeadAgencyDisplayText != "Các bộ, ngành, địa phương" &&
+        i.LeadAgency != null && i.LeadAgency.Code == "ALL_AGENCIES");
+
+    if (hasUnmapped2629)
+    {
+        var repaired = await Seed2629AssignmentRepair.RunAsync(repairDb);
+        Console.WriteLine($"Auto-repaired 2629 assignment mapping for {repaired} seed items on startup.");
+    }
+}
+catch (Exception ex)
+{
+    Console.WriteLine($"Error checking/repairing 2629 assignment mapping: {ex.Message}");
+}
+
 // Maintenance mode does not start HTTP listeners or hosted workers.
 if (args.Contains("--backfill-missing-assignments"))
 {

@@ -97,7 +97,7 @@ export function useDocumentFilters({ props, userAgencyId, agencies, rawItemsList
     const currentId = ++docDetailSearchRequestId;
     docDetailSearchTimer = setTimeout(() => {
       if (currentId !== docDetailSearchRequestId) return;
-      appliedFilters.value.searchQuery = newVal || '';
+      appliedFilters.value = JSON.parse(JSON.stringify(filterDraft.value));
       currentPage.value = 1;
       loadData();
     }, 300);
