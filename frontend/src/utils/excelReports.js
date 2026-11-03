@@ -202,7 +202,7 @@ function createGoalReportingWorksheet({
     'STT',
     'Mã MT',
     'Tên mục tiêu / Chỉ tiêu',
-    'Cơ quan chủ trì / Đầu mối TƯ',
+    'Cơ quan chủ trì',
     'Đơn vị tính',
     'Tiến độ hiện tại',
     'TIẾN ĐỘ THỰC HIỆN MỚI [CẦN ĐIỀN]',
@@ -346,7 +346,7 @@ function createGoalGuidanceWorksheet({
     'STT',
     'Mã MT',
     'Tên mục tiêu / Chỉ tiêu',
-    'Cơ quan chủ trì / Đầu mối TƯ',
+    'Cơ quan chủ trì',
     'Công thức toán học',
     'Tử số (A)',
     'Mẫu số (B)'
