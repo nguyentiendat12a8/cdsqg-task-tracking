@@ -11,7 +11,7 @@ export function reportStatusLabel(value) {
   if (['Reviewing', 'Submitted', '2', '3'].includes(value)) return 'Đang thực hiện';
   return reportStatusOptions.find(option => option.value === value)?.label || 'Chưa thực hiện';
 }
-import { getStatusLabel } from './statusPresentation';
+import { getStatusLabel } from './statusPresentation.js';
 
 
 // Compatibility presentation for history returned by older API versions.
