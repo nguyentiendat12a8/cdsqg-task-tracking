@@ -11,7 +11,7 @@ public sealed class DigitalNewsController(AppDbContext db,DigitalNewsSyncService
     [HttpGet]
     public async Task<IActionResult> List(string? search=null,string? agency=null,string? status=null,int page=1,int pageSize=10,CancellationToken ct=default,string sortBy="importedAt",string sortOrder="desc")
     {
-        pageSize=Math.Clamp(pageSize,1,100);var query=db.DigitalNewsItems.AsNoTracking();
+        pageSize=Math.Clamp(pageSize,1,100);var query=DigitalNewsRetention.Visible(db.DigitalNewsItems.AsNoTracking(),db,DateTime.UtcNow);
         if(!string.IsNullOrWhiteSpace(search)){var term=search.Trim().ToLowerInvariant();query=query.Where(i=>i.Title.ToLower().Contains(term)||i.AgencyName.ToLower().Contains(term));}
         if(!string.IsNullOrWhiteSpace(agency))query=query.Where(i=>i.AgencyName==agency);
         // Recheck existing titles without deleting history; filter BEFORE count and pagination.
@@ -57,7 +57,7 @@ public sealed class DigitalNewsController(AppDbContext db,DigitalNewsSyncService
         return Ok(new{items,total,page,pageSize});
     }
     [HttpGet("agencies")]
-    public async Task<IActionResult> Agencies(CancellationToken ct)=>Ok(await db.DigitalNewsItems.AsNoTracking().Select(i=>i.AgencyName).Distinct().OrderBy(n=>n).ToListAsync(ct));
+    public async Task<IActionResult> Agencies(CancellationToken ct)=>Ok(await DigitalNewsRetention.Visible(db.DigitalNewsItems.AsNoTracking(),db,DateTime.UtcNow).Select(i=>i.AgencyName).Distinct().OrderBy(n=>n).ToListAsync(ct));
     [HttpGet("settings"),Authorize(Roles="Admin")]
     public async Task<IActionResult> Settings(CancellationToken ct){
         var settings=await db.DigitalNewsSyncSettings.AsNoTracking().SingleAsync(ct);
@@ -97,7 +97,7 @@ public sealed class DigitalNewsController(AppDbContext db,DigitalNewsSyncService
     public async Task<IActionResult> Sync(CancellationToken ct){try{var result=await sync.RunAsync(true,ct);return result==null?Conflict(new{message="Một lượt quét đang chạy."}):Ok(new{message=$"Quét xong: {result.Added} bài mới, {result.Unchanged} đã có, {result.Filtered} lượt kết quả bị loại theo tiêu đề, {result.Skipped} truy vấn lỗi.",result});}catch(InvalidOperationException ex){return BadRequest(new{message=ex.Message});}}
     [HttpGet("{id:guid}/assessment")]
     public async Task<IActionResult> Assessment(Guid id,CancellationToken ct,Guid? result=null,Guid? notification=null){
-        var item=await db.DigitalNewsItems.AsNoTracking().SingleOrDefaultAsync(x=>x.Id==id,ct);if(item==null)return NotFound();
+        var item=await DigitalNewsRetention.Visible(db.DigitalNewsItems.AsNoTracking(),db,DateTime.UtcNow).SingleOrDefaultAsync(x=>x.Id==id,ct);if(item==null)return NotFound();
         var reads=db.DigitalPlanReads.AsNoTracking().Where(x=>x.ItemId==id);
         if(result.HasValue)reads=reads.Where(x=>x.Id==result.Value);
         else if(notification.HasValue)reads=reads.Where(x=>x.NotificationId==notification.Value);

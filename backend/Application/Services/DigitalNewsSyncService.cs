@@ -5,9 +5,10 @@ namespace Cdsqg.Application.Services;
 public sealed record DigitalNewsSyncResult(int Added,int Updated,int Unchanged,int Skipped,int Filtered=0);
 public sealed class DigitalNewsSyncService(AppDbContext db,IDigitalPlanDiscoveryReader reader)
 {
+    public const int MaxBatchSize=20;
     public async Task SaveAsync(bool enabled,int intervalMinutes,int lookbackDays,int batchSize,string actor,CancellationToken ct,DateOnly? publishedFrom=null,DateOnly? publishedTo=null)
     {
-        if(intervalMinutes is <15 or >10080||lookbackDays is <1 or >3650||batchSize is <1 or >12)throw new InvalidOperationException("Lịch quét: 15–10080 phút, khoảng tìm 1–3650 ngày, mỗi lượt 1–12 truy vấn.");
+        if(intervalMinutes is <15 or >10080||lookbackDays is <1 or >3650||batchSize<1||batchSize>MaxBatchSize)throw new InvalidOperationException($"Lịch quét: 15–10080 phút, khoảng tìm 1–3650 ngày, mỗi lượt 1–{MaxBatchSize} truy vấn.");
         DigitalNewsPublicationWindow.Validate(publishedFrom??DigitalNewsPublicationWindow.DefaultFrom,publishedTo);
         await using var tx=await db.Database.BeginTransactionAsync(ct);
         var settings=await LockSettingsAsync(db,ct);

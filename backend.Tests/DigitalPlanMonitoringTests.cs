@@ -91,6 +91,25 @@ public class DigitalPlanMonitoringTests {
   var query=Uri.UnescapeDataString(DigitalPlanDiscoveryReader.QueryUrl(new(){Domain="hanoi.gov.vn"},keyword,new DateOnly(2026,11,1)).Query);
   Assert.DoesNotContain("intitle:",query);Assert.DoesNotContain("ban hành",query);
  }
+ [PostgresFact]
+ public async Task OldNotRelevantNewsIsHiddenWithoutLosingItsUrlHash(){
+  AppContext.SetSwitch("Npgsql.EnableLegacyTimestampBehavior",true);
+  var connection=Environment.GetEnvironmentVariable("CDSQG_TEST_POSTGRES")!;var schema="news_retention_"+Guid.NewGuid().ToString("N");
+  await using var admin=new NpgsqlConnection(connection);await admin.OpenAsync();await using(var cmd=new NpgsqlCommand($"CREATE SCHEMA \"{schema}\"",admin))await cmd.ExecuteNonQueryAsync();
+  try{
+   var options=new DbContextOptionsBuilder<AppDbContext>().UseNpgsql(new NpgsqlConnectionStringBuilder(connection){SearchPath=schema}.ConnectionString).Options;
+   await using var db=new AppDbContext(options);await db.Database.MigrateAsync();
+   var now=DateTime.UtcNow;
+   DigitalNewsItem item(string suffix,int ageDays)=>new(){AgencyName="Hà Nội",Title="Tin "+suffix,Url="https://example.com/"+suffix,UrlHash=DigitalPlanText.Hash("https://example.com/"+suffix),ImportedAt=now.AddDays(-ageDays)};
+   var oldRejected=item("old-rejected",4);var recentRejected=item("recent-rejected",2);var oldRelated=item("old-related",4);var oldMixed=item("old-mixed",4);var oldUnread=item("old-unread",4);
+   db.AddRange(oldRejected,recentRejected,oldRelated,oldMixed,oldUnread);
+   db.AddRange(new DigitalPlanRead{ItemId=oldRejected.Id,Status="NotRelevant"},new DigitalPlanRead{ItemId=recentRejected.Id,Status="NotRelevant"},new DigitalPlanRead{ItemId=oldRelated.Id,Status="Related"},new DigitalPlanRead{ItemId=oldMixed.Id,Status="NotRelevant"},new DigitalPlanRead{ItemId=oldMixed.Id,Status="NeedsReview",CriteriaHash="other"});
+   await db.SaveChangesAsync();
+   var visible=await DigitalNewsRetention.Visible(db.DigitalNewsItems.AsNoTracking(),db,now).Select(x=>x.Id).ToListAsync();
+   Assert.DoesNotContain(oldRejected.Id,visible);Assert.Contains(recentRejected.Id,visible);Assert.Contains(oldRelated.Id,visible);Assert.Contains(oldMixed.Id,visible);Assert.Contains(oldUnread.Id,visible);
+   Assert.Equal(5,await db.DigitalNewsItems.CountAsync());Assert.Equal(oldRejected.UrlHash,(await db.DigitalNewsItems.SingleAsync(x=>x.Id==oldRejected.Id)).UrlHash);
+  }finally{await using var cmd=new NpgsqlCommand($"DROP SCHEMA \"{schema}\" CASCADE",admin);await cmd.ExecuteNonQueryAsync();}
+ }
  [PostgresTheory]
  [InlineData("")]
  [InlineData("khung kiến trúc dùng riêng")]
@@ -119,7 +138,11 @@ public class DigitalPlanMonitoringTests {
    await using var db=new AppDbContext(options);await db.Database.MigrateAsync();
    Assert.Equal(85,await db.DigitalPlanSources.CountAsync());Assert.Equal(33,await db.DigitalPlanKeywords.CountAsync());
    var legacy=new DigitalNewsItem{AgencyName="Hà Nội",Title="Bài cũ",Url="https://hanoi.gov.vn/old",UrlHash=DigitalPlanText.Hash("https://hanoi.gov.vn/old")};db.Add(legacy);var user=new User{Username="plan-fixture",FullName="Fixture",PasswordHash="unused"};db.Add(user);await db.SaveChangesAsync();
-   var reader=new FixtureDiscovery();var sync=new DigitalNewsSyncService(db,reader);await sync.SaveAsync(true,30,365,2,"Test",default);
+   var reader=new FixtureDiscovery();var sync=new DigitalNewsSyncService(db,reader);
+   await sync.SaveAsync(true,30,365,20,"Test",default);
+   Assert.Equal(20,(await db.DigitalNewsSyncSettings.AsNoTracking().SingleAsync()).BatchSize);
+   await Assert.ThrowsAsync<InvalidOperationException>(()=>sync.SaveAsync(true,30,365,21,"Test",default));
+   await sync.SaveAsync(true,30,365,2,"Test",default);
    var result=await sync.RunAsync(true,default);Assert.Equal(1,result!.Added);Assert.Equal(2,result.Filtered);Assert.Equal(2,reader.Calls);Assert.Equal(2,reader.Sources.Count);Assert.Equal(2,await db.DigitalNewsItems.CountAsync());Assert.Equal(0,await db.DigitalPlanReads.CountAsync());Assert.Equal(0,await db.AiInboxItems.CountAsync());
    Assert.Null(await sync.RunAsync(false,default));Assert.Equal(0,(await sync.RunAsync(true,default))!.Added);Assert.Equal(4,(await db.DigitalNewsSyncSettings.AsNoTracking().SingleAsync()).QueryCursor);
    var listed=Assert.IsType<Microsoft.AspNetCore.Mvc.OkObjectResult>(await new Cdsqg.Api.Controllers.DigitalNewsController(db,sync).List(pageSize:1));
