@@ -20,7 +20,7 @@ public static class AgencyAssignments
             return query.Where(i => ids.Contains(i.LeadAgencyId) || i.AgencyExecutions.Any(e => (e.IsLeadAssignment || e.IsCoordinatingAssignment) && ids.Contains(e.AgencyId)));
         if (Coordinating(role))
             return query.Where(i => i.AgencyExecutions.Any(e => e.IsCoordinatingAssignment && ids.Contains(e.AgencyId)));
-        return query.Where(i => ids.Contains(i.LeadAgencyId) || i.AgencyExecutions.Any(e => e.IsLeadAssignment && !e.IsLeadGroupAssignment && ids.Contains(e.AgencyId)));
+        return query.Where(i => ids.Contains(i.LeadAgencyId) || i.AgencyExecutions.Any(e => e.IsLeadAssignment && ids.Contains(e.AgencyId)));
     }
 
     public static List<Guid> ExpandSelection(IEnumerable<Guid> ids, IReadOnlyCollection<Agency> agencies, bool descendants = false)

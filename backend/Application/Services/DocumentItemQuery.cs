@@ -91,7 +91,7 @@ public static class DocumentItemQuery
                 }
                 else
                 {
-                    list = list.Where(i => ids.Contains(i.LeadAgencyId) || i.LeadAssignmentAgencyIds.Any(aid => ids.Contains(aid) && (!i.IsGeneralTask || ids.Contains(i.LeadAgencyId)))).ToList();
+                    list = list.Where(i => ids.Contains(i.LeadAgencyId) || i.LeadAssignmentAgencyIds.Any(ids.Contains)).ToList();
                 }
             }
 
