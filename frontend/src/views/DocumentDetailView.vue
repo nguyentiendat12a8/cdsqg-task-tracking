@@ -48,48 +48,34 @@
             </template>
             <template #default="{ close }">
               <div class="flex flex-col gap-2">
-                <!-- Specialized Export options for Goal -->
-                <template v-if="props.filterItemType === 'Goal'">
-                  <ActionButton 
-                    kind="export" 
-                    class="w-full justify-start !bg-blue-600 !border-blue-600 !text-white hover:!bg-blue-700 hover:!border-blue-700 shadow-sm" 
-                    @click="close(); handleExportProgressReport()" 
-                    :disabled="isExportingDocument || isLoading"
-                    :title="activeFilteredAgencyName ? `Xuất mẫu báo cáo điền sẵn cho: ${activeFilteredAgencyName}` : 'Xuất mẫu báo cáo tổng hợp (gồm tab Bộ ngành và Địa phương)'"
-                  >
-                    <span class="truncate">{{ activeFilteredAgencyName ? `Xuất mẫu BC: ${activeFilteredAgencyName}` : 'Xuất Excel báo cáo tiến độ' }}</span>
-                  </ActionButton>
-                  <ActionButton 
-                    kind="export" 
-                    class="w-full justify-start !bg-indigo-600 !border-indigo-600 !text-white hover:!bg-indigo-700 hover:!border-indigo-700 shadow-sm" 
-                    @click="close(); handleExportMinistryReport()" 
-                    :disabled="isExportingDocument || isLoading"
-                    title="Xuất biểu mẫu dành riêng cho các Bộ, ngành chủ trì mục tiêu"
-                  >
-                    Xuất biểu mẫu Bộ, ngành báo cáo
-                  </ActionButton>
-                  <ActionButton 
-                    kind="export" 
-                    class="w-full justify-start !bg-teal-600 !border-teal-600 !text-white hover:!bg-teal-700 hover:!border-teal-700 shadow-sm" 
-                    @click="close(); handleExportProvinceReport()" 
-                    :disabled="isExportingDocument || isLoading"
-                    title="Xuất biểu mẫu dành riêng cho các Tỉnh, Thành phố báo cáo"
-                  >
-                    Xuất biểu mẫu Địa phương báo cáo
-                  </ActionButton>
-                </template>
-
-                <!-- Export option for Task or other types -->
-                <template v-else>
-                  <ActionButton 
-                    kind="export" 
-                    class="w-full justify-start !bg-blue-600 !border-blue-600 !text-white hover:!bg-blue-700 hover:!border-blue-700 shadow-sm" 
-                    @click="close(); handleExportProgressReport()" 
-                    :disabled="isExportingDocument || isLoading"
-                  >
-                    Xuất Excel báo cáo tiến độ
-                  </ActionButton>
-                </template>
+                <!-- Export options unified for both Goal and Task -->
+                <ActionButton 
+                  kind="export" 
+                  class="w-full justify-start !bg-blue-600 !border-blue-600 !text-white hover:!bg-blue-700 hover:!border-blue-700 shadow-sm" 
+                  @click="close(); handleExportProgressReport()" 
+                  :disabled="isExportingDocument || isLoading"
+                  :title="activeFilteredAgencyName ? `Xuất mẫu báo cáo điền sẵn cho: ${activeFilteredAgencyName}` : 'Xuất mẫu báo cáo tổng hợp (gồm tab Bộ ngành và Địa phương)'"
+                >
+                  <span class="truncate">{{ activeFilteredAgencyName ? `Xuất mẫu BC: ${activeFilteredAgencyName}` : 'Xuất Excel báo cáo tiến độ' }}</span>
+                </ActionButton>
+                <ActionButton 
+                  kind="export" 
+                  class="w-full justify-start !bg-indigo-600 !border-indigo-600 !text-white hover:!bg-indigo-700 hover:!border-indigo-700 shadow-sm" 
+                  @click="close(); handleExportMinistryReport()" 
+                  :disabled="isExportingDocument || isLoading"
+                  :title="`Xuất biểu mẫu dành riêng cho các Bộ, ngành chủ trì ${props.filterItemType === 'Goal' ? 'mục tiêu' : 'nhiệm vụ'}`"
+                >
+                  Xuất biểu mẫu Bộ, ngành báo cáo
+                </ActionButton>
+                <ActionButton 
+                  kind="export" 
+                  class="w-full justify-start !bg-teal-600 !border-teal-600 !text-white hover:!bg-teal-700 hover:!border-teal-700 shadow-sm" 
+                  @click="close(); handleExportProvinceReport()" 
+                  :disabled="isExportingDocument || isLoading"
+                  :title="`Xuất biểu mẫu dành riêng cho các Tỉnh, Thành phố báo cáo ${props.filterItemType === 'Goal' ? 'mục tiêu' : 'nhiệm vụ'}`"
+                >
+                  Xuất biểu mẫu Địa phương báo cáo
+                </ActionButton>
 
                 <ActionButton kind="import" class="w-full justify-start !bg-blue-600 !border-blue-600 !text-white hover:!bg-blue-700 hover:!border-blue-700 shadow-sm" @click="close(); openProgressImport()" :disabled="isLoadingImport || isLoading" :aria-busy="isLoadingImport">{{ isLoadingImport ? 'Đang tải dữ liệu…' : 'Nhập Excel báo cáo tiến độ' }}</ActionButton>
                 <ActionButton kind="export" class="w-full justify-start !bg-slate-600 !border-slate-600 !text-white hover:!bg-slate-700 hover:!border-slate-700 shadow-sm" @click="close(); exportDocumentItemsToExcel()" :disabled="isExportingDocument" :aria-busy="isExportingDocument">Xuất Excel danh sách</ActionButton>

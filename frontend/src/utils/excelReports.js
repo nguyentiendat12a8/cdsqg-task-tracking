@@ -435,6 +435,152 @@ function createGoalGuidanceWorksheet({
 /**
  * Export specialized Progress Report template file for users to update & import back.
  */
+/**
+ * Helper to build and style the clean Task Reporting worksheet
+ */
+function createTaskReportingWorksheet({
+  items = [],
+  sheetTitle = 'BÁO CÁO TIẾN ĐỘ THỰC HIỆN NHIỆM VỤ CHIẾN LƯỢC',
+  agencyName = 'Bộ, Ngành, Địa phương',
+  dateStr = '',
+  guideText = 'HƯỚNG DẪN: Điền tổng kết quả đã đạt đến năm báo cáo hoặc chọn trạng thái sản phẩm ở cột H (màu vàng); nêu rõ khó khăn, vướng mắc hoặc kiến nghị tại cột I (màu xanh). Mỗi sản phẩm đầu ra chọn một trạng thái riêng.'
+}) {
+  const numCols = 9;
+  const inputCol = 7, notesCol = 8;
+  const headers = [
+    'STT',
+    'Mã NV',
+    'Tên Nhiệm Vụ',
+    'Cơ quan chủ trì',
+    'Đơn vị tính',
+    'Sản Phẩm Đầu Ra',
+    'Tiến độ hiện tại',
+    'TIẾN ĐỘ THỰC HIỆN MỚI [CẦN ĐIỀN]',
+    'GHI CHÚ / KHÓ KHĂN & KIẾN NGHỊ [CẦN ĐIỀN]',
+    'Mã Sản Phẩm'
+  ];
+
+  const rows = [
+    [sheetTitle.toUpperCase()],
+    [`Đơn vị báo cáo: ${agencyName} | Ngày xuất file: ${dateStr}`],
+    [guideText],
+    headers
+  ];
+
+  const statusCells = [], merges = [];
+  items.forEach((item, index) => {
+    const qualitative = ['Qualitative', '2', 2].includes(item.evaluationType);
+    const products = qualitative ? (item.deliverables || []) : [];
+    const unit = qualitative ? 'Trạng thái' : (item.unitName || item.unit?.name || '%');
+    const current = qualitative
+      ? (item.latestQualitativeStatus ? reportStatusLabel(item.latestQualitativeStatus) : 'Chưa cập nhật')
+      : (item.latestProgressValue != null ? formatMeasuredValue(item.latestProgressValue, unit) : 'Chưa cập nhật');
+    const start = rows.length;
+    (products.length ? products : [null]).forEach((product, productIndex) => {
+      const row = productIndex === 0
+        ? [index + 1, item.code || '', item.title || '', item.leadAgencyName || item.leadAgency?.name || '—', unit]
+        : ['', '', '', '', ''];
+      row.push(product?.title || '—');
+      row.push(product ? reportStatusLabel(product.currentStatus) : current, '', '');
+      row.push(product?.id || '');
+      rows.push(row);
+      if (qualitative) statusCells.push(`${XLSX.utils.encode_col(inputCol)}${rows.length}`);
+    });
+    if (products.length > 1) {
+      for (const c of [0, 1, 2, 3, 4, notesCol]) merges.push({ s: { r: start, c }, e: { r: rows.length - 1, c } });
+    }
+  });
+
+  const ws = XLSX.utils.aoa_to_sheet(rows);
+  ws['!cols'] = [
+    { wch: 6 },  // STT
+    { wch: 14 }, // Mã NV
+    { wch: 48 }, // Tên Nhiệm Vụ
+    { wch: 28 }, // Cơ quan chủ trì
+    { wch: 16 }, // Đơn vị tính
+    { wch: 46 }, // Sản Phẩm Đầu Ra
+    { wch: 20 }, // Tiến độ hiện tại
+    { wch: 34 }, // TIẾN ĐỘ THỰC HIỆN MỚI (Yellow)
+    { wch: 46 }  // GHI CHÚ / KHÓ KHĂN & KIẾN NGHỊ (Soft Blue)
+  ];
+  ws['!cols'].push({ wch: 36, hidden: true }); // Col 9: Mã Sản Phẩm hidden
+
+  styleWorksheet(ws, { numCols, headerRowIndex: 3, titleRowIndex: 0 }, XLSX);
+
+  for (const merge of ws['!merges'] || []) {
+    if (merge.s.r < 3) merge.e.c = numCols - 1;
+  }
+  ws['!merges'] = [...(ws['!merges'] || []), ...merges];
+
+  for (const merge of merges.filter(merge => merge.s.c === 2)) {
+    const height = Math.max(30, (ws['!rows'][merge.s.r]?.hpt || 30) / (merge.e.r - merge.s.r + 1));
+    for (let r = merge.s.r; r <= merge.e.r; r++) {
+      const productLines = String(rows[r][5] || '').split('\n').reduce((sum, line) => sum + Math.max(1, Math.ceil(line.length / 42)), 0);
+      ws['!rows'][r] = { hpt: Math.max(height, productLines * 15 + 10, r === merge.s.r ? 30 : ws['!rows'][r]?.hpt || 30) };
+    }
+  }
+
+  ws['!rows'] = ws['!rows'] || [];
+  ws['!rows'][0] = { hpt: 32 };
+  ws['!rows'][1] = { hpt: 22 };
+  ws['!rows'][2] = { hpt: 36 };
+  ws['!rows'][3] = { hpt: 30 };
+
+  const thinBorder = {
+    top: { style: 'thin', color: { rgb: 'CBD5E1' } },
+    bottom: { style: 'thin', color: { rgb: 'CBD5E1' } },
+    left: { style: 'thin', color: { rgb: 'CBD5E1' } },
+    right: { style: 'thin', color: { rgb: 'CBD5E1' } }
+  };
+
+  // Header Col 7: TIẾN ĐỘ THỰC HIỆN MỚI (Yellow)
+  const refInputHdr = XLSX.utils.encode_cell({ r: 3, c: inputCol });
+  if (ws[refInputHdr]) {
+    ws[refInputHdr].s = {
+      font: { name: 'Segoe UI', sz: 10, bold: true, color: { rgb: '0F172A' } },
+      fill: { fgColor: { rgb: 'FEF08A' } },
+      alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+      border: thinBorder
+    };
+  }
+
+  // Header Col 8: GHI CHÚ / KHÓ KHĂN & KIẾN NGHỊ (Soft Blue)
+  const refNotesHdr = XLSX.utils.encode_cell({ r: 3, c: notesCol });
+  if (ws[refNotesHdr]) {
+    ws[refNotesHdr].s = {
+      font: { name: 'Segoe UI', sz: 10, bold: true, color: { rgb: '0F172A' } },
+      fill: { fgColor: { rgb: 'BAE6FD' } },
+      alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
+      border: thinBorder
+    };
+  }
+
+  for (let r = 4; r < rows.length; r++) {
+    const cInput = XLSX.utils.encode_cell({ r, c: inputCol });
+    if (ws[cInput]) {
+      ws[cInput].s = {
+        font: { name: 'Segoe UI', sz: 10, bold: true, color: { rgb: '047857' } },
+        fill: { fgColor: { rgb: 'FEFCE8' } },
+        alignment: { horizontal: 'center', vertical: 'center' },
+        border: thinBorder
+      };
+    }
+
+    const cNotes = XLSX.utils.encode_cell({ r, c: notesCol });
+    if (ws[cNotes]) {
+      ws[cNotes].s = {
+        font: { name: 'Segoe UI', sz: 10, color: { rgb: '0F172A' } },
+        fill: { fgColor: { rgb: 'F0F9FF' } },
+        alignment: { horizontal: 'left', vertical: 'center', wrapText: true },
+        border: thinBorder
+      };
+    }
+  }
+
+  return { ws, statusCells };
+}
+
+
 export function exportProgressReportTemplate({
   items = [],
   itemType,
@@ -454,70 +600,164 @@ export function exportProgressReportTemplate({
   const isTask = (itemType || items[0]?.itemType) !== 'Goal';
 
   // -------------------------------------------------------------
-  // BRANCH 1: TASK PROGRESS REPORT (Preserve existing logic)
+  // BRANCH 1: TASK PROGRESS REPORT (Enhanced with Agency Routing & Multi-sheet)
   // -------------------------------------------------------------
   if (isTask) {
-    const noun = 'Nhiệm Vụ';
-    const numCols = 9;
-    const currentCol = 6, inputCol = currentCol + 1, notesCol = inputCol + 1;
-    const headers = ['STT', 'Mã', `Tên ${noun}`, 'Cơ Quan Chủ Trì', 'Đơn Vị Tính', 'Sản Phẩm Đầu Ra', 'Tiến Độ Hiện Tại', 'TIẾN ĐỘ THỰC HIỆN MỚI [CẦN ĐIỀN]', 'GHI CHÚ [CẦN ĐIỀN]', 'Mã Sản Phẩm'];
+    const wb = XLSX.utils.book_new();
+    const statusCellsBySheet = [];
+    const is1266 = String(documentCode || '').includes('1266') ||
+                   String(documentNumber || '').includes('1266') ||
+                   String(documentTitle || '').includes('1266');
+    const docCode = is1266 ? '1266' : (documentCode || (documentNumber ? documentNumber.replace(/\D/g, '') : '2629'));
     const typeText = documentShortTitle ? ` ${documentShortTitle.toUpperCase()}` : '';
     const docSuffix = documentTitle
       ? ` THEO DÕI${typeText} - ${documentTitle.toUpperCase()}${documentNumber ? ` (${documentNumber})` : ''}`
       : '';
-    const agencyName = targetAgency?.name || currentAgency?.name || 'Bộ, Ngành, Địa phương';
-    const rows = [
-      [`BÁO CÁO TIẾN ĐỘ THỰC HIỆN ${noun.toUpperCase()}${docSuffix}`],
-      [`Đơn vị báo cáo: ${agencyName} | Ngày xuất file: ${dateStr}`],
-      [`HƯỚNG DẪN: Điền tổng kết quả đã đạt đến năm báo cáo hoặc chọn trạng thái ở cột [H]; ghi chú ở cột [I]. Mỗi sản phẩm đầu ra chọn một trạng thái riêng. Chọn năm báo cáo khi import.`],
-      headers
-    ];
-    const statusCells = [], merges = [];
-    items.forEach((item, index) => {
-      const qualitative = ['Qualitative', '2', 2].includes(item.evaluationType);
-      const products = qualitative ? (item.deliverables || []) : [];
-      const unit = qualitative ? 'Trạng thái' : (item.unitName || item.unit?.name || '%');
-      const current = qualitative ? (item.latestQualitativeStatus ? reportStatusLabel(item.latestQualitativeStatus) : 'Chưa cập nhật') : (item.latestProgressValue != null ? formatMeasuredValue(item.latestProgressValue, unit) : 'Chưa cập nhật');
-      const start = rows.length;
-      (products.length ? products : [null]).forEach((product, productIndex) => {
-        const row = productIndex === 0 ? [index + 1, item.code || '', item.title || '', item.leadAgencyName || item.leadAgency?.name || '—', unit] : ['', '', '', '', ''];
-        row.push(product?.title || '—');
-        row.push(product ? reportStatusLabel(product.currentStatus) : current, '', '');
-        row.push(product?.id || '');
-        rows.push(row);
-        if (qualitative) statusCells.push(`${XLSX.utils.encode_col(inputCol)}${rows.length}`);
+
+    const effectiveAgency = targetAgency || (currentAgency && String(userRole).toLowerCase() !== 'admin' ? currentAgency : null);
+
+    const filterTasksForMinistry = (taskList, agency) => {
+      if (agency) {
+        const agId = agency.id ? String(agency.id).toLowerCase() : '';
+        const agCode = (agency.code || '').toUpperCase();
+        const agName = (agency.name || '').toLowerCase();
+        return taskList.filter(item => {
+          if (item.leadAgencyId && agId && String(item.leadAgencyId).toLowerCase() === agId) return true;
+          if (item.leadAgencyCode && agCode && item.leadAgencyCode.toUpperCase() === agCode) return true;
+          if (item.assignedAgencyId && agId && String(item.assignedAgencyId).toLowerCase() === agId) return true;
+          if (item.isGeneralTask || item.leadAgencyCode === 'ALL_AGENCIES' || item.leadAgencyCode === 'ALL_MINISTRIES') return true;
+          const lead = (item.leadAgencyName || '').toLowerCase();
+          if (lead.includes(agName.replace('bộ ', '').replace('ban ', '').trim())) return true;
+          return false;
+        });
+      }
+      return taskList.filter(item => {
+        if (item.isGeneralTask || item.leadAgencyCode === 'ALL_AGENCIES' || item.leadAgencyCode === 'ALL_MINISTRIES') return true;
+        return isMinistryAgency(item.leadAgency || { code: item.leadAgencyCode, name: item.leadAgencyName });
       });
-      if (products.length > 1) {
-        for (const c of [0, 1, 2, 3, 4, notesCol]) merges.push({ s: { r: start, c }, e: { r: rows.length - 1, c } });
+    };
+
+    const filterTasksForLocality = (taskList, agency) => {
+      if (agency) {
+        const agId = agency.id ? String(agency.id).toLowerCase() : '';
+        const agCode = (agency.code || '').toUpperCase();
+        const agName = (agency.name || '').toLowerCase();
+        return taskList.filter(item => {
+          if (item.leadAgencyId && agId && String(item.leadAgencyId).toLowerCase() === agId) return true;
+          if (item.leadAgencyCode && agCode && item.leadAgencyCode.toUpperCase() === agCode) return true;
+          if (item.isGeneralTask || item.leadAgencyCode === 'ALL_AGENCIES' || item.leadAgencyCode === 'ALL_PROVINCES') return true;
+          if (item.coordinatingAgencyIds && agId && item.coordinatingAgencyIds.map(String).includes(agId)) return true;
+          const lead = (item.leadAgencyName || '').toLowerCase();
+          if (lead.includes(agName.replace('tỉnh ', '').replace('thành phố ', '').trim())) return true;
+          return false;
+        });
       }
+      return taskList.filter(item => {
+        if (item.isGeneralTask || item.leadAgencyCode === 'ALL_AGENCIES' || item.leadAgencyCode === 'ALL_PROVINCES') return true;
+        if (isProvinceAgency(item.leadAgency || { code: item.leadAgencyCode, name: item.leadAgencyName })) return true;
+        if (item.coordinatingAgencyNames?.some(name => name.toLowerCase().includes('địa phương') || name.toLowerCase().includes('tỉnh'))) return true;
+        return false;
+      });
+    };
+
+    // Case 1: Specific Single Agency Report
+    if (effectiveAgency && templateMode === 'auto') {
+      const isMinistry = isMinistryAgency(effectiveAgency);
+      const isProvince = isProvinceAgency(effectiveAgency);
+      let filteredTasks = items;
+      let agencyRoleTag = 'Bộ, Ngành, Địa phương';
+
+      if (isMinistry) {
+        filteredTasks = filterTasksForMinistry(items, effectiveAgency);
+        agencyRoleTag = 'Bộ, Cơ quan chủ trì nhiệm vụ';
+      } else if (isProvince) {
+        filteredTasks = filterTasksForLocality(items, effectiveAgency);
+        agencyRoleTag = 'Ủy ban nhân dân Tỉnh, Thành phố';
+      }
+
+      const sheetTitle = `BÁO CÁO TIẾN ĐỘ THỰC HIỆN NHIỆM VỤ${docSuffix}`;
+      const { ws, statusCells } = createTaskReportingWorksheet({
+        items: filteredTasks,
+        sheetTitle,
+        agencyName: `${effectiveAgency.name} (${agencyRoleTag})`,
+        dateStr
+      });
+      const sheetName = `Báo Cáo - ${(effectiveAgency.code || effectiveAgency.name).slice(0, 20)}`;
+      XLSX.utils.book_append_sheet(wb, ws, sheetName);
+      statusCellsBySheet.push(statusCells);
+
+      const safeAgencyCode = (effectiveAgency.code || effectiveAgency.name.replace(/\s+/g, '_')).slice(0, 15);
+      const finalFileName = `Bao_Cao_Tien_Do_Nhiem_Vu_${docCode}_${safeAgencyCode}_${dateFileStr}.xlsx`;
+      downloadProgressWorkbook(wb, statusCellsBySheet, finalFileName, XLSX);
+      toast.success(`Đã xuất biểu mẫu báo cáo nhiệm vụ cho ${effectiveAgency.name}!`);
+      return;
+    }
+
+    // Case 2: Explicit Ministry mode
+    if (templateMode === 'ministry') {
+      const ministryTasks = filterTasksForMinistry(items);
+      const sheetTitle = `BÁO CÁO TIẾN ĐỘ THỰC HIỆN NHIỆM VỤ CHIẾN LƯỢC - DÀNH CHO BỘ, NGÀNH CHỦ TRÌ${docSuffix}`;
+      const { ws, statusCells } = createTaskReportingWorksheet({
+        items: ministryTasks,
+        sheetTitle,
+        agencyName: 'Các Bộ, Cơ quan ngang Bộ, Cơ quan thuộc Chính phủ chủ trì nhiệm vụ',
+        dateStr
+      });
+      XLSX.utils.book_append_sheet(wb, ws, 'Bộ ngành báo cáo');
+      statusCellsBySheet.push(statusCells);
+
+      const finalFileName = `Bao_Cao_Tien_Do_Nhiem_Vu_${docCode}_Bo_Nganh_${dateFileStr}.xlsx`;
+      downloadProgressWorkbook(wb, statusCellsBySheet, finalFileName, XLSX);
+      toast.success('Đã xuất biểu mẫu báo cáo nhiệm vụ dành cho Bộ, ngành chủ trì!');
+      return;
+    }
+
+    // Case 3: Explicit Province mode
+    if (templateMode === 'province') {
+      const provinceTasks = filterTasksForLocality(items);
+      const sheetTitle = `BÁO CÁO TIẾN ĐỘ THỰC HIỆN NHIỆM VỤ CHIẾN LƯỢC - DÀNH CHO ĐỊA PHƯƠNG${docSuffix}`;
+      const { ws, statusCells } = createTaskReportingWorksheet({
+        items: provinceTasks,
+        sheetTitle,
+        agencyName: 'Ủy ban nhân dân các Tỉnh, Thành phố trực thuộc Trung ương',
+        dateStr
+      });
+      XLSX.utils.book_append_sheet(wb, ws, 'Địa phương báo cáo');
+      statusCellsBySheet.push(statusCells);
+
+      const finalFileName = `Bao_Cao_Tien_Do_Nhiem_Vu_${docCode}_Dia_Phuong_${dateFileStr}.xlsx`;
+      downloadProgressWorkbook(wb, statusCellsBySheet, finalFileName, XLSX);
+      toast.success('Đã xuất biểu mẫu báo cáo nhiệm vụ dành cho Địa phương!');
+      return;
+    }
+
+    // Case 4: Default dual-sheet report (when all agencies selected)
+    const ministryTasks = filterTasksForMinistry(items);
+    const { ws: wsMin, statusCells: scMin } = createTaskReportingWorksheet({
+      items: ministryTasks,
+      sheetTitle: `BÁO CÁO TIẾN ĐỘ NHIỆM VỤ - DÀNH CHO CÁC BỘ, NGÀNH CHỦ TRÌ${docSuffix}`,
+      agencyName: 'Các Bộ, cơ quan chủ trì theo dõi nhiệm vụ',
+      dateStr
     });
-    const ws = XLSX.utils.aoa_to_sheet(rows);
-    ws['!cols'] = [6, 14, 50, 30, 16, 50, 22, 34, 40].map(wch => ({ wch }));
-    ws['!cols'].push({ wch: 36, hidden: true });
-    styleWorksheet(ws, { numCols, headerRowIndex: 3, titleRowIndex: 0 }, XLSX);
-    for (const merge of ws['!merges'] || []) {
-      if (merge.s.r < 3) merge.e.c = numCols - 1;
-    }
-    ws['!merges'] = [...(ws['!merges'] || []), ...merges];
-    for (const merge of merges.filter(merge => merge.s.c === 2)) {
-      const height = Math.max(30, (ws['!rows'][merge.s.r]?.hpt || 30) / (merge.e.r - merge.s.r + 1));
-      for (let r = merge.s.r; r <= merge.e.r; r++) {
-        const productLines = String(rows[r][5] || '').split('\n').reduce((sum, line) => sum + Math.max(1, Math.ceil(line.length / 42)), 0);
-        ws['!rows'][r] = { hpt: Math.max(height, productLines * 15 + 10, r === merge.s.r ? 30 : ws['!rows'][r]?.hpt || 30) };
-      }
-    }
-    ws['!rows'][2] = { hpt: 42 };
-    ws['!rows'][3] = { hpt: 36 };
-    for (const [column, color] of [[inputCol, 'FEF08A'], [notesCol, 'BAE6FD']]) {
-      const ref = XLSX.utils.encode_cell({ r: 3, c: column });
-      ws[ref].s = { ...ws[ref].s, font: { name: 'Segoe UI', sz: 10, bold: true, color: { rgb: '0F172A' } }, fill: { fgColor: { rgb: color } } };
-    }
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Báo Cáo Tiến Độ');
-    downloadProgressWorkbook(wb, [statusCells], `${fileName}_${dateFileStr}.xlsx`, XLSX);
-    toast.success('Đã xuất file Excel Báo Cáo Tiến Độ thành công!');
+    XLSX.utils.book_append_sheet(wb, wsMin, 'Bộ ngành báo cáo');
+    statusCellsBySheet.push(scMin);
+
+    const provinceTasks = filterTasksForLocality(items);
+    const { ws: wsPrv, statusCells: scPrv } = createTaskReportingWorksheet({
+      items: provinceTasks,
+      sheetTitle: `BÁO CÁO TIẾN ĐỘ NHIỆM VỤ - DÀNH CHO ĐỊA PHƯƠNG THỰC HIỆN${docSuffix}`,
+      agencyName: 'Ủy ban nhân dân các Tỉnh, Thành phố trực thuộc Trung ương',
+      dateStr
+    });
+    XLSX.utils.book_append_sheet(wb, wsPrv, 'Địa phương báo cáo');
+    statusCellsBySheet.push(scPrv);
+
+    const finalFileName = `Bao_Cao_Tien_Do_Nhiem_Vu_${docCode}_Tong_Hop_${dateFileStr}.xlsx`;
+    downloadProgressWorkbook(wb, statusCellsBySheet, finalFileName, XLSX);
+    toast.success('Đã xuất biểu mẫu báo cáo tiến độ nhiệm vụ tổng hợp (gồm tab Bộ ngành và Địa phương)!');
     return;
   }
+
 
   // -------------------------------------------------------------
   // BRANCH 2A: GENERIC GOAL REPORT (For non-2629 / non-specialized)
