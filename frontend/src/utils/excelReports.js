@@ -337,7 +337,7 @@ function createGoalReportingWorksheet({
  */
 function createGoalGuidanceWorksheet({
   items = [],
-  sheetTitle = 'HƯỚNG DẪN CÔNG THỨC TOÁN HỌC VÀ CĂN CỨ ĐO LƯỜNG CÁC MỤC TIÊU CHIẾN LƯỢC',
+  sheetTitle = 'HƯỚNG DẪN CÔNG THỨC TOÁN HỌC CÁC MỤC TIÊU CHIẾN LƯỢC',
   docSubTitle = '',
   dateStr = '',
   guidanceMap = GOAL_GUIDANCE_2629
@@ -347,12 +347,9 @@ function createGoalGuidanceWorksheet({
     'Mã MT',
     'Tên mục tiêu / Chỉ tiêu',
     'Cơ quan chủ trì / Đầu mối TƯ',
-    'Chỉ tiêu 2026',
     'Công thức toán học',
     'Tử số (A)',
-    'Mẫu số (B)',
-    'Hướng dẫn thu thập & tính toán',
-    'Nguồn dữ liệu / Căn cứ kiểm chứng'
+    'Mẫu số (B)'
   ];
 
   const rows = [
@@ -360,13 +357,12 @@ function createGoalGuidanceWorksheet({
     [docSubTitle || (guidanceMap === GOAL_GUIDANCE_1266
       ? `Căn cứ Quyết định số 1266/QĐ-TTg của Thủ tướng Chính phủ | Ngày xuất file: ${dateStr}`
       : `Căn cứ Quyết định số 2629/QĐ-TTg của Thủ tướng Chính phủ | Ngày xuất file: ${dateStr}`)],
-    ['TRA CỨU CÔNG THỨC TOÁN HỌC, ĐỊNH NGHĨA TỬ SỐ, MẪU SỐ VÀ CĂN CỨ ĐỐI SOÁT DỮ LIỆU ĐỊNH KỲ'],
+    ['TRA CỨU CÔNG THỨC TOÁN HỌC, ĐỊNH NGHĨA TỬ SỐ (A) VÀ MẪU SỐ (B)'],
     headers
   ];
 
   items.forEach((item, idx) => {
     const guidance = guidanceMap[item.code] || {};
-    const target = guidance.target2026Display || (item.targetValue != null ? String(item.targetValue) : '—');
     const leadAgency = guidance.leadAgency || item.leadAgencyName || item.leadAgency?.name || '—';
 
     rows.push([
@@ -374,12 +370,9 @@ function createGoalGuidanceWorksheet({
       item.code || '',
       item.title || '',
       leadAgency,
-      target,
       guidance.formula || 'Theo dõi định kỳ',
       guidance.numerator || '—',
-      guidance.denominator || '—',
-      guidance.guidance || item.description || '—',
-      guidance.source || 'Hệ thống thông tin của cơ quan'
+      guidance.denominator || '—'
     ]);
   });
 
@@ -389,14 +382,11 @@ function createGoalGuidanceWorksheet({
   ws['!cols'] = [
     { wch: 6 },  // STT
     { wch: 12 }, // Mã MT
-    { wch: 40 }, // Tên mục tiêu
-    { wch: 24 }, // Cơ quan chủ trì
-    { wch: 16 }, // Chỉ tiêu 2026
-    { wch: 26 }, // Công thức
-    { wch: 38 }, // Tử số (A)
-    { wch: 38 }, // Mẫu số (B)
-    { wch: 46 }, // Hướng dẫn thu thập
-    { wch: 34 }  // Nguồn dữ liệu
+    { wch: 48 }, // Tên mục tiêu
+    { wch: 28 }, // Cơ quan chủ trì
+    { wch: 26 }, // Công thức toán học
+    { wch: 52 }, // Tử số (A)
+    { wch: 52 }  // Mẫu số (B)
   ];
 
   styleWorksheet(ws, { numCols, headerRowIndex: 3, titleRowIndex: 0 }, XLSX);
@@ -419,17 +409,17 @@ function createGoalGuidanceWorksheet({
   };
 
   for (let r = 4; r < rows.length; r++) {
-    const numText = String(rows[r][6] || '');
-    const denText = String(rows[r][7] || '');
-    const guideText = String(rows[r][8] || '');
-    const maxLen = Math.max(numText.length, denText.length, guideText.length);
-    const lines = Math.max(1, Math.ceil(maxLen / 36));
+    const titleText = String(rows[r][2] || '');
+    const numText = String(rows[r][5] || '');
+    const denText = String(rows[r][6] || '');
+    const maxLen = Math.max(titleText.length, numText.length, denText.length);
+    const lines = Math.max(1, Math.ceil(maxLen / 46));
     ws['!rows'][r] = { hpt: Math.max(34, lines * 15 + 10) };
 
     for (let c = 0; c < numCols; c++) {
       const cellRef = XLSX.utils.encode_cell({ r, c });
       if (ws[cellRef]) {
-        const alignH = (c === 0 || c === 1 || c === 4 || c === 5) ? 'center' : 'left';
+        const alignH = (c === 0 || c === 1 || c === 4) ? 'center' : 'left';
         ws[cellRef].s = {
           ...ws[cellRef].s,
           alignment: { horizontal: alignH, vertical: 'center', wrapText: true },
