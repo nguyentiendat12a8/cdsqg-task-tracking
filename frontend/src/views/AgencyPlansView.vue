@@ -402,7 +402,7 @@
                 </div>
                 <div class="overflow-hidden">
                   <span class="font-bold text-slate-800 text-xs truncate block" :title="file.fileName">{{ file.fileName }}</span>
-                  <span class="text-[11px] text-slate-400 font-semibold">{{ formatFileSize(file.fileSize) }}</span>
+                  <span class="text-xs text-slate-400 font-semibold">{{ formatFileSize(file.fileSize) }}</span>
                 </div>
               </div>
               <a 
@@ -469,11 +469,11 @@
                   <td class="p-2.5 text-center">
                     <span 
                       v-if="plan.isIssued || (plan.files && plan.files.length > 0)" 
-                      class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-bold bg-indigo-100 text-indigo-800 border border-indigo-200"
+                      class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800 border border-indigo-200"
                     >
                       ✓ Đã ban hành
                     </span>
-                    <span v-else class="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] font-medium bg-slate-100 text-slate-400">
+                    <span v-else class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-slate-100 text-slate-400">
                       Chưa ban hành
                     </span>
                   </td>
@@ -582,7 +582,7 @@
                 </div>
                 <div class="overflow-hidden">
                   <span class="font-bold text-slate-800 text-xs truncate block" :title="file.fileName">{{ file.fileName }}</span>
-                  <span class="text-[11px] text-slate-400 font-semibold">{{ formatFileSize(file.fileSize) }}</span>
+                  <span class="text-xs text-slate-400 font-semibold">{{ formatFileSize(file.fileSize) }}</span>
                 </div>
               </div>
               <a 
@@ -648,7 +648,7 @@
           >
             <span>👥</span>
             <span>1. Cán bộ đầu mối</span>
-            <span v-if="contactPersonsForm.length" class="ml-1 px-1.5 py-0.2 rounded-full text-[10px] bg-blue-100 text-blue-700">{{ contactPersonsForm.length }}</span>
+            <span v-if="contactPersonsForm.length" class="ml-1 px-1.5 py-0.2 rounded-full text-xs bg-blue-100 text-blue-700">{{ contactPersonsForm.length }}</span>
           </button>
 
           <button 
@@ -690,7 +690,7 @@
             <div class="flex items-center justify-between border-b border-slate-200 pb-2">
               <div>
                 <h4 class="text-xs font-bold text-slate-800">Danh sách cán bộ đầu mối chuyển đổi số</h4>
-                <p class="text-[11px] text-slate-500">Khai báo thông tin các cán bộ chịu trách nhiệm đầu mối kết nối, tổng hợp báo cáo CĐS.</p>
+                <p class="text-xs text-slate-500">Khai báo thông tin các cán bộ chịu trách nhiệm đầu mối kết nối, tổng hợp báo cáo CĐS.</p>
               </div>
 
               <button 
@@ -839,7 +839,7 @@
                   <div class="flex items-center gap-2 overflow-hidden">
                     <span>📄</span>
                     <span class="font-bold text-slate-800 truncate" :title="file.fileName">{{ file.fileName }}</span>
-                    <span class="text-[11px] text-slate-400">({{ formatFileSize(file.fileSize) }})</span>
+                    <span class="text-xs text-slate-400">({{ formatFileSize(file.fileSize) }})</span>
                   </div>
                   <button 
                     @click="removeFiveYearFile(fIdx)" 
@@ -874,7 +874,7 @@
             <div class="flex items-center justify-between border-b border-slate-200 pb-2">
               <div>
                 <h4 class="text-xs font-bold text-slate-800">Theo dõi ban hành Kế hoạch CĐS hàng năm</h4>
-                <p class="text-[11px] text-slate-500">Tích chọn các năm đơn vị đã ban hành kế hoạch và đính kèm tệp văn bản phê duyệt.</p>
+                <p class="text-xs text-slate-500">Tích chọn các năm đơn vị đã ban hành kế hoạch và đính kèm tệp văn bản phê duyệt.</p>
               </div>
               <button 
                 @click="addAnnualPlanYear" 
@@ -923,11 +923,11 @@
                     </td>
                     <td class="p-2.5">
                       <div class="space-y-1">
-                        <div v-for="(f, fIdx) in (plan.files || [])" :key="f.id || fIdx" class="flex items-center justify-between gap-1 text-[11px] bg-slate-100 px-2 py-0.5 rounded">
+                        <div v-for="(f, fIdx) in (plan.files || [])" :key="f.id || fIdx" class="flex items-center justify-between gap-1 text-xs bg-slate-100 px-2 py-0.5 rounded">
                           <span class="truncate max-w-[120px]" :title="f.fileName">📎 {{ f.fileName }}</span>
                           <button @click="plan.files.splice(fIdx, 1)" class="text-rose-600 font-bold hover:underline cursor-pointer">✕</button>
                         </div>
-                        <label class="inline-flex items-center gap-1 text-[11px] text-indigo-600 hover:text-indigo-800 font-bold cursor-pointer hover:underline">
+                        <label class="inline-flex items-center gap-1 text-xs text-indigo-600 hover:text-indigo-800 font-bold cursor-pointer hover:underline">
                           <span>+ Tải tệp</span>
                           <input type="file" @change="handleAnnualPlanFileUpload($event, plan)" class="hidden" accept=".pdf,.doc,.docx" />
                         </label>
@@ -1007,7 +1007,7 @@
                   <div class="flex items-center gap-2 overflow-hidden">
                     <span>🏛️</span>
                     <span class="font-bold text-slate-800 truncate" :title="file.fileName">{{ file.fileName }}</span>
-                    <span class="text-[11px] text-slate-400">({{ formatFileSize(file.fileSize) }})</span>
+                    <span class="text-xs text-slate-400">({{ formatFileSize(file.fileSize) }})</span>
                   </div>
                   <button 
                     @click="digitalArchitectureForm.files.splice(fIdx, 1)" 

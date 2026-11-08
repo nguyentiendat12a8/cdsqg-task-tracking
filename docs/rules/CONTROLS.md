@@ -1,3 +1,7 @@
+# Cập nhật 08/11/2026
+
+Theo yêu cầu nâng chuẩn UI/UX, kích thước chữ và control dùng thang mới tại UI-DESIGN.md: Be Vietnam Pro, body 14px desktop/16px mobile, control 40px desktop/tối thiểu 44px mobile; quy định 12px/36px phía dưới là lịch sử và không còn ưu tiên. Icon-only trong bảng vẫn gọn và phải có tên accessible; không tăng cả bảng bằng zoom.
+
 # Rule control và trạng thái tương tác
 
 ## Component hiện có cần tái sử dụng

@@ -8,6 +8,8 @@
     ]"
     @mouseenter="onMouseEnter"
     @mouseleave="onMouseLeave"
+    @focusin="onFocusEnter"
+    @focusout="onFocusLeave"
   >
     <aside 
       :class="[
@@ -66,7 +68,7 @@
       </div>
 
       <!-- Main Navigation Items -->
-      <nav class="flex-1 py-4 px-2.5 space-y-1.5 overflow-y-auto custom-scrollbar">
+      <nav aria-label="Điều hướng chính" class="flex-1 py-4 px-2.5 space-y-1.5 overflow-y-auto custom-scrollbar">
         
         <!-- Trang chủ (Dashboard) -->
         <button 
@@ -313,11 +315,17 @@ function onMouseEnter() {
   isHovered.value = true;
 }
 
+function onFocusEnter(event) {
+  if (event.target.closest('nav')) onMouseEnter();
+}
+function onFocusLeave(event) {
+  if (!event.currentTarget.contains(event.relatedTarget)) onMouseLeave();
+}
 function onMouseLeave() {
   if (!isManualCollapsed.value) return;
   if (hoverTimer) clearTimeout(hoverTimer);
   hoverTimer = setTimeout(() => {
-    isHovered.value = false;
+    if (!document.activeElement?.closest('.app-sidebar')) isHovered.value = false;
   }, 150);
 }
 

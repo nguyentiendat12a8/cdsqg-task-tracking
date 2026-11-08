@@ -1,3 +1,7 @@
+# Cập nhật ưu tiên từ 08/11/2026
+
+Theo yêu cầu người dùng, thay chuẩn chữ 12px/Helvetica bằng thang chữ dễ đọc theo UI UX Pro Max. Mục này thay thế các quy định xung đột bên dưới: font Be Vietnam Pro tự lưu trong public/fonts kèm OFL, fallback Segoe UI/Arial; body 14px desktop và 16px mobile, chú thích 13px, bảng 14px, tiêu đề trang/modal 20px, nhóm 16px. Line height 1.5–1.6. Control desktop 40px, mobile tối thiểu 44px; nút nhãn dài được wrap trên mobile. Root giữ 16px, không dùng zoom để thu nhỏ chữ. Palette nghiệp vụ giữ nguyên. Kiểm tra desktop/mobile và zoom 200%, không xem đây là chứng nhận đạt mọi tiêu chí accessibility.
+
 # Rule font và thiết kế
 
 ## Font

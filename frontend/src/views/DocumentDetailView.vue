@@ -38,7 +38,7 @@
         </div>
 
         <div class="flex items-center gap-2 flex-wrap">
-          <OverlayPanel title="Tính năng Excel" placement="bottom-end" :show-header="false" :show-actions="false" :overflow-padding="16" width-class="w-[320px]" panel-class="bg-blue-50 border border-blue-200 shadow-xl shadow-blue-900/15">
+          <OverlayPanel anchored title="Tính năng Excel" placement="bottom-end" :show-header="false" :show-actions="false" :overflow-padding="16" width-class="w-[320px]" panel-class="bg-blue-50 border border-blue-200 shadow-xl shadow-blue-900/15">
             <template #trigger="{ isOpen, setTriggerRef }">
               <button :ref="setTriggerRef" type="button" class="ui-btn ui-btn-secondary" :class="{ '!bg-blue-100 !border-blue-300 !text-blue-800': isOpen }" :aria-expanded="isOpen" aria-haspopup="dialog">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h6v6H4zM14 4h6v6h-6zM4 14h6v6H4zM14 14h6v6h-6z" stroke-width="1.8" stroke-linejoin="round" /></svg>

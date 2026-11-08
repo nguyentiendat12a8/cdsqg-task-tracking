@@ -3,7 +3,7 @@
           <table class="w-full min-w-[1280px] text-left text-sm text-slate-700 border-collapse">
             <thead class="bg-slate-100 text-xs text-slate-700 font-semibold border-b border-slate-200 sticky top-0 z-30 shadow-xs select-none">
               <tr>
-                <th @click="handleSort('code')" class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 whitespace-nowrap min-w-[75px] w-[75px] max-w-[75px] sticky left-0 z-30 cursor-pointer hover:bg-slate-200 transition" title="Bấm để sắp xếp theo Mã">
+                <th tabindex="0" :aria-sort="sortBy === 'code' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'" @keydown.enter.prevent="handleSort('code')" @keydown.space.prevent="handleSort('code')" @click="handleSort('code')" class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 whitespace-nowrap min-w-[75px] w-[75px] max-w-[75px] sticky left-0 z-30 cursor-pointer hover:bg-slate-200 transition" title="Bấm để sắp xếp theo Mã">
                   <div class="flex items-center justify-between gap-1">
                     <span>Mã</span>
                     <span class="text-xs font-bold text-slate-400">
@@ -13,7 +13,7 @@
                     </span>
                   </div>
                 </th>
-                <th @click="handleSort('title')" class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[280px] w-[280px] max-w-[280px] sticky left-[75px] z-30 shadow-[3px_0_6px_-1px_rgba(0,0,0,0.12)] cursor-pointer hover:bg-slate-200 transition" title="Bấm để sắp xếp theo Tên">
+                <th tabindex="0" :aria-sort="sortBy === 'title' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'" @keydown.enter.prevent="handleSort('title')" @keydown.space.prevent="handleSort('title')" @click="handleSort('title')" class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[280px] w-[280px] max-w-[280px] sticky left-[75px] z-30 shadow-[3px_0_6px_-1px_rgba(0,0,0,0.12)] cursor-pointer hover:bg-slate-200 transition" title="Bấm để sắp xếp theo Tên">
                   <div class="flex items-center justify-between gap-1">
                     <span>{{ filterItemType === 'Goal' ? 'Tên mục tiêu' : (filterItemType === 'Task' ? 'Tên nhiệm vụ' : 'Tên mục tiêu / nhiệm vụ') }}</span>
                     <span class="text-xs font-bold text-slate-400">
@@ -23,7 +23,7 @@
                     </span>
                   </div>
                 </th>
-                <th @click="handleSort('leadAgency')" class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[180px] w-[180px] max-w-[180px] cursor-pointer hover:bg-slate-200 transition" title="Bấm để sắp xếp theo Cơ quan chủ trì">
+                <th tabindex="0" :aria-sort="sortBy === 'leadAgency' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'" @keydown.enter.prevent="handleSort('leadAgency')" @keydown.space.prevent="handleSort('leadAgency')" @click="handleSort('leadAgency')" class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[180px] w-[180px] max-w-[180px] cursor-pointer hover:bg-slate-200 transition" title="Bấm để sắp xếp theo Cơ quan chủ trì">
                   <div class="flex items-center justify-between gap-1">
                     <span>Cơ quan chủ trì</span>
                     <span class="text-xs font-bold text-slate-400">
@@ -33,7 +33,7 @@
                     </span>
                   </div>
                 </th>
-                <th v-if="isLeadAgencyFilteredByBKHCN" @click="handleSort('assignedAgency')" class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[180px] w-[180px] max-w-[180px] cursor-pointer hover:bg-slate-200 transition" title="Bấm để sắp xếp theo Đơn vị trực thuộc">
+                <th v-if="isLeadAgencyFilteredByBKHCN" tabindex="0" :aria-sort="sortBy === 'assignedAgency' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'" @keydown.enter.prevent="handleSort('assignedAgency')" @keydown.space.prevent="handleSort('assignedAgency')" @click="handleSort('assignedAgency')" class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[180px] w-[180px] max-w-[180px] cursor-pointer hover:bg-slate-200 transition" title="Bấm để sắp xếp theo Đơn vị trực thuộc">
                   <div class="flex items-center justify-between gap-1">
                     <span>Giao đơn vị trực thuộc</span>
                     <span class="text-xs font-bold text-slate-400">
@@ -43,7 +43,7 @@
                     </span>
                   </div>
                 </th>
-                <th @click="handleSort('coordinatingAgency')" class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[180px] w-[180px] max-w-[180px] cursor-pointer hover:bg-slate-200 transition" title="Bấm để sắp xếp theo Cơ quan phối hợp">
+                <th tabindex="0" :aria-sort="sortBy === 'coordinatingAgency' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'" @keydown.enter.prevent="handleSort('coordinatingAgency')" @keydown.space.prevent="handleSort('coordinatingAgency')" @click="handleSort('coordinatingAgency')" class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[180px] w-[180px] max-w-[180px] cursor-pointer hover:bg-slate-200 transition" title="Bấm để sắp xếp theo Cơ quan phối hợp">
                   <div class="flex items-center justify-between gap-1">
                     <span>Cơ quan phối hợp</span>
                     <span class="text-xs font-bold text-slate-400">
@@ -53,7 +53,7 @@
                     </span>
                   </div>
                 </th>
-                <th @click="handleSort('period')" class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 whitespace-nowrap min-w-[160px] w-[160px] max-w-[160px] cursor-pointer hover:bg-slate-200 transition" title="Bấm để sắp xếp theo Thời gian thực hiện">
+                <th tabindex="0" :aria-sort="sortBy === 'period' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'" @keydown.enter.prevent="handleSort('period')" @keydown.space.prevent="handleSort('period')" @click="handleSort('period')" class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 whitespace-nowrap min-w-[160px] w-[160px] max-w-[160px] cursor-pointer hover:bg-slate-200 transition" title="Bấm để sắp xếp theo Thời gian thực hiện">
                   <div class="flex items-center justify-between gap-1">
                     <span>Thời gian thực hiện</span>
                     <span class="text-xs font-bold text-slate-400">
@@ -63,7 +63,7 @@
                     </span>
                   </div>
                 </th>
-                <th v-if="filterItemType === 'Goal'" @click="handleSort('progress')" class="px-3 py-2.5 border-r border-slate-200 text-center bg-slate-100 min-w-[125px] w-[125px] max-w-[125px] cursor-pointer hover:bg-slate-200 transition" title="Bấm để sắp xếp theo Tiến độ">
+                <th v-if="filterItemType === 'Goal'" tabindex="0" :aria-sort="sortBy === 'progress' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'" @keydown.enter.prevent="handleSort('progress')" @keydown.space.prevent="handleSort('progress')" @click="handleSort('progress')" class="px-3 py-2.5 border-r border-slate-200 text-center bg-slate-100 min-w-[125px] w-[125px] max-w-[125px] cursor-pointer hover:bg-slate-200 transition" title="Bấm để sắp xếp theo Tiến độ">
                   <div class="flex items-center justify-center gap-1">
                     <span>Hoàn thành chỉ tiêu</span>
                     <span class="text-xs font-bold text-slate-400">
@@ -73,7 +73,7 @@
                     </span>
                   </div>
                 </th>
-                <th @click="handleSort('status')" class="px-3 py-2.5 border-r border-slate-200 text-center bg-slate-100 min-w-[195px] w-[195px] max-w-[195px] cursor-pointer hover:bg-slate-200 transition" title="Bấm để sắp xếp theo Trạng thái">
+                <th tabindex="0" :aria-sort="sortBy === 'status' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'" @keydown.enter.prevent="handleSort('status')" @keydown.space.prevent="handleSort('status')" @click="handleSort('status')" class="px-3 py-2.5 border-r border-slate-200 text-center bg-slate-100 min-w-[195px] w-[195px] max-w-[195px] cursor-pointer hover:bg-slate-200 transition" title="Bấm để sắp xếp theo Trạng thái">
                   <div class="flex items-center justify-center gap-1">
                     <span>Trạng thái</span>
                     <span class="text-xs font-bold text-slate-400">
@@ -99,9 +99,9 @@
                       placement="top"
                       :delay="{ show: 1500, hide: 0 }"
                     >
-                      <div class="line-clamp-2 font-normal text-slate-800 text-xs leading-relaxed cursor-help">
+                      <button type="button" class="document-title-button line-clamp-2 text-left font-normal text-slate-800 text-xs leading-relaxed hover:text-blue-700 hover:underline" @click.stop="openItemDetailModal(item)" :aria-label="`Xem chi tiết ${item.code}: ${item.title}`">
                         {{ item.title }}
-                      </div>
+                      </button>
 
                       <template #popper>
                         <div class="whitespace-normal break-words text-left leading-relaxed min-w-[280px] max-w-[450px] p-1">

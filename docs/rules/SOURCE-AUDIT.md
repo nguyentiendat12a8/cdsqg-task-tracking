@@ -87,3 +87,22 @@ Quản trị AI — đã gom file và RSS vào Nguồn dữ liệu chung, bỏ s
 28/10/2026: thêm Tiện ích → Thông tin chuyển đổi số. Đồng bộ sheet phía backend có lease, URL hash duy nhất, migration additive; không phụ thuộc browser và không ghi tiến độ mục tiêu. Xem docs/DIGITAL-NEWS.md về kiểm thử và giới hạn môi trường.
 
 - 02/11/2026: Tiện ích thông tin chuyển đổi số đã tách khỏi AI Internet và đồng bộ Sheet. Nguồn/từ khóa/lịch, hàng đợi đánh giá tiêu đề, kết quả và thông báo lưu PostgreSQL; đọc thủ công không ghi đề xuất số liệu hoặc tiến độ. Chủ sở hữu và kiểm thử: docs/DIGITAL-PLAN-MONITORING.md.
+
+
+## 08/11/2026 — Rà soát UX thành phần dùng chung
+
+Áp dụng hướng dẫn UI UX Pro Max trong thư mục tham khảo local (được gitignore), giữ palette và mật độ đã thống nhất.
+- OverlayPanel hỗ trợ chế độ anchored cho menu Excel: bỏ ép vị trí đầu màn hình trên mobile, giữ trong viewport; focus thao tác đầu tiên sau khi hiển thị, Esc trả focus và đóng khi Tab ra ngoài. Bộ lọc hiện hữu giữ chế độ mặc định.
+- DocumentItemsTable: tiêu đề cột sắp xếp hỗ trợ Enter/Space, aria-sort; tên mục là nút mở chi tiết, không phụ thuộc hover tooltip. Mobile chỉ cố định cột mã.
+- accessibleData: các header có cursor-pointer và không chứa control được hỗ trợ bàn phím qua event delegation; giữ scope và semantics của bảng.
+- Sidebar mở nhãn khi điều hướng bàn phím, giữ focus trên nút hiện hành, có tên vùng điều hướng.
+- Kiểm tra: document-ux.browser (Goal/Task ở 1440 và 390), utilities-header.browser, reports-layout.browser, digital-news.browser, dashboard-scope.browser; sidebar kiểm tra focus riêng. Build và check:rules qua. Chưa triển khai production.
+
+Còn cần rà soát theo nghiệp vụ: thống nhất nghĩa các nhãn chưa cập nhật/chưa báo cáo/không áp dụng; không thay nhãn bằng suy đoán dữ liệu trong đợt sửa tương tác này.
+
+
+## 08/11/2026 — Typography theo UI UX Pro Max
+
+Người dùng cho phép thay quy định font/mật độ cũ. Tự lưu Be Vietnam Pro 400/500/600/700 và OFL từ google/fonts; font-display swap, fallback Segoe UI/Arial. Thang token: body 14px desktop, 16px mobile; bảng 14px, caption 13px; heading trang/modal 20px, nhóm 16px. Control 40px desktop, tối thiểu 44px mobile; nút mobile được wrap. Giữ root 16px, palette và logic dữ liệu. Gỡ các cỡ caption 10–11px còn trong màn đầu mối về token text-xs.
+
+Đã kiểm tra 13 route bằng system-theme.browser ở 1440/390; document-ux, utilities-header, reports-layout, digital-news; typography.browser xác minh font load, cỡ chữ thực tế và CSS zoom 200% trên màn mục tiêu. Các kiểm tra không thay thế audit accessibility toàn diện. Chuẩn hiện hành nằm đầu UI-DESIGN/CONTROLS, phần cũ giữ làm lịch sử.

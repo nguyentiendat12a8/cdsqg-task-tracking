@@ -1,13 +1,15 @@
 <template>
   <VDropdown 
     :triggers="['click']" 
-    :auto-hide="false" 
+    :auto-hide="false"
+    :no-auto-focus="anchored"
     :placement="placement"
     :distance="8"
     :overflow-padding="overflowPadding"
     v-model:shown="isOpen"
-    @show="emit('show')"
-    popper-class="v-popper-clean-overlay"
+    @show="handleShow"
+    @apply-show="focusPanel"
+    :popper-class="['v-popper-clean-overlay', anchored ? 'v-popper-anchored-overlay' : '']"
   >
     <slot name="trigger" :is-open="isOpen" :set-trigger-ref="setTriggerRef" :close="closePanel">
     <!-- Trigger Button -->
@@ -39,6 +41,9 @@
     <template #popper>
       <div 
         ref="panelRef"
+        :role="anchored ? 'dialog' : undefined"
+        :aria-label="anchored ? title : undefined"
+        tabindex="-1"
         @keydown.esc.stop.prevent="closePanel"
         class="rounded-2xl font-sans p-4 space-y-3.5 z-50 text-slate-800 flex flex-col max-w-full max-h-[calc(100dvh-2rem)]"
         :class="[panelWidthClass, heightClass, panelClass || 'bg-white shadow-xl shadow-blue-900/10 border border-blue-200']"
@@ -114,6 +119,7 @@ import { formatNumber } from "../shared/formatters";
 import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue';
 
 const props = defineProps({
+  anchored: { type: Boolean, default: false },
   applyDisabled: { type: Boolean, default: false },
   overflowPadding: { type: Number, default: 0 },
   placement: { type: String, default: 'bottom-start' },
@@ -147,6 +153,20 @@ const triggerBtnRef = ref(null);
 
 const panelWidthClass = computed(() => props.widthClass);
 
+function handleShow() { emit('show'); }
+function focusPanel() {
+  if (!props.anchored) return;
+  nextTick(() => requestAnimationFrame(() => requestAnimationFrame(() => {
+    if (!isOpen.value) return;
+    const first = panelRef.value?.querySelector('button:not(:disabled), a[href], input:not(:disabled), [tabindex="0"]');
+    (first || panelRef.value)?.focus();
+  })));
+}
+function handleFocusOutside(event) {
+  if (!props.anchored || !isOpen.value) return;
+  if (panelRef.value?.contains(event.target) || triggerBtnRef.value?.contains(event.target)) return;
+  isOpen.value = false;
+}
 function setTriggerRef(element) { triggerBtnRef.value = element; }
 function closePanel() {
   isOpen.value = false;
@@ -175,10 +195,12 @@ function handleClickOutside(e) {
 
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
+  document.addEventListener('focusin', handleFocusOutside);
 });
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
+  document.removeEventListener('focusin', handleFocusOutside);
 });
 </script>
 
@@ -204,7 +226,7 @@ onUnmounted(() => {
   opacity: 0 !important;
 }
 @media (max-width: 639px) {
-  .v-popper-clean-overlay.v-popper__popper {
+  .v-popper-clean-overlay.v-popper__popper:not(.v-popper-anchored-overlay) {
     position: fixed !important;
     top: 1rem !important;
     bottom: auto !important;
@@ -213,5 +235,8 @@ onUnmounted(() => {
     max-width: calc(100vw - 2rem);
     max-height: calc(100dvh - 2rem);
   }
+}
+.v-popper-anchored-overlay .v-popper__inner {
+  max-width: calc(100vw - 2rem);
 }
 </style>

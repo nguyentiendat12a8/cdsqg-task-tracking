@@ -31,7 +31,7 @@ for(const width of [1440,390]){
  await page.locator('.app-sidebar').hover();await page.getByTitle('Bấm để ghim cố định Menu',{exact:true}).click();await page.waitForFunction(()=>document.querySelector('.app-sidebar').getAnimations({subtree:true}).every(a=>a.playState!=='running'));
  const active=page.locator('.nav-link.is-active').first();await active.waitFor();await active.focus();await page.keyboard.press("Tab");await page.keyboard.press("Shift+Tab");
  const navColors=await active.evaluate(el=>{const s=getComputedStyle(el),n=getComputedStyle(el.closest('aside'));return {fg:s.color,bg:s.backgroundColor,nav:n.backgroundColor,outline:s.outlineStyle};});
- assert.equal(navColors.bg,'rgb(59, 95, 168)');assert.equal(navColors.nav,'rgb(241, 245, 252)');assert.ok(contrast(navColors.fg,navColors.bg)>=4.5);assert.notEqual(navColors.outline,'none');
+ assert.equal(navColors.bg,'rgb(59, 95, 168)');assert.equal(navColors.nav,'rgb(33, 54, 88)');assert.ok(contrast(navColors.fg,navColors.bg)>=4.5);assert.notEqual(navColors.outline,'none');
  const idle=page.locator('.nav-link:not(.is-active)').first();const idleColor=await idle.evaluate(el=>getComputedStyle(el).color);assert.ok(contrast(idleColor,navColors.nav)>=4.5);
  if(process.env.THEME_QA_DIR)await page.screenshot({path:`${process.env.THEME_QA_DIR}/theme-${width}-menu.png`});
  if(width<768)await page.getByRole('button',{name:'Đóng menu',exact:true}).click({position:{x:width-10,y:100},force:true});

@@ -61,3 +61,6 @@ tài liệu phát triển/
 
 # Private AI uploads; never serve or commit original files
 backend/App_Data/
+
+# Local UI/UX reference skill
+/UI UX PRO MAX SKILL/

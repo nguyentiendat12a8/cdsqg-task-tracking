@@ -15,7 +15,7 @@ for (const file of await files(root)) {
     assert.ok(!/<select\b/.test(source), `Use SearchableSelect for business dropdowns: ${file}`);
   }
   if (file.endsWith('.vue')) {
-    assert.ok(!/text-\[(?:9(?:\.5)?|10(?:\.5)?|11|13)px\]/.test(source), `Use the shared 12px text scale: ${file}`);
+    assert.ok(!/text-\[(?:9(?:\.5)?|10(?:\.5)?|11|13)px\]/.test(source), `Use shared typography tokens, not arbitrary text sizes: ${file}`);
   }
   if (!file.includes(`${path.sep}shared${path.sep}`)) {
     assert.ok(!/^\s*(?:export )?function (?:formatDate|formatDateTime|formatFileName|getStatusLabel)\(/m.test(source), `Use shared formatter/status module: ${file}`);
