@@ -17,9 +17,12 @@ public static class Seed2629AssignmentRepair
         var agencies = await db.Agencies.ToListAsync();
         Agency Ensure(string code, string name, AgencyTypeEnum type = AgencyTypeEnum.Ministry)
         {
-            var matches = agencies.Where(a => a.Code == code || string.Equals(a.Name.Trim(), name, StringComparison.OrdinalIgnoreCase)).ToList();
-            if (matches.Count > 1) throw new InvalidOperationException($"Trùng danh mục cơ quan: {name}");
-            if (matches.Count == 1) return matches[0];
+            var byCode = agencies.Where(a => a.Code == code).ToList();
+            if (byCode.Count > 1) throw new InvalidOperationException($"Trùng mã cơ quan: {code}");
+            if (byCode.Count == 1) return byCode[0];
+            var byName = agencies.Where(a => string.Equals(a.Name.Trim(), name, StringComparison.OrdinalIgnoreCase)).ToList();
+            if (byName.Count > 1) throw new InvalidOperationException($"Trùng danh mục cơ quan: {name}");
+            if (byName.Count == 1) return byName[0];
             var agency = new Agency { Code = code, Name = name, Type = type };
             db.Agencies.Add(agency); agencies.Add(agency); return agency;
         }
@@ -28,9 +31,12 @@ public static class Seed2629AssignmentRepair
         var bkhcn = Ensure("BKHCN", "Bộ Khoa học và Công nghệ");
         var bnv = Ensure("BNV", "Bộ Nội vụ");
         var btc = Ensure("BTC", "Bộ Tài chính");
+        var bqp = Ensure("BQP", "Bộ Quốc phòng");
+        var bgd = Ensure("BGD", "Bộ Giáo dục và Đào tạo");
         var bcy = Ensure("BCYCP", "Ban Cơ yếu Chính phủ", AgencyTypeEnum.Other);
         var all = Ensure("ALL_AGENCIES", "Các bộ, ngành, địa phương", AgencyTypeEnum.Special);
         var ministries = Ensure("ALL_MINISTRIES_DIRECT", "Các bộ, ngành", AgencyTypeEnum.Special);
+        var provinces = Ensure("ALL_PROVINCES", "Các địa phương", AgencyTypeEnum.Special);
         await db.SaveChangesAsync();
         int repaired = 0;
         foreach (var item in items)
@@ -61,7 +67,26 @@ public static class Seed2629AssignmentRepair
             if (item.AssignedAgencyId.HasValue && item.AssignedAgencyId != second?.Id) continue;
             item.LeadAgencyId = lead.Id;
             item.AssignedAgencyId = second?.Id;
-            await AgencyAssignments.SyncAsync(db, item, refreshCoordination: false);
+            var refreshCoordination = false;
+            if (item.ItemType == ItemTypeEnum.Task && item.CoordinatingAgencyIds.Count == 0)
+            {
+                var coordination = (item.CoordinatingAgenciesDisplayText ?? "").Trim();
+                var named = new[] { bca, vpcp, bkhcn, bnv, btc, bqp, bgd };
+                var ids = named.Where(a => coordination.Contains(a.Name, StringComparison.OrdinalIgnoreCase))
+                    .Select(a => a.Id).ToList();
+                if (coordination.Equals("Các bộ, ngành, địa phương", StringComparison.OrdinalIgnoreCase) ||
+                    coordination.Equals("Các bộ, ngành, địa phương khác có liên quan", StringComparison.OrdinalIgnoreCase)) ids.Add(all.Id);
+                if (coordination.Equals("Các bộ, ngành", StringComparison.OrdinalIgnoreCase) ||
+                    coordination.Equals("Các bộ, ngành có liên quan", StringComparison.OrdinalIgnoreCase) ||
+                    coordination.Equals("Bộ, ngành có liên quan", StringComparison.OrdinalIgnoreCase)) ids.Add(ministries.Id);
+                if (coordination.Equals("Các địa phương", StringComparison.OrdinalIgnoreCase)) ids.Add(provinces.Id);
+                if (ids.Count > 0)
+                {
+                    item.CoordinatingAgencyIds = ids.Distinct().ToList();
+                    refreshCoordination = true;
+                }
+            }
+            await AgencyAssignments.SyncAsync(db, item, refreshCoordination: refreshCoordination);
             repaired++;
         }
         await db.SaveChangesAsync();
