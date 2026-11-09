@@ -1,10 +1,11 @@
 <template>
 <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-slate-50/60 p-3 w-full">
-          <div class="flex items-center gap-2 flex-1 max-w-xl min-w-0">
+          <div class="flex flex-wrap items-center gap-2 w-full min-w-0">
             <!-- Quick Search Input -->
-            <div class="relative flex-1 min-w-[200px]">
+            <div class="relative flex-1 min-w-[min(100%,240px)]">
               <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
               <input
+                :aria-label="filterItemType === 'Goal' ? 'Tìm mục tiêu' : 'Tìm nhiệm vụ'"
                 :value="filterDraft.searchQuery"
                 @input="filterDraft.searchQuery = $event.target.value"
                 @keyup.enter="execFilterSearch"
@@ -42,8 +43,8 @@
               title="Bộ lọc tìm kiếm nâng cao"
               buttonText="Lọc nâng cao"
               :activeCount="activeFilterCount"
-              widthClass="w-[320px] sm:w-[480px] max-w-[90vw]"
-              heightClass="h-[480px] max-h-[calc(100dvh-3rem)]"
+              widthClass="w-[calc(100vw-2rem)] sm:w-[480px]"
+              heightClass="h-[560px]"
               :applyDisabled="!!filterError"
               @apply="execFilterSearch"
               @reset="resetFilterSearch"

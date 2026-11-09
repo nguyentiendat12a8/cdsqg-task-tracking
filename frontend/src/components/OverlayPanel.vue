@@ -8,8 +8,8 @@
     :overflow-padding="overflowPadding"
     v-model:shown="isOpen"
     @show="handleShow"
-    @apply-show="focusPanel"
-    :popper-class="['v-popper-clean-overlay', anchored ? 'v-popper-anchored-overlay' : '']"
+    @apply-show="handlePanelShown"
+    :popper-class="['v-popper-clean-overlay', anchored ? 'v-popper-anchored-overlay' : 'v-popper-filter-overlay', compactFilter ? 'v-popper-filter-compact' : '']"
   >
     <slot name="trigger" :is-open="isOpen" :set-trigger-ref="setTriggerRef" :close="closePanel">
     <!-- Trigger Button -->
@@ -45,7 +45,7 @@
         :aria-label="anchored ? title : undefined"
         tabindex="-1"
         @keydown.esc.stop.prevent="closePanel"
-        class="rounded-2xl font-sans p-4 space-y-3.5 z-50 text-slate-800 flex flex-col max-w-full max-h-[calc(100dvh-2rem)]"
+        class="ui-overlay-panel rounded-2xl font-sans p-4 space-y-3.5 z-50 text-slate-800 flex flex-col max-w-full max-h-[calc(100dvh-2rem)]"
         :class="[panelWidthClass, heightClass, panelClass || 'bg-white shadow-xl shadow-blue-900/10 border border-blue-200']"
       >
         <!-- Panel Header -->
@@ -75,7 +75,7 @@
         </div>
 
         <!-- Filter Form Fields Slot -->
-        <div class="space-y-3 min-h-0 flex-1 overflow-y-auto custom-scrollbar px-0.5">
+        <div class="space-y-3 min-h-0 flex-1 overflow-y-auto custom-scrollbar px-2 py-1">
           <slot :close="closePanel"></slot>
         </div>
 
@@ -121,7 +121,7 @@ import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue';
 const props = defineProps({
   anchored: { type: Boolean, default: false },
   applyDisabled: { type: Boolean, default: false },
-  overflowPadding: { type: Number, default: 0 },
+  overflowPadding: { type: Number, default: 16 },
   placement: { type: String, default: 'bottom-start' },
   showActions: { type: Boolean, default: true },
   showHeader: { type: Boolean, default: true },
@@ -148,12 +148,29 @@ const props = defineProps({
 const emit = defineEmits(['apply', 'reset', 'show']);
 
 const isOpen = ref(false);
+const compactFilter = ref(false);
+let fitVersion = 0;
 const panelRef = ref(null);
 const triggerBtnRef = ref(null);
 
 const panelWidthClass = computed(() => props.widthClass);
 
-function handleShow() { emit('show'); }
+function handleShow() { compactFilter.value = false; emit('show'); }
+function handlePanelShown() { fitFilterToViewport(); focusPanel(); }
+async function fitFilterToViewport() {
+  if (props.anchored || !isOpen.value) return;
+  const version = ++fitVersion;
+  compactFilter.value = false;
+  await nextTick();
+  requestAnimationFrame(() => {
+    if (version !== fitVersion || !isOpen.value || !panelRef.value || !triggerBtnRef.value) return;
+    const trigger = triggerBtnRef.value.getBoundingClientRect();
+    const panel = panelRef.value.getBoundingClientRect();
+    const below = window.innerHeight - trigger.bottom - 24;
+    const above = trigger.top - 80;
+    compactFilter.value = panel.height > Math.max(below, above) || panel.width > window.innerWidth - 32;
+  });
+}
 function focusPanel() {
   if (!props.anchored) return;
   nextTick(() => requestAnimationFrame(() => requestAnimationFrame(() => {
@@ -196,11 +213,14 @@ function handleClickOutside(e) {
 onMounted(() => {
   document.addEventListener('click', handleClickOutside);
   document.addEventListener('focusin', handleFocusOutside);
+  window.addEventListener('resize', fitFilterToViewport);
 });
 
 onUnmounted(() => {
   document.removeEventListener('click', handleClickOutside);
   document.removeEventListener('focusin', handleFocusOutside);
+  window.removeEventListener('resize', fitFilterToViewport);
+  fitVersion++;
 });
 </script>
 
@@ -225,15 +245,29 @@ onUnmounted(() => {
   visibility: hidden !important;
   opacity: 0 !important;
 }
+/* Preserve anchored popovers when they fit; use a viewport surface only on overflow. */
+.v-popper-filter-compact.v-popper__popper {
+  position: fixed !important;
+  inset: 80px 16px auto auto !important;
+  transform: none !important;
+  max-width: calc(100vw - 32px);
+  max-height: calc(100dvh - 96px);
+}
+.v-popper-filter-compact .ui-overlay-panel {
+  max-height: calc(100dvh - 96px) !important;
+  width: min(480px, calc(100vw - 32px));
+  min-height: 0;
+}
 @media (max-width: 639px) {
-  .v-popper-clean-overlay.v-popper__popper:not(.v-popper-anchored-overlay) {
-    position: fixed !important;
-    top: 1rem !important;
-    bottom: auto !important;
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-    max-width: calc(100vw - 2rem);
-    max-height: calc(100dvh - 2rem);
+  .v-popper-filter-compact.v-popper__popper {
+    inset: 72px 12px auto 12px !important;
+    max-width: calc(100vw - 24px);
+    max-height: calc(100dvh - 84px);
+  }
+  .v-popper-filter-compact .ui-overlay-panel {
+    width: calc(100vw - 24px);
+    max-height: calc(100dvh - 84px) !important;
+    padding: 12px;
   }
 }
 .v-popper-anchored-overlay .v-popper__inner {

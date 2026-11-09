@@ -5,8 +5,8 @@
     <div class="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden w-full">
 
       <!-- Integrated Top Header Bar -->
-      <div class="ui-screen-heading p-4 sm:p-5 border-b border-slate-200/80 bg-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div class="flex items-center gap-3">
+      <div class="ui-screen-heading p-4 sm:p-5 border-b border-slate-200/80 bg-white flex flex-col xl:flex-row items-start xl:items-center justify-between gap-3">
+        <div class="flex flex-1 min-w-0 items-center gap-3">
           <div 
             class="ui-screen-icon w-10 h-10 rounded-2xl text-white flex items-center justify-center shrink-0 shadow-md"
 
@@ -37,7 +37,7 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-2 flex-wrap">
+        <div class="flex shrink-0 items-center gap-2 flex-wrap">
           <OverlayPanel anchored title="Tính năng Excel" placement="bottom-end" :show-header="false" :show-actions="false" :overflow-padding="16" width-class="w-[320px]" panel-class="bg-blue-50 border border-blue-200 shadow-xl shadow-blue-900/15">
             <template #trigger="{ isOpen, setTriggerRef }">
               <button :ref="setTriggerRef" type="button" class="ui-btn ui-btn-secondary" :class="{ '!bg-blue-100 !border-blue-300 !text-blue-800': isOpen }" :aria-expanded="isOpen" aria-haspopup="dialog">

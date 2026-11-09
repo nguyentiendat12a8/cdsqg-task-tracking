@@ -87,7 +87,7 @@
         ref="dropdownPanelRef"
         @keydown="handleDropdownKey"
         :style="dropdownStyle"
-        class="fixed bg-white border border-slate-200 rounded-2xl shadow-2xl z-[9999999] p-2 space-y-2 max-w-full animate-in fade-in zoom-in-95 duration-100 font-sans text-left"
+        class="fixed flex flex-col min-h-0 overflow-hidden bg-white border border-slate-200 rounded-2xl shadow-2xl z-[9999999] p-2 space-y-2 max-w-full animate-in fade-in zoom-in-95 duration-100 font-sans text-left"
       >
         <!-- Quick Search input inside control -->
         <div class="relative">
@@ -122,7 +122,7 @@
         </div>
 
         <!-- Options List with Checkboxes -->
-        <div :id="listId" role="listbox" :aria-label="label || placeholder || 'Các lựa chọn'" :aria-multiselectable="isMulti" class="max-h-52 overflow-y-auto space-y-0.5 custom-scrollbar pr-0.5">
+        <div :id="listId" role="listbox" :aria-label="label || placeholder || 'Các lựa chọn'" :aria-multiselectable="isMulti" class="min-h-0 flex-1 max-h-72 overflow-y-auto space-y-0.5 custom-scrollbar pr-0.5">
           <div 
             v-for="opt in filteredOptions" 
             :key="opt.value"
@@ -230,27 +230,18 @@ function updateDropdownPosition() {
   const rect = triggerRef.value.getBoundingClientRect();
   const minWidth = Math.min(Math.max(rect.width, 320), window.innerWidth - 24);
   
-  let top = rect.bottom + 4;
-  let left = rect.left;
-
-  // Viewport flip logic if bottom overflow
-  const viewportHeight = window.innerHeight;
-  const estimatedHeight = 260;
-  if (top + estimatedHeight > viewportHeight && rect.top > estimatedHeight) {
-    top = rect.top - estimatedHeight - 4;
-  }
-
-  // Viewport right limit
-  const viewportWidth = window.innerWidth;
-  if (left + minWidth > viewportWidth - 12) {
-    left = viewportWidth - minWidth - 12;
-  }
-  if (left < 12) left = 12;
-
+  const margin = 12;
+  const below = Math.max(0, window.innerHeight - rect.bottom - margin - 4);
+  const above = Math.max(0, rect.top - margin - 4);
+  const openAbove = below < 320 && above > below;
+  const available = openAbove ? above : below;
+  const left = Math.max(margin, Math.min(rect.left, window.innerWidth - minWidth - margin));
   dropdownStyle.value = {
-    top: `${top}px`,
+    top: openAbove ? 'auto' : `${rect.bottom + 4}px`,
+    bottom: openAbove ? `${window.innerHeight - rect.top + 4}px` : 'auto',
     left: `${left}px`,
     width: `${minWidth}px`,
+    maxHeight: `${Math.floor(available)}px`,
     zIndex: 9999999
   };
 }

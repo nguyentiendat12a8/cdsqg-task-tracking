@@ -17,6 +17,12 @@ export const accessibleData = {
             wrapper.tabIndex = 0;
             wrapper.setAttribute('role','region');
             wrapper.setAttribute('aria-label','Bảng dữ liệu, cuộn ngang bằng phím mũi tên');
+            // Reserve room for pagination using actual header/filter height.
+            const style = getComputedStyle(wrapper);
+            if (style.overflowY === 'auto' && style.maxHeight !== 'none' && !wrapper.closest('[role="dialog"]')) {
+              const available = Math.max(180, window.innerHeight - wrapper.getBoundingClientRect().top - 88);
+              wrapper.style.maxHeight = `${Math.floor(available)}px`;
+            }
             break;
           }
           wrapper = wrapper.parentElement;
@@ -30,10 +36,15 @@ export const accessibleData = {
       header.click();
     };
     el.addEventListener('keydown', onKeydown);
+    let frame;
+    const scheduleEnhance = () => { cancelAnimationFrame(frame); frame = requestAnimationFrame(enhance); };
+    const resizeObserver = new ResizeObserver(scheduleEnhance);
+    resizeObserver.observe(el);
+    window.addEventListener('resize', scheduleEnhance);
     enhance();
     const observer = new MutationObserver(enhance);
     observer.observe(el,{childList:true,subtree:true});
-    el.__dataCleanup = () => { observer.disconnect(); el.removeEventListener('keydown', onKeydown); };
+    el.__dataCleanup = () => { observer.disconnect(); resizeObserver.disconnect(); cancelAnimationFrame(frame); window.removeEventListener('resize', scheduleEnhance); el.removeEventListener('keydown', onKeydown); };
   },
   unmounted(el) {el.__dataCleanup?.();}
 };

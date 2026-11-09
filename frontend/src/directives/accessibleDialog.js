@@ -6,6 +6,7 @@ export const accessibleDialog = {
     const previous = document.activeElement;
     const panel = el.firstElementChild || el;
     accessibleData.mounted(panel);
+    panel.classList.add('ui-dialog-viewport');
     panel.setAttribute('role', 'dialog');
     panel.setAttribute('aria-modal', 'true');
     panel.setAttribute('tabindex', '-1');

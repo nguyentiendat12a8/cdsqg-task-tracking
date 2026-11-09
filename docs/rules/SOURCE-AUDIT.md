@@ -106,3 +106,10 @@ Còn cần rà soát theo nghiệp vụ: thống nhất nghĩa các nhãn chưa 
 Người dùng cho phép thay quy định font/mật độ cũ. Tự lưu Be Vietnam Pro 400/500/600/700 và OFL từ google/fonts; font-display swap, fallback Segoe UI/Arial. Thang token: body 14px desktop, 16px mobile; bảng 14px, caption 13px; heading trang/modal 20px, nhóm 16px. Control 40px desktop, tối thiểu 44px mobile; nút mobile được wrap. Giữ root 16px, palette và logic dữ liệu. Gỡ các cỡ caption 10–11px còn trong màn đầu mối về token text-xs.
 
 Đã kiểm tra 13 route bằng system-theme.browser ở 1440/390; document-ux, utilities-header, reports-layout, digital-news; typography.browser xác minh font load, cỡ chữ thực tế và CSS zoom 200% trên màn mục tiêu. Các kiểm tra không thay thế audit accessibility toàn diện. Chuẩn hiện hành nằm đầu UI-DESIGN/CONTROLS, phần cũ giữ làm lịch sử.
+
+
+## 09/11/2026 — Laptop không cần thu nhỏ toàn trang
+
+Nguyên nhân: bộ lọc cao cố định so với vùng nhìn; popover/select định vị bằng chiều cao ước lượng; thanh tìm kiếm không wrap; bảng dùng phép trừ chiều cao cố định bất kể header thực tế. Sửa tại OverlayPanel, SearchableSelect, DocumentFilters, accessibleData/accessibleDialog và style chung. Giữ bộ lọc kiểu cũ nếu đủ chỗ theo phản hồi người dùng; fallback cạnh phải chỉ khi không vừa. Chừa footer, cuộn field riêng, giới hạn popup theo dvh. Header của mục tiêu/nhiệm vụ/báo cáo xuống hàng theo breakpoint, giảm padding trên laptop thấp. Không thay schema, filter semantics hay dữ liệu.
+
+Kiểm chứng local: laptop-layout.browser.mjs nạp từng route hoàn chỉnh với API giả, kiểm tra 13 màn ở năm viewport. Bộ lọc, footer và select phải ở trong vùng nhìn; cuộn field không dịch footer; desktop rộng không bật fallback. Thêm popup mục tiêu/nhiệm vụ và bảng 10 dòng để kiểm tra chiều cao/phân trang. Kiểm tra này không phải chứng nhận toàn bộ màn nghiệp vụ với mọi dữ liệu production.

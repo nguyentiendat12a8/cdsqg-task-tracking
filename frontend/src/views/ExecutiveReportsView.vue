@@ -2,7 +2,7 @@
   <div class="w-full min-w-0 font-sans rounded-2xl border border-slate-200/80 bg-white shadow-sm overflow-hidden">
 
     <!-- Header Bar -->
-    <div class="ui-screen-heading p-4 sm:p-5 border-b border-slate-200/80 flex flex-col md:flex-row md:items-center justify-between gap-3 w-full">
+    <div class="ui-screen-heading p-4 sm:p-5 border-b border-slate-200/80 flex flex-col xl:flex-row xl:items-center justify-between gap-3 w-full">
       <div>
         <div class="flex items-center gap-3 min-w-0">
           <span class="ui-screen-icon w-10 h-10 flex items-center justify-center shrink-0 rounded-2xl">
