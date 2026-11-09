@@ -55,6 +55,9 @@ try {
   assert.equal(rows.length, 105);
   assert.equal(rows[0][0], 'BÁO CÁO TIẾN ĐỘ THỰC HIỆN MỤC TIÊU');
   assert.equal(rows[3].length, 8);
+  assert.equal(rows[3][6], 'TIẾN ĐỘ ƯỚC TÍNH [CẦN ĐIỀN]');
+  assert.deepEqual(workbook.SheetNames, ['Báo Cáo Tiến Độ', 'Kế hoạch mục tiêu']);
+  assert.match(XLSX.utils.sheet_to_json(workbook.Sheets['Kế hoạch mục tiêu'], { header: 1 })[2][0], /Kế hoạch chuyển đổi số 5 năm/);
   assert.deepEqual(workbook.Sheets[workbook.SheetNames[0]]["!merges"].slice(0, 3).map(XLSX.utils.encode_range), ["A1:H1", "A2:H2", "A3:H3"]);
   await fs.writeFile("tests/progress-template-review.xlsx", await fs.readFile(await download.path()));
   assert.equal(rows.at(-1)[1], 'MT_LAST');

@@ -123,6 +123,39 @@ namespace Cdsqg.Application.DTOs
         public string? TargetQualitativeStatus { get; set; }
     }
 
+    /// <summary>Kế hoạch mục tiêu theo năm do đơn vị chủ trì nhập từ Excel (sheet "Kế hoạch mục tiêu").</summary>
+    public class ImportYearlyTargetsRequestDto
+    {
+        public List<ImportYearlyTargetRowDto> Rows { get; set; } = new();
+        /// <summary>false: chỉ kiểm tra và trả danh sách kế hoạch đã có; true: ghi đè sau khi người dùng xác nhận.</summary>
+        public bool ConfirmOverwrite { get; set; }
+    }
+
+    public class ImportYearlyTargetRowDto
+    {
+        public Guid TaskId { get; set; }
+        public int Year { get; set; }
+        public decimal TargetQuantity { get; set; }
+    }
+
+    public class YearlyTargetConflictDto
+    {
+        public Guid TaskId { get; set; }
+        public string Code { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public int Year { get; set; }
+        public decimal? CurrentTarget { get; set; }
+        public decimal NewTarget { get; set; }
+    }
+
+    public class ImportYearlyTargetsResultDto
+    {
+        public bool RequiresConfirmation { get; set; }
+        public int SavedCount { get; set; }
+        public int UnchangedCount { get; set; }
+        public List<YearlyTargetConflictDto> Conflicts { get; set; } = new();
+    }
+
     public class UpdateGoalTaskItemRequestDto
     {
         public string? Code { get; set; }

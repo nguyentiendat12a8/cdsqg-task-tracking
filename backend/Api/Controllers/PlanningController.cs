@@ -76,6 +76,34 @@ namespace Cdsqg.Api.Controllers
         }
 
         /// <summary>
+        /// Endpoint: POST /api/planning/documents/{id}/yearly-targets/import
+        /// Nhập kế hoạch mục tiêu theo năm từ sheet "Kế hoạch mục tiêu" của biểu mẫu Excel.
+        /// Lần gọi đầu (ConfirmOverwrite=false) trả RequiresConfirmation + danh sách kế hoạch đã có nếu bị thay đổi.
+        /// </summary>
+        [HttpPost("documents/{id:guid}/yearly-targets/import")]
+        public async Task<IActionResult> ImportYearlyTargets(Guid id, [FromBody] ImportYearlyTargetsRequestDto dto, [FromQuery] Guid? userAgencyId = null, [FromQuery] string? userRole = null)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            try
+            {
+                var result = await _planningService.ImportYearlyTargetsAsync(id, dto, userAgencyId, userRole == "Admin");
+                return Ok(result);
+            }
+            catch (UnauthorizedAccessException)
+            {
+                return Forbid();
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Lỗi khi nhập kế hoạch mục tiêu", details = ex.Message });
+            }
+        }
+
+        /// <summary>
         /// Endpoint: PUT /api/planning/tasks/{taskId}/yearly-target
         /// Auto-save chỉ tiêu hằng năm của một Task/Goal
         /// </summary>

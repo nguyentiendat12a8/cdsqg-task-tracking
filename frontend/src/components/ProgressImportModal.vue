@@ -13,7 +13,7 @@
               Nhập báo cáo tiến độ từ file Excel
             </h3>
             <p class="text-xs text-slate-500 font-semibold mt-0.5">
-              Số liệu định lượng là tổng đã đạt đến năm báo cáo, không phải phần tăng thêm trong năm. Hệ thống đối soát mã, quyền và dữ liệu trước khi nhập.
+              Tiến độ ước tính định lượng là tổng đã đạt đến năm báo cáo, không phải phần tăng thêm trong năm. Sheet "Kế hoạch mục tiêu" (nếu có) được nhập kèm. Hệ thống đối soát mã, quyền và dữ liệu trước khi nhập.
             </p>
           </div>
         </div>
@@ -61,7 +61,7 @@
         <!-- Summary Stats Banner -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs font-bold shrink-0">
           <div class="bg-slate-100 p-2.5 rounded-xl border border-slate-200">
-            <span class="text-slate-500 block text-xs">Tổng mục có tiến độ mới</span>
+            <span class="text-slate-500 block text-xs">Tổng mục có tiến độ ước tính</span>
             <span class="text-slate-800 text-base font-bold">{{ formatNumber(parsedItems.length) }}</span>
           </div>
 
@@ -83,14 +83,14 @@
 
         <!-- Preview Table -->
         <div class="flex-1 overflow-y-auto border border-slate-200 rounded-xl custom-scrollbar">
-          <table class="w-full text-left border-collapse text-xs">
+          <table v-if="parsedItems.length > 0" class="w-full text-left border-collapse text-xs">
             <thead class="bg-slate-100 sticky top-0 font-bold text-slate-700 border-b border-slate-200">
               <tr>
                 <th class="p-2.5 text-center w-10">STT</th>
                 <th class="p-2.5 w-24">Mã</th>
                 <th class="p-2.5">Mục tiêu / Nhiệm vụ</th>
                 <th class="p-2.5 w-28">Đơn vị tính</th>
-                <th class="p-2.5 w-32">Tiến độ mới</th>
+                <th class="p-2.5 w-32">Tiến độ ước tính</th>
                 <th class="p-2.5">Ghi chú / Trích yếu</th>
                 <th class="p-2.5 w-44 text-center">Kiểm tra quyền & trạng thái</th>
               </tr>
@@ -126,6 +126,36 @@
               </tr>
             </tbody>
           </table>
+
+          <div v-if="parsedPlans.length > 0" :class="parsedItems.length > 0 ? 'border-t-4 border-slate-100' : ''">
+            <div class="px-3 py-2 bg-amber-50 border-b border-amber-200 text-xs font-bold text-amber-900">
+              Kế hoạch mục tiêu do cơ quan chủ trì ({{ formatNumber(validPlans.length) }} ô hợp lệ<span v-if="planOverwriteCount > 0">, {{ formatNumber(planOverwriteCount) }} ô sẽ ghi đè kế hoạch cũ — hệ thống hỏi xác nhận trước khi lưu</span>)
+            </div>
+            <table class="w-full text-left border-collapse text-xs">
+              <thead class="bg-slate-100 font-bold text-slate-700 border-b border-slate-200">
+                <tr>
+                  <th class="p-2.5 w-24">Mã</th>
+                  <th class="p-2.5">Mục tiêu</th>
+                  <th class="p-2.5 w-16 text-center">Năm</th>
+                  <th class="p-2.5 w-28 text-right">Kế hoạch cũ</th>
+                  <th class="p-2.5 w-28 text-right">Kế hoạch mới</th>
+                  <th class="p-2.5 w-52 text-center">Kiểm tra</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-200">
+                <tr v-for="(plan, idx) in parsedPlans" :key="`plan-${idx}`" :class="plan.isValid ? 'bg-white' : 'bg-rose-50/30'">
+                  <td class="p-2.5 font-bold text-blue-700">{{ plan.code }}</td>
+                  <td class="p-2.5 font-semibold text-slate-800 leading-snug">{{ plan.title || '—' }}</td>
+                  <td class="p-2.5 text-center font-bold text-slate-600">{{ plan.year }}</td>
+                  <td class="p-2.5 text-right text-slate-500">{{ plan.current != null ? formatNumber(plan.current) : '—' }}</td>
+                  <td class="p-2.5 text-right font-bold text-emerald-700">{{ formatNumber(plan.value) }}</td>
+                  <td class="p-2.5 text-center">
+                    <span :class="['px-2 py-0.5 rounded-full text-xs font-bold border inline-block whitespace-nowrap', plan.statusBadgeClass]">{{ plan.statusText }}</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <!-- Footer Actions for Step 2 -->
@@ -141,11 +171,11 @@
           <button 
             type="button" 
             @click="submitImport" 
-            :disabled="isSubmitting || validTotalCount === 0"
+            :disabled="isSubmitting || !canSubmit"
             class="ui-single-line px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs rounded-xl shadow-md transition flex items-center gap-2 cursor-pointer"
           >
             <span v-if="isSubmitting" class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></span>
-            <span>{{ isSubmitting ? 'Đang cập nhật tiến độ...' : `Xác nhận nhập (${formatNumber(validTotalCount)} mục hợp lệ)` }}</span>
+            <span>{{ isSubmitting ? 'Đang cập nhật...' : `Xác nhận nhập (${formatNumber(validTotalCount)} mục tiến độ${validPlans.length ? `, ${formatNumber(validPlans.length)} ô kế hoạch` : ''})` }}</span>
           </button>
         </div>
       </div>
@@ -160,12 +190,16 @@
               <p class="text-xs text-emerald-700 font-medium">
                 Đã xử lý thành công {{ formatNumber(importResults.successCount) }} mục, {{ formatNumber(importResults.pendingCount) }} mục đã gửi chờ phê duyệt, {{ formatNumber(importResults.failureCount) }} mục lỗi/bỏ qua.
               </p>
+              <p v-if="planResult" class="text-xs font-semibold mt-1" :class="planResult.declined ? 'text-amber-800' : 'text-emerald-800'">
+                <template v-if="planResult.declined">Kế hoạch mục tiêu: đã giữ kế hoạch cũ, không lưu kế hoạch từ file.</template>
+                <template v-else>Kế hoạch mục tiêu: đã lưu {{ formatNumber(planResult.savedCount) }} ô<span v-if="planResult.conflicts?.length">, trong đó ghi đè {{ formatNumber(planResult.conflicts.length) }} ô kế hoạch cũ</span>.</template>
+              </p>
             </div>
           </div>
         </div>
 
         <!-- Results Table -->
-        <div class="flex-1 overflow-y-auto border border-slate-200 rounded-xl custom-scrollbar">
+        <div v-if="importResults.results?.length" class="flex-1 overflow-y-auto border border-slate-200 rounded-xl custom-scrollbar">
           <table class="w-full text-left border-collapse text-xs">
             <thead class="bg-slate-100 sticky top-0 font-bold text-slate-700 border-b border-slate-200">
               <tr>
@@ -223,6 +257,9 @@ import { parseQuantityInput } from '../shared/numericInput';
 import { readProductProgress } from '../utils/progressProducts';
 import { parseReportStatus, reportStatusLabel } from '../shared/reportStatuses';
 import { fetchWithAuth } from '../services/auth';
+import { confirmModal } from '../services/confirm';
+import { activeDocumentId } from '../services/documentContext';
+import { isGoalPlanRows, readGoalPlanRows, leadsGoal } from '../utils/goalPlanSheet';
 
 import { ref, computed } from 'vue';
 import { loadExcelReader } from '../utils/excelRuntime';
@@ -250,6 +287,9 @@ const fileInputRef = ref(null);
 const isParsing = ref(false);
 const isSubmitting = ref(false);
 const parsedItems = ref([]);
+// Ô kế hoạch đọc từ sheet "Kế hoạch mục tiêu" (chỉ các ô khác kế hoạch hiện hành).
+const parsedPlans = ref([]);
+const planResult = ref(null);
 const importResults = ref({
   totalProcessed: 0,
   successCount: 0,
@@ -262,11 +302,16 @@ const validApprovedCount = computed(() => parsedItems.value.filter(i => i.isVali
 const validPendingCount = computed(() => parsedItems.value.filter(i => i.isValid && i.isPending).length);
 const validTotalCount = computed(() => parsedItems.value.filter(i => i.isValid).length);
 const invalidCount = computed(() => parsedItems.value.filter(i => !i.isValid).length);
+const validPlans = computed(() => parsedPlans.value.filter(p => p.isValid));
+const planOverwriteCount = computed(() => validPlans.value.filter(p => p.current != null).length);
+const canSubmit = computed(() => validTotalCount.value > 0 || validPlans.value.length > 0);
 
 function close() {
   if (isSubmitting.value || isParsing.value) return;
   step.value = 1;
   parsedItems.value = [];
+  parsedPlans.value = [];
+  planResult.value = null;
   emit('close');
 }
 
@@ -314,6 +359,26 @@ function checkUserPermission(task) {
   return leadAgId === currAgId || assignedAgId === currAgId;
 }
 
+// Hiển thị trước; API kiểm tra lại quyền chủ trì của từng mục tiêu.
+function canPlanGoal(task) {
+  if (isAdminRole(props.userRole)) return true;
+  return leadsGoal(task, props.agencyId) || (props.currentAgency?.children || []).some(child => leadsGoal(task, child.id));
+}
+
+function readPlans(jsonRows) {
+  return readGoalPlanRows(jsonRows, props.items).map(row => {
+    const error = row.error || (!canPlanGoal(row.item) ? 'Cơ quan không chủ trì mục tiêu này' : null);
+    return {
+      ...row,
+      taskId: row.item?.taskId || row.item?.id || null,
+      isValid: !error,
+      statusText: error || (row.current != null ? 'Ghi đè kế hoạch cũ (cần xác nhận)' : 'Kế hoạch mới'),
+      statusBadgeClass: error ? 'bg-rose-50 text-rose-700 border-rose-200'
+        : row.current != null ? 'bg-amber-50 text-amber-800 border-amber-200' : 'bg-emerald-50 text-emerald-800 border-emerald-200'
+    };
+  });
+}
+
 function checkIsLevel3Pending(task) {
   return Boolean(task) && !isAdminRole(props.userRole);
 }
@@ -325,6 +390,9 @@ async function handleFileUpload(e) {
 
   isParsing.value = true;
   parsedItems.value = [];
+  parsedPlans.value = [];
+  planResult.value = null;
+  const plans = [];
 
   try {
     const XLSX = await loadExcelReader(file.name);
@@ -345,6 +413,11 @@ async function handleFileUpload(e) {
       if (!worksheet) continue;
       const jsonRows = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
       if (!jsonRows || jsonRows.length === 0) continue;
+      // Sheet kế hoạch mục tiêu không chứa tiến độ; đọc riêng.
+      if (isGoalPlanRows(jsonRows)) {
+        plans.push(...readPlans(jsonRows));
+        continue;
+      }
 
       // Find header row containing STT or Mã
       let headerRowIdx = -1;
@@ -544,39 +617,85 @@ async function handleFileUpload(e) {
 
     const resultList = Array.from(resultMap.values());
     parsedItems.value = resultList;
+    parsedPlans.value = plans;
 
-    if (resultList.length === 0) {
-      toast.info('Không tìm thấy dữ liệu tiến độ mới trong các sheet. Các ô để trống đã được bỏ qua.');
+    if (resultList.length === 0 && plans.length === 0) {
+      toast.info('Không tìm thấy tiến độ ước tính hoặc kế hoạch mục tiêu mới trong các sheet. Các ô để trống hoặc không đổi đã được bỏ qua.');
     } else {
       step.value = 2;
     }
   } catch (err) {
     console.error('Lỗi khi đọc file Excel:', err);
-    toast.error('Không thể đọc báo cáo. Dùng mẫu xuất báo cáo tiến độ có cột Mã MT và Tiến độ thực hiện mới.');
+    toast.error('Không thể đọc báo cáo. Dùng mẫu xuất báo cáo tiến độ có cột Mã MT và Tiến độ ước tính.');
   } finally {
     isParsing.value = false;
   }
 }
 
+async function postPlans(rows, confirmOverwrite) {
+  const res = await fetchWithAuth(getApiUrl(`/api/planning/documents/${activeDocumentId.value}/yearly-targets/import`), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      confirmOverwrite,
+      rows: rows.map(row => ({ taskId: row.taskId, year: row.year, targetQuantity: row.value }))
+    })
+  });
+  if (!res.ok) {
+    const errData = await res.json().catch(() => ({}));
+    throw new Error(errData.error || errData.message || 'Lỗi server khi nhập kế hoạch mục tiêu.');
+  }
+  return res.json();
+}
+
+// Kế hoạch đã có chỉ bị ghi đè khi người dùng xác nhận danh sách thay đổi do API trả về.
+async function submitPlans(rows) {
+  const checked = await postPlans(rows, false);
+  if (!checked.requiresConfirmation) return checked;
+  const conflicts = checked.conflicts || [];
+  const listed = conflicts.slice(0, 8)
+    .map(c => `${c.code} năm ${c.year}: ${formatNumber(c.currentTarget)} → ${formatNumber(c.newTarget)}`).join('; ');
+  const more = conflicts.length > 8 ? ` và ${formatNumber(conflicts.length - 8)} ô khác` : '';
+  const accepted = await confirmModal({
+    title: 'Ghi đè kế hoạch mục tiêu đã có?',
+    message: `Hệ thống đã có kế hoạch mục tiêu cho ${formatNumber(conflicts.length)} ô trong file (${listed}${more}). Đồng ý để thay kế hoạch cũ bằng thông tin mới; chọn giữ kế hoạch cũ thì không nhập kế hoạch từ file này.`,
+    confirmText: 'Ghi đè theo thông tin mới',
+    cancelText: 'Giữ kế hoạch cũ',
+    type: 'warning'
+  });
+  if (!accepted) return { declined: true, savedCount: 0, conflicts };
+  return postPlans(rows, true);
+}
+
 async function submitImport() {
-  if (needsReportingAgency.value && !reportingAgencyId.value) {
+  if (isSubmitting.value) return;
+  const validRows = parsedItems.value.filter(i => i.isValid);
+  const planRows = validPlans.value;
+  if (validRows.length === 0 && planRows.length === 0) {
+    toast.warning('Không có hạng mục hợp lệ nào để nhập.');
+    return;
+  }
+  if (validRows.length > 0 && needsReportingAgency.value && !reportingAgencyId.value) {
     toast.warning('Chọn cơ quan báo cáo cụ thể cho mục tiêu / nhiệm vụ chung.');
     return;
   }
-  if (isSubmitting.value) return;
-  if (!isValidReportingYear(reportYear.value)) {
+  if (validRows.length > 0 && !isValidReportingYear(reportYear.value)) {
     toast.error('Năm báo cáo không hợp lệ hoặc lớn hơn năm hiện tại.');
-    return;
-  }
-  const validRows = parsedItems.value.filter(i => i.isValid);
-  if (validRows.length === 0) {
-    toast.warning('Không có hạng mục hợp lệ nào để nhập.');
     return;
   }
 
   isSubmitting.value = true;
 
   try {
+    // Kế hoạch trước: tiến độ được tính trên kế hoạch mới.
+    if (planRows.length > 0) planResult.value = await submitPlans(planRows);
+    if (validRows.length === 0) {
+      importResults.value = { totalProcessed: 0, successCount: 0, pendingCount: 0, failureCount: 0, results: [] };
+      step.value = 3;
+      if (planResult.value?.declined) toast.info('Đã giữ kế hoạch mục tiêu cũ; không có thay đổi nào được lưu.');
+      else toast.success(`Đã lưu ${formatNumber(planResult.value?.savedCount || 0)} ô kế hoạch mục tiêu.`);
+      return;
+    }
     const payload = {
       userAgencyId: props.agencyId,
       reportingAgencyId: needsReportingAgency.value ? reportingAgencyId.value : null,

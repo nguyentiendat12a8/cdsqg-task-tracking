@@ -153,6 +153,7 @@ public static class ProgressCalculator
         if (ids.Count == 1 && !aggregate) return Evaluate(item, agencyId: ids.First(), year: reportYear, evaluatedAt: evaluatedAt);
         var year = reportYear ?? item.ProgressLogs.Where(l => l.ApprovalStatus == ApprovalStatusEnum.Approved && l.AgencyId.HasValue && ids.Contains(l.AgencyId.Value))
             .Select(l => (int?)l.PeriodYear).Max() ?? (evaluatedAt ?? DateTime.UtcNow).Year;
+        if (SumsAcrossAgencies(item)) return EvaluateAgencySum(item, ids, year, evaluatedAt);
         var results = ids.Select(id => Evaluate(item, agencyId: id, year: year, evaluatedAt: evaluatedAt)).ToList();
         var (target, custom) = ResolveBaseline(item, year);
         if (results.Count == 0) return new(year, null, target, custom, null, ExecutionStatusEnum.NotStarted, AlertStatusEnum.Red);
@@ -167,6 +168,46 @@ public static class ProgressCalculator
             : results.Any(r => r.DeadlineStatus == "ExpiringSoon") ? "ExpiringSoon" : "OnTime";
         return new(year, null, target, custom, percentage, status,
             percentage >= 95 ? AlertStatusEnum.Green : percentage >= 70 ? AlertStatusEnum.Yellow : AlertStatusEnum.Red) { DeadlineStatus = deadlineStatus };
+    }
+
+    public static bool IsPercentUnit(GoalTaskItem item)
+        // An unloaded unit is treated as a percentage so no caller sums values by accident.
+        => item.Unit == null || item.Unit.Code.Equals("PERCENT", StringComparison.OrdinalIgnoreCase)
+            || item.Unit.Name.Contains('%');
+
+    /// <summary>
+    /// Shared quantitative goals counted in absolute units (e.g. MT-24 of 1266: "lượt người") are
+    /// accumulated across agencies: the overall value is the sum of every assigned agency's total.
+    /// Percentage and rank goals keep the per-agency average rule.
+    /// </summary>
+    public static bool SumsAcrossAgencies(GoalTaskItem item)
+        => item.EvaluationType == EvaluationTypeEnum.Quantitative
+            && (item.IsGeneralTask || item.AgencyExecutions.Any(e => e.IsLeadAssignment && e.IsLeadGroupAssignment))
+            && !IsPercentUnit(item) && !IsLowerBetter(item);
+
+    private static Result EvaluateAgencySum(GoalTaskItem item, IReadOnlyCollection<Guid> ids, int year, DateTime? evaluatedAt)
+    {
+        var now = evaluatedAt ?? DateTime.UtcNow;
+        // Each agency reports its own total achieved through the report year, so its latest
+        // approved total up to the selected year still counts when it has not reported again.
+        var reports = ids.Select(id => ScopedLogs(item, id)
+                .Where(l => l.ApprovalStatus == ApprovalStatusEnum.Approved && l.PeriodYear <= year && l.QuantitativeValue.HasValue)
+                .OrderByDescending(l => l.PeriodYear).ThenByDescending(l => l.LogDate).ThenByDescending(l => l.Id).FirstOrDefault())
+            .Where(l => l != null).Select(l => l!).ToList();
+        decimal? actual = reports.Count > 0 ? reports.Sum(l => l.QuantitativeValue!.Value) : null;
+        var (target, custom) = ResolveBaseline(item, year);
+        decimal? percentage = actual.HasValue && target > 0 ? Math.Round(actual.Value / target.Value * 100m, 2) : null;
+        var completed = Reaches(item, actual, target);
+        if (!completed && percentage >= 100m) percentage = 99.99m;
+        var status = completed ? ExecutionStatusEnum.Completed : actual > 0 ? ExecutionStatusEnum.InProgress : ExecutionStatusEnum.NotStarted;
+        var deadline = item.IsOngoing ? new DateTime(year, 12, 31) : item.DueDate?.Date;
+        var reachedAt = reports.Count > 0 ? reports.Max(l => l.LogDate).Date : now.Date;
+        var deadlineStatus = completed
+            ? deadline.HasValue && reachedAt > deadline.Value ? "CompletedOverdue" : "CompletedOnTime"
+            : deadline.HasValue && now.Date > deadline.Value ? "Overdue"
+            : deadline.HasValue && (deadline.Value - now.Date).TotalDays <= 30 ? "ExpiringSoon" : "OnTime";
+        var alert = percentage >= 95 ? AlertStatusEnum.Green : percentage >= 70 ? AlertStatusEnum.Yellow : AlertStatusEnum.Red;
+        return new(year, actual, target, custom, percentage, status, alert) { DeadlineStatus = deadlineStatus };
     }
 
     public static DateTime? AnnualEvaluationDate(int? year)

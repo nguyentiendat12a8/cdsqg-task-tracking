@@ -155,6 +155,7 @@
       :openItemDetailModal="openItemDetailModal"
       :hasProgress="hasProgress"
       :handleDeleteItem="handleDeleteItem"
+      :canDeleteItems="!['1266', '2629'].includes(activeDocument.code)"
       :openEditModal="openEditModal"
       :filterItemType="filterItemType"
       v-else
@@ -812,6 +813,10 @@ function hasProgress(item) {
 }
 
 async function handleDeleteItem(item) {
+  if (['1266', '2629'].includes(activeDocument.value.code)) {
+    toast.warning('Mục tiêu và nhiệm vụ của Quyết định 1266 và 2629 được cố định, không thể xóa.');
+    return;
+  }
   if (!authState.isAdmin.value) {
     toast.error("Chỉ có tài khoản Quản trị viên (Admin) mới có quyền xóa Mục tiêu / Nhiệm vụ.");
     return;

@@ -8,4 +8,13 @@ export function isGeneralTaskItem(item) {
   return ['các bộ, ngành', 'các địa phương', 'ubnd tỉnh, thành phố'].some(part => name.includes(part));
 }
 
+// Mirrors ProgressCalculator.SumsAcrossAgencies: shared quantitative goals counted in absolute
+// units (e.g. MT-24/1266, "lượt người") show the sum of every agency's total, not an average.
+export function isAgencySumGoal(item) {
+  if (!item || !isGeneralTaskItem(item)) return false;
+  if (!['Quantitative', '1', 1].includes(item.evaluationType)) return false;
+  const unit = String(item.unitName || item.unit?.name || '').trim().toLowerCase();
+  return Boolean(unit) && !unit.includes('%') && unit !== 'percent' && !['hạng', 'thứ hạng', 'rank'].includes(unit);
+}
+
 export const assignmentRoleOptions = Object.freeze([{ value: 'Lead', label: 'Chủ trì' }, { value: 'Coordinating', label: 'Phối hợp' }]);

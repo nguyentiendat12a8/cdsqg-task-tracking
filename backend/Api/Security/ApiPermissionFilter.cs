@@ -53,6 +53,12 @@ public sealed class ApiPermissionFilter(AppDbContext db) : IAsyncActionFilter
             if (!agencyId.HasValue || agencyId == Guid.Empty) { context.Result = new ForbidResult(); return; }
             args["agencyId"] = agencyId;
         }
+        // Plan import trusts only the authenticated identity, even when the query omits these fields.
+        if (controller == "Planning" && action == "ImportYearlyTargets")
+        {
+            args["userRole"] = admin ? "Admin" : "AgencyUser";
+            args["userAgencyId"] = agencyId;
+        }
         if (args.ContainsKey("approvedBy")) args["approvedBy"] = user.FindFirstValue("FullName") ?? user.Identity?.Name;
 
         bool write = !HttpMethods.IsGet(context.HttpContext.Request.Method)
@@ -86,7 +92,9 @@ public sealed class ApiPermissionFilter(AppDbContext db) : IAsyncActionFilter
         if (write && !admin)
         {
             bool allowed = controller == "Execution" && action is "SubmitProgress" or "ImportProgressBulk"
-                || controller == "Notification" && action is "MarkAsRead" or "MarkAllAsRead";
+                || controller == "Notification" && action is "MarkAsRead" or "MarkAllAsRead"
+                // Lead-agency ownership of each goal is enforced in PlanningService.ImportYearlyTargetsAsync.
+                || controller == "Planning" && action == "ImportYearlyTargets" && agencyId.HasValue;
             if (controller == "Agency" && action is "UpdatePlansAndContacts" or "UploadPlanFile" or "UploadPlanFileLegacy" or "DeletePlanFile")
             {
                 var target = args.TryGetValue("id", out var id) ? id : args.TryGetValue("agencyId", out var targetAgency) ? targetAgency : null;

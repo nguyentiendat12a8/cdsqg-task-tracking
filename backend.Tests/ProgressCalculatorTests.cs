@@ -195,6 +195,56 @@ public class ProgressCalculatorTests
     }
 
     [Fact]
+    public void SharedCountGoalSumsAgencyTotals()
+    {
+        var item = Item(); item.IsGeneralTask = true; item.ItemType = ItemTypeEnum.Goal;
+        item.Unit = new UnitDictionary { Code = "SL", Name = "Lượt người" }; item.UnitId = item.Unit.Id;
+        item.DueDate = new(2030, 12, 31);
+        item.Baselines.Add(new() { Year = 2026, TargetQuantity = 1000 });
+        item.Baselines.Add(new() { Year = 2027, TargetQuantity = 2000 });
+        var first = new Agency { Type = AgencyTypeEnum.Ministry, IsActive = true, Code = "FIRST" };
+        var second = new Agency { Type = AgencyTypeEnum.Province, IsActive = true, Code = "SECOND" };
+        var third = new Agency { Type = AgencyTypeEnum.Province, IsActive = true, Code = "THIRD" };
+        foreach (var agency in new[] { first, second, third })
+            item.AgencyExecutions.Add(new() { AgencyId = agency.Id, IsLeadAssignment = true });
+        var agencies = new[] { first, second, third };
+        Assert.True(ProgressCalculator.SumsAcrossAgencies(item));
+        Assert.Equal(ExecutionStatusEnum.NotStarted, ProgressCalculator.EvaluateOverall(item, agencies, Now, 2026).Status);
+
+        var a = Log(item, 2026, 300); a.AgencyId = first.Id;
+        var b = Log(item, 2026, 200); b.AgencyId = second.Id;
+        var pending = Log(item, 2026, 900, approval: ApprovalStatusEnum.Pending); pending.AgencyId = third.Id;
+        item.ProgressLogs.Add(a); item.ProgressLogs.Add(b); item.ProgressLogs.Add(pending);
+        var partial = ProgressCalculator.EvaluateOverall(item, agencies, Now, 2026);
+        Assert.Equal(500m, partial.ActualValue);
+        Assert.Equal(50m, partial.Percentage);
+        Assert.Equal(ExecutionStatusEnum.InProgress, partial.Status);
+
+        var revision = Log(item, 2026, 800, 5); revision.AgencyId = first.Id; // replaces 300, not added to it
+        item.ProgressLogs.Add(revision);
+        var done = ProgressCalculator.EvaluateOverall(item, agencies, Now, 2026);
+        Assert.Equal(1000m, done.ActualValue);
+        Assert.Equal(ExecutionStatusEnum.Completed, done.Status); // third agency has not reported
+
+        var later = Log(item, 2027, 1100); later.AgencyId = second.Id; // agency total through 2027
+        item.ProgressLogs.Add(later);
+        var next = ProgressCalculator.EvaluateOverall(item, agencies, Now, 2027);
+        Assert.Equal(1900m, next.ActualValue); // 800 (first, latest total up to 2027) + 1100
+        Assert.Equal(95m, next.Percentage);
+        Assert.Equal(ExecutionStatusEnum.InProgress, next.Status);
+    }
+
+    [Fact]
+    public void SharedPercentGoalKeepsAverageRule()
+    {
+        var item = Item(); item.IsGeneralTask = true;
+        item.Unit = new UnitDictionary { Code = "PERCENT", Name = "%" }; item.UnitId = item.Unit.Id;
+        Assert.False(ProgressCalculator.SumsAcrossAgencies(item));
+        item.Unit = null; // not loaded: never sum by accident
+        Assert.False(ProgressCalculator.SumsAcrossAgencies(item));
+    }
+
+    [Fact]
     public void PriorYearCorrectionDoesNotChangeCurrentAnnualTotal()
     {
         var item = Item(); item.CalculationMethod = CalculationMethodEnum.Cumulative;

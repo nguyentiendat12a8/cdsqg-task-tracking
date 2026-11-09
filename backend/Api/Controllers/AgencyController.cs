@@ -34,6 +34,8 @@ namespace Cdsqg.Api.Controllers
             [FromQuery] string? contactFilter = null,
             [FromQuery] string? planFileFilter = null,
             [FromQuery] string? fiveYearPlanFilter = null,
+            [FromQuery] string? responseDocFilter = null,
+            [FromQuery] string? updated1266Filter = null,
             [FromQuery] string? annualPlanFilter = null,
             [FromQuery] string? architectureFilter = null,
             [FromQuery] string? typeFilter = null,
@@ -167,13 +169,37 @@ namespace Cdsqg.Api.Controllers
 
             if (!string.IsNullOrWhiteSpace(fiveYearPlanFilter) && fiveYearPlanFilter != "ALL")
             {
-                if (fiveYearPlanFilter == "SENT" || fiveYearPlanFilter == "PROVIDED")
+                if (fiveYearPlanFilter == "SENT" || fiveYearPlanFilter == "PROVIDED" || fiveYearPlanFilter == "ISSUED")
                 {
-                    list = list.Where(a => (a.FiveYearPlan != null && (a.FiveYearPlan.IsIssued || (a.FiveYearPlan.Files != null && a.FiveYearPlan.Files.Count > 0))) || (a.PlanFiles != null && a.PlanFiles.Count > 0)).ToList();
+                    list = list.Where(a => (a.FiveYearPlan != null && (a.FiveYearPlan.IsIssued || a.FiveYearPlan.HasReviewedPlan || !string.IsNullOrWhiteSpace(a.FiveYearPlan.DocumentNumber) || (a.FiveYearPlan.Files != null && a.FiveYearPlan.Files.Count > 0))) || (a.PlanFiles != null && a.PlanFiles.Count > 0)).ToList();
                 }
-                else if (fiveYearPlanFilter == "NOT_SENT" || fiveYearPlanFilter == "NOT_PROVIDED")
+                else if (fiveYearPlanFilter == "NOT_SENT" || fiveYearPlanFilter == "NOT_PROVIDED" || fiveYearPlanFilter == "NOT_ISSUED")
                 {
-                    list = list.Where(a => (a.FiveYearPlan == null || (!a.FiveYearPlan.IsIssued && (a.FiveYearPlan.Files == null || a.FiveYearPlan.Files.Count == 0))) && (a.PlanFiles == null || a.PlanFiles.Count == 0)).ToList();
+                    list = list.Where(a => (a.FiveYearPlan == null || (!a.FiveYearPlan.IsIssued && !a.FiveYearPlan.HasReviewedPlan && string.IsNullOrWhiteSpace(a.FiveYearPlan.DocumentNumber) && (a.FiveYearPlan.Files == null || a.FiveYearPlan.Files.Count == 0))) && (a.PlanFiles == null || a.PlanFiles.Count == 0)).ToList();
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(responseDocFilter) && responseDocFilter != "ALL")
+            {
+                if (responseDocFilter == "PROVIDED" || responseDocFilter == "SENT" || responseDocFilter == "YES")
+                {
+                    list = list.Where(a => a.FiveYearPlan != null && !string.IsNullOrWhiteSpace(a.FiveYearPlan.ResponseDocument)).ToList();
+                }
+                else if (responseDocFilter == "NOT_PROVIDED" || responseDocFilter == "NOT_SENT" || responseDocFilter == "NO")
+                {
+                    list = list.Where(a => a.FiveYearPlan == null || string.IsNullOrWhiteSpace(a.FiveYearPlan.ResponseDocument)).ToList();
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(updated1266Filter) && updated1266Filter != "ALL")
+            {
+                if (updated1266Filter == "UPDATED" || updated1266Filter == "YES")
+                {
+                    list = list.Where(a => a.FiveYearPlan != null && a.FiveYearPlan.IsUpdated1266).ToList();
+                }
+                else if (updated1266Filter == "NOT_UPDATED" || updated1266Filter == "NO")
+                {
+                    list = list.Where(a => a.FiveYearPlan == null || !a.FiveYearPlan.IsUpdated1266).ToList();
                 }
             }
 
@@ -246,7 +272,9 @@ namespace Cdsqg.Api.Controllers
                         a.AnnualPlans,
                         a.DigitalArchitecture,
                         HasContacts = a.ContactPersons != null && a.ContactPersons.Count > 0,
-                        HasFiveYearPlan = (a.FiveYearPlan != null && (a.FiveYearPlan.IsIssued || (a.FiveYearPlan.Files != null && a.FiveYearPlan.Files.Count > 0))) || (a.PlanFiles != null && a.PlanFiles.Count > 0),
+                        HasFiveYearPlan = (a.FiveYearPlan != null && (a.FiveYearPlan.IsIssued || a.FiveYearPlan.HasReviewedPlan || !string.IsNullOrWhiteSpace(a.FiveYearPlan.DocumentNumber) || (a.FiveYearPlan.Files != null && a.FiveYearPlan.Files.Count > 0))) || (a.PlanFiles != null && a.PlanFiles.Count > 0),
+                        HasResponseDoc = a.FiveYearPlan != null && !string.IsNullOrWhiteSpace(a.FiveYearPlan.ResponseDocument),
+                        IsUpdated1266 = a.FiveYearPlan != null && a.FiveYearPlan.IsUpdated1266,
                         HasAnnualPlan = a.AnnualPlans != null && a.AnnualPlans.Any(p => p.IsIssued || (p.Files != null && p.Files.Count > 0)),
                         HasDigitalArchitecture = a.DigitalArchitecture != null && (a.DigitalArchitecture.IsIssued || (a.DigitalArchitecture.Files != null && a.DigitalArchitecture.Files.Count > 0) || !string.IsNullOrWhiteSpace(a.DigitalArchitecture.DocumentNumber)),
                         a.IsActive,
@@ -279,7 +307,9 @@ namespace Cdsqg.Api.Controllers
                 a.AnnualPlans,
                 a.DigitalArchitecture,
                 HasContacts = a.ContactPersons != null && a.ContactPersons.Count > 0,
-                HasFiveYearPlan = (a.FiveYearPlan != null && (a.FiveYearPlan.IsIssued || (a.FiveYearPlan.Files != null && a.FiveYearPlan.Files.Count > 0))) || (a.PlanFiles != null && a.PlanFiles.Count > 0),
+                HasFiveYearPlan = (a.FiveYearPlan != null && (a.FiveYearPlan.IsIssued || a.FiveYearPlan.HasReviewedPlan || !string.IsNullOrWhiteSpace(a.FiveYearPlan.DocumentNumber) || (a.FiveYearPlan.Files != null && a.FiveYearPlan.Files.Count > 0))) || (a.PlanFiles != null && a.PlanFiles.Count > 0),
+                HasResponseDoc = a.FiveYearPlan != null && !string.IsNullOrWhiteSpace(a.FiveYearPlan.ResponseDocument),
+                IsUpdated1266 = a.FiveYearPlan != null && a.FiveYearPlan.IsUpdated1266,
                 HasAnnualPlan = a.AnnualPlans != null && a.AnnualPlans.Any(p => p.IsIssued || (p.Files != null && p.Files.Count > 0)),
                 HasDigitalArchitecture = a.DigitalArchitecture != null && (a.DigitalArchitecture.IsIssued || (a.DigitalArchitecture.Files != null && a.DigitalArchitecture.Files.Count > 0) || !string.IsNullOrWhiteSpace(a.DigitalArchitecture.DocumentNumber)),
                 a.IsActive,
@@ -614,6 +644,42 @@ namespace Cdsqg.Api.Controllers
                 }
             }
             return Ok(new { success = true });
+        }
+
+        [HttpPost("seed-digital-plans")]
+        public async Task<IActionResult> SeedDigitalPlans()
+        {
+            var agencies = await _context.Agencies.ToListAsync();
+            var seedItems = DigitalPlanSeedData.GetSeedItems();
+            int updatedCount = 0;
+            var updatedAgencies = new List<string>();
+
+            foreach (var item in seedItems)
+            {
+                var matchedAgency = agencies.FirstOrDefault(a =>
+                    a.Name.Equals(item.AgencyName, StringComparison.OrdinalIgnoreCase) ||
+                    ProvinceCatalog.DisplayName(a).Equals(item.AgencyName, StringComparison.OrdinalIgnoreCase) ||
+                    (item.AgencyName.Contains(a.Name) && a.Name.Length > 3) ||
+                    (a.Name.Contains(item.AgencyName) && item.AgencyName.Length > 3)
+                );
+
+                if (matchedAgency != null)
+                {
+                    matchedAgency.FiveYearPlan ??= new AgencyFiveYearPlan();
+                    matchedAgency.FiveYearPlan.ResponseDocument = item.ResponseDocument;
+                    matchedAgency.FiveYearPlan.HasReviewedPlan = item.HasReviewedPlan;
+                    matchedAgency.FiveYearPlan.IsIssued = item.HasReviewedPlan;
+                    matchedAgency.FiveYearPlan.DocumentNumber = item.DocumentNumber;
+                    matchedAgency.FiveYearPlan.IsUpdated1266 = item.IsUpdated1266;
+                    matchedAgency.FiveYearPlan.Notes = item.Notes;
+                    matchedAgency.FiveYearPlan.Period = "2026-2030";
+                    updatedCount++;
+                    updatedAgencies.Add(matchedAgency.Name);
+                }
+            }
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = $"Đã đồng bộ thành công Kế hoạch CĐS 5 năm cho {updatedCount} cơ quan/đơn vị!", updatedAgencies });
         }
 
         [HttpPost("seed-contacts")]

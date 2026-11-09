@@ -203,9 +203,9 @@
               @click="selectTab('agency-plans')"
               :class="['nav-sublink w-full text-left py-2 px-3 rounded-lg text-xs font-semibold transition whitespace-nowrap cursor-pointer', activeTab === 'agency-plans' ? 'is-active' : 'nav-idle']"
             >
-              Đầu mối liên hệ và KH CĐS
+              Thông tin chuyển đổi số
             </button>
-            <button @click="selectTab('digital-news')" :class="['nav-sublink w-full text-left py-2 px-3 rounded-lg text-xs font-semibold transition whitespace-nowrap cursor-pointer', activeTab === 'digital-news' ? 'is-active' : 'nav-idle']">Thông tin chuyển đổi số</button>
+            <button @click="selectTab('digital-news')" :class="['nav-sublink w-full text-left py-2 px-3 rounded-lg text-xs font-semibold transition whitespace-nowrap cursor-pointer', activeTab === 'digital-news' ? 'is-active' : 'nav-idle']">Thông tin liên quan</button>
           </div>
         </div>
 

@@ -288,6 +288,18 @@ namespace Cdsqg.Api.Controllers
                     return NotFound(new { error = "Không tìm thấy Mục tiêu / Nhiệm vụ để xóa." });
                 }
 
+                var protectedDocument = await _context.Documents
+                    .Where(d => d.Id == item.DocumentId)
+                    .Select(d => d.DocumentNumber)
+                    .FirstOrDefaultAsync();
+                if (item.DocumentId == Guid.Parse("12660000-0000-0000-0000-000000001266") ||
+                    item.DocumentId == Guid.Parse("26290000-0000-0000-0000-000000002629") ||
+                    protectedDocument?.StartsWith("1266/", StringComparison.OrdinalIgnoreCase) == true ||
+                    protectedDocument?.StartsWith("2629/", StringComparison.OrdinalIgnoreCase) == true)
+                {
+                    return Conflict(new { error = "Mục tiêu và nhiệm vụ thuộc Quyết định 1266 hoặc 2629 được cố định, không thể xóa." });
+                }
+
                 var allTargetIds = new List<Guid> { id };
 
                 var hasProgressLogs = await _context.ProgressLogs.AnyAsync(p => allTargetIds.Contains(p.GoalTaskId));

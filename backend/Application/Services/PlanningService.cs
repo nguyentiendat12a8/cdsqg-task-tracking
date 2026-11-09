@@ -17,6 +17,7 @@ namespace Cdsqg.Application.Services
         Task<GoalTaskItem> CreateGoalTaskItemAsync(CreateGoalTaskItemRequestDto dto);
         Task<bool> UpdateTaskCustomBaselineAsync(Guid taskId, UpdateCustomBaselineDto dto);
         Task<bool> UpdateYearlyTargetAsync(Guid taskId, UpdateYearlyTargetDto dto);
+        Task<ImportYearlyTargetsResultDto> ImportYearlyTargetsAsync(Guid documentId, ImportYearlyTargetsRequestDto dto, Guid? userAgencyId, bool isAdmin);
     }
 
     public class PlanningService : IPlanningService
@@ -439,6 +440,85 @@ namespace Cdsqg.Application.Services
             await ProgressCalculator.RefreshCachesAsync(_context, task);
             await _context.SaveChangesAsync();
             return true;
+        }
+
+        /// <summary>
+        /// Nhập kế hoạch mục tiêu theo năm từ Excel. Đơn vị chỉ nhập cho mục tiêu định lượng mình trực tiếp
+        /// chủ trì; mục tiêu giao chung (vd. MT-24/1266) không có kế hoạch riêng. Kế hoạch đã có khác số mới
+        /// chỉ được ghi đè khi ConfirmOverwrite = true. Không lưu gì nếu có dòng lỗi.
+        /// </summary>
+        public async Task<ImportYearlyTargetsResultDto> ImportYearlyTargetsAsync(Guid documentId, ImportYearlyTargetsRequestDto dto, Guid? userAgencyId, bool isAdmin)
+        {
+            var rows = dto.Rows ?? new List<ImportYearlyTargetRowDto>();
+            if (rows.Count == 0) throw new InvalidOperationException("File không có số liệu kế hoạch mục tiêu để nhập.");
+            if (!isAdmin && (!userAgencyId.HasValue || userAgencyId == Guid.Empty))
+                throw new UnauthorizedAccessException("Tài khoản chưa gắn với cơ quan.");
+            if (rows.GroupBy(r => (r.TaskId, r.Year)).Any(g => g.Count() > 1))
+                throw new InvalidOperationException("Mỗi mục tiêu chỉ được nhập một kế hoạch cho mỗi năm.");
+
+            var ids = rows.Select(r => r.TaskId).Distinct().ToList();
+            var tasks = await _context.GoalTaskItems
+                .Include(t => t.Baselines).Include(t => t.Unit).Include(t => t.Document).Include(t => t.AgencyExecutions)
+                .Where(t => t.DocumentId == documentId && ids.Contains(t.Id))
+                .ToDictionaryAsync(t => t.Id);
+            var ownAgencyIds = new HashSet<Guid>();
+            if (!isAdmin)
+            {
+                ownAgencyIds.Add(userAgencyId!.Value);
+                ownAgencyIds.UnionWith(await _context.Agencies.Where(a => a.ParentId == userAgencyId).Select(a => a.Id).ToListAsync());
+            }
+
+            var errors = new List<string>();
+            var result = new ImportYearlyTargetsResultDto();
+            var changes = new List<(GoalTaskItem Task, ImportYearlyTargetRowDto Row)>();
+            foreach (var row in rows.OrderBy(r => r.TaskId).ThenBy(r => r.Year))
+            {
+                if (!tasks.TryGetValue(row.TaskId, out var task)) { errors.Add("Có mục tiêu không thuộc văn bản đang chọn."); continue; }
+                var label = $"{task.Code} năm {row.Year}";
+                if (task.ItemType != ItemTypeEnum.Goal || task.EvaluationType != EvaluationTypeEnum.Quantitative)
+                { errors.Add($"{label}: chỉ nhập kế hoạch cho mục tiêu định lượng."); continue; }
+                if (task.IsGeneralTask || task.AgencyExecutions.Any(e => e.IsLeadAssignment && e.IsLeadGroupAssignment))
+                { errors.Add($"{label}: mục tiêu giao chung không nhập kế hoạch riêng."); continue; }
+                if (!isAdmin && !task.AgencyExecutions.Any(e => e.IsLeadAssignment && ownAgencyIds.Contains(e.AgencyId)))
+                { errors.Add($"{label}: cơ quan không chủ trì mục tiêu này."); continue; }
+                if (row.Year is < 1900 or > 9999 || !PlanningYears.Contains(task, row.Year))
+                { errors.Add($"{label}: năm nằm ngoài thời gian thực hiện."); continue; }
+                if (row.TargetQuantity <= 0) { errors.Add($"{label}: kế hoạch phải lớn hơn 0."); continue; }
+
+                var yearKey = row.Year.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                var hasExplicit = task.CustomBaseline.ContainsKey(yearKey) || task.Baselines.Any(b => b.Year == row.Year && b.TargetQuantity > 0);
+                var current = hasExplicit ? ProgressCalculator.ResolveBaseline(task, row.Year).Target : null;
+                if (current == row.TargetQuantity) { result.UnchangedCount++; continue; }
+                if (current.HasValue)
+                    result.Conflicts.Add(new YearlyTargetConflictDto { TaskId = task.Id, Code = task.Code, Title = task.Title, Year = row.Year, CurrentTarget = current, NewTarget = row.TargetQuantity });
+                changes.Add((task, row));
+            }
+            if (errors.Count > 0) throw new InvalidOperationException(string.Join(" ", errors.Distinct().Take(20)));
+            if (result.Conflicts.Count > 0 && !dto.ConfirmOverwrite)
+            {
+                result.RequiresConfirmation = true;
+                return result;
+            }
+
+            foreach (var (task, row) in changes)
+            {
+                var baseline = task.Baselines.FirstOrDefault(b => b.Year == row.Year);
+                if (baseline == null)
+                {
+                    baseline = new TargetBaseline { Id = Guid.NewGuid(), GoalTaskId = task.Id, Year = row.Year };
+                    _context.TargetBaselines.Add(baseline);
+                    task.Baselines.Add(baseline);
+                }
+                baseline.TargetQuantity = row.TargetQuantity;
+                var overrides = new Dictionary<string, string>(task.CustomBaseline);
+                overrides.Remove(row.Year.ToString(System.Globalization.CultureInfo.InvariantCulture));
+                task.CustomBaseline = overrides;
+            }
+            foreach (var task in changes.Select(c => c.Task).Distinct())
+                await ProgressCalculator.RefreshCachesAsync(_context, task);
+            await _context.SaveChangesAsync();
+            result.SavedCount = changes.Count;
+            return result;
         }
 
         public static List<TaskDeliverable> GetDeliverablesForAgency(GoalTaskItem item, Guid? agencyId)

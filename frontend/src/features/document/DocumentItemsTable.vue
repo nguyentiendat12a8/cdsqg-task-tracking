@@ -162,7 +162,7 @@
                     </span>
                   </td>
                   <td v-if="filterItemType === 'Goal'" class="px-3 py-2.5 border-r border-slate-200 text-center text-xs min-w-[125px] w-[125px] max-w-[125px] overflow-hidden">
-                    <span v-if="authState.isAdmin.value && isGeneralTaskOrAllAgencies(item)" class="text-slate-400 font-normal">—</span>
+                    <span v-if="authState.isAdmin.value && isGeneralTaskOrAllAgencies(item) && !isAgencySumGoal(item)" class="text-slate-400 font-normal">—</span>
                     <span v-else class="font-normal text-xs text-slate-700 line-clamp-2 break-words leading-tight block" :title="formatProgressDisplay(item)">
                       {{ formatProgressDisplay(item) }}
                     </span>
@@ -241,10 +241,10 @@
                               <span>Gửi thông báo</span>
                             </button>
 
-                            <div v-if="authState.isAdmin.value && !hasProgress(item)" class="border-t border-slate-100 my-1"></div>
+                            <div v-if="canDeleteItems && authState.isAdmin.value && !hasProgress(item)" class="border-t border-slate-100 my-1"></div>
 
                             <button
-                              v-if="authState.isAdmin.value && !hasProgress(item)"
+                              v-if="canDeleteItems && authState.isAdmin.value && !hasProgress(item)"
                               @click="handleDeleteItem(item); hide()"
                               class="ui-action ui-action-danger ui-action-menu ui-single-line w-full text-left px-3 py-2 text-rose-600 hover:bg-rose-50 transition cursor-pointer"
                               title="Xóa"
@@ -272,6 +272,8 @@
 </template>
 
 <script setup>
+// Mục chung tính bằng số lượng (MT-24) hiển thị tổng cộng dồn các cơ quan do API trả về.
+import { isAgencySumGoal } from '../../shared/agencyPresentation';
 
 defineProps([
   'authState',
@@ -294,6 +296,7 @@ defineProps([
   'openItemDetailModal',
   'hasProgress',
   'handleDeleteItem',
+  'canDeleteItems',
   'openEditModal',
   'filterItemType'
 ]);
