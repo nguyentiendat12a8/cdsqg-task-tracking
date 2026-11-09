@@ -1,7 +1,7 @@
 import XLSX from 'xlsx-js-style/dist/xlsx.bundle.js';
 import { toast } from 'vue3-toastify';
 import { styleWorksheet } from './worksheetStyle.js';
-import { formatMeasuredValue } from '../shared/formatters.js';
+import { formatDateRange, formatMeasuredValue } from '../shared/formatters.js';
 import { reportStatusLabel, reportStatusOptions } from '../shared/reportStatuses.js';
 import { downloadProgressWorkbook } from './progressWorkbook.js';
 import { GOAL_GUIDANCE_2629 } from '../config/goalGuidance2629.js';
@@ -452,7 +452,7 @@ function createTaskReportingWorksheet({
     'Mã NV',
     'Tên Nhiệm Vụ',
     'Cơ quan chủ trì',
-    'Đơn vị tính',
+    'Thời gian thực hiện',
     'Sản Phẩm Đầu Ra',
     'Tiến độ hiện tại',
     'TIẾN ĐỘ THỰC HIỆN MỚI [CẦN ĐIỀN]',
@@ -478,7 +478,7 @@ function createTaskReportingWorksheet({
     const start = rows.length;
     (products.length ? products : [null]).forEach((product, productIndex) => {
       const row = productIndex === 0
-        ? [index + 1, item.code || '', item.title || '', item.leadAgencyName || item.leadAgency?.name || '—', unit]
+        ? [index + 1, item.code || '', item.title || '', item.leadAgencyName || item.leadAgency?.name || '—', item.isOngoing ? 'Thường xuyên' : formatDateRange(item.startDate, item.dueDate)]
         : ['', '', '', '', ''];
       row.push(product?.title || '—');
       row.push(product ? reportStatusLabel(product.currentStatus) : current, '', '');
@@ -497,7 +497,7 @@ function createTaskReportingWorksheet({
     { wch: 14 }, // Mã NV
     { wch: 48 }, // Tên Nhiệm Vụ
     { wch: 28 }, // Cơ quan chủ trì
-    { wch: 16 }, // Đơn vị tính
+    { wch: 25 }, // Thời gian thực hiện
     { wch: 46 }, // Sản Phẩm Đầu Ra
     { wch: 20 }, // Tiến độ hiện tại
     { wch: 34 }, // TIẾN ĐỘ THỰC HIỆN MỚI (Yellow)
@@ -840,37 +840,6 @@ export function exportProgressReportTemplate({
 
   const effectiveAgency = targetAgency || (currentAgency && String(userRole).toLowerCase() !== 'admin' ? currentAgency : null);
 
-  // Helper to filter goals led by a specific ministry
-  const filterGoalsForMinistry = (goalList, agency) => {
-    if (!agency) return goalList;
-    const agId = agency.id ? String(agency.id).toLowerCase() : '';
-    const agCode = (agency.code || '').toUpperCase();
-    const agName = (agency.name || '').toLowerCase();
-
-    const matched = goalList.filter(item => {
-      if (item.leadAgencyId && agId && String(item.leadAgencyId).toLowerCase() === agId) return true;
-      if (item.leadAgencyCode && agCode && item.leadAgencyCode.toUpperCase() === agCode) return true;
-      const g = activeGuidanceMap[item.code];
-      if (g && g.leadAgency) {
-        const lead = g.leadAgency.toLowerCase();
-        if (agCode === 'VPCP' && lead.includes('văn phòng chính phủ')) return true;
-        if (agCode === 'BKHCN' && lead.includes('khoa học và công nghệ')) return true;
-        if (agCode === 'BCA' && lead.includes('công an')) return true;
-        if (agCode === 'BNV' && lead.includes('nội vụ')) return true;
-        if (agCode === 'BTC' && lead.includes('tài chính')) return true;
-        if (agCode === 'BCT' && lead.includes('công thương')) return true;
-        if (agCode === 'NHNN' && (lead.includes('ngân hàng nhà nước') || lead.includes('ngân hàng'))) return true;
-        if (agCode === 'BYT' && lead.includes('y tế')) return true;
-        if (agCode === 'BTP' && lead.includes('tư pháp')) return true;
-        if (agCode === 'BGDDT' && lead.includes('giáo dục')) return true;
-        if (agCode === 'BTTTT' && lead.includes('thông tin và truyền thông')) return true;
-        if (lead.includes(agName.replace('bộ ', '').replace('ban ', '').trim())) return true;
-      }
-      return false;
-    });
-    return matched.length > 0 ? matched : goalList;
-  };
-
   // Helper to filter goals that localities measure & report
   const filterGoalsForLocality = (goalList) => {
     return goalList.filter(item => {
@@ -889,10 +858,8 @@ export function exportProgressReportTemplate({
     let agencyRoleTag = 'Bộ, Ngành, Địa phương';
 
     if (isMinistry) {
-      filteredItems = filterGoalsForMinistry(items, effectiveAgency);
       agencyRoleTag = 'Bộ, Cơ quan chủ trì mục tiêu';
     } else if (isProvince) {
-      filteredItems = filterGoalsForLocality(items);
       agencyRoleTag = 'Ủy ban nhân dân Tỉnh, Thành phố';
     }
 

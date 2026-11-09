@@ -105,7 +105,8 @@ try {
   assert.equal(rows[0][0], 'BÁO CÁO TIẾN ĐỘ THỰC HIỆN NHIỆM VỤ');
   assert.equal(taskWB.SheetNames.length, 1);
   assert.equal(rows[4][7] || '', '');
-  assert.equal(rows[4][4], 'Trạng thái');
+  assert.equal(rows[3][4], 'Thời gian thực hiện');
+  assert.equal(rows[4][4], '01/01/2026 ➔ 31/12/2030');
   assert.equal(rows[3][5], 'Sản Phẩm Đầu Ra');
   assert.ok(taskWB.Sheets[taskWB.SheetNames[0]]['!merges'].some(m => XLSX.utils.encode_range(m) === 'B6:B7'));
   const archive = XLSX.CFB.read(await fs.readFile(await download.path()), { type: 'buffer' });
