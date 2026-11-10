@@ -609,21 +609,18 @@ namespace Cdsqg.Application.Services
             var doc1266Id = Guid.Parse("12660000-0000-0000-0000-000000001266");
             var doc2629Id = Guid.Parse("26290000-0000-0000-0000-000000002629");
 
-            var allMatchingItems = await _context.GoalTaskItems
+            var reportItemsQuery = _context.GoalTaskItems
                 .Include(i => i.Document)
                 .Include(i => i.Unit)
                 .Include(i => i.Baselines)
                 .Include(i => i.ProgressLogs)
                 .Include(i => i.AgencyExecutions)
-                .Where(i => i.DocumentId == doc1266Id || i.DocumentId == doc2629Id)
+                .Where(i => i.DocumentId == doc1266Id || i.DocumentId == doc2629Id);
+
+            // Use persisted lead assignments, never a substring in a display label.
+            var agencyItems = await AgencyAssignments.Filter(reportItemsQuery, new[] { agencyId })
                 .AsNoTrackingWithIdentityResolution()
                 .ToListAsync();
-
-            var agencyItems = allMatchingItems.Where(i =>
-                i.LeadAgencyId == agencyId ||
-                i.AgencyExecutions.Any(e => e.IsLeadAssignment && e.AgencyId == agencyId) ||
-                (i.LeadAgencyDisplayText != null && i.LeadAgencyDisplayText.Contains(agency.Name, StringComparison.OrdinalIgnoreCase))
-            ).ToList();
 
             var agenciesMap = await _context.Agencies.AsNoTracking().ToDictionaryAsync(a => a.Id);
 

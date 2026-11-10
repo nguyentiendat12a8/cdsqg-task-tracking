@@ -462,4 +462,26 @@ public class AgencyProgressReportTests
         Assert.Equal(5, allReport.Goals.Count);
         Assert.Equal(5, allReport.Tasks.Count);
     }
+    [Fact]
+    public async Task Report_OnlyIncludesActualLeadAssignments_NotDisplayTextOrCoordination()
+    {
+        await using var db = CreateInMemoryDb("ReportScope_" + Guid.NewGuid());
+        var doc = new Document { Id = Guid.Parse("26290000-0000-0000-0000-000000002629"), DocumentNumber = "2629/QĐ-TTg", Name = "Test" };
+        var a = new Agency { Id = Guid.NewGuid(), Code = "A", Name = "Bộ Công an", Type = AgencyTypeEnum.Ministry };
+        var b = new Agency { Id = Guid.NewGuid(), Code = "B", Name = "Bộ khác", Type = AgencyTypeEnum.Ministry };
+        GoalTaskItem Item(string code) => new() { Id = Guid.NewGuid(), DocumentId = doc.Id, Code = code, Title = code, ItemType = ItemTypeEnum.Task, LeadAgencyId = b.Id };
+        var direct = Item("NV-01"); direct.LeadAgencyId = a.Id;
+        var assigned = Item("NV-02"); assigned.AgencyExecutions.Add(new AgencyTaskExecution { AgencyId = a.Id, IsLeadAssignment = true });
+        var display = Item("NV-03"); display.LeadAgencyDisplayText = "Đơn vị thuộc " + a.Name;
+        var coordination = Item("NV-04"); coordination.AgencyExecutions.Add(new AgencyTaskExecution { AgencyId = a.Id, IsCoordinatingAssignment = true });
+        db.Documents.Add(doc); db.Agencies.AddRange(a,b); db.GoalTaskItems.AddRange(direct,assigned,display,coordination); await db.SaveChangesAsync();
+        var service = new PlanningService(db);
+        foreach (var fetchAll in new[] { false, true })
+        {
+            var report = await service.GetAgencyProgressReportAsync(a.Id,2026,a.Id,"Admin",tab:"tasks",fetchAll:fetchAll);
+            Assert.Equal(2,report.TotalTasks);
+            Assert.Equal(new[] { "NV-01", "NV-02" },report.Tasks.Select(t=>t.Code));
+        }
+    }
+
 }

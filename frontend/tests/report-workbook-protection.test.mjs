@@ -14,9 +14,13 @@ const bytes=encodeProgressWorkbook(wb,[[],task.statusCells],XLSX);fs.mkdirSync('
 const zip=XLSX.CFB.read(bytes,{type:'array'});const read=path=>new TextDecoder().decode(XLSX.CFB.find(zip,zip.FullPaths.find(p=>p.endsWith(path))).content);
 const styles=read('/xl/styles.xml');const xf=/color/.test(styles)&&/<cellXfs\b[^>]*>([\s\S]*?)<\/cellXfs>/.exec(styles)[1].match(/<xf\b[^>]*?\/>|<xf\b[^>]*>[\s\S]*?<\/xf>/g);
 for(let index=0;index<2;index++){const sheet=wb.Sheets[wb.SheetNames[index]],xml=read(`/xl/worksheets/sheet${index+1}.xml`);assert.match(xml,/<sheetProtection\b[^>]*password="[A-F0-9]+"[^>]*sheet="1"/);const editable=new Set(sheet['!reportEditableCells']);for(const match of xml.matchAll(/<c\b([^>]*)>/g)){const ref=/\br="([^"]+)"/.exec(match[1])[1];const style=Number(/\bs="(\d+)"/.exec(match[1])?.[1]||0);assert.equal(/<protection\b[^>]*locked="0"/.test(xf[style]),editable.has(ref),ref+' protection');}assert(!styles.includes('FEF08A'));assert(!styles.includes('FEFCE8'));}
-assert.match(read('/xl/worksheets/sheet2.xml'),/dataValidation[^>]*sqref="G6"/);assert.equal(task.ws.F4.v,'Sản phẩm bàn giao');assert.equal(task.ws.G4.v,'TRẠNG THÁI THỰC HIỆN [CẦN CHỌN]');
+assert.match(read('/xl/worksheets/sheet2.xml'),/dataValidation[^>]*sqref="G6"/);assert.equal(task.ws.F4.v,'Sản phẩm bàn giao');assert.equal(task.ws.G4.v,'TRẠNG THÁI THỰC HIỆN');
 for(const sheet of [ws,task.ws]){const rows=XLSX.utils.sheet_to_json(sheet,{header:1});for(let i=0;i<rows.length;i++)if(['I','II'].includes(rows[i][0]))assert.equal(sheet[`A${i+1}`].s.alignment.horizontal,'center');}
 assert.equal(ws[`J${r1+1}`].s.fill.fgColor.rgb,ws[`E${r1+1}`].s.fill.fgColor.rgb);
+assert.equal(ws[`C${r1+1}`].s.fill.fgColor.rgb.slice(-6), 'FFFFFF');
+assert.equal(ws[`E${r1+1}`].s.fill.fgColor.rgb.slice(-6), 'F8F9FB');
+assert.equal(ws[`H${r1+1}`].s.fill.fgColor.rgb.slice(-6), 'EAF1FC');
+assert.notEqual(ws[`C${r1+1}`].s.fill.fgColor.rgb.slice(-6), ws[`J${r1+1}`].s.fill.fgColor.rgb);
 const original=XLSX.utils.book_new();XLSX.utils.book_append_sheet(original,XLSX.utils.aoa_to_sheet([['Unrelated']]),'Other');const oldBytes=encodeProgressWorkbook(original,[[]],XLSX);const oldZip=XLSX.CFB.read(oldBytes,{type:'array'});assert(!new TextDecoder().decode(XLSX.CFB.find(oldZip,oldZip.FullPaths.find(p=>p.endsWith('/xl/worksheets/sheet1.xml'))).content).includes('sheetProtection'));
 console.log('PASS report colors, blank locked cells, dash editable cells, heights, all XML locks and opt-in isolation');
 

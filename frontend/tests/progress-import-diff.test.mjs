@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import {reconcileProgressReportImport} from '../src/utils/progressReportImportDiff.js';
+const goals=[{id:'a',code:'MT-08',actual2025:null,estimate2026:41.2,plan2027:'100',notes:'Ghi chú'}, {id:'b',code:'MT-10',actual2025:null,estimate2026:36.5,plan2027:'50',notes:''}];
+const tasks=[{id:'t',code:'NV-01',status:'InProgress',notes:'Giữ nguyên'}];
+const parsed={goals:goals.flatMap(g=>[{id:g.id,periodYear:2025,value:g.id==='a'?40:30,summaryNotes:g.notes},{id:g.id,periodYear:2026,value:g.estimate2026,summaryNotes:g.notes}]),plans:goals.map(g=>({taskId:g.id,year:2027,targetQuantity:Number(g.plan2027)})),tasks:[{id:'t',status:'Drafting',summaryNotes:'Giữ nguyên',value:null}]};
+const result=reconcileProgressReportImport(parsed,goals,tasks);
+assert.equal(result.goals.length,2);assert.equal(result.plans.length,0);assert.equal(result.tasks.length,0);
+assert(result.goals.every(g=>g.periodYear===2025));assert.equal(result.preview.goals.length,2);
+assert(result.preview.goals.every(g=>g.cells[2025].changed&&!g.cells[2026].changed));
+assert.equal(result.preview.goals[0].cells[2025].previous,null);
+const unchanged=reconcileProgressReportImport({...parsed,goals:parsed.goals.filter(g=>g.periodYear===2026)},goals,tasks);
+assert.equal(unchanged.goals.length+unchanged.plans.length+unchanged.tasks.length,0);
+const notes=reconcileProgressReportImport({...parsed,goals:[],plans:[],tasks:[{id:'t',status:'Drafting',summaryNotes:'Ghi chú mới',value:null}]},goals,tasks);
+assert.equal(notes.tasks.length,1);assert(notes.preview.tasks[0].cells.notes.changed);assert(!notes.preview.tasks[0].cells.status.changed);
+console.log('PASS only two changed 2025 cells; unchanged results/plans/status ignored; notes-only diff highlighted');

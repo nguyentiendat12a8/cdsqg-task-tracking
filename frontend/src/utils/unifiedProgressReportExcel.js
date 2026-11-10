@@ -61,21 +61,26 @@ const GUIDE_STYLE = {
 
 const CELL_TEXT_LEFT = {
   font: { name: 'Segoe UI', sz: 10, color: { rgb: '0F172A' } },
-  fill: { fgColor: { rgb: 'F8FAFC' } },
+  fill: { fgColor: { rgb: 'FFFFFF' } },
   alignment: { horizontal: 'left', vertical: 'center', wrapText: true },
   border: THIN_BORDER
 };
 
 const CELL_TEXT_CENTER = {
   font: { name: 'Segoe UI', sz: 10, color: { rgb: '0F172A' } },
-  fill: { fgColor: { rgb: 'F8FAFC' } },
+  fill: { fgColor: { rgb: 'FFFFFF' } },
   alignment: { horizontal: 'center', vertical: 'center' },
   border: THIN_BORDER
 };
 
+const CELL_REFERENCE = {
+  ...CELL_TEXT_CENTER,
+  fill: { fgColor: { rgb: 'F8F9FB' } }
+};
+
 const CELL_CODE = {
   font: { name: 'Segoe UI', sz: 10, bold: true, color: { rgb: '1E3A8A' } },
-  fill: { fgColor: { rgb: 'F8FAFC' } },
+  fill: { fgColor: { rgb: 'FFFFFF' } },
   alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
   border: THIN_BORDER
 };
@@ -89,7 +94,7 @@ const CELL_EDITABLE = {
 
 const CELL_DISABLED = {
   font: { name: 'Segoe UI', sz: 10, color: { rgb: '94A3B8' } },
-  fill: { fgColor: { rgb: 'F8FAFC' } },
+  fill: { fgColor: { rgb: 'F8F9FB' } },
   alignment: { horizontal: 'center', vertical: 'center' },
   border: THIN_BORDER
 };
@@ -387,7 +392,7 @@ export function buildGoalsWorksheet(goals, agencyName, dateStr, XLSX) {
     applyStyleToRange(ws, r, 1, r, 1, CELL_CODE, XLSX);        // Mã
     applyStyleToRange(ws, r, 2, r, 2, CELL_TEXT_LEFT, XLSX);   // Tên
     applyStyleToRange(ws, r, 3, r, 3, CELL_TEXT_CENTER, XLSX); // ĐVT
-    applyStyleToRange(ws, r, 4, r, 5, CELL_TEXT_CENTER, XLSX); // Kết quả QĐ
+    applyStyleToRange(ws, r, 4, r, 5, CELL_REFERENCE, XLSX); // Kết quả QĐ
     applyStyleToRange(ws, r, 6, r, 6, CELL_TEXT_CENTER, XLSX); // 2025
     applyStyleToRange(ws, r, 12, r, 12, CELL_NOTES, XLSX);     // Ghi chú
   }
@@ -456,7 +461,7 @@ export function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
     'Cơ quan phối hợp',
     'Hạn hoàn thành',
     'Sản phẩm bàn giao',
-    'TRẠNG THÁI THỰC HIỆN [CẦN CHỌN]',
+    'TRẠNG THÁI THỰC HIỆN',
     'GHI CHÚ / KHÓ KHĂN & KIẾN NGHỊ',
     'ID Nhiệm Vụ (Ẩn)',
     'ID Quyết Định (Ẩn)'
@@ -741,19 +746,36 @@ export async function parseUnifiedProgressReportFile(file, { existingGoals = [],
       const headers = rows[headerRowIdx].map(value => String(value || '').trim().toLowerCase());
       const colMap = {
         code: headers.findIndex(h => h.includes('mã nv')),
+        id: headers.findIndex(h => h.includes('id nhiệm vụ')),
+        documentId: headers.findIndex(h => h.includes('id quyết định')),
         status: headers.findIndex(h => h.includes('trạng thái')),
         percent: headers.findIndex(h => h.includes('tiến độ') && h.includes('%')),
         notes: headers.findIndex(h => h.includes('ghi chú'))
       };
 
+      let sectionDocumentNumber = null;
       for (let r = headerRowIdx + 1; r < rows.length; r++) {
         const row = rows[r];
         if (!row || !row[colMap.code]) continue;
         const code = String(row[colMap.code]).trim();
+        if (/QUYẾT ĐỊNH|QĐ/i.test(code) && /1266|2629/.test(code)) {
+          sectionDocumentNumber = /2629/.test(code) ? '2629' : '1266';
+          continue;
+        }
         if (!code || code.startsWith('I') || code.startsWith('QĐ') || code.toLowerCase().startsWith('mã')) continue;
 
-        const matchedTask = existingTasks.find(t => t.code && t.code.trim().toLowerCase() === code.toLowerCase());
-        if (!matchedTask) continue;
+        const rowId = String(row[colMap.id] || '').trim().toLowerCase();
+        const documentId = String(row[colMap.documentId] || '').trim().toLowerCase();
+        const candidates = existingTasks.filter(t =>
+          (!rowId || String(t.id).toLowerCase() === rowId) &&
+          (!documentId || String(t.documentId).toLowerCase() === documentId) &&
+          (!sectionDocumentNumber || String(t.documentNumber).includes(sectionDocumentNumber)) &&
+          t.code?.trim().toLowerCase() === code.toLowerCase());
+        if (candidates.length !== 1) {
+          warnings.push(`Không đối chiếu được duy nhất nhiệm vụ ${code} trong quyết định tương ứng; dòng này không được cập nhật.`);
+          continue;
+        }
+        const matchedTask = candidates[0];
 
         const statusRaw = row[colMap.status] !== undefined && row[colMap.status] !== null ? String(row[colMap.status]).trim() : '';
         const percentRaw = row[colMap.percent];

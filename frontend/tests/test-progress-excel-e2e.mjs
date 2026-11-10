@@ -153,7 +153,7 @@ assert.equal(wsTasks['B4'].v, 'Mã NV', 'Must NOT have Căn cứ QĐ column!');
 assert.equal(wsTasks['C4'].v, 'Tên nhiệm vụ');
 assert.equal(wsTasks['D4'].v, 'Cơ quan phối hợp');
 assert.equal(wsTasks['E4'].v, 'Hạn hoàn thành');
-assert.equal(wsTasks['G4'].v, 'TRẠNG THÁI THỰC HIỆN [CẦN CHỌN]');
+assert.equal(wsTasks['G4'].v, 'TRẠNG THÁI THỰC HIỆN');
 assert.equal(wsTasks['F4'].v, 'Sản phẩm bàn giao');
 assert.equal(wsTasks['H4'].v, 'GHI CHÚ / KHÓ KHĂN & KIẾN NGHỊ');
 assert.equal(wsTasks['I4'].v, 'ID Nhiệm Vụ (Ẩn)');

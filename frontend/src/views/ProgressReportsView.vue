@@ -28,13 +28,14 @@
         <button
           type="button"
           @click="handleExportExcel"
-          :disabled="isLoading || !reportData"
+          :disabled="isLoading || isExporting || !reportData"
+          :aria-busy="isExporting"
           class="ui-btn ui-btn-secondary px-3.5 py-2 text-xs font-bold rounded-xl flex items-center gap-2 cursor-pointer shadow-xs disabled:opacity-50"
         >
           <svg class="w-4 h-4 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
           </svg>
-          <span>Xuất excel</span>
+          <span>{{ isExporting ? 'Đang xuất Excel…' : 'Xuất excel' }}</span>
         </button>
 
         <button
@@ -109,7 +110,7 @@
               :options="agencyOptions"
               :isMulti="false"
               :clearable="false"
-              :disabled="isLoading"
+              :disabled="isSubmitting || isImportModalOpen"
             />
           </div>
         </template>
@@ -364,7 +365,7 @@
 
     <!-- UNIFIED IMPORT MODAL -->
     <div v-if="isImportModalOpen" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
-      <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-4xl w-full p-5 space-y-4 max-h-[90vh] flex flex-col">
+      <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-7xl w-full p-5 space-y-4 max-h-[90vh] flex flex-col">
         <!-- Modal Header -->
         <div class="flex items-center justify-between border-b border-slate-100 pb-3 shrink-0">
           <div class="flex items-center gap-2.5">
@@ -418,10 +419,13 @@
 
         <!-- Step 2: Preview Parsed Items -->
         <div v-else-if="importStep === 2" class="space-y-3 flex-1 overflow-y-auto">
+          <div v-if="parsedData.warnings?.length" class="p-3 rounded-xl bg-amber-50 text-amber-900 text-sm" role="alert">
+            <p v-for="(warning, index) in parsedData.warnings" :key="index">{{ warning }}</p>
+          </div>
           <!-- Summary Cards -->
           <div class="grid grid-cols-3 gap-3 text-xs font-bold shrink-0">
             <div class="bg-blue-50 p-3 rounded-xl border border-blue-200">
-              <span class="text-blue-700 block text-xs">Mục tiêu có kết quả mới</span>
+              <span class="text-blue-700 block text-xs">Kết quả mục tiêu thay đổi</span>
               <span class="text-blue-900 text-lg font-bold">{{ parsedData.goals.length }}</span>
             </div>
             <div class="bg-amber-50 p-3 rounded-xl border border-amber-200">
@@ -429,36 +433,25 @@
               <span class="text-amber-900 text-lg font-bold">{{ parsedData.plans.length }}</span>
             </div>
             <div class="bg-emerald-50 p-3 rounded-xl border border-emerald-200">
-              <span class="text-emerald-700 block text-xs">Nhiệm vụ có tiến độ mới</span>
+              <span class="text-emerald-700 block text-xs">Nhiệm vụ thay đổi</span>
               <span class="text-emerald-900 text-lg font-bold">{{ parsedData.tasks.length }}</span>
             </div>
           </div>
 
-          <!-- Preview Tabs/List -->
-          <div class="space-y-2 border border-slate-200 rounded-xl p-3 max-h-64 overflow-y-auto">
-            <div v-if="parsedData.goals.length > 0" class="space-y-1">
-              <div class="font-bold text-xs text-blue-800">🎯 Tiến độ Mục tiêu:</div>
-              <div v-for="g in parsedData.goals" :key="`${g.code}-${g.periodYear}`" class="text-xs text-slate-700 flex justify-between py-0.5 border-b border-slate-100">
-                <span class="font-semibold">{{ g.code }} - {{ g.title }} ({{ g.periodYear }})</span>
-                <span class="font-bold text-emerald-700">{{ g.value }}%</span>
-              </div>
-            </div>
-
-            <div v-if="parsedData.plans.length > 0" class="space-y-1 pt-2">
-              <div class="font-bold text-xs text-amber-800">📅 Kế hoạch mục tiêu từng năm:</div>
-              <div v-for="(p, pIdx) in parsedData.plans" :key="pIdx" class="text-xs text-slate-700 flex justify-between py-0.5 border-b border-slate-100">
-                <span>{{ p.code }} (Năm {{ p.year }})</span>
-                <span class="font-bold text-amber-700">{{ p.targetQuantity }}%</span>
-              </div>
-            </div>
-
-            <div v-if="parsedData.tasks.length > 0" class="space-y-1 pt-2">
-              <div class="font-bold text-xs text-emerald-800">📋 Tiến độ Nhiệm vụ:</div>
-              <div v-for="t in parsedData.tasks" :key="t.code" class="text-xs text-slate-700 flex justify-between py-0.5 border-b border-slate-100">
-                <span class="font-semibold">{{ t.code }} - {{ t.title }}</span>
-                <span class="font-bold text-emerald-700">{{ t.status }} ({{ t.value != null ? `${t.value}%` : '' }})</span>
-              </div>
-            </div>
+          <p class="text-sm text-slate-600">Chỉ cập nhật dữ liệu thay đổi. Ô tô vàng hiển thị giá trị cũ → giá trị trong file.</p>
+          <div v-if="!parsedData.preview?.goals.length && !parsedData.preview?.tasks.length" class="p-6 text-center text-slate-500">Không có thay đổi so với dữ liệu hiện tại.</div>
+          <div v-for="kind in ['goals', 'tasks']" :key="kind" class="overflow-auto border border-slate-200 rounded-xl" v-show="parsedData.preview?.[kind].length">
+            <table class="w-full text-sm border-collapse">
+              <caption class="text-left p-3 font-bold bg-slate-50">{{ kind === 'goals' ? 'Mục tiêu' : 'Nhiệm vụ' }}</caption>
+              <thead class="bg-blue-50"><tr><th class="p-3 border">Mã</th><th class="p-3 border min-w-64">Tên / Chỉ tiêu</th><th v-for="col in (kind === 'goals' ? [2025,2026,2027,2028,2029,2030,'notes'] : ['status','notes'])" :key="col" class="p-3 border min-w-28">{{ col === 'notes' ? 'Ghi chú' : col === 'status' ? 'Trạng thái' : col }}</th></tr></thead>
+              <tbody><tr v-for="row in parsedData.preview?.[kind]" :key="row.id">
+                <td class="p-3 border whitespace-pre-line">{{ row.documentNumber }}<br>{{ row.code }}</td><td class="p-3 border">{{ row.title }}</td>
+                <td v-for="col in (kind === 'goals' ? [2025,2026,2027,2028,2029,2030,'notes'] : ['status','notes'])" :key="col" class="p-3 border" :class="row.cells[col]?.changed ? 'bg-amber-100 text-amber-950 font-semibold' : 'text-slate-500'">
+                  <template v-if="row.cells[col]?.changed"><span class="block text-xs font-normal line-through text-slate-500">{{ row.cells[col].previous ?? 'Trống' }}</span><span>→ {{ row.cells[col].value || row.cells[col].value === 0 ? row.cells[col].value : 'Trống' }}</span></template>
+                  <template v-else>{{ row.cells[col]?.value }}</template>
+                </td>
+              </tr></tbody>
+            </table>
           </div>
 
           <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
@@ -505,6 +498,7 @@
 </template>
 
 <script setup>
+import { reconcileProgressReportImport } from '../utils/progressReportImportDiff.js';
 import { ref, computed, onMounted, watch } from 'vue';
 import { fetchWithAuth, authState } from '../services/auth';
 import { isProgressReportYearApplicable, progressReportYearValue } from '../shared/progressReportCells.js';
@@ -517,6 +511,7 @@ import { exportUnifiedProgressReport, parseUnifiedProgressReportFile } from '../
 
 const activeTab = ref('goals'); // 'goals' | 'tasks'
 const isLoading = ref(false);
+const isExporting = ref(false);
 const agencies = ref([]);
 const selectedAgencyId = ref('');
 const reportData = ref(null);
@@ -655,9 +650,12 @@ async function loadAgencies() {
   }
 }
 
+let reportRequestVersion = 0;
 async function fetchReport() {
   if (!selectedAgencyId.value) return;
+  const requestVersion = ++reportRequestVersion;
   isLoading.value = true;
+  reportData.value = null;
   try {
     const url = `/api/planning/agency-progress-report?agencyId=${selectedAgencyId.value}&reportYear=2026&tab=${activeTab.value}&page=${currentPage.value}&pageSize=${pageSize.value}&userRole=${authState.user.value?.role || 'Admin'}&userAgencyId=${authState.user.value?.agencyId || ''}`;
     const res = await fetchWithAuth(getApiUrl(url));
@@ -666,6 +664,7 @@ async function fetchReport() {
       throw new Error(err.error || 'Lỗi khi tải báo cáo tiến độ cơ quan');
     }
     const data = await res.json();
+    if (requestVersion !== reportRequestVersion) return;
     reportData.value = data;
     totalGoals.value = data.totalGoals ?? 0;
     totalTasks.value = data.totalTasks ?? 0;
@@ -673,10 +672,11 @@ async function fetchReport() {
     totalPages.value = data.totalPages ?? 1;
     currentPage.value = data.page ?? 1;
   } catch (err) {
+    if (requestVersion !== reportRequestVersion) return;
     console.error('Error fetching report:', err);
     toast.error(err.message || 'Lỗi khi tải dữ liệu báo cáo');
   } finally {
-    isLoading.value = false;
+    if (requestVersion === reportRequestVersion) isLoading.value = false;
   }
 }
 
@@ -704,22 +704,24 @@ watch(selectedAgencyId, (newVal) => {
 });
 
 async function handleExportExcel() {
-  if (!selectedAgencyId.value) return;
-  isLoading.value = true;
+  if (!selectedAgencyId.value || isExporting.value || isLoading.value) return;
+  const agencyId = selectedAgencyId.value;
+  const agencyName = selectedAgencyName.value;
+  isExporting.value = true;
   try {
-    const fullRes = await fetchWithAuth(getApiUrl(`/api/planning/agency-progress-report?agencyId=${selectedAgencyId.value}&reportYear=2026&fetchAll=true&userRole=${authState.user.value?.role || 'Admin'}&userAgencyId=${authState.user.value?.agencyId || ''}`));
+    const fullRes = await fetchWithAuth(getApiUrl(`/api/planning/agency-progress-report?agencyId=${agencyId}&reportYear=2026&fetchAll=true&userRole=${authState.user.value?.role || 'Admin'}&userAgencyId=${authState.user.value?.agencyId || ''}`));
     if (!fullRes.ok) throw new Error('Không thể tải dữ liệu để xuất Excel');
     const fullData = await fullRes.json();
     await exportUnifiedProgressReport({
       reportData: fullData,
-      agencyName: selectedAgencyName.value,
+      agencyName,
       reportYear: 2026
     });
   } catch (err) {
     console.error('Lỗi khi xuất excel:', err);
     toast.error(err.message || 'Lỗi khi xuất file Excel');
   } finally {
-    isLoading.value = false;
+    isExporting.value = false;
   }
 }
 
@@ -750,12 +752,11 @@ async function handleFileUpload(e) {
       reportYear: 2026
     });
 
-    parsedData.value = res;
-    if (res.goals.length === 0 && res.plans.length === 0 && res.tasks.length === 0) {
+    parsedData.value = reconcileProgressReportImport(res, fullData.goals || [], fullData.tasks || []);
+    if (parsedData.value.goals.length === 0 && parsedData.value.plans.length === 0 && parsedData.value.tasks.length === 0) {
       toast.warning('Không tìm thấy dữ liệu tiến độ hoặc kế hoạch mới nào trong file.');
-    } else {
-      importStep.value = 2;
     }
+    importStep.value = 2;
   } catch (err) {
     console.error('Lỗi khi đọc file Excel:', err);
     toast.error(err.message || 'Lỗi khi đọc file Excel');
@@ -816,11 +817,12 @@ async function submitImportData() {
       });
 
       for (const [docId, rows] of Object.entries(plansByDoc)) {
-        await fetchWithAuth(getApiUrl(`/api/planning/documents/${docId}/yearly-targets/import`), {
+        const planResponse = await fetchWithAuth(getApiUrl(`/api/planning/documents/${docId}/yearly-targets/import`), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ confirmOverwrite: true, rows })
         });
+        if (!planResponse.ok) throw new Error('Không thể cập nhật kế hoạch mục tiêu. Vui lòng kiểm tra và thử lại.');
       }
     }
 

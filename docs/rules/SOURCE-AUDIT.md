@@ -130,3 +130,27 @@ progressWorkbook chỉ bật protection cho sheet có metadata !reportEditableCe
 
 
 10/11/2026 — Cập nhật Excel theo phản hồi: protection có password verifier theo mật khẩu người dùng cung cấp (không ghi plaintext vào source/tài liệu). Mở khóa kết quả 2025 chỉ khi applicableYears cho phép; parser đọc riêng cột 2025 và 2026, UI preview hiện năm và bulk payload giữ periodYear từng dòng. Backend bulk hiện đã hỗ trợ năm từng item nên không đổi BE. Ô không áp dụng dùng fill F8FAFC như dữ liệu cố định và để trống. Mã ghép chuẩn hóa xuống dòng, wrap và tính chiều cao; cột số La Mã căn giữa ở hai sheet. Sheet nhiệm vụ đổi F=Sản phẩm, G=Trạng thái, H=Ghi chú; validation/unlocked metadata và hướng dẫn theo cột G. Parser theo header giữ nhận mẫu cũ. Kiểm tra e2e import, khóa/style từng ô, password hash độc lập bằng openpyxl, tách kết quả 2025/2026 và giá trị zero.
+
+
+11/11/2026 — ProgressReportsView xuất Excel không bật isLoading của bảng nữa; dùng isExporting riêng và chặn gửi lặp. Chốt agencyId/agencyName tại lúc bấm để tên file khớp dữ liệu tải; không thay tab/page/list hiện hành. progress-export-state.browser.mjs trì hoãn API xuất để kiểm tra table DOM giữ nguyên, không có frame navigation, download thành công và nhánh lỗi trả lại trạng thái nút.
+
+
+### 11/11/2026 — Đối chiếu trước khi nhập báo cáo Excel
+
+- So sánh kết quả theo năm, kế hoạch và trạng thái/ghi chú với snapshot API hiện tại; chỉ gửi các bản ghi thay đổi. Chuẩn hóa trạng thái tương đương và giá trị số để không đếm lại dữ liệu giữ nguyên.
+- Bảng xem trước theo cột năm/trạng thái/ghi chú, tô ô thay đổi và hiện giá trị cũ → mới; không có thay đổi thì không cho xác nhận.
+- Kiểm chứng: fixture chỉ sửa hai kết quả 2025, không gửi lại kết quả 2026/kế hoạch/nhiệm vụ; kiểm tra trình duyệt laptop/mobile và build frontend.
+
+
+### 11/11/2026 — Phạm vi cơ quan trong báo cáo tiến độ
+
+- Báo cáo dùng AgencyAssignments.Filter theo phân giao chủ trì thay vì tìm tên cơ quan trong nhãn hiển thị. Cùng nguồn cho danh sách/phân trang và fetchAll của xuất/nhập Excel.
+- FE bỏ phản hồi cũ khi đổi cơ quan/tab; không hiển thị dữ liệu cơ quan trước trong lúc tải.
+- Kiểm chứng: sáu test AgencyProgressReportTests, có trường hợp cơ quan chỉ có tên trong nhãn hoặc chỉ phối hợp phải bị loại; kiểm tra phản hồi sai thứ tự trên trình duyệt.
+
+
+### 11/11/2026 — Mã nhiệm vụ trùng giữa hai quyết định khi nhập Excel
+
+- Đối chiếu ID nhiệm vụ/ID quyết định ở cột ẩn và quyết định của khối thay vì lấy dòng đầu tiên cùng mã NV. File cũ dùng mã + khối quyết định; nếu không duy nhất thì bỏ qua và cảnh báo, không đoán.
+- Chuẩn hóa xuống dòng ghi chú để tránh báo thay đổi do CRLF/LF.
+- Kiểm chứng: xuất/nhập nguyên file có hai NV-03 khác quyết định không sinh cập nhật; sửa một trạng thái chỉ highlight đúng nhiệm vụ của quyết định đó.
