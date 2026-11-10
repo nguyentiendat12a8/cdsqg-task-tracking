@@ -6,17 +6,14 @@
       <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div class="flex items-center gap-3 min-w-0">
           <div class="ui-screen-icon w-10 h-10 rounded-2xl flex items-center justify-center shrink-0" aria-hidden="true">
-            <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
           </div>
           <div>
             <h2 class="ui-page-title tracking-tight text-slate-800 font-bold text-lg">
               Thông tin chuyển đổi số
             </h2>
-            <p class="text-xs text-slate-500 font-medium">
-              Theo dõi Kế hoạch Chuyển đổi số 5 năm (2026 - 2030), Văn bản phúc đáp, Cập nhật QĐ 1266/QĐ-TTg và Cán bộ đầu mối liên hệ của các Bộ, Ngành, Địa phương.
-            </p>
           </div>
         </div>
 
