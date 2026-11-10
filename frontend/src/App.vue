@@ -56,7 +56,7 @@
           />
 
           <!-- Báo cáo - Xuất Excel (Executive Reports Center) -->
-          <ExecutiveReportsView v-else-if="['reports', 'reports-general', 'reports-progress', 'reports-general'].includes(currentTab)" />
+          <ExecutiveReportsView v-else-if="['reports', 'reports-general'].includes(currentTab)" />
           <ProgressReportsView v-else-if="currentTab === 'reports-progress'" />
           <AiDataView v-else-if="isAiDataRoute(currentTab) && authState.isAdmin.value" :section="aiSectionFor(currentTab).key" :initial-tab="currentTab==='ai-review'?'review':currentTab==='ai-alerts'?'alerts':'files'" @navigate="switchTab" />
 
@@ -142,7 +142,7 @@ function parseHashRoute() {
   const fallback = forbiddenTabFallback(route);
   if (fallback) { currentTab.value = fallback; return; }
 
-  if (['goals', 'goals-list', 'goals-grid', 'tasks', 'tasks-list', 'tasks-grid', 'reports', 'legal-documents', 'agency-plans', 'digital-news', 'agencies', 'units', 'users', 'import-history', 'settings', 'master-data', 'ai-settings', 'ai-alerts', 'ai-review', ...AI_MENU.map(item => item.route)].includes(route)) {
+  if (['goals', 'goals-list', 'goals-grid', 'tasks', 'tasks-list', 'tasks-grid', 'reports', 'reports-general', 'reports-progress', 'legal-documents', 'agency-plans', 'digital-news', 'agencies', 'units', 'users', 'import-history', 'settings', 'master-data', 'ai-settings', 'ai-alerts', 'ai-review', ...AI_MENU.map(item => item.route)].includes(route)) {
     currentTab.value = route;
   } else {
     currentTab.value = 'dashboard';

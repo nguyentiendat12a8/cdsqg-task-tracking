@@ -146,8 +146,8 @@
           <span v-if="!isCollapsed" class="truncate">Nhiệm vụ</span>
         </button>
 
-        <!-- Báo cáo (Reports) - Submenu: Báo cáo chung & Báo cáo tiến độ -->
-        <div>
+        <!-- Báo cáo: Dropdown cho Admin/Văn thư, Nút trực tiếp cho Cán bộ đơn vị -->
+        <div v-if="authState.seesAll.value">
           <button 
             @click="handleReportsClick"
             :class="[
@@ -167,7 +167,6 @@
           <!-- Submenu Báo cáo -->
           <div v-if="isReportsOpen && !isCollapsed" class="pl-9 pr-2 py-1.5 space-y-1">
             <button 
-              v-if="authState.seesAll.value"
               @click="selectTab('reports-general')"
               :class="[
                 'nav-sublink w-full text-left py-2 px-3 rounded-lg text-xs font-semibold transition whitespace-nowrap cursor-pointer',
@@ -187,6 +186,20 @@
             </button>
           </div>
         </div>
+
+        <button 
+          v-else
+          @click="selectTab('reports-progress')"
+          :class="[
+            'nav-link w-full flex items-center gap-3 py-3 rounded-xl font-bold text-xs transition-all duration-200 whitespace-nowrap overflow-hidden cursor-pointer',
+            isCollapsed ? 'justify-center px-0 w-12 h-12 mx-auto' : 'px-3',
+            ['reports', 'reports-general', 'reports-progress'].includes(activeTab) ? 'is-active' : 'nav-idle'
+          ]"
+          v-tip="{ content: isCollapsed ? 'Báo cáo tiến độ' : '', placement: 'right' }"
+        >
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+          <span v-if="!isCollapsed" class="truncate">Báo cáo tiến độ</span>
+        </button>
 
         <div v-if="authState.isAdmin.value">
           <button @click="handleAiClick" aria-label="Quản trị dữ liệu AI" :aria-expanded="isAiOpen && !isCollapsed" aria-controls="ai-submenu" v-tip="{ content: isCollapsed ? 'Quản trị dữ liệu AI' : '', placement: 'right' }" :class="['nav-link w-full flex items-center justify-between py-3 rounded-xl font-bold text-xs transition whitespace-nowrap cursor-pointer', isCollapsed ? 'justify-center px-0 w-12 h-12 mx-auto' : 'px-3', isAiRoute(activeTab) ? 'is-active' : 'nav-idle']">
