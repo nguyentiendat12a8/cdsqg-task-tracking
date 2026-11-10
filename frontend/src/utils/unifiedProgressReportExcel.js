@@ -603,10 +603,11 @@ export async function parseUnifiedProgressReportFile(file, { existingGoals = [],
         const percentRaw = row[colMap.percent] !== undefined && row[colMap.percent] !== null ? String(row[colMap.percent]).trim() : '';
         const notesRaw = row[colMap.notes] !== undefined && row[colMap.notes] !== null ? String(row[colMap.notes]).trim() : '';
 
+        const sLower = statusRaw.toLowerCase();
         let mappedStatus = null;
-        if (statusRaw.includes('hoàn thành')) mappedStatus = 'Completed';
-        else if (statusRaw.includes('đang')) mappedStatus = 'InProgress';
-        else if (statusRaw.includes('chưa')) mappedStatus = 'NotStarted';
+        if (sLower.includes('hoàn thành') || statusRaw === 'Completed') mappedStatus = 'Completed';
+        else if (sLower.includes('đang') || statusRaw === 'Drafting' || statusRaw === 'InProgress') mappedStatus = 'Drafting';
+        else if (sLower.includes('chưa') || statusRaw === 'NotStarted') mappedStatus = 'NotStarted';
 
         let numPercent = null;
         if (percentRaw !== '' && percentRaw !== '—') {

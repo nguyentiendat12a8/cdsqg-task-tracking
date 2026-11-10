@@ -617,7 +617,7 @@ namespace Cdsqg.Application.Services
                 string docNum = is2629 ? "2629/QĐ-TTg" : "1266/QĐ-TTg";
 
                 var baselines = g.Baselines ?? new List<TargetBaseline>();
-                var bMap = baselines.ToDictionary(b => b.Year, b => b.TargetQuantity);
+                var bMap = baselines.ToDictionary(b => b.Year, b => (b.ConfiguredTargetQuantity > 0 ? b.ConfiguredTargetQuantity : b.TargetQuantity));
 
                 var pLogs = g.ProgressLogs?.Where(p => p.AgencyId == agencyId && (p.PeriodYear == 2025 || p.PeriodYear == 2026))
                     .OrderByDescending(p => p.LogDate)
