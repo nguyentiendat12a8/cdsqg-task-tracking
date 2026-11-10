@@ -22,14 +22,14 @@ public class SecurityTests
         .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
 
     private static ActionExecutingContext Context(string controller, string action, string method,
-        Dictionary<string, object?>? args = null, Guid? agencyId = null, bool admin = false, bool authenticated = true)
+        Dictionary<string, object?>? args = null, Guid? agencyId = null, bool admin = false, bool authenticated = true, string? role = null)
     {
         var http = new DefaultHttpContext();
         http.Request.Method = method;
         if (authenticated)
             http.User = new ClaimsPrincipal(new ClaimsIdentity(new[] {
                 new Claim(ClaimTypes.NameIdentifier, Guid.NewGuid().ToString()),
-                new Claim(ClaimTypes.Role, admin ? "Admin" : "AgencyUser"),
+                new Claim(ClaimTypes.Role, role ?? (admin ? "Admin" : "AgencyUser")),
                 new Claim("AgencyId", agencyId?.ToString() ?? ""),
                 new Claim("FullName", "Verified user") }, "test"));
         var routes = new RouteData();
@@ -69,6 +69,56 @@ public class SecurityTests
         var admin = Context(controller, action, "GET", new() { ["agencyId"] = null }, admin: true);
         Assert.True(await Run(db, admin));
         Assert.Null(admin.ActionArguments["agencyId"]);
+    }
+
+    [Theory]
+    [InlineData("LegalDocument", "CreateLegalDocument", "POST")]
+    [InlineData("LegalDocument", "DeleteLegalDocument", "DELETE")]
+    [InlineData("Agency", "UpdatePlansAndContacts", "PUT")]
+    [InlineData("Agency", "UploadPlanFile", "POST")]
+    [InlineData("DigitalNews", "Sync", "POST")]
+    public async Task ClerkCanOperateUtilityData(string controller, string action, string method)
+    {
+        using var db = Database();
+        var ctx = Context(controller, action, method, new() { ["userRole"] = null, ["userAgencyId"] = Guid.NewGuid() }, role: "Clerk");
+        Assert.True(await Run(db, ctx));
+        Assert.Equal("Admin", ctx.ActionArguments["userRole"]); // phạm vi toàn hệ thống
+        Assert.Null(ctx.ActionArguments["userAgencyId"]);
+    }
+
+    [Theory]
+    [InlineData("GoalTaskItem", "CreateItem", "POST")]
+    [InlineData("GoalTaskItem", "UpdateItem", "PUT")]
+    [InlineData("Planning", "UpdateYearlyTarget", "PUT")]
+    [InlineData("Planning", "ImportYearlyTargets", "POST")]
+    [InlineData("Execution", "ApproveProgress", "POST")]
+    [InlineData("Execution", "SubmitUrge", "POST")]
+    [InlineData("Document", "CreateDocument", "POST")]
+    [InlineData("Agency", "CreateAgency", "POST")]
+    [InlineData("LegalDocument", "ClearAllLegalDocuments", "DELETE")]
+    [InlineData("Notification", "SendNotification", "POST")]
+    public async Task ClerkIsReadOnlyOutsideUtilities(string controller, string action, string method)
+    {
+        using var db = Database();
+        var ctx = Context(controller, action, method, role: "Clerk");
+        Assert.False(await Run(db, ctx));
+        Assert.IsType<ForbidResult>(ctx.Result);
+    }
+
+    [Fact]
+    public async Task ClerkViewsAllAgenciesButNotAdministration()
+    {
+        using var db = Database();
+        var list = Context("Document", "GetDocumentItems", "GET", new() { ["agencyId"] = null, ["userRole"] = null }, role: "Clerk");
+        Assert.True(await Run(db, list));
+        Assert.Null(list.ActionArguments["agencyId"]);
+        Assert.Equal("Admin", list.ActionArguments["userRole"]);
+        foreach (var controller in new[] { "User", "MasterData", "AiData" })
+        {
+            var ctx = Context(controller, "Get", "GET", role: "Clerk");
+            Assert.False(await Run(db, ctx));
+            Assert.IsType<ForbidResult>(ctx.Result);
+        }
     }
 
     [Theory]

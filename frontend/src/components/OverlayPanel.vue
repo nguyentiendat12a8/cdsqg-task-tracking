@@ -18,7 +18,7 @@
       type="button" 
       class="ui-single-line ui-toolbar-control px-3.5 py-2 bg-slate-100 hover:bg-slate-200 active:bg-slate-300 text-slate-700 font-semibold border border-slate-200/80 transition flex items-center gap-1.5 shrink-0 cursor-pointer shadow-2xs select-none whitespace-nowrap"
       :class="{ '!bg-blue-50 !text-blue-700 !border-blue-300': isOpen || activeCount > 0 }"
-      title="Mở bộ lọc nâng cao"
+      v-tip="'Mở bộ lọc nâng cao'"
     >
       <svg class="w-4 h-4 text-slate-500" :class="{ '!text-blue-600': activeCount > 0 || isOpen }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"/>
@@ -68,7 +68,7 @@
             aria-label="Đóng bảng tùy chọn"
             @click="closePanel" 
             class="w-6 h-6 rounded-lg bg-slate-200/80 hover:bg-slate-300 text-slate-500 hover:text-slate-800 flex items-center justify-center text-xs font-bold transition cursor-pointer"
-            title="Đóng panel"
+            v-tip="'Đóng panel'"
           >
             ✕
           </button>

@@ -76,6 +76,8 @@ namespace Cdsqg.Application.DTOs
         public List<TaskDeliverable> Deliverables { get; set; } = new List<TaskDeliverable>();
         public Dictionary<int, decimal> YearlyAllocations { get; set; } = new();
         public Dictionary<int, object?> YearlyTargets { get; set; } = new Dictionary<int, object?>();
+        public Dictionary<int, object?> DefaultYearlyTargets { get; set; } = new();
+        public Dictionary<int, decimal?> ConfiguredYearlyTargets { get; set; } = new();
 
     }
 

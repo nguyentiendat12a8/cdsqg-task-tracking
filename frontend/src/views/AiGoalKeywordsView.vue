@@ -167,7 +167,7 @@
 
                 <!-- Tiêu đề mục tiêu -->
                 <td class="px-3 py-3 border-r border-slate-200">
-                  <p class="font-semibold text-slate-900 leading-snug" :title="'Cập nhật: ' + formatDateTime(item.updatedAt)">
+                  <p class="font-semibold text-slate-900 leading-snug" v-tip="'Cập nhật: ' + formatDateTime(item.updatedAt)">
                     {{ item.goalTitle }}
                   </p>
                 </td>
@@ -203,7 +203,7 @@
                 <td class="px-3 py-3 border-r border-slate-200">
                   <div
                     class="p-2 rounded-lg bg-slate-50 border border-slate-200/80 text-xs text-slate-700 leading-relaxed max-h-24 overflow-y-auto custom-scrollbar"
-                    :title="item.extractionPrompt"
+                    v-tip="item.extractionPrompt"
                   >
                     {{ item.extractionPrompt }}
                   </div>
@@ -216,7 +216,7 @@
                       type="button"
                       class="ui-btn ui-btn-secondary !px-2.5 !py-1 text-xs font-semibold"
                       :disabled="busy"
-                      title="Sửa bộ từ khóa"
+                      v-tip="'Sửa bộ từ khóa'"
                       @click="openEdit(item)"
                     >
                       Sửa
@@ -225,7 +225,7 @@
                       type="button"
                       class="ui-btn ui-btn-danger !px-2.5 !py-1 text-xs font-semibold"
                       :disabled="busy"
-                      title="Xóa bộ từ khóa"
+                      v-tip="'Xóa bộ từ khóa'"
                       @click="handleDelete(item)"
                     >
                       Xóa

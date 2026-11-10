@@ -1,3 +1,4 @@
+using Cdsqg.Api.Security;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -56,7 +57,7 @@ namespace Cdsqg.Api.Controllers
                 if (reportYear.HasValue && (reportYear < reportFromYear || reportYear > reportToYear)) return BadRequest("Năm báo cáo nằm ngoài khoảng đã chọn.");
                 if (!reportYear.HasValue && reportToYear.HasValue) reportYear = reportToYear.Value;
                 if (detailMode != null && detailMode is not ("items" or "assignments")) return BadRequest("Loại danh sách không hợp lệ.");
-                if (detailMode != null && ControllerContext.HttpContext != null && !User.IsInRole("Admin")) return Forbid();
+                if (detailMode != null && ControllerContext.HttpContext != null && !RolePermissions.SeesAllAgencies(User)) return Forbid();
                 ExecutionStatusEnum? requestedStatus = null;
                 if (!string.IsNullOrWhiteSpace(detailStatus))
                 {

@@ -68,6 +68,33 @@ public class GoalResultPlanTests
     }
 
     [Fact]
+    public void GoalStatusUsesConfiguredPlanAndFallsBackToExistingDefault()
+    {
+        var item = Goal(50, 2026, 2026);
+        var baseline = new TargetBaseline { Year = 2026, TargetQuantity = 50 };
+        item.Baselines.Add(baseline);
+        item.ProgressLogs.Add(new ProgressLog
+        {
+            PeriodYear = 2026, QuantitativeValue = 60,
+            ApprovalStatus = ApprovalStatusEnum.Approved
+        });
+
+        var fromDefault = ProgressCalculator.Evaluate(item, year: 2026);
+        Assert.Equal(50m, fromDefault.Target);
+        Assert.Equal(ExecutionStatusEnum.Completed, fromDefault.Status);
+
+        baseline.ConfiguredTargetQuantity = 100;
+        var fromConfigured = ProgressCalculator.Evaluate(item, year: 2026);
+        Assert.Equal(100m, fromConfigured.Target);
+        Assert.Equal(60m, fromConfigured.Percentage);
+        Assert.Equal(ExecutionStatusEnum.InProgress, fromConfigured.Status);
+        Assert.Equal(50m, ProgressCalculator.ResolveDefaultBaseline(item, 2026));
+
+        baseline.ConfiguredTargetQuantity = null;
+        Assert.Equal(ExecutionStatusEnum.Completed, ProgressCalculator.Evaluate(item, year: 2026).Status);
+    }
+
+    [Fact]
     public void SinglePartialYearReceivesEntireTargetAndChangedDatesRecalculateDefaults()
     {
         var item = Goal(10, 2025, 2025);

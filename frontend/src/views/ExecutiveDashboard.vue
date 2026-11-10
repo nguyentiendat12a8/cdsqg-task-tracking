@@ -10,22 +10,22 @@
     <main v-if="hasDashboardData && !loadError" :inert="isLoading" class="space-y-3" :class="{'opacity-60':isLoading}">
 
       <div class="grid grid-cols-1 xl:grid-cols-2 gap-3 items-start" data-testid="dashboard-kpi-groups">
-      <LeadershipOverview :show-assignments="authState.isAdmin.value" v-for="kind in dashboardKinds" :key="kind.value" :summary="summaryFor(kind.value)" :assignment-summary="metrics[kind.prefix+'StatusSummary'] || {}" :total="totalFor(kind.value)" :noun="kind.noun" :unit-count="performanceAgencies.filter(a=>a[kind.total]>0).length" :scope-counts="authState.isAdmin.value?{specific:metrics.createdMetrics?.[kind.prefix+'sSpecific']||0,general:metrics.createdMetrics?.[kind.prefix+'sGeneral']||0}:null" @select-statistic="openStatistic({...$event,itemType:kind.itemType})" />
+      <LeadershipOverview :show-assignments="authState.seesAll.value" v-for="kind in dashboardKinds" :key="kind.value" :summary="summaryFor(kind.value)" :assignment-summary="metrics[kind.prefix+'StatusSummary'] || {}" :total="totalFor(kind.value)" :noun="kind.noun" :unit-count="performanceAgencies.filter(a=>a[kind.total]>0).length" :scope-counts="authState.seesAll.value?{specific:metrics.createdMetrics?.[kind.prefix+'sSpecific']||0,general:metrics.createdMetrics?.[kind.prefix+'sGeneral']||0}:null" @select-statistic="openStatistic({...$event,itemType:kind.itemType})" />
       </div>
-      <div v-if="authState.isAdmin.value" class="grid grid-cols-1 lg:grid-cols-[minmax(0,1.8fr)_minmax(0,1fr)] gap-3 items-stretch">
+      <div v-if="authState.seesAll.value" class="grid grid-cols-1 lg:grid-cols-[minmax(0,1.8fr)_minmax(0,1fr)] gap-3 items-stretch">
         <section v-if="!isSubAgencyUser" class="min-w-0 executive-map" aria-label="Theo dõi địa phương trên bản đồ"><ProvinceProgressMap :agencies="filteredProvincesPerformance" :filter-type="mapFilter" fit-height @select-agency="openAgency($event,mapFilter)" data-testid="province-map-panel"><template #type-switch><DashboardTypeSwitch v-model="mapFilter" label="Loại dữ liệu bản đồ" /></template></ProvinceProgressMap></section>
 
         <LeadershipWatchlist :agencies="performanceAgencies" :leaders="leadingAgencies" noun="mục tiêu và nhiệm vụ" @select-agency="openAgency($event,'all')" @select-overdue-agency="openOverdueAgency" />
       </div>
-      <div v-if="authState.isAdmin.value" class="grid grid-cols-1 lg:grid-cols-[minmax(0,1.8fr)_minmax(0,1fr)] gap-3 items-stretch" data-testid="dashboard-comparison-groups">
+      <div v-if="authState.seesAll.value" class="grid grid-cols-1 lg:grid-cols-[minmax(0,1.8fr)_minmax(0,1fr)] gap-3 items-stretch" data-testid="dashboard-comparison-groups">
         <AgencyPerformanceBoard :agencies="performanceAgencies" @select-agency="openAgency" />
         <div class="executive-groups min-w-0"><GroupPerformanceBoard :statistics="metrics.groupStatistics || []" /></div>
       </div>
-      <div v-if="!authState.isAdmin.value" class="agency-dashboard-grid grid grid-cols-1 lg:grid-cols-[minmax(0,1.8fr)_minmax(0,1fr)] gap-3 items-stretch" data-testid="agency-dashboard-content">
+      <div v-if="!authState.seesAll.value" class="agency-dashboard-grid grid grid-cols-1 lg:grid-cols-[minmax(0,1.8fr)_minmax(0,1fr)] gap-3 items-stretch" data-testid="agency-dashboard-content">
         <AgencyWorkQueue :agency-id="authState.user.value?.agencyId || ''" :agency-name="singleSubAgencyPerformance?.name || loggedUserAgency?.name || authState.user.value?.agencyName || ''" :query="metricsQuery" @select-item="selectedDetailItem=$event" />
         <div class="agency-dashboard-sidebar min-h-0 min-w-0 flex flex-col gap-3"><LeadershipWatchlist :show-coverage="false" :agencies="singleSubAgencyPerformance ? [singleSubAgencyPerformance] : []" noun="mục tiêu và nhiệm vụ" @select-overdue-agency="openOverdueAgency" /><GroupPerformanceBoard :statistics="metrics.groupStatistics || []" /></div>
       </div>
-      <AgencyPerformanceBoard v-if="subordinatePerformance.length" :show-agency-groups="authState.isAdmin.value" :agencies="subordinatePerformance" title="Kết quả các đơn vị trực thuộc" @select-agency="openAgency" />
+      <AgencyPerformanceBoard v-if="subordinatePerformance.length" :show-agency-groups="authState.seesAll.value" :agencies="subordinatePerformance" title="Kết quả các đơn vị trực thuộc" @select-agency="openAgency" />
     </main>
     <!-- Drilldown Sub-agencies, Tasks List & Contact Persons Modal -->
     <AgencyDrilldownDialog
@@ -117,14 +117,14 @@ const {
 const hasDashboardData=computed(()=>!!metrics.value.overviewMetrics||!!metrics.value.createdMetrics);
 const performanceAgencies=computed(()=>[...filteredMinistriesPerformance.value,...filteredProvincesPerformance.value,...filteredOthersPerformance.value].map(a=>({...a,completionRate:a.completionRateOverall})));
 const assignedAgencies=computed(()=>performanceAgencies.value.filter(a=>a.totalItems>0));
-function summaryFor(type){return !authState.isAdmin.value?agencyForDashboard(singleSubAgencyPerformance.value||{},type):metrics.value.overviewMetrics?.[type==='goals'?'goalStatusSummary':'taskStatusSummary']||{};}
+function summaryFor(type){return !authState.seesAll.value?agencyForDashboard(singleSubAgencyPerformance.value||{},type):metrics.value.overviewMetrics?.[type==='goals'?'goalStatusSummary':'taskStatusSummary']||{};}
 function totalFor(type){const summary=summaryFor(type);return ['notStarted','inProgress','completed'].reduce((sum,key)=>sum+(summary[key]||0),0);}
 async function openOverdueAgency(agency){drilldownFilter.value='all';await drilldownAgency(agency,{deadlineStatus:'Overdue'});}
 async function openAgency(agency,type='goals'){drilldownFilter.value=type;await drilldownAgency(agency);}
 const leadingAgencies=computed(()=>[...assignedAgencies.value].sort((a,b)=>b.totalItems-a.totalItems||a.name.localeCompare(b.name,'vi')).slice(0,2));
-const subordinatePerformance=computed(()=> (authState.isAdmin.value?filteredMostSubAgenciesPerformance.value:userSubAgenciesPerformance.value).filter(a=>authState.isAdmin.value||a.totalItems>0).map(a=>({...a,completionRate:a.completionRateOverall})));
+const subordinatePerformance=computed(()=> (authState.seesAll.value?filteredMostSubAgenciesPerformance.value:userSubAgenciesPerformance.value).filter(a=>authState.seesAll.value||a.totalItems>0).map(a=>({...a,completionRate:a.completionRateOverall})));
 async function openStatistic(selection){
- if(authState.isAdmin.value){summarySelection.value=selection;return;}
+ if(authState.seesAll.value){summarySelection.value=selection;return;}
  if(singleSubAgencyPerformance.value){await openAgency(singleSubAgencyPerformance.value,selection.itemType==='Task'?'tasks':'goals');modalStatusFilter.value=selection.status||'all';}
 }
 async function exportDashboardExcelReport(){

@@ -77,7 +77,7 @@
                   Xuất biểu mẫu Địa phương báo cáo
                 </ActionButton>
 
-                <ActionButton kind="import" class="w-full justify-start !bg-blue-600 !border-blue-600 !text-white hover:!bg-blue-700 hover:!border-blue-700 shadow-sm" @click="close(); openProgressImport()" :disabled="isLoadingImport || isLoading" :aria-busy="isLoadingImport">{{ isLoadingImport ? 'Đang tải dữ liệu…' : 'Nhập Excel báo cáo tiến độ' }}</ActionButton>
+                <ActionButton v-if="authState.canReport.value" kind="import" class="w-full justify-start !bg-blue-600 !border-blue-600 !text-white hover:!bg-blue-700 hover:!border-blue-700 shadow-sm" @click="close(); openProgressImport()" :disabled="isLoadingImport || isLoading" :aria-busy="isLoadingImport">{{ isLoadingImport ? 'Đang tải dữ liệu…' : 'Nhập Excel báo cáo tiến độ' }}</ActionButton>
                 <ActionButton kind="export" class="w-full justify-start !bg-slate-600 !border-slate-600 !text-white hover:!bg-slate-700 hover:!border-slate-700 shadow-sm" @click="close(); exportDocumentItemsToExcel()" :disabled="isExportingDocument" :aria-busy="isExportingDocument">Xuất Excel danh sách</ActionButton>
               </div>
             </template>
@@ -87,7 +87,7 @@
             v-if="authState.isAdmin.value"
             @click="openPendingApprovalsModal"
             class="ui-single-line px-3.5 py-2 text-amber-950 font-bold text-xs rounded-xl bg-amber-100 hover:bg-amber-200 border border-amber-300 transition shadow-2xs flex items-center gap-1.5 cursor-pointer relative"
-            title="Xem danh sách báo cáo tiến độ chờ phê duyệt"
+            v-tip="'Xem danh sách báo cáo tiến độ chờ phê duyệt'"
           >
             <span class="text-amber-700">⏳</span>
             <span>Duyệt báo cáo tiến độ</span>
@@ -522,7 +522,7 @@ watch(() => [props.subTab, props.filterItemType], ([newSubTab, itemType]) => {
 const userAgencyId = computed(() => authState.user.value?.agencyId || authState.user.value?.agency?.id || null);
 const userRoleStr = computed(() => {
   const r = authState.user.value?.role;
-  if (authState.isAdmin.value) return 'Admin';
+  if (authState.seesAll.value) return 'Admin'; // phạm vi xem; quyền thao tác kiểm tra riêng
   if (r === 'Level2' || r === 2 || r === '2') return 'Level2';
   if (r === 'Level3' || r === 3 || r === '3') return 'Level3';
   return String(r || 'Level2');

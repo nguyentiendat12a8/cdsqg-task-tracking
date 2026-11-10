@@ -219,7 +219,7 @@
               <!-- Agency Name -->
               <td class="px-3 py-2 border-r border-slate-200 font-bold text-slate-900 whitespace-nowrap overflow-hidden">
                 <div class="flex items-center gap-1.5 w-full">
-                  <span class="truncate block flex-1" :title="item.name">{{ item.name }}</span>
+                  <span class="truncate block flex-1" v-tip="item.name">{{ item.name }}</span>
                   <span v-if="currentTab === 'all' && isMinistryAgency(item)" class="inline-flex items-center px-1.5 py-0.2 rounded text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 shrink-0">Bộ</span>
                   <span v-else-if="currentTab === 'all' && isProvinceAgency(item)" class="inline-flex items-center px-1.5 py-0.2 rounded text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 shrink-0">Tỉnh</span>
                 </div>
@@ -230,7 +230,7 @@
                 <span 
                   v-if="item.fiveYearPlan?.responseDocument" 
                   class="truncate block font-semibold text-slate-800" 
-                  :title="item.fiveYearPlan.responseDocument"
+                  v-tip="item.fiveYearPlan.responseDocument"
                 >
                   {{ item.fiveYearPlan.responseDocument }}
                 </span>
@@ -242,7 +242,7 @@
                 <span 
                   v-if="hasFiveYearPlan(item)" 
                   class="inline-flex items-center justify-center text-emerald-600 font-bold cursor-default" 
-                  title="Đã có Kế hoạch Chuyển đổi số 05 năm"
+                  v-tip="'Đã có Kế hoạch Chuyển đổi số 05 năm'"
                 >
                   <svg class="w-4 h-4 text-emerald-600 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
                 </span>
@@ -254,7 +254,7 @@
                 <div v-if="item.fiveYearPlan?.documentNumber" class="flex items-center gap-1.5 w-full">
                   <span 
                     class="truncate block font-medium text-slate-800 flex-1" 
-                    :title="item.fiveYearPlan.documentNumber"
+                    v-tip="item.fiveYearPlan.documentNumber"
                   >
                     {{ item.fiveYearPlan.documentNumber }}
                   </span>
@@ -262,7 +262,7 @@
                     v-if="getFiveYearPlanFiles(item).length > 0"
                     @click="openViewFiveYearPlan(item)"
                     class="shrink-0 text-blue-600 hover:text-blue-800 cursor-pointer p-0.5 rounded hover:bg-blue-50 text-xs"
-                    :title="'Có ' + getFiveYearPlanFiles(item).length + ' tệp đính kèm. Bấm để xem/tải.'"
+                    v-tip="'Có ' + getFiveYearPlanFiles(item).length + ' tệp đính kèm. Bấm để xem/tải.'"
                   >
                     📎
                   </button>
@@ -284,7 +284,7 @@
                 <span 
                   v-if="item.fiveYearPlan?.isUpdated1266" 
                   class="inline-flex items-center justify-center text-emerald-600 font-bold cursor-default" 
-                  title="Đã cập nhật theo Chiến lược quốc gia QĐ 1266/QĐ-TTg"
+                  v-tip="'Đã cập nhật theo Chiến lược quốc gia QĐ 1266/QĐ-TTg'"
                 >
                   <svg class="w-4 h-4 text-emerald-600 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
                 </span>
@@ -297,7 +297,7 @@
                   v-if="hasContacts(item)" 
                   @click="openViewContacts(item)"
                   class="inline-flex items-center gap-1 px-2 py-0.5 rounded-lg text-xs font-bold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-900 border border-emerald-200 transition cursor-pointer"
-                  :title="'Có ' + item.contactPersons.length + ' cán bộ đầu mối liên hệ. Nhấn để xem danh sách.'"
+                  v-tip="'Có ' + item.contactPersons.length + ' cán bộ đầu mối liên hệ. Nhấn để xem danh sách.'"
                 >
                   <svg class="w-3.5 h-3.5 text-emerald-600 stroke-[2.5] shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
                   <span>({{ item.contactPersons.length }})</span>
@@ -310,7 +310,7 @@
                 <span 
                   v-if="item.fiveYearPlan?.notes" 
                   class="truncate block text-slate-700" 
-                  :title="item.fiveYearPlan.notes"
+                  v-tip="item.fiveYearPlan.notes"
                 >
                   {{ item.fiveYearPlan.notes }}
                 </span>
@@ -323,13 +323,13 @@
                   v-if="canEditAgency(item)"
                   @click="openEditModal(item)"
                   class="ui-action ui-action-primary p-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-blue-700 rounded-lg border border-slate-200 inline-flex items-center justify-center shadow-2xs cursor-pointer transition mx-auto group"
-                  title="Cập nhật Kế hoạch CĐS & Đầu mối liên hệ"
+                  v-tip="'Cập nhật Kế hoạch CĐS & Đầu mối liên hệ'"
                   aria-label="Cập nhật Kế hoạch CĐS & Đầu mối liên hệ">
                   <svg class="w-4 h-4 text-slate-600 group-hover:text-blue-700 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                 </button>
-                <span v-else class="p-1.5 bg-slate-50 text-slate-300 rounded-lg border border-slate-100 inline-flex items-center justify-center mx-auto" title="Bạn không có quyền chỉnh sửa đơn vị này">
+                <span v-else class="p-1.5 bg-slate-50 text-slate-300 rounded-lg border border-slate-100 inline-flex items-center justify-center mx-auto" v-tip="'Bạn không có quyền chỉnh sửa đơn vị này'">
                   <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
@@ -383,7 +383,7 @@
               <!-- Subordinate Unit Name -->
               <td class="px-3 py-2 border-r border-slate-200 font-bold text-slate-900 whitespace-nowrap overflow-hidden">
                 <div class="flex items-center gap-1.5 w-full">
-                  <span class="truncate block flex-1" :title="item.name">{{ item.name }}</span>
+                  <span class="truncate block flex-1" v-tip="item.name">{{ item.name }}</span>
                 </div>
               </td>
 
@@ -392,7 +392,7 @@
                 <span 
                   v-if="hasContacts(item)" 
                   class="inline-flex items-center justify-center text-emerald-600 font-bold cursor-default" 
-                  title="Đã cung cấp thông tin cán bộ đầu mối"
+                  v-tip="'Đã cung cấp thông tin cán bộ đầu mối'"
                 >
                   <svg class="w-4 h-4 text-emerald-600 stroke-[2.5]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
                 </span>
@@ -405,7 +405,7 @@
                   v-if="hasContacts(item)" 
                   @click="openViewContacts(item)"
                   class="truncate font-medium text-slate-800 cursor-pointer hover:text-blue-700 flex items-center gap-2"
-                  :title="formatContactsTooltip(item.contactPersons)"
+                  v-tip="formatContactsTooltip(item.contactPersons)"
                 >
                   <span class="px-1.5 py-0.2 bg-emerald-100 text-emerald-800 rounded font-bold text-xs shrink-0">({{ item.contactPersons.length }})</span>
                   <span class="truncate">{{ formatContactsSingleLine(item.contactPersons) }}</span>
@@ -419,13 +419,13 @@
                   v-if="canEditAgency(item)"
                   @click="openEditModal(item, 'contacts')"
                   class="ui-action ui-action-primary p-1.5 bg-slate-100 text-slate-700 hover:bg-slate-200 hover:text-blue-700 rounded-lg border border-slate-200 inline-flex items-center justify-center shadow-2xs cursor-pointer transition mx-auto group"
-                  title="Cập nhật cán bộ đầu mối liên hệ"
+                  v-tip="'Cập nhật cán bộ đầu mối liên hệ'"
                   aria-label="Cập nhật cán bộ đầu mối liên hệ">
                   <svg class="w-4 h-4 text-slate-600 group-hover:text-blue-700 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
                 </button>
-                <span v-else class="p-1.5 bg-slate-50 text-slate-300 rounded-lg border border-slate-100 inline-flex items-center justify-center mx-auto" title="Bạn không có quyền chỉnh sửa đơn vị này">
+                <span v-else class="p-1.5 bg-slate-50 text-slate-300 rounded-lg border border-slate-100 inline-flex items-center justify-center mx-auto" v-tip="'Bạn không có quyền chỉnh sửa đơn vị này'">
                   <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
@@ -600,7 +600,7 @@
                   📄
                 </div>
                 <div class="overflow-hidden">
-                  <span class="font-bold text-slate-800 text-xs truncate block" :title="file.fileName">{{ file.fileName }}</span>
+                  <span class="font-bold text-slate-800 text-xs truncate block" v-tip="file.fileName">{{ file.fileName }}</span>
                   <span class="text-xs text-slate-400 font-semibold">{{ formatFileSize(file.fileSize) }}</span>
                 </div>
               </div>
@@ -652,7 +652,7 @@
           <button 
             @click="closeModal" 
             class="w-8 h-8 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition cursor-pointer font-bold text-sm"
-            title="Đóng cửa sổ"
+            v-tip="'Đóng cửa sổ'"
           >
             ✕
           </button>
@@ -766,7 +766,7 @@
                 >
                   <div class="flex items-center gap-2 overflow-hidden">
                     <span>📄</span>
-                    <span class="font-bold text-slate-800 truncate" :title="file.fileName">{{ file.fileName }}</span>
+                    <span class="font-bold text-slate-800 truncate" v-tip="file.fileName">{{ file.fileName }}</span>
                     <span class="text-xs text-slate-400">({{ formatFileSize(file.fileSize) }})</span>
                   </div>
                   <button 
@@ -920,6 +920,7 @@ import ActionButton from "../components/ActionButton.vue";
 import DocumentPagination from "../features/document/DocumentPagination.vue";
 import { formatNumber, formatDate } from "../shared/formatters";
 import { fetchWithAuth, authState } from '../services/auth';
+import { MODULE, ACTION } from '../shared/permissions';
 import { ref, computed, onMounted } from 'vue';
 import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
@@ -990,7 +991,8 @@ function isBKHCN(agency) {
 }
 
 const isUserLevel1 = computed(() => {
-  if (authState.isAdmin.value) return true;
+  // Admin và Văn thư: xem và cập nhật kế hoạch CĐS của mọi cơ quan (bảng quyền phần Tiện ích).
+  if (authState.can(MODULE.utilities, ACTION.edit)) return true;
   if (currentUserAgencyId.value) {
     const userAgency = currentUserAgency.value || authState.user.value?.agency;
     if (userAgency && isBKHCN(userAgency)) return true;

@@ -8,7 +8,7 @@ import { GOAL_GUIDANCE_2629 } from '../config/goalGuidance2629.js';
 import { GOAL_GUIDANCE_1266 } from '../config/goalGuidance1266.js';
 import { isAgencySumGoal } from '../shared/agencyPresentation.js';
 import {
-  GOAL_PLAN_SHEET_NAME, planYearHeader, isPlanEligibleGoal, leadsGoal, planYears, isPlanYearInRange, currentPlanValue
+  GOAL_PLAN_SHEET_NAME, planYearHeader, isPlanEligibleGoal, leadsGoal, planYears, isPlanYearInRange, configuredPlanValue
 } from './goalPlanSheet.js';
 
 // Lời dặn chung đặt trên biểu báo cáo tiến độ mục tiêu.
@@ -350,8 +350,8 @@ function createGoalReportingWorksheet({
 
 /**
  * Sheet "Kế hoạch mục tiêu": cơ quan chủ trì điền kế hoạch (chỉ tiêu cần đạt đến từng năm)
- * căn cứ kế hoạch chuyển đổi số 5 năm đã ban hành. Ô đã có số là kế hoạch hiện hành;
- * khi nhập lại, số khác kế hoạch cũ chỉ được ghi đè sau khi người dùng xác nhận.
+ * căn cứ kế hoạch chuyển đổi số 5 năm đã ban hành. Chỉ điền sẵn bản thiết lập;
+ * dữ liệu mặc định không ghi vào Excel. Số khác bản thiết lập cũ cần xác nhận ghi đè.
  * Mục tiêu giao chung (như MT-24) không có kế hoạch riêng nên không xuất hiện ở sheet này.
  */
 function createGoalPlanWorksheet({
@@ -392,7 +392,7 @@ function createGoalPlanWorksheet({
       item.title || '',
       ...(showLeadAgency ? [guidance.leadAgency || item.leadAgencyName || item.leadAgency?.name || '—'] : []),
       guidance.unit || item.unitName || item.unit?.name || '%',
-      ...years.map(year => isPlanYearInRange(item, year, years) ? (currentPlanValue(item, year) ?? '') : '—')
+      ...years.map(year => isPlanYearInRange(item, year, years) ? (configuredPlanValue(item, year) ?? '') : '—')
     ]);
   });
   if (goals.length === 0) rows.push(['Không có mục tiêu định lượng do cơ quan chủ trì cần lập kế hoạch trong văn bản này.']);

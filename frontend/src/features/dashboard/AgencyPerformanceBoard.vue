@@ -8,7 +8,7 @@
         <div class="comparison-axis" aria-hidden="true"><span>{{ formatNumber(maxTotal) }}</span><span>{{ formatNumber(maxTotal/2) }}</span><span>0</span></div>
         <button v-for="agency in filtered" :key="agency.id || agency.agencyId" type="button" role="listitem" class="comparison-column rounded-lg text-center hover:bg-blue-50 focus-visible:outline-2 focus-visible:outline-blue-700" @click="$emit('select-agency',agency,filterType)" :aria-label="`${agency.name}: ${executionStatusSeries.map(s=>s.label+' '+formatNumber(agency[s.key])).join(', ')}. Xem chi tiết`">
           <span class="comparison-plot"><span class="comparison-total font-semibold text-slate-700">{{ formatNumber(agency.totalItems) }}</span><span class="comparison-stack" :style="{height:visualShare(agency.totalItems,maxTotal)+'%'}"><span v-for="state in executionStatusSeries" :key="state.key" class="flex items-center justify-center text-xs font-semibold text-white overflow-hidden" :style="{height:visualShare(agency[state.key],agency.totalItems)+'%',background:themeColor(state.color)}"><span v-if="visualShare(agency[state.key],maxTotal)>8">{{ formatNumber(agency[state.key]) }}</span></span></span></span>
-          <span class="comparison-name mt-2 font-medium text-xs text-slate-800 text-center" :title="agency.name">{{ agency.name }}</span>
+          <span class="comparison-name mt-2 font-medium text-xs text-slate-800 text-center" v-tip="agency.name">{{ agency.name }}</span>
           <strong class="block mt-1 text-xs text-emerald-700 tabular-nums">{{ agency.completionRate == null ? '—' : formatPercent(agency.completionRate) }} <span aria-hidden="true" class="text-xs">↗</span></strong>
         </button>
       </div>

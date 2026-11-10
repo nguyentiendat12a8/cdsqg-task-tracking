@@ -31,6 +31,7 @@ public class DocumentSortPostgresTests
                 for (var n = 1; n <= 14; n++)
                     db.Add(new GoalTaskItem { DocumentId = doc.Id, LeadAgencyId = agency.Id, ItemType = kind,
                         Code = $"{(kind == ItemTypeEnum.Goal ? "MT" : "NV")}-{n:D2}", Title = $"Title {n:D2}",
+                        StartDate = new DateTime(2026, 1, 1), DueDate = new DateTime(2030, 12, 31),
                         CreatedAt = new DateTime(2026, 1, n), LastUpdated = new DateTime(2026, 2, n) });
             await db.SaveChangesAsync();
             var service = new PlanningService(db);
@@ -51,6 +52,15 @@ public class DocumentSortPostgresTests
                 }
                 var numbers = direction == "asc" ? Enumerable.Range(1,14) : Enumerable.Range(1,14).Reverse();
                 Assert.Equal(numbers.Select(n => $"{(kind == "Goal" ? "MT" : "NV")}-{n:D2}"), actual);
+            }
+            foreach (var kind in new[] { "Goal", "Task" })
+            {
+                var in2026 = await service.GetDocumentItemsPagedAsync(doc.Id, new DocumentItemsQueryDto {
+                    UserRole = "Admin", ItemType = kind, ReportFromYear = 2026, ReportToYear = 2026 });
+                var in2031 = await service.GetDocumentItemsPagedAsync(doc.Id, new DocumentItemsQueryDto {
+                    UserRole = "Admin", ItemType = kind, ReportFromYear = 2031, ReportToYear = 2031 });
+                Assert.Equal(14, in2026.TotalCount);
+                Assert.Equal(0, in2031.TotalCount);
             }
         }
         finally

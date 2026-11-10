@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
-import { readGoalPlanRows, isGoalPlanRows, isPlanEligibleGoal, leadsGoal, planYearHeader } from '../src/utils/goalPlanSheet.js';
+import { readGoalPlanRows, isGoalPlanRows, isPlanEligibleGoal, leadsGoal, planYearHeader, configuredPlanValue } from '../src/utils/goalPlanSheet.js';
 import { isAgencySumGoal } from '../src/shared/agencyPresentation.js';
 
-const goal = { taskId: 't1', code: 'MT-03', title: 'Tỷ lệ', itemType: 'Goal', evaluationType: 'Quantitative', unitName: '%', leadAgencyId: 'A1', leadAssignmentAgencyIds: ['a1'], startDate: '2026-01-01', dueDate: '2028-12-31', yearlyTargets: { 2026: 90, 2027: null, 2028: null } };
+const goal = { taskId: 't1', code: 'MT-03', title: 'Tỷ lệ', itemType: 'Goal', evaluationType: 'Quantitative', unitName: '%', leadAgencyId: 'A1', leadAssignmentAgencyIds: ['a1'], startDate: '2026-01-01', dueDate: '2028-12-31', yearlyTargets: { 2026: 90, 2027: null, 2028: null }, configuredYearlyTargets: { 2026: 90 } };
 const shared = { taskId: 't2', code: 'MT-24', title: 'Kỹ năng số', itemType: 'Goal', evaluationType: 'Quantitative', unitName: 'Lượt người', isGeneralTask: true, leadAgencyCode: 'ALL_AGENCIES', yearlyTargets: { 2026: 10000000 } };
 const percentShared = { ...shared, code: 'MT-99', unitName: '%' };
 
@@ -13,6 +13,14 @@ assert.equal(isAgencySumGoal(percentShared), false);
 assert.equal(isAgencySumGoal(goal), false);
 assert.equal(leadsGoal(goal, 'a1'), true);
 assert.equal(leadsGoal(goal, 'b2'), false);
+assert.equal(configuredPlanValue(goal, 2026), 90);
+assert.equal(configuredPlanValue({ yearlyTargets: { 2026: 90 } }, 2026), null);
+const defaultOnly = { ...goal, configuredYearlyTargets: { 2026: null }, defaultYearlyTargets: { 2026: 90 } };
+assert.equal(configuredPlanValue(defaultOnly, 2026), null, 'Excel must leave a default-only plan empty');
+assert.deepEqual(readGoalPlanRows([
+  ['Mã MT', planYearHeader(2026)],
+  ['MT-03', 95]
+], [defaultOnly]).map(row => [row.current, row.value, row.error]), [[null, 95, null]]);
 
 const rows = [
   ['KẾ HOẠCH MỤC TIÊU'], ['Đơn vị'], ['CĂN CỨ ...'],

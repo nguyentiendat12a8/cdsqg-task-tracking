@@ -37,12 +37,22 @@ public static class ProgressCalculator
         if (item.CustomBaseline.TryGetValue(year.ToString(CultureInfo.InvariantCulture), out var text)
             && decimal.TryParse(text, NumberStyles.AllowDecimalPoint | NumberStyles.AllowLeadingSign, CultureInfo.InvariantCulture, out var custom) && custom > 0)
             return (custom, true);
-        var target = item.Baselines.FirstOrDefault(b => b.Year == year)?.TargetQuantity;
+        var target = item.Baselines.FirstOrDefault(b => b.Year == year)?.ConfiguredTargetQuantity;
+        if (target > 0) return (target, false);
+        target = item.Baselines.FirstOrDefault(b => b.Year == year)?.TargetQuantity;
         if (target > 0) return (target, false);
         if (item.ResultTarget.HasValue) return (GoalResultPlan.CumulativeTarget(item, year), false);
         // Legacy records without a unit are displayed as percentages throughout the application.
         if (!item.UnitId.HasValue || item.Unit?.Name == "%" || item.Unit?.Code == "PERCENT") return (100m, false);
         return (null, false);
+    }
+
+    public static decimal? ResolveDefaultBaseline(GoalTaskItem item, int year)
+    {
+        var target = item.Baselines.FirstOrDefault(b => b.Year == year)?.TargetQuantity;
+        if (target > 0) return target;
+        if (item.ResultTarget.HasValue) return GoalResultPlan.CumulativeTarget(item, year);
+        return !item.UnitId.HasValue || item.Unit?.Name == "%" || item.Unit?.Code == "PERCENT" ? 100m : null;
     }
 
     public static ProgressLog? LatestApproved(GoalTaskItem item, Guid? agencyId = null, int? year = null)

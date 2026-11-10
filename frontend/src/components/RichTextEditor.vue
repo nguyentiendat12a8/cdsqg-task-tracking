@@ -9,7 +9,7 @@
         type="button" 
         @click="exec('bold')" 
         class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 transition font-bold text-sm"
-        title="In đậm (Ctrl+B)"
+        v-tip="'In đậm (Ctrl+B)'"
       >
         B
       </button>
@@ -18,7 +18,7 @@
         type="button" 
         @click="exec('italic')" 
         class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 transition italic font-serif text-sm"
-        title="In nghiêng (Ctrl+I)"
+        v-tip="'In nghiêng (Ctrl+I)'"
       >
         I
       </button>
@@ -27,7 +27,7 @@
         type="button" 
         @click="exec('underline')" 
         class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 transition underline text-sm"
-        title="Gạch chân (Ctrl+U)"
+        v-tip="'Gạch chân (Ctrl+U)'"
       >
         U
       </button>
@@ -36,7 +36,7 @@
         type="button" 
         @click="exec('strikeThrough')" 
         class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 transition line-through text-sm"
-        title="Gạch ngang"
+        v-tip="'Gạch ngang'"
       >
         S
       </button>
@@ -48,7 +48,7 @@
         type="button" 
         @click="exec('insertUnorderedList')" 
         class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 transition text-sm"
-        title="Danh sách gạch đầu dòng"
+        v-tip="'Danh sách gạch đầu dòng'"
       >
         • List
       </button>
@@ -57,7 +57,7 @@
         type="button" 
         @click="exec('insertOrderedList')" 
         class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 transition text-sm"
-        title="Danh sách đánh số"
+        v-tip="'Danh sách đánh số'"
       >
         1. List
       </button>
@@ -69,7 +69,7 @@
         type="button" 
         @click="exec('justifyLeft')" 
         class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 transition text-xs"
-        title="Căn trái"
+        v-tip="'Căn trái'"
       >
         ⬅
       </button>
@@ -78,7 +78,7 @@
         type="button" 
         @click="exec('justifyCenter')" 
         class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 transition text-xs"
-        title="Căn giữa"
+        v-tip="'Căn giữa'"
       >
         ↔
       </button>
@@ -87,7 +87,7 @@
         type="button" 
         @click="exec('justifyRight')" 
         class="w-7 h-7 flex items-center justify-center rounded hover:bg-slate-200 transition text-xs"
-        title="Căn phải"
+        v-tip="'Căn phải'"
       >
         ➡
       </button>
@@ -100,19 +100,19 @@
           type="button" 
           @click="exec('foreColor', '#1e293b')" 
           class="w-4 h-4 rounded-full bg-slate-800 border border-slate-300 hover:scale-110 transition"
-          title="Màu mặc định"
+          v-tip="'Màu mặc định'"
         ></button>
         <button 
           type="button" 
           @click="exec('foreColor', '#e11d48')" 
           class="w-4 h-4 rounded-full bg-rose-600 border border-rose-300 hover:scale-110 transition"
-          title="Màu đỏ nổi bật"
+          v-tip="'Màu đỏ nổi bật'"
         ></button>
         <button 
           type="button" 
           @click="exec('foreColor', '#2563eb')" 
           class="w-4 h-4 rounded-full bg-blue-600 border border-blue-300 hover:scale-110 transition"
-          title="Màu xanh dương"
+          v-tip="'Màu xanh dương'"
         ></button>
       </div>
 
@@ -123,7 +123,7 @@
         type="button" 
         @click="exec('removeFormat')" 
         class="ui-single-line px-2 py-1 rounded hover:bg-slate-200 transition text-xs text-slate-600"
-        title="Xóa định dạng"
+        v-tip="'Xóa định dạng'"
       >
         🧹 Xóa định dạng
       </button>

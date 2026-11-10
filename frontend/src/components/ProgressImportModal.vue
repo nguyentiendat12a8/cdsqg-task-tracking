@@ -115,7 +115,7 @@
                   <span v-if="row.newValueDisplay">{{ row.newValueDisplay }}</span>
                   <span v-else class="text-slate-400 italic">Chưa nhập</span>
                 </td>
-                <td class="p-2.5 text-slate-600 truncate max-w-xs" :title="row.summaryNotes">
+                <td class="p-2.5 text-slate-600 truncate max-w-xs" v-tip="row.summaryNotes">
                   {{ row.summaryNotes || '—' }}
                 </td>
                 <td class="p-2.5 text-center">

@@ -84,7 +84,7 @@ export function createDocumentReportActions({
       if (!item.isOngoing) {
         dateStr = formatDateRange(item.startDate, item.dueDate);
       }
-      const isGeneral = authState.isAdmin.value && isGeneralTaskOrAllAgencies(item);
+      const isGeneral = authState.seesAll.value && isGeneralTaskOrAllAgencies(item);
       const progStr = isGeneral ? '—' : formatProgressDisplay(item);
       const statusStr = isGeneral ? '—' : getStatusLabel(item.calculatedStatus);
 

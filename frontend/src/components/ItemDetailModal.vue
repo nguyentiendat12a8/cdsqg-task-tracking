@@ -157,7 +157,7 @@
         <div v-if="activeTab === 'reports'" class="space-y-4">
           
           <!-- Agency Filter Bar (Shown for Admin or General Tasks when multiple agencies have reported) -->
-          <div v-if="(authState.isAdmin.value || item?.isGeneralTask) && availableAgenciesInHistory.length > 1" class="flex flex-wrap items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-200 gap-2 text-xs">
+          <div v-if="(authState.seesAll.value || item?.isGeneralTask) && availableAgenciesInHistory.length > 1" class="flex flex-wrap items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-200 gap-2 text-xs">
             <div class="flex items-center gap-2 font-bold text-slate-700">
               <span>🏛️ Lọc theo đơn vị báo cáo:</span>
             </div>
@@ -195,7 +195,7 @@
                   <span v-if="rep.approvalStatus === 'Pending' || rep.approvalStatus === '2'" class="px-2.5 py-0.5 bg-amber-100 text-amber-900 border border-amber-300 rounded-md font-bold text-xs animate-pulse">
                     ⏳ Chờ duyệt
                   </span>
-                  <span v-else-if="rep.approvalStatus === 'Rejected' || rep.approvalStatus === '3'" class="px-2.5 py-0.5 bg-rose-100 text-rose-900 border border-rose-300 rounded-md font-bold text-xs" :title="rep.rejectionReason">
+                  <span v-else-if="rep.approvalStatus === 'Rejected' || rep.approvalStatus === '3'" class="px-2.5 py-0.5 bg-rose-100 text-rose-900 border border-rose-300 rounded-md font-bold text-xs" v-tip="rep.rejectionReason">
                     ❌ Từ chối: {{ rep.rejectionReason || 'Chưa đạt yêu cầu' }}
                   </span>
                   <span v-else class="px-2.5 py-0.5 bg-emerald-100 text-emerald-900 border border-emerald-300 rounded-md font-bold text-xs">
@@ -278,7 +278,7 @@
                       <button 
                         type="button"
                         class="text-xs font-bold text-purple-700 bg-purple-50 hover:bg-purple-600 hover:text-white px-2 py-0.5 rounded transition cursor-pointer shrink-0 ml-1 border-0"
-                        title="Tải tệp đính kèm về máy"
+                        v-tip="'Tải tệp đính kèm về máy'"
                         @click.prevent="downloadEvidence(fileUrl)"
                       >
                         Tải về
@@ -380,7 +380,7 @@
                   @click="agencyMatrixSearchKeyword = ''"
                   type="button"
                   class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 text-xs font-bold cursor-pointer p-0.5"
-                  title="Xóa từ khóa tìm kiếm"
+                  v-tip="'Xóa từ khóa tìm kiếm'"
                 >
                   ✕
                 </button>
@@ -419,11 +419,11 @@
                         </span>
                       </td>
                       <td class="px-3.5 py-2.5 border-r border-slate-200 font-normal">
-                        <p v-if="row.summaryNotes" class="text-slate-700 text-xs line-clamp-2" :title="row.summaryNotes">{{ row.summaryNotes }}</p>
+                        <p v-if="row.summaryNotes" class="text-slate-700 text-xs line-clamp-2" v-tip="row.summaryNotes">{{ row.summaryNotes }}</p>
                         <span v-else class="text-slate-400 italic text-xs">Chưa có ghi chú</span>
                         
                         <div v-if="row.attachmentFileUrls?.length" class="mt-1.5 space-y-1">
-                          <a v-for="(fileUrl, fIdx) in row.attachmentFileUrls" :key="fIdx" :href="getApiUrl(fileUrl)" target="_blank" class="text-xs text-blue-700 hover:underline font-bold block truncate" title="Xem file minh chứng">
+                          <a v-for="(fileUrl, fIdx) in row.attachmentFileUrls" :key="fIdx" :href="getApiUrl(fileUrl)" target="_blank" class="text-xs text-blue-700 hover:underline font-bold block truncate" v-tip="'Xem file minh chứng'">
                             📎 {{ formatFileName(fileUrl) }}
                           </a>
                         </div>
@@ -675,7 +675,7 @@ async function loadHistories() {
   try {
     // Admin reads all agencies' progress history unless a specific filter is selected
     // Non-admin agency users default to their own agencyId
-    let userAgId = authState.isAdmin.value 
+    let userAgId = authState.seesAll.value
       ? selectedAgencyFilter.value 
       : (selectedAgencyFilter.value || authState.user.value?.agencyId || '');
 

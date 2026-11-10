@@ -49,6 +49,11 @@ export function currentPlanValue(item, year) {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
+export function configuredPlanValue(item, year) {
+  const value = item.configuredYearlyTargets?.[year] ?? item.configuredYearlyTargets?.[String(year)];
+  return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
 export function readPlanCell(value) {
   if (value === undefined || value === null) return null;
   if (typeof value === 'number') return Number.isFinite(value) ? value : NaN;
@@ -78,7 +83,7 @@ export function readGoalPlanRows(rows, items) {
     for (const { col, year } of yearCols) {
       const value = readPlanCell(row[col]);
       if (value === null) continue;
-      const current = item ? currentPlanValue(item, year) : null;
+      const current = item ? configuredPlanValue(item, year) : null;
       if (item && current !== null && value === current) continue;
       let error = null;
       if (!item) error = 'Mã không tồn tại';

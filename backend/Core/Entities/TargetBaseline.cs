@@ -16,6 +16,8 @@ namespace Cdsqg.Core.Entities
         public int Year { get; set; }
 
         public decimal? TargetQuantity { get; set; }
+        // Kế hoạch Admin thiết lập; TargetQuantity là bản mặc định được giữ nguyên.
+        public decimal? ConfiguredTargetQuantity { get; set; }
         public TextStatusEnum? TargetQualitativeStatus { get; set; }
 
         public bool IsCustomOverride { get; set; } = false;

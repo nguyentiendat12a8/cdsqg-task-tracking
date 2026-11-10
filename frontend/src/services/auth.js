@@ -1,6 +1,7 @@
 import { ref, computed } from 'vue';
 import { getApiUrl } from '../config/api';
-import { isAdminRole } from '../shared/roles';
+import { isAdminRole, isClerkRole, normalizeRole } from '../shared/roles';
+import { can as canRole, canReportProgress, seesAllAgencies } from '../shared/permissions';
 
 const TOKEN_KEY = 'cdsqg_auth_token';
 const USER_KEY = 'cdsqg_auth_user';
@@ -15,7 +16,13 @@ export const authState = {
   token,
   user,
   isLoggedIn: computed(() => !!token.value && !!user.value),
-  isAdmin: computed(() => isAdminRole(user.value?.role))
+  // isAdmin: toàn quyền. seesAll: phạm vi xem toàn hệ thống (Admin, Văn thư). Quyền thao tác dùng can().
+  isAdmin: computed(() => isAdminRole(user.value?.role)),
+  isClerk: computed(() => isClerkRole(user.value?.role)),
+  role: computed(() => normalizeRole(user.value?.role)),
+  seesAll: computed(() => seesAllAgencies(user.value?.role)),
+  canReport: computed(() => canReportProgress(user.value?.role)),
+  can: (module, action) => canRole(user.value?.role, module, action)
 };
 
 export async function login(username, password) {

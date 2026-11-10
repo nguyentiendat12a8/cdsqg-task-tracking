@@ -7,6 +7,7 @@
     "check:rules": "node tests/rules.check.mjs",
     "test:shared": "node tests/shared.test.mjs",
     "test:goal-plan": "node tests/goal-plan-sheet.test.mjs",
+    "test:permissions": "node tests/permissions.test.mjs",
     "test:theme": "node tests/system-theme.browser.mjs",
     "test:dashboard-time": "node tests/dashboard-time.browser.mjs",
     "dev": "vite",

@@ -6,7 +6,7 @@
     @click="$emit('select', item)"
   >
     <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5 w-full">
-      <h4 :title="item.name" class="min-w-0 flex-1 text-xs sm:text-sm font-bold text-slate-800 leading-snug truncate">
+      <h4 v-tip="item.name" class="min-w-0 flex-1 text-xs sm:text-sm font-bold text-slate-800 leading-snug truncate">
         {{ item.name }}
       </h4>
       <span :class="['w-7 h-7 text-white font-bold text-xs rounded-xl flex items-center justify-center shrink-0 shadow-2xs', badgeColor]">

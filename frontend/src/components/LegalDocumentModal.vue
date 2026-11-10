@@ -218,7 +218,7 @@
                   type="button" 
                   @click="openFileInNewWindow(att)" 
                   class="font-normal text-slate-800 hover:text-blue-700 hover:underline truncate cursor-pointer text-left" 
-                  :title="`Click để mở xem tệp: ${att.cleanName || att.fileName}`"
+                  v-tip="`Click để mở xem tệp: ${att.cleanName || att.fileName}`"
                 >
                   {{ att.cleanName || att.fileName }}
                 </button>
@@ -301,6 +301,7 @@ import 'vue3-toastify/dist/index.css';
 import SearchableSelect from './SearchableSelect.vue';
 import { getApiUrl } from '../config/api';
 import { authState } from '../services/auth';
+import { MODULE, ACTION } from '../shared/permissions';
 import { openFileInNewWindow } from '../utils/fileViewer';
 
 const props = defineProps({
@@ -313,7 +314,7 @@ const props = defineProps({
 const emit = defineEmits(['close', 'saved']);
 
 const isEditing = computed(() => !!props.editingDocument);
-const isReadOnly = computed(() => props.readOnly || !authState.isAdmin.value);
+const isReadOnly = computed(() => props.readOnly || !authState.can(MODULE.utilities, ACTION.edit));
 const isSubmitting = ref(false);
 const isUploading = ref(false);
 
@@ -371,7 +372,7 @@ const agencySelectOptions = computed(() => {
 // Role permission checks for Issuing Agency dropdown
 const userAgencyId = computed(() => authState.user.value?.agencyId || authState.user.value?.agency?.id || null);
 const userAgencyObj = computed(() => props.agencies?.find(a => String(a.id).toLowerCase() === String(userAgencyId.value).toLowerCase()) || null);
-const isAdmin = computed(() => authState.isAdmin.value);
+const isAdmin = computed(() => authState.seesAll.value); // Admin, Văn thư: chọn mọi cơ quan ban hành
 const isLevel2 = computed(() => !isAdmin.value && userAgencyObj.value && !userAgencyObj.value.parentId);
 const isLevel3 = computed(() => !isAdmin.value && userAgencyObj.value && userAgencyObj.value.parentId);
 

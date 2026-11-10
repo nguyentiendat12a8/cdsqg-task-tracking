@@ -78,7 +78,7 @@
               <!-- Card Header: Child Agency Name & Blue Index Badge -->
               <div class="flex items-start justify-between gap-2 border-b border-slate-100 pb-2.5">
                 <div class="min-w-0 flex-1">
-                  <h4 class="text-xs sm:text-sm font-bold text-slate-800 leading-snug truncate" :title="child.name">
+                  <h4 class="text-xs sm:text-sm font-bold text-slate-800 leading-snug truncate" v-tip="child.name">
                     {{ child.name }}
                   </h4>
                   <p class="text-xs text-slate-500 font-medium mt-0.5">
@@ -178,13 +178,13 @@
                           {{ item.isGeneralTask ? 'Phạm vi chung' : 'Phạm vi riêng' }}
                         </span>
                       </div>
-                      <div class="font-semibold text-slate-900 leading-snug line-clamp-2" :title="item.title">
+                      <div class="font-semibold text-slate-900 leading-snug line-clamp-2" v-tip="item.title">
                         {{ item.title }}
                       </div>
                     </td>
 
                     <!-- Cơ quan chủ trì -->
-                    <td class="px-3 py-2.5 border-r border-slate-200 font-bold text-slate-800 text-xs leading-relaxed truncate" :title="item.leadAgencyName">
+                    <td class="px-3 py-2.5 border-r border-slate-200 font-bold text-slate-800 text-xs leading-relaxed truncate" v-tip="item.leadAgencyName">
                       {{ item.leadAgencyName }}
                     </td>
 
@@ -220,7 +220,7 @@
                       <button
                         @click.stop="selectedDetailItem = item"
                         class="ui-single-line px-2 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs rounded-lg border border-blue-200 transition shadow-2xs inline-flex items-center gap-1 cursor-pointer"
-                        title="Xem chi tiết"
+                        v-tip="'Xem chi tiết'"
                       >
                         <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
                         <span>Chi tiết</span>

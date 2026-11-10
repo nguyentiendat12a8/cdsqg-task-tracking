@@ -120,7 +120,7 @@
               type="button" 
               @click="showLoginPassword = !showLoginPassword" 
               class="absolute inset-y-0 right-0 pr-3 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
-              :title="showLoginPassword ? 'Ẩn mật khẩu' : 'Hiển thị mật khẩu'"
+              v-tip="showLoginPassword ? 'Ẩn mật khẩu' : 'Hiển thị mật khẩu'"
               :aria-label="showLoginPassword ? 'Ẩn mật khẩu' : 'Hiển thị mật khẩu'"
             >
               <svg v-if="!showLoginPassword" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

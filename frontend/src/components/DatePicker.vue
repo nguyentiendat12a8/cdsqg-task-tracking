@@ -33,7 +33,7 @@
           type="button" 
           @click.stop="clearDate" 
           class="w-4 h-4 rounded-full hover:bg-slate-200 text-slate-400 hover:text-slate-600 flex items-center justify-center text-xs font-bold transition cursor-pointer"
-          title="Xóa ngày" aria-label="Xóa ngày"
+          v-tip="'Xóa ngày'" aria-label="Xóa ngày"
         >
           ✕
         </button>
@@ -53,7 +53,7 @@
             type="button" 
             @click="prevMonth" 
             class="w-7 h-7 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-blue-600 flex items-center justify-center font-bold text-sm transition cursor-pointer shrink-0"
-            title="Tháng trước"
+            v-tip="'Tháng trước'"
           >
             ‹
           </button>
@@ -86,7 +86,7 @@
             type="button" 
             @click="nextMonth" 
             class="w-7 h-7 rounded-lg hover:bg-slate-100 text-slate-500 hover:text-blue-600 flex items-center justify-center font-bold text-sm transition cursor-pointer shrink-0"
-            title="Tháng sau"
+            v-tip="'Tháng sau'"
           >
             ›
           </button>

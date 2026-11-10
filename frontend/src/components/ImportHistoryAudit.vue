@@ -15,7 +15,7 @@
           v-if="authState.isAdmin.value"
           @click="handleClearDemoData" 
           class="ui-single-line px-3.5 py-2 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-xs"
-          title="Xóa toàn bộ dữ liệu mẫu / demo để sẵn sàng nạp dữ liệu thật"
+          v-tip="'Xóa toàn bộ dữ liệu mẫu / demo để sẵn sàng nạp dữ liệu thật'"
         >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
           <span>Xóa dữ liệu mẫu</span>
@@ -119,7 +119,7 @@
                       :href="fItem.url"
                       @click.prevent="downloadFile(fItem.url, fItem.cleanName)"
                       class="inline-flex items-center gap-1.5 text-blue-600 hover:text-blue-800 hover:underline cursor-pointer group transition-colors break-all"
-                      :title="`Click để tải về file: ${fItem.cleanName}`"
+                      v-tip="`Click để tải về file: ${fItem.cleanName}`"
                     >
                       <span class="text-blue-500 shrink-0">📄</span>
                       <span class="group-hover:underline font-normal">{{ fItem.cleanName }}</span>
@@ -444,7 +444,7 @@ function changePage(newPage) {
 
 function buildListUrl() {
     const user = authState.user.value;
-    const isAdmin = authState.isAdmin.value;
+    const isAdmin = authState.seesAll.value;
 
     const url = new URL(getApiUrl('/api/documents/import-history'));
     url.searchParams.append('pageNumber', currentPage.value);

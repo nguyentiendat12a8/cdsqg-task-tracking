@@ -158,7 +158,7 @@
                   type="button" 
                   @click="removeFile(index)" 
                   class="text-slate-400 hover:text-rose-600 font-bold px-1.5 py-0.5 rounded-md hover:bg-rose-50 transition text-sm"
-                  :aria-label="`Xóa tệp ${file.name}`" :disabled="isSubmitting" title="Xóa tệp khỏi danh sách"
+                  :aria-label="`Xóa tệp ${file.name}`" :disabled="isSubmitting" v-tip="'Xóa tệp khỏi danh sách'"
                 >
                   ✕
                 </button>
@@ -188,7 +188,7 @@
                     target="_blank" 
                     download
                     class="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-purple-700 hover:text-white bg-purple-100 hover:bg-purple-600 rounded-lg transition-all cursor-pointer"
-                    title="Tải file minh chứng về máy"
+                    v-tip="'Tải file minh chứng về máy'"
                   >
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
@@ -200,7 +200,7 @@
                     type="button" 
                     @click="removeExistingFile(idx)" 
                     class="ui-single-line inline-flex items-center gap-1 px-2.5 py-1 text-xs font-bold text-rose-600 hover:text-white bg-rose-50 hover:bg-rose-600 rounded-lg transition-all border border-rose-200 cursor-pointer"
-                    title="Xóa file đính kèm này"
+                    v-tip="'Xóa file đính kèm này'"
                   >
                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

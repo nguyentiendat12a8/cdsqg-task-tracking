@@ -120,21 +120,29 @@ namespace Cdsqg.Application.Services
                     .ToList();
 
                 var yearlyTargets = new Dictionary<int, object?>();
+                var defaultYearlyTargets = new Dictionary<int, object?>();
+                var configuredYearlyTargets = new Dictionary<int, decimal?>();
                 foreach (var year in dynamicYears)
                 {
                     if (!PlanningYears.Contains(item, year))
                     {
                         yearlyTargets[year] = null;
+                        defaultYearlyTargets[year] = null;
+                        configuredYearlyTargets[year] = null;
                         continue;
                     }
                     var baseline = item.Baselines.FirstOrDefault(b => b.Year == year);
                     if (item.EvaluationType == EvaluationTypeEnum.Quantitative)
                     {
                         yearlyTargets[year] = ProgressCalculator.ResolveBaseline(item, year).Target;
+                        defaultYearlyTargets[year] = ProgressCalculator.ResolveDefaultBaseline(item, year);
+                        configuredYearlyTargets[year] = baseline?.ConfiguredTargetQuantity;
                     }
                     else
                     {
                         yearlyTargets[year] = baseline?.TargetQualitativeStatus?.ToString();
+                        defaultYearlyTargets[year] = yearlyTargets[year];
+                        configuredYearlyTargets[year] = null;
                     }
                 }
 
@@ -200,7 +208,9 @@ namespace Cdsqg.Application.Services
                     CalculatedAlert = progress.Alert.ToString(),
                     CustomBaseline = item.CustomBaseline ?? new Dictionary<string, string>(),
                     Deliverables = agencyDeliverables ?? new List<TaskDeliverable>(),
-                    YearlyTargets = yearlyTargets
+                    YearlyTargets = yearlyTargets,
+                    DefaultYearlyTargets = defaultYearlyTargets,
+                    ConfiguredYearlyTargets = configuredYearlyTargets
                 };
             }
 
@@ -423,7 +433,10 @@ namespace Cdsqg.Application.Services
                 _context.TargetBaselines.Add(baseline);
             }
 
-            baseline.TargetQuantity = dto.TargetQuantity;
+            if (task.ItemType == ItemTypeEnum.Goal && task.EvaluationType == EvaluationTypeEnum.Quantitative)
+                baseline.ConfiguredTargetQuantity = dto.TargetQuantity;
+            else
+                baseline.TargetQuantity = dto.TargetQuantity;
             // Editing the annual grid explicitly replaces that year's custom override.
             var overrides = new Dictionary<string, string>(task.CustomBaseline);
             overrides.Remove(dto.Year.ToString(System.Globalization.CultureInfo.InvariantCulture));
@@ -486,7 +499,8 @@ namespace Cdsqg.Application.Services
                 if (row.TargetQuantity <= 0) { errors.Add($"{label}: kế hoạch phải lớn hơn 0."); continue; }
 
                 var yearKey = row.Year.ToString(System.Globalization.CultureInfo.InvariantCulture);
-                var hasExplicit = task.CustomBaseline.ContainsKey(yearKey) || task.Baselines.Any(b => b.Year == row.Year && b.TargetQuantity > 0);
+                var baseline = task.Baselines.FirstOrDefault(b => b.Year == row.Year);
+                var hasExplicit = task.CustomBaseline.ContainsKey(yearKey) || baseline?.ConfiguredTargetQuantity > 0;
                 var current = hasExplicit ? ProgressCalculator.ResolveBaseline(task, row.Year).Target : null;
                 if (current == row.TargetQuantity) { result.UnchangedCount++; continue; }
                 if (current.HasValue)
@@ -509,7 +523,7 @@ namespace Cdsqg.Application.Services
                     _context.TargetBaselines.Add(baseline);
                     task.Baselines.Add(baseline);
                 }
-                baseline.TargetQuantity = row.TargetQuantity;
+                baseline.ConfiguredTargetQuantity = row.TargetQuantity;
                 var overrides = new Dictionary<string, string>(task.CustomBaseline);
                 overrides.Remove(row.Year.ToString(System.Globalization.CultureInfo.InvariantCulture));
                 task.CustomBaseline = overrides;

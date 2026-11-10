@@ -367,6 +367,24 @@ input[type="number"] {
   border-color: rgba(15, 23, 42, 0.96) !important;
 }
 
+/* Tooltip ngắn dùng chung (directive v-tip): cùng theme custom-dark, giữ xuống dòng trong nội dung. */
+.app-tip .v-popper__inner {
+  max-width: 22rem;
+  white-space: pre-line;
+  text-align: left;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+/* Dòng tiêu đề trong tooltip chi tiết (🎯 Chi tiết mục tiêu, 🏛️ Cơ quan chủ trì...). */
+.app-tip-title {
+  display: block;
+  margin-bottom: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #d8b4fe; /* purple-300 */
+}
+
 /* Custom Clean FloatingVue Overlay Panel (Filter Popovers) */
 .v-popper-clean-overlay.v-popper__popper {
   outline: none !important;

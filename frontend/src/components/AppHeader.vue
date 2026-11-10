@@ -6,7 +6,7 @@
       <div class="truncate">
         <h1
           class="ui-app-title truncate font-bold text-blue-900 tracking-tight"
-          title="Hệ thống theo dõi nhiệm vụ Chuyển đổi số quốc gia"
+          v-tip="'Hệ thống theo dõi nhiệm vụ Chuyển đổi số quốc gia'"
         >
           Hệ thống theo dõi nhiệm vụ Chuyển đổi số quốc gia
         </h1>
@@ -29,7 +29,7 @@
             'w-9 h-9 rounded-xl border flex items-center justify-center transition shadow-2xs group relative',
             isUserMenuOpen ? 'bg-blue-50 border-blue-400 text-blue-600 ring-2 ring-blue-500/20' : 'bg-slate-100 hover:bg-slate-200/80 border-slate-200 text-slate-600'
           ]"
-          title="Thông tin tài khoản cá nhân"
+          v-tip="'Thông tin tài khoản cá nhân'"
         >
           <!-- User Person Character Icon -->
           <svg class="w-5 h-5 transition-transform group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -54,7 +54,7 @@
                 <div class="text-xs font-bold text-slate-900 truncate leading-snug">
                   {{ user?.fullName || user?.username || 'Quản trị viên hệ thống' }}
                 </div>
-                <div class="text-xs font-bold text-blue-600 mt-0.5 truncate" :title="userDisplayAgency">
+                <div class="text-xs font-bold text-blue-600 mt-0.5 truncate" v-tip="userDisplayAgency">
                   {{ userDisplayAgency }}
                 </div>
               </div>
@@ -100,6 +100,7 @@ const userDisplayAgency = computed(() => {
   if (props.user?.agencyName) return props.user.agencyName;
   if (props.user?.agency?.name) return props.user.agency.name;
   if (authState.isAdmin.value) return 'Quản trị viên hệ thống';
+  if (authState.isClerk.value) return 'Văn thư';
   return 'Cơ quan / đơn vị';
 });
 

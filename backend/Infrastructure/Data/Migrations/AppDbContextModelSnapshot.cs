@@ -3203,6 +3203,9 @@ namespace Cdsqg.Infrastructure.Data.Migrations
 
             modelBuilder.Entity("Cdsqg.Core.Entities.TargetBaseline", b =>
                 {
+                    b.Property<decimal?>("ConfiguredTargetQuantity")
+                        .HasColumnType("numeric");
+
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uuid");

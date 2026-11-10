@@ -70,7 +70,7 @@
                     v-if="row.hasChildren"
                     @click="toggleNode(row.id)"
                     class="w-5 h-5 rounded hover:bg-slate-200 text-slate-600 flex items-center justify-center transition shrink-0 cursor-pointer"
-                    :title="expandedNodes.has(row.id) ? 'Thu gọn' : 'Mở rộng'"
+                    v-tip="expandedNodes.has(row.id) ? 'Thu gọn' : 'Mở rộng'"
                   >
                     <svg class="w-3.5 h-3.5 transition-transform duration-200" :class="{ 'rotate-90': expandedNodes.has(row.id) }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"/>
@@ -104,7 +104,7 @@
                   v-if="row.contactPersons && row.contactPersons.length > 0"
                   @click="openContactPersonsModal(row)"
                   class="ui-action ui-action-primary px-2.5 py-1 bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium text-xs rounded-xl transition border border-blue-200 inline-flex items-center gap-1.5 shadow-2xs cursor-pointer"
-                  title="Click để xem chi tiết cán bộ đầu mối liên hệ"
+                  v-tip="'Click để xem chi tiết cán bộ đầu mối liên hệ'"
                  aria-label="Click để xem chi tiết cán bộ đầu mối liên hệ">
                   <svg class="w-3.5 h-3.5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/></svg>
                   <span>{{ formatNumber(row.contactPersons.length) }} cán bộ đầu mối</span>
@@ -115,15 +115,15 @@
               <!-- Actions -->
               <td class="px-4 py-3 text-center space-x-1 whitespace-nowrap min-w-[110px] w-28">
                 <template v-if="isBKHCN(row)">
-                  <span class="inline-flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200 shadow-2xs" title="Danh mục hệ thống cố định, không thể sửa/xóa">
+                  <span class="inline-flex items-center gap-1 text-xs font-bold text-amber-700 bg-amber-50 px-2.5 py-1 rounded-lg border border-amber-200 shadow-2xs" v-tip="'Danh mục hệ thống cố định, không thể sửa/xóa'">
                     🔒 Cố định
                   </span>
                 </template>
                 <template v-else>
-                  <button @click="openEditModal(row)" class="ui-action ui-action-primary p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition inline-flex items-center cursor-pointer" title="Sửa" aria-label="Sửa">
+                  <button @click="openEditModal(row)" class="ui-action ui-action-primary p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition inline-flex items-center cursor-pointer" v-tip="'Sửa'" aria-label="Sửa">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                   </button>
-                  <button @click="deleteAgency(row)" class="ui-action ui-action-danger p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg transition inline-flex items-center cursor-pointer" title="Xóa" aria-label="Xóa">
+                  <button @click="deleteAgency(row)" class="ui-action ui-action-danger p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg transition inline-flex items-center cursor-pointer" v-tip="'Xóa'" aria-label="Xóa">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                   </button>
                 </template>

@@ -33,14 +33,16 @@ public class DocumentQueryTests
     }
 
     [Fact]
-    public void DeadlineYearFilterAndOngoingModeKeepExistingServerContract()
+    public void YearFilterIncludesItemsWhoseExecutionPeriodOverlapsSelectedYear()
     {
         var items = new List<PlanningGridItemDto> {
             new() { Code = "NV-01", DueDate = new DateTime(2028, 1, 1), StartDate = new DateTime(2026, 1, 1) },
+            new() { Code = "NV-03", DueDate = new DateTime(2025, 12, 31), StartDate = new DateTime(2025, 1, 1) },
             new() { Code = "NV-02", IsOngoing = true }
         };
-        Assert.Empty(DocumentItemQuery.Apply(items, new() { FromYear = 2026, ToYear = 2026 }));
+        Assert.Equal(new[] { "NV-01", "NV-02" }, DocumentItemQuery.Apply(items, new() { FromYear = 2026, ToYear = 2026 }).Select(i => i.Code));
         Assert.Equal("NV-02", Assert.Single(DocumentItemQuery.Apply(items, new() { OnlyOngoing = true, FromYear = 2026, ToYear = 2026 })).Code);
+        Assert.Equal(new[] { "NV-01", "NV-02" }, DocumentItemQuery.Apply(items, new() { ReportFromYear = 2026, ReportToYear = 2026 }).Select(i => i.Code));
     }
 
     [Fact]

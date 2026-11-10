@@ -2,7 +2,7 @@
   <div 
     class="relative rounded-full flex items-center justify-center shrink-0 shadow-sm transition-transform duration-200 hover:scale-105 cursor-pointer group select-none"
     :style="{ width: `${size}px`, height: `${size}px`, background: conicGradient }"
-    :title="tooltipText"
+    v-tip="tooltipText"
   >
     <!-- Center Cutout Hole -->
     <div 

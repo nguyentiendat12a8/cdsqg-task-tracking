@@ -24,7 +24,7 @@
               <div class="text-right sm:text-left text-xs text-slate-500">{{ yearlyTargets[year] == null ? 'Chưa thiết lập' : formatNumber(yearlyTargets[year]) }} <span v-if="yearlyTargets[year] != null" class="text-xs">{{ unitName }}</span></div>
               <div class="relative col-span-2 sm:col-span-1">
                 <QuantityInput string-value :id="`annual-target-${year}`" v-model="milestones[year]"  min="0.000001" step="any" placeholder="Dùng mặc định" class="ui-single-line ui-control w-full rounded-lg border border-slate-200 bg-white py-2 pl-3 pr-14 text-xs font-medium text-slate-900 placeholder:font-normal placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 transition" />
-                <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 max-w-10 truncate text-xs text-slate-400" :title="unitName">{{ unitName }}</span>
+                <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 max-w-10 truncate text-xs text-slate-400" v-tip="unitName">{{ unitName }}</span>
               </div>
             </div>
           </div>

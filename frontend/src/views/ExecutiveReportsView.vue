@@ -277,7 +277,7 @@
                   </div>
                   <template #popper>
                     <div class="whitespace-normal break-words text-left leading-relaxed min-w-[260px] max-w-[420px] p-1">
-                      <span class="font-semibold text-blue-300 block mb-1 text-xs">📋 Nội dung chi tiết</span>
+                      <span class="app-tip-title">📋 Nội dung chi tiết</span>
                       {{ item.title }}
                     </div>
                   </template>

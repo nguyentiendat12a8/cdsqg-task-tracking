@@ -138,13 +138,13 @@
 
               <td class="px-4 py-3 text-center whitespace-nowrap">
                 <div class="inline-flex items-center justify-center gap-1.5 whitespace-nowrap">
-                  <button @click="openResetModal(u)" class="ui-action ui-action-warning ui-single-line px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold text-xs rounded-lg transition border border-amber-200 cursor-pointer" title="Đặt lại mật khẩu" aria-label="Đặt lại mật khẩu">
+                  <button @click="openResetModal(u)" class="ui-action ui-action-warning ui-single-line px-2.5 py-1 bg-amber-50 hover:bg-amber-100 text-amber-700 font-bold text-xs rounded-lg transition border border-amber-200 cursor-pointer" v-tip="'Đặt lại mật khẩu'" aria-label="Đặt lại mật khẩu">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.724 5.747L10.5 17.25H7.5v3h-3v-3l7.003-7.003A6 6 0 1121.75 8.25z"/></svg><span>Mật khẩu</span>
                   </button>
-                  <button @click="openEditModal(u)" class="ui-action ui-action-primary p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition inline-flex items-center cursor-pointer" title="Sửa thông tin" aria-label="Sửa thông tin">
+                  <button @click="openEditModal(u)" class="ui-action ui-action-primary p-1.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-lg transition inline-flex items-center cursor-pointer" v-tip="'Sửa thông tin'" aria-label="Sửa thông tin">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
                   </button>
-                  <button v-if="u.username !== 'admin'" @click="deleteUser(u)" class="ui-action ui-action-danger p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg transition inline-flex items-center cursor-pointer" title="Xóa tài khoản" aria-label="Xóa tài khoản">
+                  <button v-if="u.username !== 'admin'" @click="deleteUser(u)" class="ui-action ui-action-danger p-1.5 text-rose-600 hover:text-rose-800 hover:bg-rose-50 rounded-lg transition inline-flex items-center cursor-pointer" v-tip="'Xóa tài khoản'" aria-label="Xóa tài khoản">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
                   </button>
                 </div>
@@ -231,7 +231,7 @@
                   type="button" 
                   @click="showAddPassword = !showAddPassword" 
                   class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
-                  :title="showAddPassword ? 'Ẩn mật khẩu' : 'Hiển thị mật khẩu'"
+                  v-tip="showAddPassword ? 'Ẩn mật khẩu' : 'Hiển thị mật khẩu'"
                 >
                   <svg v-if="!showAddPassword" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -273,9 +273,9 @@
                 v-model="newUserForm.agencyId" 
                 :options="agencyOptions" 
                 :isMulti="false" 
-                :disabled="newUserForm.role === 'Admin'"
+                :disabled="seesAllAgencies(newUserForm.role)"
                 label="Cơ quan gán" 
-                :placeholder="newUserForm.role === 'Admin' ? 'Không gán (Toàn quyền Admin)' : '-- Chọn cơ quan gán --'"
+                :placeholder="seesAllAgencies(newUserForm.role) ? 'Không gán (phạm vi toàn hệ thống)' : '-- Chọn cơ quan gán --'"
               />
             </div>
           </div>
@@ -331,9 +331,9 @@
                 v-model="editUserForm.agencyId" 
                 :options="agencyOptions" 
                 :isMulti="false" 
-                :disabled="editUserForm.role === 'Admin' || editUserForm.hasDataOperations"
+                :disabled="seesAllAgencies(editUserForm.role) || editUserForm.hasDataOperations"
                 label="Cơ quan gán" 
-                :placeholder="editUserForm.role === 'Admin' ? 'Không gán (Toàn quyền Admin)' : '-- Chọn cơ quan gán --'"
+                :placeholder="seesAllAgencies(editUserForm.role) ? 'Không gán (phạm vi toàn hệ thống)' : '-- Chọn cơ quan gán --'"
               />
             </div>
           </div>
@@ -375,7 +375,7 @@
                 type="button" 
                 @click="showResetPassword = !showResetPassword" 
                 class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
-                :title="showResetPassword ? 'Ẩn mật khẩu' : 'Hiển thị mật khẩu'"
+                v-tip="showResetPassword ? 'Ẩn mật khẩu' : 'Hiển thị mật khẩu'"
               >
                 <svg v-if="!showResetPassword" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
@@ -403,7 +403,8 @@
 import ActionButton from "../components/ActionButton.vue";
 import { formatNumber } from "../shared/formatters";
 import { formatDateTime } from '../shared/formatters';
-import { isAdminRole } from '../shared/roles';
+import { ROLE, isAdminRole, isClerkRole, normalizeRole } from '../shared/roles';
+import { seesAllAgencies } from '../shared/permissions';
 import { fetchWithAuth } from '../services/auth';
 
 import { ref, computed, watch, onMounted } from 'vue';
@@ -434,13 +435,16 @@ const activeFilterCount = computed(() => {
 });
 
 const roleOptions = ref([
-  { value: 'Admin', label: 'Quản trị viên (Admin)' },
-  { value: 'AgencyUser', label: 'Cán bộ cơ quan / bộ ngành' }
+  { value: ROLE.Admin, label: 'Quản trị viên (Admin)' },
+  { value: ROLE.Clerk, label: 'Văn thư' },
+  { value: ROLE.AgencyUser, label: 'Cán bộ cơ quan / bộ ngành' }
 ]);
 
+// Văn thư: xem toàn hệ thống, chỉ thao tác dữ liệu phần Tiện ích (xem shared/permissions.js).
 const roleModalOptions = ref([
-  { value: 'Admin', label: 'Quản trị viên (Admin)' },
-  { value: 'AgencyUser', label: 'Cán bộ cơ quan / bộ ngành' }
+  { value: ROLE.Admin, label: 'Quản trị viên (Admin)' },
+  { value: ROLE.Clerk, label: 'Văn thư (chỉ thao tác phần Tiện ích)' },
+  { value: ROLE.AgencyUser, label: 'Cán bộ cơ quan / bộ ngành' }
 ]);
 
 const isSpecialAgencyCode = (code) => code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES' || code === 'ALL_PROVINCES_UBND' || code === 'ALL_MINISTRIES_DIRECT';
@@ -505,13 +509,13 @@ const editUserForm = ref({
 });
 
 watch(() => newUserForm.value.role, (newRole) => {
-  if (newRole === 'Admin') {
+  if (seesAllAgencies(newRole)) {
     newUserForm.value.agencyId = null;
   }
 });
 
 watch(() => editUserForm.value.role, (newRole) => {
-  if (newRole === 'Admin') {
+  if (seesAllAgencies(newRole)) {
     editUserForm.value.agencyId = null;
   }
 });
@@ -625,7 +629,7 @@ async function saveNewUser() {
       fullName: newUserForm.value.fullName,
       email: newUserForm.value.email,
       roleString: newUserForm.value.role,
-      agencyId: newUserForm.value.agencyId || null
+      agencyId: seesAllAgencies(newUserForm.value.role) ? null : (newUserForm.value.agencyId || null)
     };
 
     const res = await fetchWithAuth(getApiUrl('/api/user'), {
@@ -648,10 +652,7 @@ async function saveNewUser() {
 }
 
 function openEditModal(user) {
-  let mappedRole = 'AgencyUser';
-  if (isAdminRole(user.role) || isAdminRole(user.roleName)) {
-    mappedRole = 'Admin';
-  }
+  const mappedRole = normalizeRole(user.roleName ?? user.role);
 
   editUserForm.value = {
     id: user.id,
@@ -672,7 +673,7 @@ async function saveEditUser() {
       fullName: editUserForm.value.fullName,
       email: editUserForm.value.email,
       roleString: editUserForm.value.role,
-      agencyId: editUserForm.value.role === 'Admin' ? null : (editUserForm.value.agencyId || null),
+      agencyId: seesAllAgencies(editUserForm.value.role) ? null : (editUserForm.value.agencyId || null),
       isActive: editUserForm.value.isActive
     };
 
@@ -748,12 +749,13 @@ async function deleteAccount(user) {
 
 function getRoleLabel(role) {
   if (isAdminRole(role)) return 'Quản trị viên (Admin)';
-  if (role === 'AgencyUser' || role === 2 || role === '2') return 'Cán bộ Cơ quan/Bộ ngành';
+  if (isClerkRole(role)) return 'Văn thư';
   return 'Cán bộ Cơ quan/Bộ ngành';
 }
 
 function getRoleBadgeClass(role) {
   if (isAdminRole(role)) return 'bg-purple-100 text-purple-800 border border-purple-200';
+  if (isClerkRole(role)) return 'bg-amber-100 text-amber-800 border border-amber-200';
   return 'bg-blue-100 text-blue-800 border border-blue-200';
 }
 

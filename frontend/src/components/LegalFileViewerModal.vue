@@ -7,7 +7,7 @@
         <div class="flex items-center gap-2.5 min-w-0 pr-4">
           <span class="p-2 bg-blue-100 text-blue-700 rounded-xl font-bold text-sm shrink-0">📄</span>
           <div class="truncate">
-            <h3 class="text-sm sm:text-base font-bold text-slate-800 truncate" :title="fileItem?.cleanName || fileItem?.fileName">
+            <h3 class="text-sm sm:text-base font-bold text-slate-800 truncate" v-tip="fileItem?.cleanName || fileItem?.fileName">
               {{ fileItem?.cleanName || fileItem?.fileName || 'Xem văn bản đính kèm' }}
             </h3>
             <p class="text-xs text-slate-500 truncate" v-if="fileItem?.fileType">
@@ -21,7 +21,7 @@
             v-if="fileItem?.fileUrl" 
             @click="openInNewWindow"
             class="ui-single-line px-3.5 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 cursor-pointer shadow-sm"
-            title="Mở trong cửa sổ mới (toàn màn hình)"
+            v-tip="'Mở trong cửa sổ mới (toàn màn hình)'"
           >
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
             <span>Mở cửa sổ mới</span>
@@ -32,7 +32,7 @@
             :href="fullFileUrl" 
             download 
             class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition flex items-center gap-1.5 cursor-pointer"
-            title="Tải tệp về máy"
+            v-tip="'Tải tệp về máy'"
           >
             <svg class="w-4 h-4 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
             <span>Tải về</span>

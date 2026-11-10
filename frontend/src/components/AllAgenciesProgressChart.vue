@@ -32,6 +32,7 @@
 </template>
 
 <script setup>
+import { chartTooltipStyle } from '../shared/tooltipStyle';
 import { executionStatusSeries } from '../shared/statusPresentation';
 import { themeColor } from "../shared/themeColors";
 import { formatNumber } from "../shared/formatters";
@@ -258,13 +259,7 @@ const sharedOptions = computed(() => ({
       display: false
     },
     tooltip: {
-      backgroundColor: '#0f172a',
-      titleColor: '#f8fafc',
-      bodyColor: '#e2e8f0',
-      titleFont: { size: 12, weight: 'bold' },
-      bodyFont: { size: 12 },
-      padding: 10,
-      cornerRadius: 8,
+      ...chartTooltipStyle,
       callbacks: {
         title: (items) => {
           if (!items || items.length === 0) return '';

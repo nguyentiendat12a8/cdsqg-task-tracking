@@ -130,6 +130,10 @@
           </div>
         </OverlayPanel>
       </div>
+      <div v-if="activeSubTab === 'goals'" class="inline-flex shrink-0 self-end sm:self-auto rounded-lg border border-blue-200 bg-white p-0.5" role="group" aria-label="Chọn bản kế hoạch">
+        <button type="button" class="rounded-md px-3 py-1.5 text-xs font-semibold" :class="goalPlanView === 'configured' ? 'bg-blue-700 text-white' : 'text-slate-700 hover:bg-slate-100'" :aria-pressed="goalPlanView === 'configured'" @click="goalPlanView = 'configured'">Bản thiết lập</button>
+        <button type="button" class="rounded-md px-3 py-1.5 text-xs font-semibold" :class="goalPlanView === 'default' ? 'bg-blue-700 text-white' : 'text-slate-700 hover:bg-slate-100'" :aria-pressed="goalPlanView === 'default'" @click="goalPlanView = 'default'">Bản mặc định</button>
+      </div>
     </div>
 
     <!-- Loading State -->
@@ -183,7 +187,7 @@
 
                     <template #popper>
                       <div class="whitespace-normal break-words text-left leading-relaxed min-w-[280px] max-w-[450px] p-1">
-                        <span class="font-semibold text-purple-300 block mb-1 text-xs">🎯 Chi tiết mục tiêu</span>
+                        <span class="app-tip-title">🎯 Chi tiết mục tiêu</span>
                         {{ item.title }}
                       </div>
                     </template>
@@ -203,7 +207,7 @@
 
                     <template #popper>
                       <div class="whitespace-normal break-words text-left leading-relaxed min-w-[200px] max-w-[420px] p-1">
-                        <span class="font-semibold text-blue-300 block mb-1 text-xs">🏛️ Cơ quan chủ trì</span>
+                        <span class="app-tip-title">🏛️ Cơ quan chủ trì</span>
                         {{ item.leadAgencyDisplayText || item.leadAgencyName || item.leadAgencyCode }}
                       </div>
                     </template>
@@ -224,11 +228,14 @@
                   :class="{ 'bg-slate-100/80 opacity-40': !isYearEnabledForItem(item, year) }"
                 >
                   <template v-if="!isYearEnabledForItem(item, year)"><span class="text-slate-400" aria-label="Ngoài thời gian thực hiện">—</span></template>
+                  <template v-else-if="goalPlanView === 'default'">
+                    <span class="text-xs font-semibold text-slate-700">{{ item.defaultYearlyTargets?.[year] ?? '—' }}</span>
+                  </template>
                   <template v-else-if="isQuantitative(item)">
                     <div class="relative flex items-center">
                       <QuantityInput  
-                        v-model="item.yearlyTargets[year]" 
-                        :disabled="!isYearEnabledForItem(item, year)"
+                        v-model="item.configuredYearlyTargets[year]"
+                        :disabled="!canEditPlans || !isYearEnabledForItem(item, year) || !configuredPlansSupported"
                         @change="saveYearlyTarget(item, year, $event)"
                         placeholder="—"
                         class="ui-single-line w-full text-center font-normal text-slate-800 bg-white border border-slate-300 rounded-lg py-1 pl-2 pr-6 focus:ring-2 focus:ring-blue-500 focus:outline-none transition hover:border-blue-400 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed disabled:border-slate-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -241,7 +248,7 @@
                       v-model="item.yearlyTargets[year]" 
                       :options="gridStatusCellOptions" 
                       :isMulti="false" 
-                      :disabled="!isYearEnabledForItem(item, year)"
+                      :disabled="!canEditPlans || !isYearEnabledForItem(item, year)"
                       :clearable="false"
                       @change="val => saveYearlyTarget(item, year, val)" 
                       class="w-full text-xs"
@@ -277,7 +284,7 @@
 
                     <template #popper>
                       <div class="whitespace-normal break-words text-left leading-relaxed min-w-[280px] max-w-[450px] p-1">
-                        <span class="font-semibold text-blue-300 block mb-1 text-xs">📋 Chi tiết nhiệm vụ</span>
+                        <span class="app-tip-title">📋 Chi tiết nhiệm vụ</span>
                         {{ item.title }}
                       </div>
                     </template>
@@ -297,7 +304,7 @@
 
                     <template #popper>
                       <div class="whitespace-normal break-words text-left leading-relaxed min-w-[200px] max-w-[420px] p-1">
-                        <span class="font-semibold text-blue-300 block mb-1 text-xs">🏛️ Cơ quan chủ trì</span>
+                        <span class="app-tip-title">🏛️ Cơ quan chủ trì</span>
                         {{ item.leadAgencyDisplayText || item.leadAgencyName || item.leadAgencyCode }}
                       </div>
                     </template>
@@ -319,7 +326,7 @@
                     <div class="relative flex items-center">
                       <QuantityInput  
                         v-model="item.yearlyTargets[year]" 
-                        :disabled="!isYearEnabledForItem(item, year)"
+                        :disabled="!canEditPlans || !isYearEnabledForItem(item, year)"
                         @change="saveYearlyTarget(item, year, $event)"
                         placeholder="—"
                         class="ui-single-line w-full text-center font-normal text-slate-800 bg-white border border-slate-300 rounded-lg py-1 pl-2 pr-6 focus:ring-2 focus:ring-blue-500 focus:outline-none transition hover:border-blue-400 disabled:bg-slate-100 disabled:text-slate-400 disabled:cursor-not-allowed disabled:border-slate-200 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
@@ -332,7 +339,7 @@
                       v-model="item.yearlyTargets[year]" 
                       :options="gridStatusCellOptions" 
                       :isMulti="false" 
-                      :disabled="!isYearEnabledForItem(item, year)"
+                      :disabled="!canEditPlans || !isYearEnabledForItem(item, year)"
                       :clearable="false"
                       @change="val => saveYearlyTarget(item, year, val)" 
                       class="w-full text-xs"
@@ -375,6 +382,7 @@ import { fetchWithAuth } from '../services/auth';
 
 import { ref, computed, watch, onMounted } from 'vue';
 import { authState } from '../services/auth';
+import { MODULE, ACTION } from '../shared/permissions';
 import LoadingSpinner from './LoadingSpinner.vue';
 import SearchableSelect from './SearchableSelect.vue';
 import OverlayPanel from './OverlayPanel.vue';
@@ -388,6 +396,10 @@ const props = defineProps({
 });
 
 const activeSubTab = ref('goals');
+const goalPlanView = ref('configured');
+const configuredPlansSupported = ref(true);
+// Văn thư và vai trò chỉ xem: ô kế hoạch hiển thị nhưng không sửa được (API cũng chặn).
+const canEditPlans = computed(() => authState.can(MODULE.planning, ACTION.edit));
 const isLoading = ref(false);
 const agencies = ref([]);
 const toastMessage = ref('');
@@ -817,13 +829,26 @@ function isYearEnabledForItem(item, year) {
 
 
 async function saveYearlyTarget(item, year, val) {
+  if (!canEditPlans.value) return;
+  if (activeSubTab.value === 'goals' && !configuredPlansSupported.value) {
+    showToast('Máy chủ cần được cập nhật trước khi thiết lập kế hoạch mục tiêu.');
+    return;
+  }
   const isQuant = isQuantitative(item);
+  const isGoalPlan = activeSubTab.value === 'goals' && isQuant;
+  const target = isGoalPlan ? item.configuredYearlyTargets : item.yearlyTargets;
+  const cellKey = `${item.taskId}:${year}:${isGoalPlan ? 'configured' : 'annual'}`;
+  const previous = savedYearlyTargets.get(cellKey) ?? null;
+  const next = val === '' || val == null ? null : isQuant ? Number(val) : val;
+  if (next === previous) return;
+  if (savingCells.has(cellKey)) return;
   const payload = {
     year: Number(year),
-    targetQuantity: isQuant ? (val !== '' && val !== null ? Number(val) : null) : null,
+    targetQuantity: isQuant ? next : null,
     targetQualitativeStatus: !isQuant ? val : null
   };
 
+  savingCells.add(cellKey);
   try {
     const res = await fetchWithAuth(getApiUrl(`/api/planning/tasks/${item.taskId}/yearly-target`), {
       method: 'PUT',
@@ -832,16 +857,23 @@ async function saveYearlyTarget(item, year, val) {
     });
 
     if (res.ok) {
-      await loadGridData();
+      savedYearlyTargets.set(cellKey, next);
+      if (isGoalPlan) item.yearlyTargets[year] = next ?? item.defaultYearlyTargets?.[year] ?? null;
       showToast(`Đã tự động lưu chỉ tiêu ${item.code} năm ${year}: ${val}`);
     } else {
+      target[year] = previous;
       showToast(`Lỗi khi tự động lưu chỉ tiêu năm ${year}`);
     }
   } catch (e) {
+    target[year] = previous;
     showToast(`Không thể kết nối máy chủ để lưu chỉ tiêu`);
+  } finally {
+    savingCells.delete(cellKey);
   }
 }
 
+const savedYearlyTargets = new Map();
+const savingCells = new Set();
 let gridRequestVersion = 0;
 async function loadGridData() {
   if (!props.documentId) return;
@@ -854,6 +886,7 @@ async function loadGridData() {
     if (res.ok) {
       const data = await res.json();
       if (version !== gridRequestVersion) return;
+      configuredPlansSupported.value = !(data.items || []).some(item => item.itemType === 'Goal' && item.configuredYearlyTargets == null);
       gridData.value = {
         documentId: data.documentId || props.documentId,
         documentNumber: data.documentNumber || '',
@@ -861,8 +894,20 @@ async function loadGridData() {
         startYear: data.startYear || 2026,
         endYear: data.endYear || 2030,
         dynamicYears: data.dynamicYears || [2026, 2027, 2028, 2029, 2030],
-        items: data.items || []
+        items: (data.items || []).map(item => ({
+          ...item,
+          configuredYearlyTargets: item.configuredYearlyTargets ?? {},
+          defaultYearlyTargets: item.defaultYearlyTargets ?? item.yearlyTargets ?? {}
+        }))
       };
+      savedYearlyTargets.clear();
+      for (const item of gridData.value.items) {
+        for (const year of gridData.value.dynamicYears) {
+          const isGoalPlan = item.itemType === 'Goal' && isQuantitative(item);
+          const target = isGoalPlan ? item.configuredYearlyTargets : item.yearlyTargets;
+          savedYearlyTargets.set(`${item.taskId}:${year}:${isGoalPlan ? 'configured' : 'annual'}`, target?.[year] ?? null);
+        }
+      }
     }
   } catch (e) {
     console.error('Error fetching planning grid data from backend API:', e);

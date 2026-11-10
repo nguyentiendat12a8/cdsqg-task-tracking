@@ -27,6 +27,9 @@ public sealed class ApiPermissionFilter(AppDbContext db) : IAsyncActionFilter
         var user = context.HttpContext.User;
         if (user.Identity?.IsAuthenticated != true) { context.Result = new UnauthorizedResult(); return; }
         var admin = user.IsInRole(nameof(UserRoleEnum.Admin));
+        var clerk = !admin && user.IsInRole(nameof(UserRoleEnum.Clerk));
+        // Admin và Văn thư cùng phạm vi xem toàn hệ thống; quyền ghi tách riêng ở cuối filter (RolePermissions).
+        var seesAll = RolePermissions.SeesAllAgencies(admin, clerk);
         Guid? agencyId = Guid.TryParse(user.FindFirstValue("AgencyId"), out var aid) ? aid : null;
         Guid? userId = Guid.TryParse(user.FindFirstValue(ClaimTypes.NameIdentifier), out var uid) ? uid : null;
         var action = context.RouteData.Values["action"]?.ToString();
@@ -41,13 +44,13 @@ public sealed class ApiPermissionFilter(AppDbContext db) : IAsyncActionFilter
                 return;
             }
         }
-        if (args.ContainsKey("userRole")) args["userRole"] = admin ? "Admin" : "AgencyUser";
-        if (args.ContainsKey("userAgencyId")) args["userAgencyId"] = agencyId;
-        if (args.ContainsKey("isAdmin")) args["isAdmin"] = admin;
+        if (args.ContainsKey("userRole")) args["userRole"] = seesAll ? "Admin" : "AgencyUser";
+        if (args.ContainsKey("userAgencyId")) args["userAgencyId"] = seesAll ? null : agencyId;
+        if (args.ContainsKey("isAdmin")) args["isAdmin"] = seesAll;
         if (args.ContainsKey("userId")) args["userId"] = userId;
         if (controller == "Notification" && args.ContainsKey("agencyId")) args["agencyId"] = agencyId;
         // These list endpoints must always use the authenticated agency, including exports.
-        if (!admin && ((controller == "Document" && action == "GetDocumentItems")
+        if (!seesAll && ((controller == "Document" && action == "GetDocumentItems")
             || (controller == "Planning" && action == "GetDocumentPlanningGrid")))
         {
             if (!agencyId.HasValue || agencyId == Guid.Empty) { context.Result = new ForbidResult(); return; }
@@ -64,11 +67,11 @@ public sealed class ApiPermissionFilter(AppDbContext db) : IAsyncActionFilter
         bool write = !HttpMethods.IsGet(context.HttpContext.Request.Method)
             && !HttpMethods.IsHead(context.HttpContext.Request.Method);
         // User records and maintenance endpoints are private to administrators.
-        if (!admin && (controller is "User" or "MasterData" or "AiData" or "AiInbox" or "AiProvider" or "AiAlerts")) { context.Result = new ForbidResult(); return; }
+        if (!admin && RolePermissions.IsAdminOnly(controller)) { context.Result = new ForbidResult(); return; }
         if (controller == "Notification" && action == "MarkAsRead" && args.TryGetValue("id", out var nid))
         {
             var notification = await db.Notifications.AsNoTracking().FirstOrDefaultAsync(n => n.Id == (Guid)nid!);
-            if (notification != null && !admin && !(notification.UserId == userId
+            if (notification != null && !seesAll && !(notification.UserId == userId
                 || (notification.UserId == null && agencyId.HasValue && notification.AgencyId == agencyId)))
             { context.Result = new ForbidResult(); return; }
         }
@@ -89,7 +92,12 @@ public sealed class ApiPermissionFilter(AppDbContext db) : IAsyncActionFilter
             if (!admin && !agencyId.HasValue) { context.Result = new ForbidResult(); return; }
         }
 
-        if (write && !admin)
+        if (write && clerk)
+        {
+            // Văn thư: chỉ thao tác dữ liệu phần Tiện ích; các phân hệ khác chỉ xem.
+            if (!RolePermissions.ClerkCanWrite(controller, action)) { context.Result = new ForbidResult(); return; }
+        }
+        else if (write && !admin)
         {
             bool allowed = controller == "Execution" && action is "SubmitProgress" or "ImportProgressBulk"
                 || controller == "Notification" && action is "MarkAsRead" or "MarkAllAsRead"

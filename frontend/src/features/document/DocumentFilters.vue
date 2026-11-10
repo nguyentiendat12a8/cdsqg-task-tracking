@@ -2,7 +2,7 @@
 <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-slate-50/60 p-3 w-full">
           <div class="flex flex-wrap items-center gap-2 w-full min-w-0">
             <!-- Quick Search Input -->
-            <div class="relative flex-1 min-w-[min(100%,240px)]">
+            <div class="relative w-full sm:w-80 max-w-full shrink-0">
               <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
               <input
                 :aria-label="filterItemType === 'Goal' ? 'Tìm mục tiêu' : 'Tìm nhiệm vụ'"
@@ -19,7 +19,7 @@
               type="button"
               @click="execFilterSearch"
               class="ui-btn ui-btn-primary px-3 py-1.5 text-xs font-bold rounded-xl flex items-center gap-1.5 shrink-0 shadow-xs cursor-pointer"
-              title="Tìm kiếm và áp dụng bộ lọc"
+              v-tip="'Tìm kiếm và áp dụng bộ lọc'"
             >
               <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
               <span>Tìm kiếm</span>
@@ -32,9 +32,9 @@
                 :options="displayYearOptions"
                 :is-multi="false"
                 :clearable="false"
-                label="Năm báo cáo"
+                label="Năm thực hiện"
                 label-class="sr-only"
-                placeholder="Năm báo cáo"
+                placeholder="Năm thực hiện"
               />
             </div>
 
@@ -114,7 +114,7 @@
                 </div>
 
                 <div>
-                  <label class="text-xs font-semibold text-slate-700 block mb-1">Thời gian báo cáo (từ năm ➔ đến năm)</label>
+                  <label class="text-xs font-semibold text-slate-700 block mb-1">Thời gian thực hiện (từ năm ➔ đến năm)</label>
                   <div class="flex items-center gap-2">
                     <SearchableSelect
                       v-model="filterDraft.reportFromYear"
@@ -213,7 +213,7 @@ const quickYearValue = computed({
 
 const filterError = computed(() => {
   const draft = filterDraft.value;
-  if (draft.reportFromYear && draft.reportToYear && Number(draft.reportFromYear) > Number(draft.reportToYear)) return 'Năm báo cáo từ không được lớn hơn năm đến.';
+  if (draft.reportFromYear && draft.reportToYear && Number(draft.reportFromYear) > Number(draft.reportToYear)) return 'Năm thực hiện từ không được lớn hơn năm đến.';
   if (draft.executionFrom && draft.executionTo && draft.executionFrom > draft.executionTo) return 'Ngày hoàn thành từ không được lớn hơn ngày đến.';
   return '';
 });

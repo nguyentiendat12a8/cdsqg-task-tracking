@@ -18,6 +18,7 @@
 </template>
 
 <script setup>
+import { chartTooltipStyle } from '../shared/tooltipStyle';
 import { computed } from 'vue';
 import { Bar } from 'vue-chartjs';
 import {
@@ -137,13 +138,7 @@ const chartOptions = computed(() => ({
       }
     },
     tooltip: {
-      backgroundColor: '#0f172a',
-      titleColor: '#f8fafc',
-      bodyColor: '#e2e8f0',
-      titleFont: { size: 12, weight: 'bold' },
-      bodyFont: { size: 12 },
-      padding: 10,
-      cornerRadius: 8,
+      ...chartTooltipStyle,
       displayColors: true,
       boxWidth: 8,
       boxHeight: 8,

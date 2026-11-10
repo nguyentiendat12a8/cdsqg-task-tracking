@@ -131,7 +131,8 @@ namespace Cdsqg.Api.Controllers
             }
 
             Guid? targetAgencyId = (dto.AgencyId.HasValue && dto.AgencyId.Value != Guid.Empty) ? dto.AgencyId : null;
-            if (userRole == UserRoleEnum.Admin)
+            // Admin và Văn thư làm việc ở phạm vi toàn hệ thống, không gắn cơ quan.
+            if (userRole is UserRoleEnum.Admin or UserRoleEnum.Clerk)
             {
                 targetAgencyId = null;
             }
@@ -191,7 +192,8 @@ namespace Cdsqg.Api.Controllers
             }
 
             Guid? targetAgencyId = (dto.AgencyId.HasValue && dto.AgencyId.Value != Guid.Empty) ? dto.AgencyId : null;
-            if (userRole == UserRoleEnum.Admin)
+            // Admin và Văn thư làm việc ở phạm vi toàn hệ thống, không gắn cơ quan.
+            if (userRole is UserRoleEnum.Admin or UserRoleEnum.Clerk)
             {
                 targetAgencyId = null;
             }

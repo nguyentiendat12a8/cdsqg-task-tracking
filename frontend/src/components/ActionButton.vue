@@ -1,5 +1,5 @@
 <template>
-  <button type="button" :class="['ui-btn shrink-0', kind === 'create' ? 'ui-btn-primary' : 'ui-btn-secondary']">
+  <button type="button" v-tip="title" :class="['ui-btn shrink-0', kind === 'create' ? 'ui-btn-primary' : 'ui-btn-secondary']">
     <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
       <path v-if="kind === 'create'" d="M12 5v14M5 12h14" stroke-width="2" stroke-linecap="round" />
       <template v-else>
@@ -12,5 +12,9 @@
 </template>
 
 <script setup>
-defineProps({ kind: { type: String, default: 'export', validator: value => ['export', 'import', 'create'].includes(value) } });
+// title hiển thị bằng tooltip chung của hệ thống (v-tip), không dùng tooltip mặc định của trình duyệt.
+defineProps({
+  kind: { type: String, default: 'export', validator: value => ['export', 'import', 'create'].includes(value) },
+  title: { type: String, default: '' }
+});
 </script>

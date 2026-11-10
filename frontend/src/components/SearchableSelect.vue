@@ -28,7 +28,7 @@
           <span 
             v-if="!isMulti && displaySelectedItems.length > 0" 
             class="text-sm font-medium text-blue-900 truncate max-w-full block"
-            :title="displaySelectedItems[0].label"
+            v-tip="displaySelectedItems[0].label"
           >
             {{ displaySelectedItems[0].label }}
           </span>
@@ -39,7 +39,7 @@
               v-for="item in displaySelectedItems" 
               :key="item.value"
               class="bg-blue-50 text-blue-700 border border-blue-200/80 text-xs font-bold px-1.5 py-0.5 rounded-md flex items-center gap-1 shrink min-w-0 max-w-[140px] truncate"
-              :title="item.label"
+              v-tip="item.label"
             >
               <span class="truncate">{{ item.label }}</span>
               <button 
@@ -47,7 +47,7 @@
                 type="button"
                 @click.stop="removeItem(item)"
                 class="hover:text-blue-950 text-slate-400 hover:text-rose-600 font-bold text-xs leading-none shrink-0"
-                title="Xóa chọn"
+                v-tip="'Xóa chọn'"
               >
                 ×
               </button>
@@ -65,7 +65,7 @@
           type="button"
           @click.stop="clearAll"
           class="text-slate-400 hover:text-slate-600 p-0.5 text-xs font-bold"
-          title="Xóa tất cả chọn"
+          v-tip="'Xóa tất cả chọn'"
         >
           ✕
         </button>

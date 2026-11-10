@@ -52,6 +52,26 @@ public class GoalResultPlanPostgresTests
             Assert.Null(row.YearlyTargets[2025]);
             Assert.Null(row.YearlyTargets[2029]);
             Assert.Null(row.YearlyTargets[2030]);
+            Assert.Equal(6m, row.DefaultYearlyTargets[2027]);
+            Assert.Null(row.ConfiguredYearlyTargets[2027]);
+            await new PlanningService(db).UpdateYearlyTargetAsync(created.Id, new UpdateYearlyTargetDto { Year = 2027, TargetQuantity = 9 });
+            db.ChangeTracker.Clear();
+            var configured = Assert.Single((await new PlanningService(db).GetDocumentPlanningGridAsync(document.Id)).Items, i => i.Code == "MT-01");
+            Assert.Equal(6m, configured.DefaultYearlyTargets[2027]);
+            Assert.Equal(9m, configured.ConfiguredYearlyTargets[2027]);
+            Assert.Equal(9m, configured.YearlyTargets[2027]);
+            var stored = await db.TargetBaselines.SingleAsync(b => b.GoalTaskId == created.Id && b.Year == 2027);
+            Assert.Null(stored.TargetQuantity);
+            Assert.Equal(9m, stored.ConfiguredTargetQuantity);
+            var imported = await new PlanningService(db).ImportYearlyTargetsAsync(document.Id,
+                new ImportYearlyTargetsRequestDto { Rows = new() { new() { TaskId = created.Id, Year = 2026, TargetQuantity = 5 } } },
+                null, isAdmin: true);
+            Assert.False(imported.RequiresConfirmation);
+            Assert.Equal(1, imported.SavedCount);
+            db.ChangeTracker.Clear();
+            var importedRow = Assert.Single((await new PlanningService(db).GetDocumentPlanningGridAsync(document.Id)).Items, i => i.Code == "MT-01");
+            Assert.Equal(3m, importedRow.DefaultYearlyTargets[2026]);
+            Assert.Equal(5m, importedRow.YearlyTargets[2026]);
             await Assert.ThrowsAsync<InvalidOperationException>(() => new PlanningService(db).UpdateYearlyTargetAsync(created.Id, new UpdateYearlyTargetDto { Year = 2025, TargetQuantity = 99 }));
             await Assert.ThrowsAsync<InvalidOperationException>(() => new PlanningService(db).UpdateYearlyTargetAsync(created.Id, new UpdateYearlyTargetDto { Year = 2029, TargetQuantity = 99 }));
             await Assert.ThrowsAsync<InvalidOperationException>(() => new PlanningService(db).UpdateTaskCustomBaselineAsync(created.Id, new UpdateCustomBaselineDto { Milestones = new() { ["2025"] = "99" } }));
@@ -68,6 +88,24 @@ public class GoalResultPlanPostgresTests
             });
             Assert.IsType<BadRequestObjectResult>(invalid);
             Assert.False(await db.GoalTaskItems.AnyAsync(i => i.Code == "INVALID"));
+            stored = await db.TargetBaselines.SingleAsync(b => b.GoalTaskId == created.Id && b.Year == 2027);
+            stored.ConfiguredTargetQuantity = null;
+            await db.SaveChangesAsync();
+            db.ProgressLogs.Add(new ProgressLog { GoalTaskId = created.Id, AgencyId = agency.Id,
+                PeriodYear = 2027, QuantitativeValue = 8, ApprovalStatus = Cdsqg.Core.Enums.ApprovalStatusEnum.Approved });
+            await db.SaveChangesAsync();
+            db.ChangeTracker.Clear();
+            var beforePlanChange = await db.GoalTaskItems.Include(i => i.Baselines).Include(i => i.ProgressLogs)
+                .SingleAsync(i => i.Id == created.Id);
+            Assert.Equal(Cdsqg.Core.Enums.ExecutionStatusEnum.Completed,
+                ProgressCalculator.Evaluate(beforePlanChange, year: 2027).Status);
+            await new PlanningService(db).UpdateYearlyTargetAsync(created.Id, new UpdateYearlyTargetDto { Year = 2027, TargetQuantity = 10 });
+            db.ChangeTracker.Clear();
+            var afterPlanChange = await db.GoalTaskItems.Include(i => i.Baselines).Include(i => i.ProgressLogs)
+                .SingleAsync(i => i.Id == created.Id);
+            Assert.Equal(Cdsqg.Core.Enums.ExecutionStatusEnum.InProgress,
+                ProgressCalculator.Evaluate(afterPlanChange, year: 2027).Status);
+            Assert.Equal(80m, (await db.ProgressLogs.SingleAsync(l => l.GoalTaskId == created.Id)).CalculatedProgressPercentage);
         }
         finally { await using var cleanup = new NpgsqlCommand($"DROP SCHEMA \"{schema}\" CASCADE", admin); await cleanup.ExecuteNonQueryAsync(); }
     }

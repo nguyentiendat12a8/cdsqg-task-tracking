@@ -111,6 +111,7 @@ const UserManagementView = loadView(() => import('./views/UserManagementView.vue
 const ImportHistoryAudit = loadView(() => import('./components/ImportHistoryAudit.vue'));
 import ConfirmModal from './components/ConfirmModal.vue';
 import { authState, logout } from './services/auth';
+import { MODULE, ACTION } from './shared/permissions';
 import { getApiUrl } from './config/api';
 import { SUPPORTED_DOCUMENTS, activeDocumentId, switchDocument } from './services/documentContext';
 import { AI_MENU, isAiDataRoute, aiSectionFor } from './shared/aiNavigation';
@@ -136,19 +137,26 @@ function parseHashRoute() {
   const rawPath = hash.replace(/^#\/?/, '');
   const [route] = rawPath.split('?');
 
-  const adminOnlyTabs = ['reports', 'agencies', 'units', 'users', 'goals-grid', 'master-data', 'settings', 'ai-settings', 'ai-alerts', 'ai-review', ...AI_MENU.map(item => item.route)];
-  if (!authState.isAdmin.value && adminOnlyTabs.includes(route)) {
-    if (route === 'goals-grid') currentTab.value = 'goals-list';
-    else if (['agencies', 'units', 'users', 'settings', 'master-data'].includes(route)) currentTab.value = 'import-history';
-    else currentTab.value = 'dashboard';
-    return;
-  }
+  const fallback = forbiddenTabFallback(route);
+  if (fallback) { currentTab.value = fallback; return; }
 
   if (['goals', 'goals-list', 'goals-grid', 'tasks', 'tasks-list', 'tasks-grid', 'reports', 'legal-documents', 'agency-plans', 'digital-news', 'agencies', 'units', 'users', 'import-history', 'settings', 'master-data', 'ai-settings', 'ai-alerts', 'ai-review', ...AI_MENU.map(item => item.route)].includes(route)) {
     currentTab.value = route;
   } else {
     currentTab.value = 'dashboard';
   }
+}
+
+// Quyền vào màn hình theo bảng phân quyền (shared/permissions.js):
+// quản trị chỉ Admin; kế hoạch mục tiêu và báo cáo tổng hợp cho vai trò xem toàn hệ thống (Admin, Văn thư).
+const ADMIN_ONLY_TABS = ['agencies', 'units', 'users', 'master-data', 'settings', 'ai-settings', 'ai-alerts', 'ai-review', ...AI_MENU.map(item => item.route)];
+const SYSTEM_VIEW_TABS = ['reports', 'goals-grid'];
+function forbiddenTabFallback(tab) {
+  if (ADMIN_ONLY_TABS.includes(tab) && !authState.can(MODULE.administration, ACTION.view)) {
+    return ['agencies', 'units', 'users', 'settings', 'master-data'].includes(tab) ? 'import-history' : 'dashboard';
+  }
+  if (SYSTEM_VIEW_TABS.includes(tab) && !authState.seesAll.value) return tab === 'goals-grid' ? 'goals-list' : 'dashboard';
+  return null;
 }
 
 function syncHashRoute() {
@@ -162,13 +170,8 @@ function syncHashRoute() {
 
 function switchTab(tabName) {
   mobileMenuOpen.value = false;
-  const adminOnlyTabs = ['reports', 'agencies', 'units', 'users', 'goals-grid', 'master-data', 'settings', 'ai-settings', 'ai-alerts', 'ai-review', ...AI_MENU.map(item => item.route)];
-  if (!authState.isAdmin.value && adminOnlyTabs.includes(tabName)) {
-    if (tabName === 'goals-grid') currentTab.value = 'goals-list';
-    else if (['agencies', 'units', 'users', 'settings', 'master-data'].includes(tabName)) currentTab.value = 'import-history';
-    else currentTab.value = 'dashboard';
-    return;
-  }
+  const fallback = forbiddenTabFallback(tabName);
+  if (fallback) { currentTab.value = fallback; return; }
   currentTab.value = tabName;
 }
 

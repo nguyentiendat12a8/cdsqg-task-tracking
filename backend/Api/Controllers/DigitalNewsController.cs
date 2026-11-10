@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Cdsqg.Api.Security;
 using Cdsqg.Application.Services;
 using Cdsqg.Infrastructure.Data;
 using Microsoft.AspNetCore.Authorization;
@@ -58,22 +59,22 @@ public sealed class DigitalNewsController(AppDbContext db,DigitalNewsSyncService
     }
     [HttpGet("agencies")]
     public async Task<IActionResult> Agencies(CancellationToken ct)=>Ok(await DigitalNewsRetention.Visible(db.DigitalNewsItems.AsNoTracking(),db,DateTime.UtcNow).Select(i=>i.AgencyName).Distinct().OrderBy(n=>n).ToListAsync(ct));
-    [HttpGet("settings"),Authorize(Roles="Admin")]
+    [HttpGet("settings"),Authorize(Roles=RolePermissions.UtilityEditorRoles)]
     public async Task<IActionResult> Settings(CancellationToken ct){
         var settings=await db.DigitalNewsSyncSettings.AsNoTracking().SingleAsync(ct);
         return Ok(new{evaluationCriteria=DigitalPlanCriteria.Parse(settings.EvaluationCriteriaJson),settings.Enabled,settings.IntervalMinutes,publishedFrom=settings.PublishedFrom??DigitalNewsPublicationWindow.DefaultFrom,settings.PublishedTo,settings.LookbackDays,settings.BatchSize,settings.QueryCursor,settings.NextRunAt,settings.LastStatus,settings.LastError,busy=settings.LeaseUntil>DateTime.UtcNow,
             sources=await db.DigitalPlanSources.AsNoTracking().OrderByDescending(x=>x.Enabled).ThenBy(x=>x.SortOrder).ThenBy(x=>x.Id).ToListAsync(ct),keywords=await db.DigitalPlanKeywords.AsNoTracking().OrderByDescending(x=>x.Enabled).ThenBy(x=>x.SortOrder).ThenBy(x=>x.Id).ToListAsync(ct)});
     }
-    [HttpPut("criteria"),Authorize(Roles="Admin")]
+    [HttpPut("criteria"),Authorize(Roles=RolePermissions.UtilityEditorRoles)]
     public async Task<IActionResult> Criteria(DigitalPlanCriteria input,CancellationToken ct){
         try{var criteria=input.Validate();await db.DigitalNewsSyncSettings.Where(x=>x.Id==1).ExecuteUpdateAsync(s=>s.SetProperty(x=>x.EvaluationCriteriaJson,criteria.Json()),ct);return Ok(new{message="Đã lưu tiêu chí. Lần bấm Đọc tiếp theo sẽ dùng cấu hình mới; kết quả cũ được giữ lại."});}
         catch(InvalidOperationException ex){return BadRequest(new{message=ex.Message});}
     }
     public sealed record SyncInput(bool Enabled,int IntervalMinutes,int BatchSize,DateOnly? PublishedFrom=null,DateOnly? PublishedTo=null,int LookbackDays=365);
-    [HttpPut("settings"),Authorize(Roles="Admin")]
+    [HttpPut("settings"),Authorize(Roles=RolePermissions.UtilityEditorRoles)]
     public async Task<IActionResult> Save(SyncInput input,CancellationToken ct){try{await sync.SaveAsync(input.Enabled,input.IntervalMinutes,input.LookbackDays,input.BatchSize,User.Identity?.Name??"Admin",ct,input.PublishedFrom,input.PublishedTo);return Ok(new{message="Đã lưu lịch quét tin."});}catch(InvalidOperationException ex){return BadRequest(new{message=ex.Message});}}
     public sealed record MonitoringInput(List<Cdsqg.Core.Entities.DigitalPlanSource> Sources,List<Cdsqg.Core.Entities.DigitalPlanKeyword> Keywords);
-    [HttpPut("monitoring"),Authorize(Roles="Admin")]
+    [HttpPut("monitoring"),Authorize(Roles=RolePermissions.UtilityEditorRoles)]
     public async Task<IActionResult> Monitoring(MonitoringInput input,CancellationToken ct){
         try{
             if(input.Sources==null||input.Keywords==null||input.Sources.Count is <1 or >500||input.Keywords.Count is <1 or >100||!input.Sources.Any(x=>x.Enabled)||!input.Keywords.Any(x=>x.Enabled))throw new InvalidOperationException("Cần 1–500 nguồn, 1–100 từ khóa; bật ít nhất một nguồn và một từ khóa.");
@@ -93,7 +94,7 @@ public sealed class DigitalNewsController(AppDbContext db,DigitalNewsSyncService
             settings.QueryCursor=0;await db.SaveChangesAsync(ct);await tx.CommitAsync(ct);return Ok(new{message="Đã lưu nguồn và từ khóa theo dõi."});
         }catch(InvalidOperationException ex){return BadRequest(new{message=ex.Message});}
     }
-    [HttpPost("sync"),Authorize(Roles="Admin")]
+    [HttpPost("sync"),Authorize(Roles=RolePermissions.UtilityEditorRoles)]
     public async Task<IActionResult> Sync(CancellationToken ct){try{var result=await sync.RunAsync(true,ct);return result==null?Conflict(new{message="Một lượt quét đang chạy."}):Ok(new{message=$"Quét xong: {result.Added} bài mới, {result.Unchanged} đã có, {result.Filtered} lượt kết quả bị loại theo tiêu đề, {result.Skipped} truy vấn lỗi.",result});}catch(InvalidOperationException ex){return BadRequest(new{message=ex.Message});}}
     [HttpGet("{id:guid}/assessment")]
     public async Task<IActionResult> Assessment(Guid id,CancellationToken ct,Guid? result=null,Guid? notification=null){
@@ -106,7 +107,7 @@ public sealed class DigitalNewsController(AppDbContext db,DigitalNewsSyncService
         if((result.HasValue||notification.HasValue)&&assessment==null)return NotFound(new{message="Không tìm thấy kết quả được nhắc trong thông báo."});
         return Ok(new{item=new{item.Id,Title=assessment?.Title??item.Title,AgencyName=assessment?.AgencyName??item.AgencyName,item.Url},assessment});
     }
-    [HttpPost("{id:guid}/read"),Authorize(Roles="Admin")]
+    [HttpPost("{id:guid}/read"),Authorize(Roles=RolePermissions.UtilityEditorRoles)]
     public async Task<IActionResult> Read(Guid id,[FromServices]DigitalPlanReadService reader,CancellationToken ct){
         if(!Guid.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier),out var userId))return Unauthorized();
         var read=await reader.QueueAsync(id,userId,ct);return read==null?NotFound():Ok(new{message=read.Status is "Queued" or "Reading"?"Đã xếp hàng đánh giá tiêu đề. Kết quả sẽ được lưu tại bài viết.":"Đang hiển thị kết quả đã lưu.",assessment=read});

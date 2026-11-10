@@ -33,9 +33,10 @@ public static class DocumentItemQuery
         if (reportFrom.HasValue || reportTo.HasValue)
         {
             int from = reportFrom ?? 1900, to = reportTo ?? 9999;
-            query = query.Where(i => i.IsOngoing && dto.OnlyOngoing || !i.IsOngoing &&
-                (i.DueDate.HasValue ? i.DueDate.Value.Year : i.StartDate.HasValue ? i.StartDate.Value.Year : 2026) >= from
-                && (i.DueDate.HasValue ? i.DueDate.Value.Year : i.StartDate.HasValue ? i.StartDate.Value.Year : 2026) <= to);
+            query = query.Where(i => (!dto.OnlyOngoing || i.IsOngoing) &&
+                (i.IsOngoing ||
+                    (i.StartDate.HasValue ? i.StartDate.Value.Year : i.DueDate.HasValue ? i.DueDate.Value.Year : 2026) <= to
+                    && (i.DueDate.HasValue ? i.DueDate.Value.Year : i.StartDate.HasValue ? i.StartDate.Value.Year : 2026) >= from));
         }
         else if (dto.OnlyOngoing) query = query.Where(i => i.IsOngoing);
 
