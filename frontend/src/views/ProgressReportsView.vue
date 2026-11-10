@@ -51,29 +51,74 @@
       </div>
     </div>
 
-    <!-- Agency Filter & Control Bar -->
-    <div class="p-4 bg-slate-50/80 border-b border-slate-200/80 flex flex-col md:flex-row md:items-center justify-between gap-3">
-      <div class="w-full md:w-96">
-        <SearchableSelect
-          v-model="selectedAgencyId"
-          label="Cơ quan báo cáo"
-          :options="agencyOptions"
-          :isMulti="false"
-          :clearable="false"
-          :disabled="isAgencyUser || isLoading"
-        />
+    <!-- Tabs & Agency Control Row -->
+    <div class="px-4 py-3 border-b border-slate-200/80 bg-slate-50/60 flex flex-col md:flex-row md:items-center justify-between gap-3">
+      <!-- Tabs (Mục tiêu / Nhiệm vụ) -->
+      <div class="flex items-center gap-2">
+        <button
+          type="button"
+          @click="activeTab = 'goals'"
+          :class="[
+            'px-4 py-2 text-xs font-bold rounded-xl transition-all flex items-center gap-2 cursor-pointer shadow-2xs',
+            activeTab === 'goals'
+              ? 'bg-blue-600 text-white shadow-xs'
+              : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
+          ]"
+        >
+          <span>🎯 Mục tiêu</span>
+          <span
+            class="px-2 py-0.5 rounded-full text-xs font-semibold"
+            :class="activeTab === 'goals' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'"
+          >
+            {{ goalsList.length }}
+          </span>
+        </button>
+
+        <button
+          type="button"
+          @click="activeTab = 'tasks'"
+          :class="[
+            'px-4 py-2 text-xs font-bold rounded-xl transition-all flex items-center gap-2 cursor-pointer shadow-2xs',
+            activeTab === 'tasks'
+              ? 'bg-blue-600 text-white shadow-xs'
+              : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-100'
+          ]"
+        >
+          <span>📋 Nhiệm vụ</span>
+          <span
+            class="px-2 py-0.5 rounded-full text-xs font-semibold"
+            :class="activeTab === 'tasks' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'"
+          >
+            {{ tasksList.length }}
+          </span>
+        </button>
       </div>
 
-      <div class="flex items-center gap-3">
-        <span v-if="isAgencyUser" class="text-xs text-amber-700 bg-amber-50 px-3 py-1.5 rounded-lg border border-amber-200 font-medium">
-          🔒 Đang hiển thị dữ liệu của đơn vị: <strong>{{ selectedAgencyName }}</strong>
+      <!-- Agency Dropdown & Actions -->
+      <div class="flex items-center gap-2.5">
+        <span v-if="isAgencyUser" class="text-xs text-amber-700 bg-amber-50 px-3 py-1.5 rounded-xl border border-amber-200 font-medium">
+          🔒 Đơn vị: <strong>{{ selectedAgencyName }}</strong>
         </span>
+
+        <template v-else>
+          <span class="text-xs font-bold text-slate-600 whitespace-nowrap hidden sm:inline">Cơ quan báo cáo:</span>
+          <div class="w-72 sm:w-80 md:w-96">
+            <SearchableSelect
+              v-model="selectedAgencyId"
+              placeholder="Chọn cơ quan báo cáo..."
+              :options="agencyOptions"
+              :isMulti="false"
+              :clearable="false"
+              :disabled="isLoading"
+            />
+          </div>
+        </template>
 
         <button
           type="button"
           @click="fetchReport"
           :disabled="isLoading"
-          class="p-2 text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-100 rounded-xl border border-slate-200 transition cursor-pointer"
+          class="p-2 text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-100 rounded-xl border border-slate-200 transition cursor-pointer shrink-0 shadow-2xs"
           title="Tải lại dữ liệu"
         >
           <svg class="w-4 h-4" :class="{ 'animate-spin': isLoading }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -81,41 +126,6 @@
           </svg>
         </button>
       </div>
-    </div>
-
-    <!-- Tabs Navigation (Mục tiêu / Nhiệm vụ) -->
-    <div class="px-4 pt-3 border-b border-slate-200 flex items-center gap-2 bg-white">
-      <button
-        type="button"
-        @click="activeTab = 'goals'"
-        :class="[
-          'px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all border-b-2 flex items-center gap-2 cursor-pointer',
-          activeTab === 'goals'
-            ? 'border-blue-600 text-blue-700 bg-blue-50/40'
-            : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-        ]"
-      >
-        <span>🎯 Mục tiêu</span>
-        <span class="px-2 py-0.5 rounded-full text-xs font-semibold" :class="activeTab === 'goals' ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-700'">
-          {{ goalsList.length }}
-        </span>
-      </button>
-
-      <button
-        type="button"
-        @click="activeTab = 'tasks'"
-        :class="[
-          'px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all border-b-2 flex items-center gap-2 cursor-pointer',
-          activeTab === 'tasks'
-            ? 'border-blue-600 text-blue-700 bg-blue-50/40'
-            : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
-        ]"
-      >
-        <span>📋 Nhiệm vụ</span>
-        <span class="px-2 py-0.5 rounded-full text-xs font-semibold" :class="activeTab === 'tasks' ? 'bg-blue-600 text-white' : 'bg-slate-200 text-slate-700'">
-          {{ tasksList.length }}
-        </span>
-      </button>
     </div>
 
     <!-- Loading State -->
@@ -126,22 +136,11 @@
 
     <!-- Tab 1: MỤC TIÊU -->
     <div v-else-if="activeTab === 'goals'" class="p-4 space-y-4">
-      <!-- Guidance Banner -->
-      <div class="p-3 bg-amber-50/80 border border-amber-200 rounded-xl text-xs text-amber-900 space-y-1">
-        <div class="font-bold">📌 CĂN CỨ VÀ HƯỚNG DẪN BÁO CÁO MỤC TIÊU:</div>
-        <p>
-          Kế hoạch mục tiêu được xây dựng căn cứ theo Kế hoạch chuyển đổi số 5 năm của cơ quan, đơn vị đã được cấp có thẩm quyền ban hành.
-          Các ô màu vàng thể hiện kết quả ước tính và kế hoạch mục tiêu từng năm (chỉ hiển thị đến năm 2030).
-          Các ô gạch ngang (<span class="font-bold text-slate-500">—</span>) là các năm không thuộc giai đoạn thực hiện của mục tiêu.
-        </p>
-      </div>
-
       <div class="overflow-x-auto border border-slate-200 rounded-xl shadow-2xs">
         <table class="w-full text-left text-xs border-collapse">
           <thead>
             <tr class="bg-slate-800 text-white font-bold text-center border-b border-slate-700">
               <th rowspan="2" class="p-2.5 border-r border-slate-700 w-12">STT</th>
-              <th rowspan="2" class="p-2.5 border-r border-slate-700 w-28">Căn cứ QĐ</th>
               <th rowspan="2" class="p-2.5 border-r border-slate-700 w-20">Mã MT</th>
               <th rowspan="2" class="p-2.5 border-r border-slate-700 min-w-[280px] text-left">Tên mục tiêu / Chỉ tiêu</th>
               <th rowspan="2" class="p-2.5 border-r border-slate-700 w-16">ĐVT</th>
@@ -155,21 +154,21 @@
               <th class="p-2 border-r border-slate-600 w-24">2028-2030</th>
               <th class="p-2 border-r border-slate-600 bg-amber-700/80 text-amber-100 w-24">Kết quả 2025</th>
               <th class="p-2 border-r border-slate-600 bg-amber-700/80 text-amber-100 w-24">Ước tính 2026</th>
-              <th class="p-2 border-r border-slate-600 bg-amber-600/80 text-amber-100 w-24">Kế hoạch 2027</th>
-              <th class="p-2 border-r border-slate-600 bg-amber-600/80 text-amber-100 w-24">Kế hoạch 2028</th>
-              <th class="p-2 border-r border-slate-600 bg-amber-600/80 text-amber-100 w-24">Kế hoạch 2029</th>
-              <th class="p-2 border-r border-slate-600 bg-amber-600/80 text-amber-100 w-24">Kế hoạch 2030</th>
+              <th class="p-2 border-r border-slate-600 bg-amber-600/80 text-amber-100 w-24">2027</th>
+              <th class="p-2 border-r border-slate-600 bg-amber-600/80 text-amber-100 w-24">2028</th>
+              <th class="p-2 border-r border-slate-600 bg-amber-600/80 text-amber-100 w-24">2029</th>
+              <th class="p-2 border-r border-slate-600 bg-amber-600/80 text-amber-100 w-24">2030</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-200">
             <!-- SECTION I: 2629 -->
             <tr class="bg-blue-900 text-white font-bold">
-              <td colspan="13" class="p-2.5 px-3">
+              <td colspan="12" class="p-2.5 px-3">
                 I. QUYẾT ĐỊNH SỐ 2629/QĐ-TTg NGÀY 10/12/2024
               </td>
             </tr>
             <tr v-if="goals2629.length === 0" class="text-slate-500 italic text-center">
-              <td colspan="13" class="p-4">Không có mục tiêu nào được giao cho đơn vị thuộc QĐ 2629/QĐ-TTg</td>
+              <td colspan="12" class="p-4">Không có mục tiêu nào được giao cho đơn vị thuộc QĐ 2629/QĐ-TTg</td>
             </tr>
             <tr
               v-for="(g, idx) in goals2629"
@@ -177,12 +176,11 @@
               class="hover:bg-slate-50/80 transition font-normal"
             >
               <td class="p-2.5 text-center font-medium text-slate-500 border-r border-slate-200">{{ idx + 1 }}</td>
-              <td class="p-2.5 text-center font-medium text-blue-700 border-r border-slate-200">{{ g.documentNumber }}</td>
               <td class="p-2.5 text-center font-bold text-blue-900 border-r border-slate-200">{{ g.code }}</td>
               <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">{{ g.title }}</td>
               <td class="p-2.5 text-center border-r border-slate-200 text-slate-600">{{ g.unitName }}</td>
-              <td class="p-2.5 text-center border-r border-slate-200 font-semibold text-slate-700">{{ g.targetPhase1 || '—' }}</td>
-              <td class="p-2.5 text-center border-r border-slate-200 font-semibold text-slate-700">{{ g.targetPhase2 || '—' }}</td>
+              <td class="p-2.5 text-center border-r border-slate-200 font-semibold text-slate-700">{{ formatTarget(g.targetPhase1) }}</td>
+              <td class="p-2.5 text-center border-r border-slate-200 font-semibold text-slate-700">{{ formatTarget(g.targetPhase2) }}</td>
               <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.actual2025)">{{ formatCellVal(g.actual2025) }}</td>
               <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.estimate2026)">{{ formatCellVal(g.estimate2026) }}</td>
               <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2027)">{{ formatCellVal(g.plan2027) }}</td>
@@ -194,12 +192,12 @@
 
             <!-- SECTION II: 1266 -->
             <tr class="bg-blue-900 text-white font-bold">
-              <td colspan="13" class="p-2.5 px-3">
+              <td colspan="12" class="p-2.5 px-3">
                 II. QUYẾT ĐỊNH SỐ 1266/QĐ-TTg NGÀY 24/10/2024
               </td>
             </tr>
             <tr v-if="goals1266.length === 0" class="text-slate-500 italic text-center">
-              <td colspan="13" class="p-4">Không có mục tiêu nào được giao cho đơn vị thuộc QĐ 1266/QĐ-TTg</td>
+              <td colspan="12" class="p-4">Không có mục tiêu nào được giao cho đơn vị thuộc QĐ 1266/QĐ-TTg</td>
             </tr>
             <tr
               v-for="(g, idx) in goals1266"
@@ -207,12 +205,11 @@
               class="hover:bg-slate-50/80 transition font-normal"
             >
               <td class="p-2.5 text-center font-medium text-slate-500 border-r border-slate-200">{{ idx + 1 }}</td>
-              <td class="p-2.5 text-center font-medium text-blue-700 border-r border-slate-200">{{ g.documentNumber }}</td>
               <td class="p-2.5 text-center font-bold text-blue-900 border-r border-slate-200">{{ g.code }}</td>
               <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">{{ g.title }}</td>
               <td class="p-2.5 text-center border-r border-slate-200 text-slate-600">{{ g.unitName }}</td>
-              <td class="p-2.5 text-center border-r border-slate-200 font-semibold text-slate-700">{{ g.targetPhase1 || '—' }}</td>
-              <td class="p-2.5 text-center border-r border-slate-200 font-semibold text-slate-700">{{ g.targetPhase2 || '—' }}</td>
+              <td class="p-2.5 text-center border-r border-slate-200 font-semibold text-slate-700">{{ formatTarget(g.targetPhase1) }}</td>
+              <td class="p-2.5 text-center border-r border-slate-200 font-semibold text-slate-700">{{ formatTarget(g.targetPhase2) }}</td>
               <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.actual2025)">{{ formatCellVal(g.actual2025) }}</td>
               <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.estimate2026)">{{ formatCellVal(g.estimate2026) }}</td>
               <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2027)">{{ formatCellVal(g.plan2027) }}</td>
@@ -228,17 +225,11 @@
 
     <!-- Tab 2: NHIỆM VỤ -->
     <div v-else-if="activeTab === 'tasks'" class="p-4 space-y-4">
-      <div class="p-3 bg-blue-50/80 border border-blue-200 rounded-xl text-xs text-blue-900">
-        <span class="font-bold">📌 THEO DÕI TIẾN ĐỘ NHIỆM VỤ:</span>
-        Danh sách nhiệm vụ do đơn vị chủ trì thực hiện thuộc các Quyết định chiến lược quốc gia.
-      </div>
-
       <div class="overflow-x-auto border border-slate-200 rounded-xl shadow-2xs">
         <table class="w-full text-left text-xs border-collapse">
           <thead>
             <tr class="bg-slate-800 text-white font-bold text-center border-b border-slate-700">
               <th class="p-2.5 border-r border-slate-700 w-12">STT</th>
-              <th class="p-2.5 border-r border-slate-700 w-28">Căn cứ QĐ</th>
               <th class="p-2.5 border-r border-slate-700 w-20">Mã NV</th>
               <th class="p-2.5 border-r border-slate-700 min-w-[280px] text-left">Tên nhiệm vụ</th>
               <th class="p-2.5 border-r border-slate-700 min-w-[180px] text-left">Cơ quan phối hợp</th>
@@ -252,12 +243,12 @@
           <tbody class="divide-y divide-slate-200">
             <!-- SECTION I: 2629 Tasks -->
             <tr class="bg-blue-900 text-white font-bold">
-              <td colspan="10" class="p-2.5 px-3">
+              <td colspan="9" class="p-2.5 px-3">
                 I. QUYẾT ĐỊNH SỐ 2629/QĐ-TTg NGÀY 10/12/2024
               </td>
             </tr>
             <tr v-if="tasks2629.length === 0" class="text-slate-500 italic text-center">
-              <td colspan="10" class="p-4">Không có nhiệm vụ nào do đơn vị chủ trì thuộc QĐ 2629/QĐ-TTg</td>
+              <td colspan="9" class="p-4">Không có nhiệm vụ nào do đơn vị chủ trì thuộc QĐ 2629/QĐ-TTg</td>
             </tr>
             <tr
               v-for="(t, idx) in tasks2629"
@@ -265,7 +256,6 @@
               class="hover:bg-slate-50/80 transition font-normal"
             >
               <td class="p-2.5 text-center font-medium text-slate-500 border-r border-slate-200">{{ idx + 1 }}</td>
-              <td class="p-2.5 text-center font-medium text-blue-700 border-r border-slate-200">{{ t.documentNumber }}</td>
               <td class="p-2.5 text-center font-bold text-blue-900 border-r border-slate-200">{{ t.code }}</td>
               <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">{{ t.title }}</td>
               <td class="p-2.5 border-r border-slate-200 text-slate-600 text-xs">{{ t.coordinatingAgencies || '—' }}</td>
@@ -284,12 +274,12 @@
 
             <!-- SECTION II: 1266 Tasks -->
             <tr class="bg-blue-900 text-white font-bold">
-              <td colspan="10" class="p-2.5 px-3">
+              <td colspan="9" class="p-2.5 px-3">
                 II. QUYẾT ĐỊNH SỐ 1266/QĐ-TTg NGÀY 24/10/2024
               </td>
             </tr>
             <tr v-if="tasks1266.length === 0" class="text-slate-500 italic text-center">
-              <td colspan="10" class="p-4">Không có nhiệm vụ nào do đơn vị chủ trì thuộc QĐ 1266/QĐ-TTg</td>
+              <td colspan="9" class="p-4">Không có nhiệm vụ nào do đơn vị chủ trì thuộc QĐ 1266/QĐ-TTg</td>
             </tr>
             <tr
               v-for="(t, idx) in tasks1266"
@@ -297,7 +287,6 @@
               class="hover:bg-slate-50/80 transition font-normal"
             >
               <td class="p-2.5 text-center font-medium text-slate-500 border-r border-slate-200">{{ idx + 1 }}</td>
-              <td class="p-2.5 text-center font-medium text-blue-700 border-r border-slate-200">{{ t.documentNumber }}</td>
               <td class="p-2.5 text-center font-bold text-blue-900 border-r border-slate-200">{{ t.code }}</td>
               <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">{{ t.title }}</td>
               <td class="p-2.5 border-r border-slate-200 text-slate-600 text-xs">{{ t.coordinatingAgencies || '—' }}</td>
@@ -489,7 +478,7 @@ const isAgencyUser = computed(() => {
 const agencyOptions = computed(() => {
   return (agencies.value || []).map(a => ({
     value: a.id,
-    label: `${a.name} (${a.type === 'Ministry' ? 'Bộ/Ngành' : 'Địa phương'})`
+    label: a.name
   }));
 });
 
@@ -519,6 +508,17 @@ function formatCellVal(val) {
   if (val === '—') return '—';
   if (typeof val === 'number') return `${val}%`;
   return String(val);
+}
+
+function formatTarget(val) {
+  if (val == null || val === '' || val === '—') return '—';
+  const str = String(val).trim();
+  if (str === '—') return '—';
+  if (str.endsWith('.0')) return str.slice(0, -2);
+  if (str.endsWith('.00')) return str.slice(0, -3);
+  const n = Number(str);
+  if (!isNaN(n) && n % 1 === 0) return String(Math.round(n));
+  return str;
 }
 
 function statusBadgeClass(status) {

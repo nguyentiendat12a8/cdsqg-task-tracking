@@ -564,6 +564,23 @@ namespace Cdsqg.Application.Services
         public static ExecutionStatusEnum CalculateExecutionStatus(GoalTaskItem item, ProgressLog? latestLog, List<TaskDeliverable>? customDeliverables = null)
             => ProgressCalculator.Evaluate(item, latestLog, customDeliverables, latestLog?.AgencyId).Status;
 
+        private static string FormatTargetClean(decimal? val, string? fallback)
+        {
+            if (val.HasValue)
+            {
+                return val.Value % 1 == 0
+                    ? ((long)val.Value).ToString(System.Globalization.CultureInfo.InvariantCulture)
+                    : val.Value.ToString("G29", System.Globalization.CultureInfo.InvariantCulture);
+            }
+            if (!string.IsNullOrWhiteSpace(fallback) && decimal.TryParse(fallback, System.Globalization.NumberStyles.Any, System.Globalization.CultureInfo.InvariantCulture, out var d))
+            {
+                return d % 1 == 0
+                    ? ((long)d).ToString(System.Globalization.CultureInfo.InvariantCulture)
+                    : d.ToString("G29", System.Globalization.CultureInfo.InvariantCulture);
+            }
+            return fallback ?? "";
+        }
+
         public async Task<AgencyProgressReportDto> GetAgencyProgressReportAsync(Guid agencyId, int reportYear, Guid? userAgencyId, string? userRole)
         {
             var agency = await _context.Agencies.AsNoTracking().FirstOrDefaultAsync(a => a.Id == agencyId);
@@ -641,26 +658,26 @@ namespace Cdsqg.Application.Services
 
                     if (isPhase1)
                     {
-                        tPhase1 = bMap.ContainsKey(2027) && bMap[2027].HasValue ? $"{bMap[2027]}" : (cb.ContainsKey("2027") ? cb["2027"] : (g.ResultTarget?.ToString() ?? ""));
+                        tPhase1 = FormatTargetClean(bMap.ContainsKey(2027) ? bMap[2027] : null, cb.ContainsKey("2027") ? cb["2027"] : g.ResultTarget?.ToString());
                         applicableYears.AddRange(new[] { 2025, 2026, 2027 });
                     }
                     else
                     {
-                        tPhase2 = bMap.ContainsKey(2030) && bMap[2030].HasValue ? $"{bMap[2030]}" : (cb.ContainsKey("2030") ? cb["2030"] : (g.ResultTarget?.ToString() ?? ""));
+                        tPhase2 = FormatTargetClean(bMap.ContainsKey(2030) ? bMap[2030] : null, cb.ContainsKey("2030") ? cb["2030"] : g.ResultTarget?.ToString());
                         applicableYears.AddRange(new[] { 2028, 2029, 2030 });
                     }
                 }
                 else
                 {
-                    tPhase1 = bMap.ContainsKey(2030) && bMap[2030].HasValue ? $"{bMap[2030]}" : (cb.ContainsKey("2030") ? cb["2030"] : (g.ResultTarget?.ToString() ?? ""));
+                    tPhase1 = FormatTargetClean(bMap.ContainsKey(2030) ? bMap[2030] : null, cb.ContainsKey("2030") ? cb["2030"] : g.ResultTarget?.ToString());
                     applicableYears.AddRange(new[] { 2026, 2027, 2028, 2029, 2030 });
                 }
 
                 string? GetPlanVal(int yr)
                 {
                     if (!applicableYears.Contains(yr)) return "—";
-                    if (cb.ContainsKey(yr.ToString())) return cb[yr.ToString()];
-                    if (bMap.ContainsKey(yr) && bMap[yr].HasValue) return bMap[yr]?.ToString();
+                    if (cb.ContainsKey(yr.ToString())) return FormatTargetClean(null, cb[yr.ToString()]);
+                    if (bMap.ContainsKey(yr) && bMap[yr].HasValue) return FormatTargetClean(bMap[yr], null);
                     return "";
                 }
 

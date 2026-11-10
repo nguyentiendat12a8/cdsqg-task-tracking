@@ -112,6 +112,15 @@ function applyStyleToRange(ws, r1, c1, r2, c2, style, XLSX) {
   }
 }
 
+function formatExcelTarget(val) {
+  if (val == null || val === '' || val === '—') return '';
+  const s = String(val).trim();
+  if (s.endsWith('.0')) return s.slice(0, -2);
+  const n = Number(s);
+  if (!isNaN(n) && n % 1 === 0) return Math.round(n);
+  return s;
+}
+
 /**
  * Builds Sheet 1: Mục tiêu
  */
@@ -155,10 +164,10 @@ function buildGoalsWorksheet(goals, agencyName, dateStr, XLSX) {
     '', '', '', '', '', '',
     'Kết quả 2025',
     'Ước tính 2026',
-    'KẾ HOẠCH 2027',
-    'KẾ HOẠCH 2028',
-    'KẾ HOẠCH 2029',
-    'KẾ HOẠCH 2030',
+    '2027',
+    '2028',
+    '2029',
+    '2030',
     ''
   ]);
 
@@ -212,8 +221,8 @@ function buildGoalsWorksheet(goals, agencyName, dateStr, XLSX) {
         g.code || '',
         g.title || '',
         g.unitName || '%',
-        g.targetPhase1 || '',
-        g.targetPhase2 || '',
+        formatExcelTarget(g.targetPhase1),
+        formatExcelTarget(g.targetPhase2),
         valAct2025,
         valEst2026,
         valPlan2027,
