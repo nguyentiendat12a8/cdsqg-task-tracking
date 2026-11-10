@@ -36,7 +36,7 @@
       <AiListPagination v-model:page="page" v-model:page-size="pageSize" :total="total" :disabled="loading||busy"/>
     </section>
   </div>
-    <div v-if="selected" v-accessible-dialog="closeReview" class="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-3" @click.self="closeReview">
+    <div v-if="selected" v-accessible-dialog="closeReview" class="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-3">
       <section class="bg-white rounded-2xl w-full max-w-5xl max-h-[90dvh] flex flex-col overflow-hidden shadow-xl">
         <header class="flex justify-between items-start gap-4 p-4 sm:p-6 border-b border-slate-200 shrink-0">
           <div><h3 class="ui-title">{{ selected.inputType==='upload'?'Kết quả bóc tách':'Kiểm chứng số liệu' }}</h3><p class="text-slate-600 mt-2">{{ metricName(selected.metricKey) }}</p></div>

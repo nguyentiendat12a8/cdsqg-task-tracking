@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isOpen" @click.self="close" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4" v-accessible-dialog="close">
+  <div v-if="isOpen" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4" v-accessible-dialog="close">
     <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-6xl sm:max-w-7xl w-full p-6 space-y-4 font-sans max-h-[92vh] flex flex-col">
       
       <!-- Modal Header -->
@@ -466,7 +466,7 @@
     </div>
 
     <!-- Modal Giao Nhiệm Vụ cho Đơn Vị Trực Thuộc -->
-    <div v-if="isAssignModalOpen" @click.self="isAssignModalOpen = false" class="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4" v-accessible-dialog="() => isAssignModalOpen = false">
+    <div v-if="isAssignModalOpen" class="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4" v-accessible-dialog="() => isAssignModalOpen = false">
       <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-5 space-y-4">
         <div class="flex justify-between items-center border-b border-slate-100 pb-2">
           <h4 class="font-bold text-slate-800 text-sm">⚡ Giao đơn vị trực thuộc</h4>
@@ -501,7 +501,7 @@
     </div>
 
     <!-- Modal Từ Chối Báo Cáo Tiến Độ -->
-    <div v-if="isRejectModalOpen" @click.self="isRejectModalOpen = false" class="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4" v-accessible-dialog="() => isRejectModalOpen = false">
+    <div v-if="isRejectModalOpen" class="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4" v-accessible-dialog="() => isRejectModalOpen = false">
       <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-5 space-y-4">
         <div class="flex justify-between items-center border-b border-slate-100 pb-2">
           <h4 class="font-bold text-rose-700 text-sm">❌ Từ chối báo cáo tiến độ</h4>

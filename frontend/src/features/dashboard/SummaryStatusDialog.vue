@@ -1,5 +1,5 @@
 <template>
-  <div v-accessible-dialog="() => emit('close')" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4" @click.self="emit('close')">
+  <div v-accessible-dialog="() => emit('close')" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
     <section class="bg-white rounded-2xl border border-slate-200 shadow-xl w-full max-w-7xl max-h-[90vh] flex flex-col p-4 sm:p-5 gap-3 min-w-0">
       <header class="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
         <div>

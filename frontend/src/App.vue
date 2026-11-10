@@ -56,7 +56,8 @@
           />
 
           <!-- Báo cáo - Xuất Excel (Executive Reports Center) -->
-          <ExecutiveReportsView v-else-if="currentTab === 'reports'" />
+          <ExecutiveReportsView v-else-if="['reports', 'reports-general', 'reports-progress', 'reports-general'].includes(currentTab)" />
+          <ProgressReportsView v-else-if="currentTab === 'reports-progress'" />
           <AiDataView v-else-if="isAiDataRoute(currentTab) && authState.isAdmin.value" :section="aiSectionFor(currentTab).key" :initial-tab="currentTab==='ai-review'?'review':currentTab==='ai-alerts'?'alerts':'files'" @navigate="switchTab" />
 
           <!-- Văn bản Quy Phạm Pháp Luật (VB QPPL) -->
@@ -101,6 +102,7 @@ const AiSettingsView = loadView(() => import('./views/AiSettingsView.vue'));
 const AiGoalKeywordsView = loadView(() => import('./views/AiGoalKeywordsView.vue'));
 const AiDataView = loadView(() => import('./views/AiDataView.vue'));
 const ExecutiveReportsView = loadView(() => import('./views/ExecutiveReportsView.vue'));
+const ProgressReportsView = loadView(() => import('./views/ProgressReportsView.vue'));
 const LegalDocumentsView = loadView(() => import('./views/LegalDocumentsView.vue'));
 const DigitalNewsView = loadView(() => import('./views/DigitalNewsView.vue'));
 const AgencyPlansView = loadView(() => import('./views/AgencyPlansView.vue'));
@@ -150,7 +152,7 @@ function parseHashRoute() {
 // Quyền vào màn hình theo bảng phân quyền (shared/permissions.js):
 // quản trị chỉ Admin; kế hoạch mục tiêu và báo cáo tổng hợp cho vai trò xem toàn hệ thống (Admin, Văn thư).
 const ADMIN_ONLY_TABS = ['agencies', 'units', 'users', 'master-data', 'settings', 'ai-settings', 'ai-alerts', 'ai-review', ...AI_MENU.map(item => item.route)];
-const SYSTEM_VIEW_TABS = ['reports', 'goals-grid'];
+const SYSTEM_VIEW_TABS = ['reports', 'reports-general', 'goals-grid'];
 function forbiddenTabFallback(tab) {
   if (ADMIN_ONLY_TABS.includes(tab) && !authState.can(MODULE.administration, ACTION.view)) {
     return ['agencies', 'units', 'users', 'settings', 'master-data'].includes(tab) ? 'import-history' : 'dashboard';

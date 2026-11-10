@@ -1,5 +1,5 @@
 <template>
-<div v-accessible-dialog="() => isEditModalOpen = false"  @click.self="isEditModalOpen = false" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+<div v-accessible-dialog="() => isEditModalOpen = false" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
       <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-4xl sm:max-w-5xl w-full p-6 sm:p-7 space-y-4 max-h-[90vh] flex flex-col">
         <h3 class="text-base font-bold text-slate-800 border-b border-slate-100 pb-2 shrink-0">
           Chỉnh sửa {{ editingItem?.itemType === 'Goal' ? 'mục tiêu' : 'nhiệm vụ' }} ({{ editingItem?.code }})

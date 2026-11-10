@@ -183,7 +183,7 @@
     </div>
 
     <!-- Create/Edit Modal with Parent Selector & Contact Persons -->
-    <div v-if="isModalOpen" @click.self="closeModal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+    <div v-if="isModalOpen" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
       <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-3xl w-full p-6 sm:p-7 space-y-4 max-h-[90vh] flex flex-col">
         <h3 class="text-lg font-bold text-slate-800 border-b border-slate-100 pb-2 shrink-0">
           {{ isEditing ? 'Chỉnh sửa cơ quan' : 'Thêm cơ quan / đơn vị mới' }}

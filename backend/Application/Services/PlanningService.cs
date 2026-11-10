@@ -18,6 +18,7 @@ namespace Cdsqg.Application.Services
         Task<bool> UpdateTaskCustomBaselineAsync(Guid taskId, UpdateCustomBaselineDto dto);
         Task<bool> UpdateYearlyTargetAsync(Guid taskId, UpdateYearlyTargetDto dto);
         Task<ImportYearlyTargetsResultDto> ImportYearlyTargetsAsync(Guid documentId, ImportYearlyTargetsRequestDto dto, Guid? userAgencyId, bool isAdmin);
+        Task<AgencyProgressReportDto> GetAgencyProgressReportAsync(Guid agencyId, int reportYear, Guid? userAgencyId, string? userRole);
     }
 
     public class PlanningService : IPlanningService
@@ -562,7 +563,191 @@ namespace Cdsqg.Application.Services
 
         public static ExecutionStatusEnum CalculateExecutionStatus(GoalTaskItem item, ProgressLog? latestLog, List<TaskDeliverable>? customDeliverables = null)
             => ProgressCalculator.Evaluate(item, latestLog, customDeliverables, latestLog?.AgencyId).Status;
+
+        public async Task<AgencyProgressReportDto> GetAgencyProgressReportAsync(Guid agencyId, int reportYear, Guid? userAgencyId, string? userRole)
+        {
+            var agency = await _context.Agencies.AsNoTracking().FirstOrDefaultAsync(a => a.Id == agencyId);
+            if (agency == null)
+            {
+                throw new KeyNotFoundException($"Không tìm thấy cơ quan với ID: {agencyId}");
+            }
+
+            if (!string.Equals(userRole, "Admin", StringComparison.OrdinalIgnoreCase))
+            {
+                if (!userAgencyId.HasValue || userAgencyId.Value == Guid.Empty)
+                    throw new UnauthorizedAccessException("Người dùng chưa được gán cơ quan.");
+                var scope = await AgencyScopePolicy.ResolveViewScopeAsync(_context, userAgencyId.Value);
+                if (!scope.AgencyIds.Contains(agencyId))
+                    throw new UnauthorizedAccessException("Bạn không có quyền truy cập báo cáo của cơ quan này.");
+            }
+
+            var doc1266Id = Guid.Parse("12660000-0000-0000-0000-000000001266");
+            var doc2629Id = Guid.Parse("26290000-0000-0000-0000-000000002629");
+
+            var allMatchingItems = await _context.GoalTaskItems
+                .Include(i => i.Document)
+                .Include(i => i.Unit)
+                .Include(i => i.Baselines)
+                .Include(i => i.ProgressLogs)
+                .Include(i => i.AgencyExecutions)
+                .Where(i => i.DocumentId == doc1266Id || i.DocumentId == doc2629Id)
+                .AsNoTrackingWithIdentityResolution()
+                .ToListAsync();
+
+            var agencyItems = allMatchingItems.Where(i =>
+                i.LeadAgencyId == agencyId ||
+                i.AgencyExecutions.Any(e => e.IsLeadAssignment && e.AgencyId == agencyId) ||
+                (i.LeadAgencyDisplayText != null && i.LeadAgencyDisplayText.Contains(agency.Name, StringComparison.OrdinalIgnoreCase))
+            ).ToList();
+
+            var agenciesMap = await _context.Agencies.AsNoTracking().ToDictionaryAsync(a => a.Id);
+
+            var goalsList = new List<AgencyProgressGoalItemDto>();
+            var tasksList = new List<AgencyProgressTaskItemDto>();
+
+            var sortedGoals = agencyItems
+                .Where(i => i.ItemType == ItemTypeEnum.Goal)
+                .OrderByDescending(i => i.DocumentId == doc2629Id)
+                .ThenBy(i => i.Code)
+                .ToList();
+
+            foreach (var g in sortedGoals)
+            {
+                bool is2629 = g.DocumentId == doc2629Id;
+                string docNum = is2629 ? "2629/QĐ-TTg" : "1266/QĐ-TTg";
+
+                var baselines = g.Baselines ?? new List<TargetBaseline>();
+                var bMap = baselines.ToDictionary(b => b.Year, b => b.TargetQuantity);
+
+                var pLogs = g.ProgressLogs?.Where(p => p.AgencyId == agencyId && (p.PeriodYear == 2025 || p.PeriodYear == 2026))
+                    .OrderByDescending(p => p.LogDate)
+                    .ToList() ?? new List<ProgressLog>();
+
+                var p2025 = pLogs.FirstOrDefault(p => p.PeriodYear == 2025)?.QuantitativeValue;
+                var p2026 = pLogs.FirstOrDefault(p => p.PeriodYear == 2026)?.QuantitativeValue;
+                var latestNote = pLogs.FirstOrDefault()?.SummaryNotes;
+
+                var cb = g.CustomBaseline ?? new Dictionary<string, string>();
+
+                string? tPhase1 = null;
+                string? tPhase2 = null;
+                var applicableYears = new List<int>();
+
+                if (is2629)
+                {
+                    bool isPhase1 = (g.Section != null && g.Section.Contains("2025-2027")) ||
+                                    (g.DueDate.HasValue && g.DueDate.Value.Year <= 2027) ||
+                                    bMap.ContainsKey(2027);
+
+                    if (isPhase1)
+                    {
+                        tPhase1 = bMap.ContainsKey(2027) && bMap[2027].HasValue ? $"{bMap[2027]}" : (cb.ContainsKey("2027") ? cb["2027"] : (g.ResultTarget?.ToString() ?? ""));
+                        applicableYears.AddRange(new[] { 2025, 2026, 2027 });
+                    }
+                    else
+                    {
+                        tPhase2 = bMap.ContainsKey(2030) && bMap[2030].HasValue ? $"{bMap[2030]}" : (cb.ContainsKey("2030") ? cb["2030"] : (g.ResultTarget?.ToString() ?? ""));
+                        applicableYears.AddRange(new[] { 2028, 2029, 2030 });
+                    }
+                }
+                else
+                {
+                    tPhase1 = bMap.ContainsKey(2030) && bMap[2030].HasValue ? $"{bMap[2030]}" : (cb.ContainsKey("2030") ? cb["2030"] : (g.ResultTarget?.ToString() ?? ""));
+                    applicableYears.AddRange(new[] { 2026, 2027, 2028, 2029, 2030 });
+                }
+
+                string? GetPlanVal(int yr)
+                {
+                    if (!applicableYears.Contains(yr)) return "—";
+                    if (cb.ContainsKey(yr.ToString())) return cb[yr.ToString()];
+                    if (bMap.ContainsKey(yr) && bMap[yr].HasValue) return bMap[yr]?.ToString();
+                    return "";
+                }
+
+                goalsList.Add(new AgencyProgressGoalItemDto
+                {
+                    Id = g.Id,
+                    DocumentId = g.DocumentId,
+                    DocumentNumber = docNum,
+                    Code = g.Code,
+                    Title = g.Title,
+                    UnitName = g.Unit?.Name ?? "%",
+                    Section = g.Section,
+                    TargetPhase1 = tPhase1,
+                    TargetPhase2 = tPhase2,
+                    Actual2025 = applicableYears.Contains(2025) ? p2025 : null,
+                    Estimate2026 = applicableYears.Contains(2026) ? p2026 : null,
+                    Plan2027 = GetPlanVal(2027),
+                    Plan2028 = GetPlanVal(2028),
+                    Plan2029 = GetPlanVal(2029),
+                    Plan2030 = GetPlanVal(2030),
+                    Notes = latestNote,
+                    ApplicableYears = applicableYears
+                });
+            }
+
+            var sortedTasks = agencyItems
+                .Where(i => i.ItemType == ItemTypeEnum.Task)
+                .OrderByDescending(i => i.DocumentId == doc2629Id)
+                .ThenBy(i => i.Code)
+                .ToList();
+
+            foreach (var t in sortedTasks)
+            {
+                bool is2629 = t.DocumentId == doc2629Id;
+                string docNum = is2629 ? "2629/QĐ-TTg" : "1266/QĐ-TTg";
+
+                var latestLog = PlanningService.GetLatestProgressLogForAgency(t, agencyId);
+                var eval = ProgressCalculator.Evaluate(t, latestLog, null, agencyId);
+
+                string statusKey = eval.Status.ToString();
+                string statusLabel = statusKey switch
+                {
+                    "Completed" => "Đã hoàn thành",
+                    "InProgress" => "Đang thực hiện",
+                    _ => "Chưa thực hiện"
+                };
+
+                var coordNames = t.CoordinatingAgencyIds
+                    .Where(id => agenciesMap.ContainsKey(id))
+                    .Select(id => agenciesMap[id].Name)
+                    .ToList();
+                string coordText = !string.IsNullOrWhiteSpace(t.CoordinatingAgenciesDisplayText)
+                    ? t.CoordinatingAgenciesDisplayText
+                    : string.Join(", ", coordNames);
+
+                string deliverablesText = t.Deliverables != null && t.Deliverables.Any()
+                    ? string.Join("; ", t.Deliverables.Select(d => d.Title))
+                    : "";
+
+                tasksList.Add(new AgencyProgressTaskItemDto
+                {
+                    Id = t.Id,
+                    DocumentId = t.DocumentId,
+                    DocumentNumber = docNum,
+                    Code = t.Code,
+                    Title = t.Title,
+                    CoordinatingAgencies = coordText,
+                    DueDate = t.DueDate?.ToString("dd/MM/yyyy"),
+                    Status = statusKey,
+                    StatusLabel = statusLabel,
+                    CompletionPercentage = eval.Percentage,
+                    Deliverables = deliverablesText,
+                    Notes = latestLog?.SummaryNotes
+                });
+            }
+
+            return new AgencyProgressReportDto
+            {
+                AgencyId = agency.Id,
+                AgencyName = agency.Name,
+                AgencyCode = agency.Code,
+                AgencyType = agency.Type.ToString(),
+                ReportYear = reportYear,
+                Goals = goalsList,
+                Tasks = tasksList
+            };
+        }
+
     }
 }
-
-

@@ -190,4 +190,52 @@ namespace Cdsqg.Application.DTOs
     {
         public Guid? AssignedAgencyId { get; set; }
     }
+
+    public class AgencyProgressReportDto
+    {
+        public Guid AgencyId { get; set; }
+        public string AgencyName { get; set; } = string.Empty;
+        public string AgencyCode { get; set; } = string.Empty;
+        public string AgencyType { get; set; } = string.Empty;
+        public int ReportYear { get; set; } = 2026;
+        public List<AgencyProgressGoalItemDto> Goals { get; set; } = new();
+        public List<AgencyProgressTaskItemDto> Tasks { get; set; } = new();
+    }
+
+    public class AgencyProgressGoalItemDto
+    {
+        public Guid Id { get; set; }
+        public Guid DocumentId { get; set; }
+        public string DocumentNumber { get; set; } = string.Empty;
+        public string Code { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public string UnitName { get; set; } = "%";
+        public string? Section { get; set; }
+        public string? TargetPhase1 { get; set; }
+        public string? TargetPhase2 { get; set; }
+        public decimal? Actual2025 { get; set; }
+        public decimal? Estimate2026 { get; set; }
+        public string? Plan2027 { get; set; }
+        public string? Plan2028 { get; set; }
+        public string? Plan2029 { get; set; }
+        public string? Plan2030 { get; set; }
+        public string? Notes { get; set; }
+        public List<int> ApplicableYears { get; set; } = new();
+    }
+
+    public class AgencyProgressTaskItemDto
+    {
+        public Guid Id { get; set; }
+        public Guid DocumentId { get; set; }
+        public string DocumentNumber { get; set; } = string.Empty;
+        public string Code { get; set; } = string.Empty;
+        public string Title { get; set; } = string.Empty;
+        public string? CoordinatingAgencies { get; set; }
+        public string? DueDate { get; set; }
+        public string Status { get; set; } = "NotStarted";
+        public string StatusLabel { get; set; } = "Chưa thực hiện";
+        public decimal? CompletionPercentage { get; set; }
+        public string? Deliverables { get; set; }
+        public string? Notes { get; set; }
+    }
 }

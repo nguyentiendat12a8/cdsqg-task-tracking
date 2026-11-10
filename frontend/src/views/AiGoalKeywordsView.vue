@@ -274,7 +274,6 @@
       v-if="modalOpen"
       v-accessible-dialog="closeModal"
       class="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-3 sm:p-4"
-      @click.self="closeModal"
     >
       <form
         class="bg-white rounded-2xl w-full max-w-3xl max-h-[92dvh] flex flex-col shadow-2xl overflow-hidden border border-slate-200"

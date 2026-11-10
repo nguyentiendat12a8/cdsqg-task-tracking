@@ -31,7 +31,7 @@
    </div>
   </div>
   <DigitalPlanSettings v-if="configOpen" :settings="settings" @close="configOpen=false" @saved="message=$event;configOpen=false;refresh()" />
-  <div v-if="selected" v-accessible-dialog="closeSelected" class="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-3" @click.self="closeSelected">
+  <div v-if="selected" v-accessible-dialog="closeSelected" class="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-3">
    <section class="bg-white rounded-2xl w-full max-w-2xl max-h-[90dvh] flex flex-col overflow-hidden shadow-xl">
     <header class="p-4 sm:p-6 border-b border-slate-200 bg-[#f1f5fc]"><h3 class="ui-title">Kết quả đánh giá tiêu đề</h3></header>
     <div class="p-4 sm:p-6 overflow-y-auto space-y-4">

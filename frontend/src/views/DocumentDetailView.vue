@@ -263,7 +263,7 @@
     />
 
     <!-- Modal Giao Nhiệm Vụ cho Đơn Vị Trực Thuộc từ Danh Sách -->
-    <div v-if="isAssignModalOpen" @click.self="isAssignModalOpen = false" class="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
+    <div v-if="isAssignModalOpen" class="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4">
       <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-5 space-y-4 font-sans">
         <div class="flex justify-between items-center border-b border-slate-100 pb-2">
           <h4 class="font-bold text-slate-800 text-sm">⚡ Giao đơn vị trực thuộc</h4>
@@ -408,7 +408,6 @@
     <div
       v-if="isRejectModalOpen"
       class="fixed inset-0 z-60 bg-slate-900/60 backdrop-blur-xs flex items-center justify-center p-4 font-sans"
-      @click.self="isRejectModalOpen = false"
     >
       <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-5 sm:p-6 space-y-4">
         <!-- Modal Header -->

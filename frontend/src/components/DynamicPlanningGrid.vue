@@ -138,6 +138,7 @@
 
     <!-- Loading State -->
     <LoadingSpinner v-if="isLoading" text="Đang tải dữ liệu chỉ tiêu kế hoạch..." />
+    <div v-else-if="gridLoadError" class="rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-semibold text-rose-700" role="alert">{{ gridLoadError }}</div>
 
     <!-- Spreadsheet Grid Table Container with Attached Pagination Bar -->
     <div v-else class="border border-slate-200/80 rounded-2xl bg-white overflow-hidden shadow-sm flex flex-col w-full">
@@ -361,6 +362,7 @@
 
       <DocumentPagination
         :changePage="changeGridPage"
+        :disabled="isLoading"
         :pageSizeOptions="gridPageSizeOptions"
         :totalCount="totalGridItems"
         :totalPages="totalGridPages"
@@ -380,13 +382,14 @@ import QuantityInput from './QuantityInput.vue';
 import DocumentPagination from '../features/document/DocumentPagination.vue';
 import { fetchWithAuth } from '../services/auth';
 
-import { ref, computed, watch, onMounted } from 'vue';
+import { ref, computed, watch, onMounted, nextTick } from 'vue';
 import { authState } from '../services/auth';
 import { MODULE, ACTION } from '../shared/permissions';
 import LoadingSpinner from './LoadingSpinner.vue';
 import SearchableSelect from './SearchableSelect.vue';
 import OverlayPanel from './OverlayPanel.vue';
 import { getApiUrl } from '../config/api';
+import { SUPPORTED_DOCUMENTS } from '../services/documentContext';
 import { loadAgencyCatalog } from '../services/agencyCatalog';
 import { GOAL_SECTIONS, GOAL_GROUPS, TASK_SECTIONS, TASK_GROUPS } from '../config/planningStructureConfig';
 
@@ -398,6 +401,7 @@ const props = defineProps({
 const activeSubTab = ref('goals');
 const goalPlanView = ref('configured');
 const configuredPlansSupported = ref(true);
+const gridLoadError = ref('');
 // Văn thư và vai trò chỉ xem: ô kế hoạch hiển thị nhưng không sửa được (API cũng chặn).
 const canEditPlans = computed(() => authState.can(MODULE.planning, ACTION.edit));
 const isLoading = ref(false);
@@ -619,180 +623,30 @@ async function loadAgencies() {
 
 const goalsList = computed(() => {
   if (!gridData.value || !gridData.value.items) return [];
-  const list = gridData.value.items.filter(x => x.itemType === 'Goal' || x.itemType === 1 || x.itemType === '1');
-  return list.sort((a, b) => new Date(b.lastUpdated || b.createdAt || 0) - new Date(a.lastUpdated || a.createdAt || 0));
+  return gridData.value.items.filter(x => x.itemType === 'Goal' || x.itemType === 1 || x.itemType === '1');
 });
 
 const tasksList = computed(() => {
   if (!gridData.value || !gridData.value.items) return [];
-  const list = gridData.value.items.filter(x => x.itemType === 'Task' || x.itemType === 2 || x.itemType === '2');
-  return list.sort((a, b) => new Date(b.lastUpdated || b.createdAt || 0) - new Date(a.lastUpdated || a.createdAt || 0));
+  return gridData.value.items.filter(x => x.itemType === 'Task' || x.itemType === 2 || x.itemType === '2');
 });
 
-function filterGridItem(item) {
-  // 0. Non-Admin Focal Point Agency Scoping Filter:
-  // - Sub-Agency (ParentId != null): ONLY show items assigned to this Sub-Agency (cannot view parent agency data)
-  // - Parent Agency (ParentId == null): Show items assigned to Parent Agency AND all of its Sub-Agencies (views all)
-  if (!authState.isAdmin.value && authState.user.value?.agencyId) {
-    const userAgencyId = String(authState.user.value.agencyId).toLowerCase();
-    const userAgency = agencies.value.find(a => String(a.id).toLowerCase() === userAgencyId);
-
-    const scopedAgencyIds = [userAgencyId];
-    if (userAgency && !userAgency.parentId) {
-      const childIds = agencies.value
-        .filter(a => a.parentId && String(a.parentId).toLowerCase() === userAgencyId && a.type !== 4 && a.type !== 'Other')
-        .map(a => String(a.id).toLowerCase());
-      scopedAgencyIds.push(...childIds);
-    }
-
-    const itemLeadId = item.leadAgencyId ? String(item.leadAgencyId).toLowerCase() : '';
-    const itemAssignedId = item.assignedAgencyId ? String(item.assignedAgencyId).toLowerCase() : '';
-    const itemCoordIds = (item.coordinatingAgencyIds || []).map(id => String(id).toLowerCase());
-
-    const isParentAgency = !userAgency || !userAgency.parentId;
-    const isGeneral = isParentAgency && (item.isGeneralTask || isSpecialAgencyCode(item.leadAgencyCode) || ['00000000-0000-0000-0000-000000009999', '00000000-0000-0000-0000-000000009998', '00000000-0000-0000-0000-000000009997', '00000000-0000-0000-0000-000000009996', '00000000-0000-0000-0000-000000009995'].includes(itemLeadId) || (item.leadAgencyName && (item.leadAgencyName.toLowerCase().includes('các bộ, ngành') || item.leadAgencyName.toLowerCase().includes('các địa phương'))));
-    const isLead = scopedAgencyIds.includes(itemLeadId);
-    const isAssigned = itemAssignedId && scopedAgencyIds.includes(itemAssignedId);
-    const isCoord = itemCoordIds.some(id => scopedAgencyIds.includes(id));
-
-    if (!isGeneral && !isLead && !isAssigned && !isCoord) return false;
-  }
-
-  // 1. Search Query Filter - Real-time debounced matching
-  const q = (appliedFilters.value.searchQuery || '').toLowerCase().trim();
-  if (q) {
-    const matchQ = (item.code && item.code.toLowerCase().includes(q)) ||
-                   (item.title && item.title.toLowerCase().includes(q)) ||
-                   (item.leadAgencyCode && item.leadAgencyCode.toLowerCase().includes(q)) ||
-                   (item.leadAgencyName && item.leadAgencyName.toLowerCase().includes(q)) ||
-                   (item.category && item.category.toLowerCase().includes(q));
-    if (!matchQ) return false;
-  }
-
-  // 2. Agency Filter (Multi-select)
-  if (appliedFilters.value.selectedAgencyIds && appliedFilters.value.selectedAgencyIds.length > 0) {
-    const selectedAgencies = agencies.value.filter(a => appliedFilters.value.selectedAgencyIds.includes(a.id));
-    const selectedCodes = selectedAgencies.map(a => a.code);
-    const expandedCodes = new Set(selectedCodes);
-    const expandedIds = new Set(appliedFilters.value.selectedAgencyIds);
-
-    const ministriesGuid1 = '00000000-0000-0000-0000-000000009998';
-    const ministriesGuid2 = '00000000-0000-0000-0000-000000009995';
-    const provincesGuid1  = '00000000-0000-0000-0000-000000009997';
-    const provincesGuid2  = '00000000-0000-0000-0000-000000009996';
-
-    if (expandedIds.has(ministriesGuid1) || expandedIds.has(ministriesGuid2) || expandedCodes.has('ALL_MINISTRIES') || expandedCodes.has('ALL_MINISTRIES_DIRECT')) {
-      expandedIds.add(ministriesGuid1);
-      expandedIds.add(ministriesGuid2);
-      expandedCodes.add('ALL_MINISTRIES');
-      expandedCodes.add('ALL_MINISTRIES_DIRECT');
-    }
-    if (expandedIds.has(provincesGuid1) || expandedIds.has(provincesGuid2) || expandedCodes.has('ALL_PROVINCES') || expandedCodes.has('ALL_PROVINCES_UBND')) {
-      expandedIds.add(provincesGuid1);
-      expandedIds.add(provincesGuid2);
-      expandedCodes.add('ALL_PROVINCES');
-      expandedCodes.add('ALL_PROVINCES_UBND');
-    }
-
-    const matchAg = expandedIds.has(item.leadAgencyId) ||
-      (item.leadAgencyCode && expandedCodes.has(item.leadAgencyCode)) ||
-      selectedAgencies.some(ag => item.leadAgencyName === ag.name);
-
-    if (!matchAg) return false;
-  }
-
-  // 2.1 Subordinate Agency Filter (Multi-select)
-  if (appliedFilters.value.selectedSubAgencyIds && appliedFilters.value.selectedSubAgencyIds.length > 0) {
-    const selectedSubAgencies = agencies.value.filter(a => appliedFilters.value.selectedSubAgencyIds.includes(a.id));
-    const matchSubAg = selectedSubAgencies.some(ag =>
-      item.assignedAgencyId === ag.id ||
-      item.assignedAgencyCode === ag.code ||
-      item.assignedAgencyName === ag.name
-    );
-    if (!matchSubAg) return false;
-  }
-
-  // 2.5 Scope Filter (Multi-select)
-  if (appliedFilters.value.selectedScopes && appliedFilters.value.selectedScopes.length > 0) {
-    const isGeneral = item.isGeneralTask || isSpecialAgencyCode(item.leadAgencyCode) || ['00000000-0000-0000-0000-000000009999', '00000000-0000-0000-0000-000000009998', '00000000-0000-0000-0000-000000009997', '00000000-0000-0000-0000-000000009996', '00000000-0000-0000-0000-000000009995'].includes(item.leadAgencyId);
-    const matchGen = appliedFilters.value.selectedScopes.includes('general') && isGeneral;
-    const matchSpec = appliedFilters.value.selectedScopes.includes('specific') && !isGeneral;
-    if (!matchGen && !matchSpec) return false;
-  }
-
-  // 3. Section Filter (Multi-select)
-  if (appliedFilters.value.selectedSections && appliedFilters.value.selectedSections.length > 0) {
-    if (!appliedFilters.value.selectedSections.includes(item.section)) return false;
-  }
-
-  // 4. Group Filter (Multi-select)
-  if (appliedFilters.value.selectedGroups && appliedFilters.value.selectedGroups.length > 0) {
-    if (!appliedFilters.value.selectedGroups.includes(item.group)) return false;
-  }
-
-  // 5 & 6. Ongoing Tasks / Goals & Year Range Filter
-  const wantOngoing = !!appliedFilters.value.onlyOngoing;
-  const hasYearFilter = !!(appliedFilters.value.fromYear || appliedFilters.value.toYear);
-
-  if (wantOngoing && hasYearFilter) {
-    const fYr = appliedFilters.value.fromYear ? Number(appliedFilters.value.fromYear) : 2026;
-    const tYr = appliedFilters.value.toYear ? Number(appliedFilters.value.toYear) : 2030;
-    if (!item.isOngoing) {
-      const targetYear = item.dueDate ? new Date(item.dueDate).getFullYear() : (item.startDate ? new Date(item.startDate).getFullYear() : 2026);
-      if (appliedFilters.value.fromYear && targetYear < fYr) return false;
-      if (appliedFilters.value.toYear && targetYear > tYr) return false;
-    }
-  } else if (wantOngoing) {
-    if (!item.isOngoing) return false;
-  } else if (hasYearFilter) {
-    if (item.isOngoing) return false;
-    const fYr = appliedFilters.value.fromYear ? Number(appliedFilters.value.fromYear) : 2026;
-    const tYr = appliedFilters.value.toYear ? Number(appliedFilters.value.toYear) : 2030;
-    const targetYear = item.dueDate ? new Date(item.dueDate).getFullYear() : (item.startDate ? new Date(item.startDate).getFullYear() : 2026);
-    if (appliedFilters.value.fromYear && targetYear < fYr) return false;
-    if (appliedFilters.value.toYear && targetYear > tYr) return false;
-  }
-
-  // Execution state is supplied by the BE calculator, independent of deadline alerts.
-  if (appliedFilters.value.selectedStatuses?.length) {
-    const filterOverdue = appliedFilters.value.selectedStatuses.includes('Overdue');
-    const statuses = appliedFilters.value.selectedStatuses.filter(s => s !== 'Overdue');
-    const matchOverdue = filterOverdue && item.deadlineStatus === 'Overdue';
-    const matchStatus = statuses.length > 0 && statuses.includes(item.calculatedStatus);
-    if (!matchOverdue && !matchStatus) return false;
-  }
-
-  // 8. Year Filter (Multi-select)
-  if (appliedFilters.value.selectedYears && appliedFilters.value.selectedYears.length > 0) {
-    const matchYr = appliedFilters.value.selectedYears.some(yr => {
-      const yrNum = Number(yr);
-      return item.yearlyTargets && item.yearlyTargets[yrNum] !== undefined && item.yearlyTargets[yrNum] !== null && item.yearlyTargets[yrNum] !== '';
-    });
-    if (!matchYr) return false;
-  }
-
-  return true;
-}
-
 const filteredGoalsList = computed(() => {
-  return goalsList.value.filter(filterGridItem);
+  return goalsList.value;
 });
 
 const filteredTasksList = computed(() => {
-  return tasksList.value.filter(filterGridItem);
+  return tasksList.value;
 });
 
 const activeGridList = computed(() => {
   return activeSubTab.value === 'goals' ? filteredGoalsList.value : filteredTasksList.value;
 });
 
-const totalGridItems = computed(() => activeGridList.value.length);
+const totalGridItems = ref(0);
 const totalGridPages = computed(() => Math.ceil(totalGridItems.value / gridPageSize.value) || 1);
 
-const paginatedGridList = computed(() => {
-  const start = (gridCurrentPage.value - 1) * gridPageSize.value;
-  return activeGridList.value.slice(start, start + gridPageSize.value);
-});
+const paginatedGridList = computed(() => activeGridList.value);
 
 watch(totalGridPages, () => changeGridPage(gridCurrentPage.value));
 
@@ -879,38 +733,71 @@ async function loadGridData() {
   if (!props.documentId) return;
   const version = ++gridRequestVersion;
   isLoading.value = true;
+  gridLoadError.value = '';
   try {
+    const filters = appliedFilters.value;
+    const params = new URLSearchParams({
+      itemType: activeSubTab.value === 'goals' ? 'Goal' : 'Task',
+      pageNumber: String(gridCurrentPage.value),
+      pageSize: String(gridPageSize.value),
+      sortBy: 'code',
+      sortOrder: 'asc',
+      assignmentRole: 'Lead',
+      userRole: authState.isAdmin.value ? 'Admin' : (authState.user.value?.role || '')
+    });
     const currentAgencyId = authState.user.value?.agencyId || '';
-    const agencyParam = currentAgencyId ? `?agencyId=${currentAgencyId}` : '';
-    const res = await fetchWithAuth(getApiUrl(`/api/planning/documents/${props.documentId}/grid${agencyParam}`));
-    if (res.ok) {
-      const data = await res.json();
-      if (version !== gridRequestVersion) return;
-      configuredPlansSupported.value = !(data.items || []).some(item => item.itemType === 'Goal' && item.configuredYearlyTargets == null);
-      gridData.value = {
-        documentId: data.documentId || props.documentId,
-        documentNumber: data.documentNumber || '',
-        documentName: data.documentName || '',
-        startYear: data.startYear || 2026,
-        endYear: data.endYear || 2030,
-        dynamicYears: data.dynamicYears || [2026, 2027, 2028, 2029, 2030],
-        items: (data.items || []).map(item => ({
-          ...item,
-          configuredYearlyTargets: item.configuredYearlyTargets ?? {},
-          defaultYearlyTargets: item.defaultYearlyTargets ?? item.yearlyTargets ?? {}
-        }))
-      };
-      savedYearlyTargets.clear();
-      for (const item of gridData.value.items) {
-        for (const year of gridData.value.dynamicYears) {
-          const isGoalPlan = item.itemType === 'Goal' && isQuantitative(item);
-          const target = isGoalPlan ? item.configuredYearlyTargets : item.yearlyTargets;
-          savedYearlyTargets.set(`${item.taskId}:${year}:${isGoalPlan ? 'configured' : 'annual'}`, target?.[year] ?? null);
-        }
+    if (currentAgencyId) params.set('agencyId', currentAgencyId);
+    if (filters.searchQuery?.trim()) params.set('search', filters.searchQuery.trim());
+    for (const [key, values] of [
+      ['selectedAgencyIds', filters.selectedAgencyIds],
+      ['selectedSubAgencyIds', filters.selectedSubAgencyIds],
+      ['selectedScopes', filters.selectedScopes],
+      ['selectedStatuses', filters.selectedStatuses],
+      ['selectedSections', filters.selectedSections],
+      ['selectedGroups', filters.selectedGroups]
+    ]) if (values?.length) params.set(key, values.join(','));
+    if (filters.fromYear) params.set('fromYear', String(filters.fromYear));
+    if (filters.toYear) params.set('toYear', String(filters.toYear));
+    if (filters.onlyOngoing) params.set('onlyOngoing', 'true');
+
+    const res = await fetchWithAuth(getApiUrl(`/api/documents/${props.documentId}/items?${params}`));
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    if (!Array.isArray(data.items) || !Number.isInteger(data.totalCount)) throw new Error('Invalid page response');
+    if (version !== gridRequestVersion) return;
+    const document = SUPPORTED_DOCUMENTS.find(d => d.id === props.documentId);
+    const startYear = document?.startYear ?? 2026;
+    const endYear = document?.endYear ?? 2030;
+    configuredPlansSupported.value = !data.items.some(item => item.itemType === 'Goal' && item.configuredYearlyTargets == null);
+    totalGridItems.value = data.totalCount;
+    gridData.value = {
+      documentId: props.documentId,
+      documentNumber: document?.documentNumber ?? '',
+      documentName: document?.name ?? '',
+      startYear,
+      endYear,
+      dynamicYears: Array.from({ length: endYear - startYear + 1 }, (_, index) => startYear + index),
+      items: data.items.map(item => ({
+        ...item,
+        configuredYearlyTargets: item.configuredYearlyTargets ?? {},
+        defaultYearlyTargets: item.defaultYearlyTargets ?? item.yearlyTargets ?? {}
+      }))
+    };
+    savedYearlyTargets.clear();
+    for (const item of gridData.value.items) {
+      for (const year of gridData.value.dynamicYears) {
+        const isGoalPlan = item.itemType === 'Goal' && isQuantitative(item);
+        const target = isGoalPlan ? item.configuredYearlyTargets : item.yearlyTargets;
+        savedYearlyTargets.set(`${item.taskId}:${year}:${isGoalPlan ? 'configured' : 'annual'}`, target?.[year] ?? null);
       }
     }
   } catch (e) {
-    console.error('Error fetching planning grid data from backend API:', e);
+    if (version === gridRequestVersion) {
+      gridLoadError.value = 'Không tải được trang kế hoạch. Vui lòng thử lại.';
+      totalGridItems.value = 0;
+      gridData.value.items = [];
+    }
+    console.error('Error fetching planning page from backend API:', e);
   } finally {
     if (version === gridRequestVersion) isLoading.value = false;
   }
@@ -923,16 +810,23 @@ watch(() => props.filterItemType, (newType, oldType) => {
   } else if (newType === 'Task' || newType === 'tasks' || newType === '2') {
     activeSubTab.value = 'tasks';
   }
-  if (oldType !== undefined) loadGridData();
+  if (oldType !== undefined) gridCurrentPage.value = 1;
 }, { immediate: true });
 
 watch(() => props.documentId, () => {
-  loadGridData();
+  gridCurrentPage.value = 1;
 });
 
-onMounted(() => {
+let gridInitialized = false;
+watch([gridCurrentPage, gridPageSize, activeSubTab, appliedFilters, () => props.documentId], () => {
+  if (gridInitialized) loadGridData();
+}, { deep: true });
+
+onMounted(async () => {
   loadSavedFilters();
   loadAgencies();
+  await nextTick();
+  gridInitialized = true;
   loadGridData();
 });
 

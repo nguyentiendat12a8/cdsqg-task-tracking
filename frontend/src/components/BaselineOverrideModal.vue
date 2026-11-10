@@ -1,5 +1,5 @@
 <template>
-  <div v-if="isOpen" v-accessible-dialog class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-3 sm:p-6" @click.self="close">
+  <div v-if="isOpen" v-accessible-dialog class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-3 sm:p-6">
     <section role="dialog" aria-modal="true" aria-labelledby="annual-baseline-title" class="flex w-full max-w-2xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl max-h-[90vh]">
       <header class="flex items-start justify-between gap-4 border-b border-slate-100 px-5 py-5 sm:px-7">
         <div class="min-w-0">

@@ -6,8 +6,20 @@ try {
   const page = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   const errors=[]; page.on('pageerror',error=>errors.push(error.message));
   const items=Array.from({length:27},(_,i)=>({taskId:`goal-${i}`,code:`MT-${String(i+1).padStart(2,'0')}`,title:`Mục tiêu ${i+1}`,itemType:'Goal',evaluationType:'Quantitative',yearlyTargets:{2026:i+1},leadAgencyName:'Cơ quan kiểm thử',startDate:'2026-01-01',dueDate:'2030-12-31'}));
-  await page.route('**/api/**',route=>route.fulfill({contentType:'application/json',body:JSON.stringify(route.request().url().includes('/grid')?{items,dynamicYears:[2026]}:[])}));
-  await page.goto(process.env.FRONTEND_TEST_URL || 'http://127.0.0.1:5201');
+  const pageRequests=[];
+  await page.route('**/api/**',route=>{
+    const url=new URL(route.request().url());
+    if(url.pathname.endsWith('/items')){
+      const pageNumber=Number(url.searchParams.get('pageNumber'));
+      const pageSize=Number(url.searchParams.get('pageSize'));
+      const search=(url.searchParams.get('search')||'').toLowerCase();
+      const filtered=items.filter(item=>item.code.toLowerCase().includes(search)||item.title.toLowerCase().includes(search));
+      pageRequests.push({pageNumber,pageSize,search});
+      return route.fulfill({json:{items:filtered.slice((pageNumber-1)*pageSize,pageNumber*pageSize),totalCount:filtered.length,pageNumber,pageSize}});
+    }
+    return route.fulfill({json:[]});
+  });
+  await page.goto(process.env.FRONTEND_TEST_URL || 'http://127.0.0.1:5201',{waitUntil:'domcontentloaded',timeout:120000});
   await page.evaluate(async()=>{
     const f=await import('/tests/refactor-fixture.js'); const {default:Grid}=await import('/src/components/DynamicPlanningGrid.vue');
     f.authState.user.value={role:1}; f.authState.token.value='fixture-token'; document.querySelector('#app').style.display='none';
@@ -17,8 +29,10 @@ try {
   const root=page.locator('#grid-test'); await root.getByText('Trang 1 / 3',{exact:true}).waitFor();
   assert.equal(await root.locator('tbody tr').count(),10);
   await root.getByRole('button',{name:'Trang sau'}).click();await root.getByText('Trang 2 / 3',{exact:true}).waitFor();assert.match(await root.locator('tbody tr').first().innerText(),/MT-11/);
+  assert(pageRequests.some(request=>request.pageNumber===2&&request.pageSize===10));
   await root.getByRole('button',{name:'Trang sau'}).click();await root.getByText('Trang 3 / 3',{exact:true}).waitFor();assert.equal(await root.locator('tbody tr').count(),7);
   await root.getByPlaceholder('Tìm theo mã, tên chỉ tiêu kế hoạch...').fill('MT-27');await root.getByText('Trang 1 / 1',{exact:true}).waitFor();assert.equal(await root.locator('tbody tr').count(),1);
+  assert(pageRequests.some(request=>request.pageNumber===1&&request.search==='mt-27'));
   await root.getByPlaceholder('Tìm theo mã, tên chỉ tiêu kế hoạch...').fill('');await root.getByText('Trang 1 / 3',{exact:true}).waitFor();
   await root.getByRole('combobox').last().click();
   await page.getByRole('option',{name:'25',exact:true}).click();

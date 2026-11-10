@@ -1,5 +1,5 @@
 <template>
- <div v-accessible-dialog="close" class="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-3" @click.self="close">
+ <div v-accessible-dialog="close" class="fixed inset-0 z-50 bg-slate-900/60 flex items-center justify-center p-3">
   <section class="bg-white rounded-2xl w-full max-w-5xl max-h-[90dvh] flex flex-col overflow-hidden shadow-xl">
    <header class="p-4 sm:p-6 bg-[#f1f5fc] border-b border-slate-200"><h3 class="ui-title">Cấu hình theo dõi thông tin liên quan</h3></header>
    <nav class="flex flex-wrap gap-2 px-4 pt-4" aria-label="Cấu hình"><button v-for="item in tabs" :key="item.key" type="button" class="ui-btn" :class="tab===item.key?'ui-btn-primary':'ui-btn-secondary'" @click="tab=item.key">{{ item.label }}</button></nav>

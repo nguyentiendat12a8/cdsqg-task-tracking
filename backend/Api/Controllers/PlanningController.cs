@@ -130,5 +130,41 @@ namespace Cdsqg.Api.Controllers
                 return StatusCode(500, new { error = "Lỗi khi cập nhật chỉ tiêu hàng năm", details = ex.Message });
             }
         }
+
+        /// <summary>
+        /// Endpoint: GET /api/planning/agency-progress-report
+        /// Báo cáo tiến độ mục tiêu, nhiệm vụ tổng hợp theo từng đơn vị (QĐ 2629 & QĐ 1266)
+        /// </summary>
+        [HttpGet("agency-progress-report")]
+        public async Task<IActionResult> GetAgencyProgressReport(
+            [FromQuery] Guid? agencyId = null,
+            [FromQuery] int reportYear = 2026,
+            [FromQuery] Guid? userAgencyId = null,
+            [FromQuery] string? userRole = null)
+        {
+            try
+            {
+                var targetAgencyId = agencyId ?? userAgencyId;
+                if (!targetAgencyId.HasValue || targetAgencyId.Value == Guid.Empty)
+                {
+                    return BadRequest(new { error = "Vui lòng chọn cơ quan cần báo cáo." });
+                }
+
+                var report = await _planningService.GetAgencyProgressReportAsync(targetAgencyId.Value, reportYear, userAgencyId, userRole);
+                return Ok(report);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { error = ex.Message });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return StatusCode(403, new { error = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { error = "Lỗi khi tải báo cáo tiến độ cơ quan", details = ex.Message });
+            }
+        }
     }
 }

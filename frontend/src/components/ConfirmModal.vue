@@ -4,7 +4,6 @@
       <div 
         v-if="confirmState.isVisible.value" 
         class="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4 overflow-y-auto font-sans"
-        @click.self="handleConfirmResponse(false)"
       >
         <div 
           ref="dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" tabindex="-1"
