@@ -18,7 +18,7 @@ namespace Cdsqg.Application.Services
         Task<bool> UpdateTaskCustomBaselineAsync(Guid taskId, UpdateCustomBaselineDto dto);
         Task<bool> UpdateYearlyTargetAsync(Guid taskId, UpdateYearlyTargetDto dto);
         Task<ImportYearlyTargetsResultDto> ImportYearlyTargetsAsync(Guid documentId, ImportYearlyTargetsRequestDto dto, Guid? userAgencyId, bool isAdmin);
-        Task<AgencyProgressReportDto> GetAgencyProgressReportAsync(Guid agencyId, int reportYear, Guid? userAgencyId, string? userRole);
+        Task<AgencyProgressReportDto> GetAgencyProgressReportAsync(Guid agencyId, int reportYear, Guid? userAgencyId, string? userRole, string? tab = null, int page = 1, int pageSize = 15, bool fetchAll = false);
     }
 
     public class PlanningService : IPlanningService
@@ -581,7 +581,15 @@ namespace Cdsqg.Application.Services
             return fallback ?? "";
         }
 
-        public async Task<AgencyProgressReportDto> GetAgencyProgressReportAsync(Guid agencyId, int reportYear, Guid? userAgencyId, string? userRole)
+        public async Task<AgencyProgressReportDto> GetAgencyProgressReportAsync(
+            Guid agencyId, 
+            int reportYear, 
+            Guid? userAgencyId, 
+            string? userRole,
+            string? tab = null,
+            int page = 1,
+            int pageSize = 15,
+            bool fetchAll = false)
         {
             var agency = await _context.Agencies.AsNoTracking().FirstOrDefaultAsync(a => a.Id == agencyId);
             if (agency == null)
@@ -619,8 +627,30 @@ namespace Cdsqg.Application.Services
 
             var agenciesMap = await _context.Agencies.AsNoTracking().ToDictionaryAsync(a => a.Id);
 
-            var goalsList = new List<AgencyProgressGoalItemDto>();
-            var tasksList = new List<AgencyProgressTaskItemDto>();
+            bool loadAll = fetchAll || string.IsNullOrWhiteSpace(tab);
+            bool loadGoals = loadAll || string.Equals(tab, "goals", StringComparison.OrdinalIgnoreCase);
+            bool loadTasks = loadAll || string.Equals(tab, "tasks", StringComparison.OrdinalIgnoreCase);
+            string activeTab = string.Equals(tab, "tasks", StringComparison.OrdinalIgnoreCase) ? "tasks" : "goals";
+
+            static string NormalizeTitle(string? t)
+            {
+                if (string.IsNullOrWhiteSpace(t)) return "";
+                var s = t.Trim().TrimEnd('.').ToLowerInvariant();
+                return System.Text.RegularExpressions.Regex.Replace(s, @"\s+", " ");
+            }
+
+            var allGoalItems = agencyItems
+                .Where(i => i.ItemType == ItemTypeEnum.Goal)
+                .OrderByDescending(i => i.DocumentId == doc2629Id)
+                .ThenBy(i => i.Code)
+                .ToList();
+
+            var mergedGoalsList = new List<AgencyProgressGoalItemDto>();
+            int totalGoals = 0;
+
+            if (loadGoals)
+            {
+                var goalsList = new List<AgencyProgressGoalItemDto>();
 
             var sortedGoals = agencyItems
                 .Where(i => i.ItemType == ItemTypeEnum.Goal)
@@ -711,14 +741,6 @@ namespace Cdsqg.Application.Services
             }
 
             // Group and merge multi-phase goals that share the same title
-            static string NormalizeTitle(string? t)
-            {
-                if (string.IsNullOrWhiteSpace(t)) return "";
-                var s = t.Trim().TrimEnd('.').ToLowerInvariant();
-                return System.Text.RegularExpressions.Regex.Replace(s, @"\s+", " ");
-            }
-
-            var mergedGoalsList = new List<AgencyProgressGoalItemDto>();
             var goalGroups = goalsList.GroupBy(g => (g.DocumentId, NormalizeTitle(g.Title))).ToList();
 
             foreach (var group in goalGroups)
@@ -761,13 +783,46 @@ namespace Cdsqg.Application.Services
                 }
             }
 
-            var sortedTasks = agencyItems
-                .Where(i => i.ItemType == ItemTypeEnum.Task)
-                .OrderByDescending(i => i.DocumentId == doc2629Id)
-                .ThenBy(i => i.Code)
-                .ToList();
+            int seq2629 = 1;
+            int seq1266 = 1;
+            foreach (var mg in mergedGoalsList)
+            {
+                if (mg.DocumentNumber.Contains("2629")) mg.SequenceNumber = seq2629++;
+                else mg.SequenceNumber = seq1266++;
+            }
 
-            foreach (var t in sortedTasks)
+            totalGoals = mergedGoalsList.Count;
+        }
+        else
+        {
+            totalGoals = allGoalItems.GroupBy(g => (g.DocumentId, NormalizeTitle(g.Title))).Count();
+        }
+
+        var allTaskItems = agencyItems
+            .Where(i => i.ItemType == ItemTypeEnum.Task)
+            .OrderByDescending(i => i.DocumentId == doc2629Id)
+            .ThenBy(i => i.Code)
+            .ToList();
+
+        int totalTasks = allTaskItems.Count;
+        var finalTasksList = new List<AgencyProgressTaskItemDto>();
+
+        if (loadTasks)
+        {
+            var taskSeqMap = new Dictionary<Guid, int>();
+            int tSeq2629 = 1;
+            int tSeq1266 = 1;
+            foreach (var t in allTaskItems)
+            {
+                if (t.DocumentId == doc2629Id) taskSeqMap[t.Id] = tSeq2629++;
+                else taskSeqMap[t.Id] = tSeq1266++;
+            }
+
+            var tasksToProcess = fetchAll
+                ? allTaskItems
+                : allTaskItems.Skip((Math.Max(1, page) - 1) * pageSize).Take(pageSize).ToList();
+
+            foreach (var t in tasksToProcess)
             {
                 bool is2629 = t.DocumentId == doc2629Id;
                 string docNum = is2629 ? "2629/QĐ-TTg" : "1266/QĐ-TTg";
@@ -795,8 +850,9 @@ namespace Cdsqg.Application.Services
                     ? string.Join("; ", t.Deliverables.Select(d => d.Title))
                     : "";
 
-                tasksList.Add(new AgencyProgressTaskItemDto
+                finalTasksList.Add(new AgencyProgressTaskItemDto
                 {
+                    SequenceNumber = taskSeqMap.ContainsKey(t.Id) ? taskSeqMap[t.Id] : 0,
                     Id = t.Id,
                     DocumentId = t.DocumentId,
                     DocumentNumber = docNum,
@@ -811,17 +867,34 @@ namespace Cdsqg.Application.Services
                     Notes = latestLog?.SummaryNotes
                 });
             }
+        }
 
-            return new AgencyProgressReportDto
-            {
-                AgencyId = agency.Id,
-                AgencyName = agency.Name,
-                AgencyCode = agency.Code,
-                AgencyType = agency.Type.ToString(),
-                ReportYear = reportYear,
-                Goals = mergedGoalsList,
-                Tasks = tasksList
-            };
+        var pagedGoals = fetchAll || !loadGoals
+            ? mergedGoalsList
+            : mergedGoalsList.Skip((Math.Max(1, page) - 1) * pageSize).Take(pageSize).ToList();
+
+        int totalCount = activeTab == "tasks" ? totalTasks : totalGoals;
+        int actualPageSize = pageSize > 0 ? pageSize : 15;
+        int totalPages = fetchAll ? 1 : Math.Max(1, (int)Math.Ceiling((double)totalCount / actualPageSize));
+        int currentPage = fetchAll ? 1 : Math.Max(1, page);
+
+        return new AgencyProgressReportDto
+        {
+            AgencyId = agency.Id,
+            AgencyName = agency.Name,
+            AgencyCode = agency.Code,
+            AgencyType = agency.Type.ToString(),
+            ReportYear = reportYear,
+            Page = currentPage,
+            PageSize = actualPageSize,
+            TotalCount = totalCount,
+            TotalPages = totalPages,
+            TotalGoals = totalGoals,
+            TotalTasks = totalTasks,
+            ActiveTab = activeTab,
+            Goals = pagedGoals,
+            Tasks = finalTasksList
+        };
         }
 
     }

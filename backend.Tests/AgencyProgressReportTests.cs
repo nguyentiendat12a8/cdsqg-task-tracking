@@ -379,4 +379,87 @@ public class AgencyProgressReportTests
         Assert.Contains(2027, mergedGoal.ApplicableYears);
         Assert.Contains(2030, mergedGoal.ApplicableYears);
     }
+
+    [Fact]
+    public async Task GetAgencyProgressReport_TabLoadingAndPagination_WorksCorrectly()
+    {
+        var dbName = "AgencyReportTabPagingTest_" + Guid.NewGuid().ToString("N");
+        await using var db = CreateInMemoryDb(dbName);
+
+        var doc2629Id = Guid.Parse("26290000-0000-0000-0000-000000002629");
+        var doc2629 = new Document { Id = doc2629Id, DocumentNumber = "2629/QĐ-TTg", Name = "Chương trình 2629" };
+        var agency = new Agency { Id = Guid.NewGuid(), Code = "BCA", Name = "Bộ Công an", Type = AgencyTypeEnum.Ministry };
+
+        db.Agencies.Add(agency);
+        db.Documents.Add(doc2629);
+
+        for (int i = 1; i <= 5; i++)
+        {
+            db.GoalTaskItems.Add(new GoalTaskItem
+            {
+                Id = Guid.NewGuid(),
+                DocumentId = doc2629Id,
+                Document = doc2629,
+                Code = $"MT-{i:D2}",
+                Title = $"Mục tiêu số {i}",
+                ItemType = ItemTypeEnum.Goal,
+                EvaluationType = EvaluationTypeEnum.Quantitative,
+                LeadAgencyId = agency.Id,
+                Section = "Giai đoạn 2025-2027",
+                DueDate = new DateTime(2027, 12, 31)
+            });
+
+            db.GoalTaskItems.Add(new GoalTaskItem
+            {
+                Id = Guid.NewGuid(),
+                DocumentId = doc2629Id,
+                Document = doc2629,
+                Code = $"NV-{i:D2}",
+                Title = $"Nhiệm vụ số {i}",
+                ItemType = ItemTypeEnum.Task,
+                EvaluationType = EvaluationTypeEnum.Qualitative,
+                LeadAgencyId = agency.Id,
+                DueDate = new DateTime(2026, 12, 31)
+            });
+        }
+        await db.SaveChangesAsync();
+
+        var planningService = new PlanningService(db);
+
+        // 1. Load only goals tab, page 1, pageSize 2
+        var goalsP1 = await planningService.GetAgencyProgressReportAsync(agency.Id, 2026, agency.Id, "Admin", tab: "goals", page: 1, pageSize: 2);
+        Assert.Equal("goals", goalsP1.ActiveTab);
+        Assert.Equal(5, goalsP1.TotalGoals);
+        Assert.Equal(5, goalsP1.TotalTasks);
+        Assert.Equal(5, goalsP1.TotalCount);
+        Assert.Equal(3, goalsP1.TotalPages);
+        Assert.Equal(2, goalsP1.Goals.Count);
+        Assert.Empty(goalsP1.Tasks);
+        Assert.Equal(1, goalsP1.Goals[0].SequenceNumber);
+        Assert.Equal(2, goalsP1.Goals[1].SequenceNumber);
+
+        // 2. Load goals tab, page 2, pageSize 2
+        var goalsP2 = await planningService.GetAgencyProgressReportAsync(agency.Id, 2026, agency.Id, "Admin", tab: "goals", page: 2, pageSize: 2);
+        Assert.Equal(2, goalsP2.Goals.Count);
+        Assert.Equal(3, goalsP2.Goals[0].SequenceNumber);
+        Assert.Equal(4, goalsP2.Goals[1].SequenceNumber);
+
+        // 3. Load only tasks tab, page 1, pageSize 3
+        var tasksP1 = await planningService.GetAgencyProgressReportAsync(agency.Id, 2026, agency.Id, "Admin", tab: "tasks", page: 1, pageSize: 3);
+        Assert.Equal("tasks", tasksP1.ActiveTab);
+        Assert.Equal(5, tasksP1.TotalGoals);
+        Assert.Equal(5, tasksP1.TotalTasks);
+        Assert.Equal(5, tasksP1.TotalCount);
+        Assert.Equal(2, tasksP1.TotalPages);
+        Assert.Equal(3, tasksP1.Tasks.Count);
+        Assert.Empty(tasksP1.Goals);
+        Assert.Equal(1, tasksP1.Tasks[0].SequenceNumber);
+        Assert.Equal(2, tasksP1.Tasks[1].SequenceNumber);
+        Assert.Equal(3, tasksP1.Tasks[2].SequenceNumber);
+
+        // 4. Fetch all
+        var allReport = await planningService.GetAgencyProgressReportAsync(agency.Id, 2026, agency.Id, "Admin", fetchAll: true);
+        Assert.Equal(5, allReport.Goals.Count);
+        Assert.Equal(5, allReport.Tasks.Count);
+    }
 }

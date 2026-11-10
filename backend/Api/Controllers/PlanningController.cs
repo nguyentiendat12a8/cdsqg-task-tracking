@@ -139,18 +139,32 @@ namespace Cdsqg.Api.Controllers
         public async Task<IActionResult> GetAgencyProgressReport(
             [FromQuery] Guid? agencyId = null,
             [FromQuery] int reportYear = 2026,
+            [FromQuery] string? tab = null,
+            [FromQuery] int page = 1,
+            [FromQuery] int pageSize = 15,
+            [FromQuery] bool fetchAll = false,
             [FromQuery] Guid? userAgencyId = null,
             [FromQuery] string? userRole = null)
         {
             try
             {
-                var targetAgencyId = agencyId ?? userAgencyId;
+                var effectiveRole = !string.IsNullOrWhiteSpace(userRole) 
+                    ? userRole 
+                    : User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+
+                var effectiveAgencyId = userAgencyId;
+                if (!effectiveAgencyId.HasValue && Guid.TryParse(User.FindFirst("AgencyId")?.Value, out var claimAgencyId) && claimAgencyId != Guid.Empty)
+                {
+                    effectiveAgencyId = claimAgencyId;
+                }
+
+                var targetAgencyId = agencyId ?? effectiveAgencyId;
                 if (!targetAgencyId.HasValue || targetAgencyId.Value == Guid.Empty)
                 {
                     return BadRequest(new { error = "Vui lòng chọn cơ quan cần báo cáo." });
                 }
 
-                var report = await _planningService.GetAgencyProgressReportAsync(targetAgencyId.Value, reportYear, userAgencyId, userRole);
+                var report = await _planningService.GetAgencyProgressReportAsync(targetAgencyId.Value, reportYear, effectiveAgencyId, effectiveRole, tab, page, pageSize, fetchAll);
                 return Ok(report);
             }
             catch (KeyNotFoundException ex)

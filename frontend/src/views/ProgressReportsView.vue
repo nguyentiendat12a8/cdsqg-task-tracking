@@ -70,7 +70,7 @@
             class="px-2 py-0.5 rounded-full text-xs font-semibold"
             :class="activeTab === 'goals' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'"
           >
-            {{ goalsList.length }}
+            {{ totalGoals }}
           </span>
         </button>
 
@@ -89,7 +89,7 @@
             class="px-2 py-0.5 rounded-full text-xs font-semibold"
             :class="activeTab === 'tasks' ? 'bg-white/20 text-white' : 'bg-slate-100 text-slate-700'"
           >
-            {{ tasksList.length }}
+            {{ totalTasks }}
           </span>
         </button>
       </div>
@@ -167,92 +167,106 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-200">
-            <!-- SECTION I: 2629 -->
-            <tr class="bg-blue-900 text-white font-bold border-b border-blue-800">
-              <td colspan="4" class="p-2.5 px-3">
-                I. QUYẾT ĐỊNH SỐ 2629/QĐ-TTg NGÀY 10/12/2024
-              </td>
-              <td class="p-2 text-center border-l border-blue-800 bg-blue-950/60">
-                <span class="inline-block px-2 py-0.5 rounded bg-amber-400 text-slate-900 font-bold text-xs">2025 - 2027</span>
-              </td>
-              <td class="p-2 text-center border-l border-blue-800 bg-blue-950/60">
-                <span class="inline-block px-2 py-0.5 rounded bg-amber-400 text-slate-900 font-bold text-xs">2028 - 2030</span>
-              </td>
-              <td colspan="6" class="p-2.5 px-3 text-right text-xs text-blue-200 font-medium italic border-l border-blue-800">
-                Kế hoạch mục tiêu từng năm (đến 2030)
-              </td>
-            </tr>
-            <tr v-if="goals2629.length === 0" class="text-slate-500 italic text-center">
-              <td colspan="12" class="p-4">Không có mục tiêu nào được giao cho đơn vị thuộc QĐ 2629/QĐ-TTg</td>
-            </tr>
-            <tr
-              v-for="(g, idx) in goals2629"
-              :key="g.id"
-              class="hover:bg-slate-50/80 transition font-normal"
-            >
-              <td class="p-2.5 text-center font-medium text-slate-500 border-r border-slate-200">{{ idx + 1 }}</td>
-              <td class="p-2.5 text-center border-r border-slate-200">
-                <div v-for="c in String(g.code).split('\n')" :key="c" class="font-bold text-blue-900 leading-tight">
-                  {{ c }}
-                </div>
-              </td>
-              <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">{{ g.title }}</td>
-              <td class="p-2.5 text-center border-r border-slate-200 text-slate-600">{{ g.unitName }}</td>
-              <td class="p-2.5 text-center border-r border-slate-200 font-semibold text-slate-700">{{ formatTarget(g.targetPhase1) }}</td>
-              <td class="p-2.5 text-center border-r border-slate-200 font-semibold text-slate-700">{{ formatTarget(g.targetPhase2) }}</td>
-              <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.actual2025)">{{ formatCellVal(g.actual2025) }}</td>
-              <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.estimate2026)">{{ formatCellVal(g.estimate2026) }}</td>
-              <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2027)">{{ formatCellVal(g.plan2027) }}</td>
-              <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2028)">{{ formatCellVal(g.plan2028) }}</td>
-              <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2029)">{{ formatCellVal(g.plan2029) }}</td>
-              <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2030)">{{ formatCellVal(g.plan2030) }}</td>
-              <td class="p-2.5 text-slate-600 text-xs leading-relaxed">{{ g.notes || '' }}</td>
+            <tr v-if="goalsList.length === 0" class="text-slate-500 italic text-center">
+              <td colspan="12" class="p-6">Không có mục tiêu nào được giao cho đơn vị.</td>
             </tr>
 
+            <!-- SECTION I: 2629 -->
+            <template v-if="goals2629.length > 0">
+              <tr class="bg-blue-900 text-white font-bold border-b border-blue-800">
+                <td colspan="4" class="p-2.5 px-3">
+                  I. QUYẾT ĐỊNH SỐ 2629/QĐ-TTg NGÀY 10/12/2024
+                </td>
+                <td class="p-2 text-center border-l border-blue-800 bg-blue-950/60">
+                  <span class="inline-block px-2 py-0.5 rounded bg-amber-400 text-slate-900 font-bold text-xs">2025 - 2027</span>
+                </td>
+                <td class="p-2 text-center border-l border-blue-800 bg-blue-950/60">
+                  <span class="inline-block px-2 py-0.5 rounded bg-amber-400 text-slate-900 font-bold text-xs">2028 - 2030</span>
+                </td>
+                <td colspan="6" class="p-2.5 px-3 text-right text-xs text-blue-200 font-medium italic border-l border-blue-800">
+                  Kế hoạch mục tiêu từng năm (đến 2030)
+                </td>
+              </tr>
+              <tr
+                v-for="(g, idx) in goals2629"
+                :key="g.id"
+                class="hover:bg-slate-50/80 transition font-normal"
+              >
+                <td class="p-2.5 text-center font-medium text-slate-500 border-r border-slate-200">{{ g.sequenceNumber || (idx + 1) }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200">
+                  <div v-for="c in String(g.code).split('\n')" :key="c" class="font-bold text-blue-900 leading-tight">
+                    {{ c }}
+                  </div>
+                </td>
+                <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">{{ g.title }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200 text-slate-600">{{ g.unitName }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200 font-semibold text-slate-700">{{ formatTarget(g.targetPhase1) }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200 font-semibold text-slate-700">{{ formatTarget(g.targetPhase2) }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.actual2025)">{{ formatCellVal(g.actual2025) }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.estimate2026)">{{ formatCellVal(g.estimate2026) }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2027)">{{ formatCellVal(g.plan2027) }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2028)">{{ formatCellVal(g.plan2028) }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2029)">{{ formatCellVal(g.plan2029) }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2030)">{{ formatCellVal(g.plan2030) }}</td>
+                <td class="p-2.5 text-slate-600 text-xs leading-relaxed">{{ g.notes || '' }}</td>
+              </tr>
+            </template>
+
             <!-- SECTION II: 1266 -->
-            <tr class="bg-blue-900 text-white font-bold border-b border-blue-800">
-              <td colspan="4" class="p-2.5 px-3">
-                II. QUYẾT ĐỊNH SỐ 1266/QĐ-TTg NGÀY 24/10/2024
-              </td>
-              <td class="p-2 text-center border-l border-blue-800 bg-blue-950/60">
-                <span class="inline-block px-2 py-0.5 rounded bg-amber-400 text-slate-900 font-bold text-xs">2026 - 2030</span>
-              </td>
-              <td class="p-2 text-center border-l border-blue-800 bg-blue-950/60">
-                <span class="inline-block px-2 py-0.5 rounded bg-amber-400 text-slate-900 font-bold text-xs">2031 - 2045</span>
-              </td>
-              <td colspan="6" class="p-2.5 px-3 text-right text-xs text-blue-200 font-medium italic border-l border-blue-800">
-                Kế hoạch mục tiêu từng năm (đến 2030)
-              </td>
-            </tr>
-            <tr v-if="goals1266.length === 0" class="text-slate-500 italic text-center">
-              <td colspan="12" class="p-4">Không có mục tiêu nào được giao cho đơn vị thuộc QĐ 1266/QĐ-TTg</td>
-            </tr>
-            <tr
-              v-for="(g, idx) in goals1266"
-              :key="g.id"
-              class="hover:bg-slate-50/80 transition font-normal"
-            >
-              <td class="p-2.5 text-center font-medium text-slate-500 border-r border-slate-200">{{ idx + 1 }}</td>
-              <td class="p-2.5 text-center border-r border-slate-200">
-                <div v-for="c in String(g.code).split('\n')" :key="c" class="font-bold text-blue-900 leading-tight">
-                  {{ c }}
-                </div>
-              </td>
-              <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">{{ g.title }}</td>
-              <td class="p-2.5 text-center border-r border-slate-200 text-slate-600">{{ g.unitName }}</td>
-              <td class="p-2.5 text-center border-r border-slate-200 font-semibold text-slate-700">{{ formatTarget(g.targetPhase1) }}</td>
-              <td class="p-2.5 text-center border-r border-slate-200 font-semibold text-slate-700">{{ formatTarget(g.targetPhase2) }}</td>
-              <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.actual2025)">{{ formatCellVal(g.actual2025) }}</td>
-              <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.estimate2026)">{{ formatCellVal(g.estimate2026) }}</td>
-              <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2027)">{{ formatCellVal(g.plan2027) }}</td>
-              <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2028)">{{ formatCellVal(g.plan2028) }}</td>
-              <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2029)">{{ formatCellVal(g.plan2029) }}</td>
-              <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2030)">{{ formatCellVal(g.plan2030) }}</td>
-              <td class="p-2.5 text-slate-600 text-xs leading-relaxed">{{ g.notes || '' }}</td>
-            </tr>
+            <template v-if="goals1266.length > 0">
+              <tr class="bg-blue-900 text-white font-bold border-b border-blue-800">
+                <td colspan="4" class="p-2.5 px-3">
+                  II. QUYẾT ĐỊNH SỐ 1266/QĐ-TTg NGÀY 24/10/2024
+                </td>
+                <td class="p-2 text-center border-l border-blue-800 bg-blue-950/60">
+                  <span class="inline-block px-2 py-0.5 rounded bg-amber-400 text-slate-900 font-bold text-xs">2026 - 2030</span>
+                </td>
+                <td class="p-2 text-center border-l border-blue-800 bg-blue-950/60">
+                  <span class="inline-block px-2 py-0.5 rounded bg-amber-400 text-slate-900 font-bold text-xs">2031 - 2045</span>
+                </td>
+                <td colspan="6" class="p-2.5 px-3 text-right text-xs text-blue-200 font-medium italic border-l border-blue-800">
+                  Kế hoạch mục tiêu từng năm (đến 2030)
+                </td>
+              </tr>
+              <tr
+                v-for="(g, idx) in goals1266"
+                :key="g.id"
+                class="hover:bg-slate-50/80 transition font-normal"
+              >
+                <td class="p-2.5 text-center font-medium text-slate-500 border-r border-slate-200">{{ g.sequenceNumber || (idx + 1) }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200">
+                  <div v-for="c in String(g.code).split('\n')" :key="c" class="font-bold text-blue-900 leading-tight">
+                    {{ c }}
+                  </div>
+                </td>
+                <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">{{ g.title }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200 text-slate-600">{{ g.unitName }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200 font-semibold text-slate-700">{{ formatTarget(g.targetPhase1) }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200 font-semibold text-slate-700">{{ formatTarget(g.targetPhase2) }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.actual2025)">{{ formatCellVal(g.actual2025) }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.estimate2026)">{{ formatCellVal(g.estimate2026) }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2027)">{{ formatCellVal(g.plan2027) }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2028)">{{ formatCellVal(g.plan2028) }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2029)">{{ formatCellVal(g.plan2029) }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2030)">{{ formatCellVal(g.plan2030) }}</td>
+                <td class="p-2.5 text-slate-600 text-xs leading-relaxed">{{ g.notes || '' }}</td>
+              </tr>
+            </template>
           </tbody>
         </table>
       </div>
+
+      <!-- Pagination for Goals -->
+      <DocumentPagination
+        v-model:currentPage="currentPage"
+        v-model:pageSize="pageSize"
+        :totalCount="totalCount"
+        :totalPages="totalPages"
+        filterItemType="Goal"
+        :pageSizeOptions="pageSizeOptions"
+        :disabled="isLoading"
+        :changePage="handlePageChange"
+      />
     </div>
 
     <!-- Tab 2: NHIỆM VỤ -->
@@ -273,70 +287,84 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-200">
-            <!-- SECTION I: 2629 Tasks -->
-            <tr class="bg-blue-900 text-white font-bold">
-              <td colspan="9" class="p-2.5 px-3">
-                I. QUYẾT ĐỊNH SỐ 2629/QĐ-TTg NGÀY 10/12/2024
-              </td>
-            </tr>
-            <tr v-if="tasks2629.length === 0" class="text-slate-500 italic text-center">
-              <td colspan="9" class="p-4">Không có nhiệm vụ nào do đơn vị chủ trì thuộc QĐ 2629/QĐ-TTg</td>
-            </tr>
-            <tr
-              v-for="(t, idx) in tasks2629"
-              :key="t.id"
-              class="hover:bg-slate-50/80 transition font-normal"
-            >
-              <td class="p-2.5 text-center font-medium text-slate-500 border-r border-slate-200">{{ idx + 1 }}</td>
-              <td class="p-2.5 text-center font-bold text-blue-900 border-r border-slate-200">{{ t.code }}</td>
-              <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">{{ t.title }}</td>
-              <td class="p-2.5 border-r border-slate-200 text-slate-600 text-xs">{{ t.coordinatingAgencies || '—' }}</td>
-              <td class="p-2.5 text-center border-r border-slate-200 text-slate-600">{{ t.dueDate || '—' }}</td>
-              <td class="p-2.5 text-center border-r border-slate-200">
-                <span :class="statusBadgeClass(t.status)">
-                  {{ t.statusLabel }}
-                </span>
-              </td>
-              <td class="p-2.5 text-center border-r border-slate-200 font-bold" :class="t.completionPercentage != null ? 'text-emerald-700' : 'text-slate-400'">
-                {{ t.completionPercentage != null ? `${t.completionPercentage}%` : '—' }}
-              </td>
-              <td class="p-2.5 border-r border-slate-200 text-slate-600 text-xs">{{ t.deliverables || '—' }}</td>
-              <td class="p-2.5 text-slate-600 text-xs leading-relaxed">{{ t.notes || '' }}</td>
+            <tr v-if="tasksList.length === 0" class="text-slate-500 italic text-center">
+              <td colspan="9" class="p-6">Không có nhiệm vụ nào do đơn vị chủ trì.</td>
             </tr>
 
+            <!-- SECTION I: 2629 Tasks -->
+            <template v-if="tasks2629.length > 0">
+              <tr class="bg-blue-900 text-white font-bold">
+                <td colspan="9" class="p-2.5 px-3">
+                  I. QUYẾT ĐỊNH SỐ 2629/QĐ-TTg NGÀY 10/12/2024
+                </td>
+              </tr>
+              <tr
+                v-for="(t, idx) in tasks2629"
+                :key="t.id"
+                class="hover:bg-slate-50/80 transition font-normal"
+              >
+                <td class="p-2.5 text-center font-medium text-slate-500 border-r border-slate-200">{{ t.sequenceNumber || (idx + 1) }}</td>
+                <td class="p-2.5 text-center font-bold text-blue-900 border-r border-slate-200">{{ t.code }}</td>
+                <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">{{ t.title }}</td>
+                <td class="p-2.5 border-r border-slate-200 text-slate-600 text-xs">{{ t.coordinatingAgencies || '—' }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200 text-slate-600">{{ t.dueDate || '—' }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200">
+                  <span :class="statusBadgeClass(t.status)">
+                    {{ t.statusLabel }}
+                  </span>
+                </td>
+                <td class="p-2.5 text-center border-r border-slate-200 font-bold" :class="t.completionPercentage != null ? 'text-emerald-700' : 'text-slate-400'">
+                  {{ t.completionPercentage != null ? `${t.completionPercentage}%` : '—' }}
+                </td>
+                <td class="p-2.5 border-r border-slate-200 text-slate-600 text-xs">{{ t.deliverables || '—' }}</td>
+                <td class="p-2.5 text-slate-600 text-xs leading-relaxed">{{ t.notes || '' }}</td>
+              </tr>
+            </template>
+
             <!-- SECTION II: 1266 Tasks -->
-            <tr class="bg-blue-900 text-white font-bold">
-              <td colspan="9" class="p-2.5 px-3">
-                II. QUYẾT ĐỊNH SỐ 1266/QĐ-TTg NGÀY 24/10/2024
-              </td>
-            </tr>
-            <tr v-if="tasks1266.length === 0" class="text-slate-500 italic text-center">
-              <td colspan="9" class="p-4">Không có nhiệm vụ nào do đơn vị chủ trì thuộc QĐ 1266/QĐ-TTg</td>
-            </tr>
-            <tr
-              v-for="(t, idx) in tasks1266"
-              :key="t.id"
-              class="hover:bg-slate-50/80 transition font-normal"
-            >
-              <td class="p-2.5 text-center font-medium text-slate-500 border-r border-slate-200">{{ idx + 1 }}</td>
-              <td class="p-2.5 text-center font-bold text-blue-900 border-r border-slate-200">{{ t.code }}</td>
-              <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">{{ t.title }}</td>
-              <td class="p-2.5 border-r border-slate-200 text-slate-600 text-xs">{{ t.coordinatingAgencies || '—' }}</td>
-              <td class="p-2.5 text-center border-r border-slate-200 text-slate-600">{{ t.dueDate || '—' }}</td>
-              <td class="p-2.5 text-center border-r border-slate-200">
-                <span :class="statusBadgeClass(t.status)">
-                  {{ t.statusLabel }}
-                </span>
-              </td>
-              <td class="p-2.5 text-center border-r border-slate-200 font-bold" :class="t.completionPercentage != null ? 'text-emerald-700' : 'text-slate-400'">
-                {{ t.completionPercentage != null ? `${t.completionPercentage}%` : '—' }}
-              </td>
-              <td class="p-2.5 border-r border-slate-200 text-slate-600 text-xs">{{ t.deliverables || '—' }}</td>
-              <td class="p-2.5 text-slate-600 text-xs leading-relaxed">{{ t.notes || '' }}</td>
-            </tr>
+            <template v-if="tasks1266.length > 0">
+              <tr class="bg-blue-900 text-white font-bold">
+                <td colspan="9" class="p-2.5 px-3">
+                  II. QUYẾT ĐỊNH SỐ 1266/QĐ-TTg NGÀY 24/10/2024
+                </td>
+              </tr>
+              <tr
+                v-for="(t, idx) in tasks1266"
+                :key="t.id"
+                class="hover:bg-slate-50/80 transition font-normal"
+              >
+                <td class="p-2.5 text-center font-medium text-slate-500 border-r border-slate-200">{{ t.sequenceNumber || (idx + 1) }}</td>
+                <td class="p-2.5 text-center font-bold text-blue-900 border-r border-slate-200">{{ t.code }}</td>
+                <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">{{ t.title }}</td>
+                <td class="p-2.5 border-r border-slate-200 text-slate-600 text-xs">{{ t.coordinatingAgencies || '—' }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200 text-slate-600">{{ t.dueDate || '—' }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200">
+                  <span :class="statusBadgeClass(t.status)">
+                    {{ t.statusLabel }}
+                  </span>
+                </td>
+                <td class="p-2.5 text-center border-r border-slate-200 font-bold" :class="t.completionPercentage != null ? 'text-emerald-700' : 'text-slate-400'">
+                  {{ t.completionPercentage != null ? `${t.completionPercentage}%` : '—' }}
+                </td>
+                <td class="p-2.5 border-r border-slate-200 text-slate-600 text-xs">{{ t.deliverables || '—' }}</td>
+                <td class="p-2.5 text-slate-600 text-xs leading-relaxed">{{ t.notes || '' }}</td>
+              </tr>
+            </template>
           </tbody>
         </table>
       </div>
+
+      <!-- Pagination for Tasks -->
+      <DocumentPagination
+        v-model:currentPage="currentPage"
+        v-model:pageSize="pageSize"
+        :totalCount="totalCount"
+        :totalPages="totalPages"
+        filterItemType="Task"
+        :pageSizeOptions="pageSizeOptions"
+        :disabled="isLoading"
+        :changePage="handlePageChange"
+      />
     </div>
 
     <!-- UNIFIED IMPORT MODAL -->
@@ -487,6 +515,7 @@ import { fetchWithAuth, authState } from '../services/auth';
 import { getApiUrl } from '../config/api';
 import { toast } from 'vue3-toastify';
 import SearchableSelect from '../components/SearchableSelect.vue';
+import DocumentPagination from '../features/document/DocumentPagination.vue';
 import { exportUnifiedProgressReport, parseUnifiedProgressReportFile } from '../utils/unifiedProgressReportExcel.js';
 
 const activeTab = ref('goals'); // 'goals' | 'tasks'
@@ -494,6 +523,21 @@ const isLoading = ref(false);
 const agencies = ref([]);
 const selectedAgencyId = ref('');
 const reportData = ref(null);
+
+// Pagination State
+const currentPage = ref(1);
+const pageSize = ref(15);
+const totalCount = ref(0);
+const totalPages = ref(1);
+const totalGoals = ref(0);
+const totalTasks = ref(0);
+
+const pageSizeOptions = [
+  { value: 10, label: '10' },
+  { value: 15, label: '15' },
+  { value: 20, label: '20' },
+  { value: 50, label: '50' }
+];
 
 // Import Modal State
 const isImportModalOpen = ref(false);
@@ -584,13 +628,19 @@ async function fetchReport() {
   if (!selectedAgencyId.value) return;
   isLoading.value = true;
   try {
-    const res = await fetchWithAuth(getApiUrl(`/api/planning/agency-progress-report?agencyId=${selectedAgencyId.value}&reportYear=2026&userRole=${authState.user.value?.role || 'Admin'}&userAgencyId=${authState.user.value?.agencyId || ''}`));
+    const url = `/api/planning/agency-progress-report?agencyId=${selectedAgencyId.value}&reportYear=2026&tab=${activeTab.value}&page=${currentPage.value}&pageSize=${pageSize.value}&userRole=${authState.user.value?.role || 'Admin'}&userAgencyId=${authState.user.value?.agencyId || ''}`;
+    const res = await fetchWithAuth(getApiUrl(url));
     if (!res.ok) {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.error || 'Lỗi khi tải báo cáo tiến độ cơ quan');
     }
     const data = await res.json();
     reportData.value = data;
+    totalGoals.value = data.totalGoals ?? 0;
+    totalTasks.value = data.totalTasks ?? 0;
+    totalCount.value = data.totalCount ?? 0;
+    totalPages.value = data.totalPages ?? 1;
+    currentPage.value = data.page ?? 1;
   } catch (err) {
     console.error('Error fetching report:', err);
     toast.error(err.message || 'Lỗi khi tải dữ liệu báo cáo');
@@ -599,17 +649,47 @@ async function fetchReport() {
   }
 }
 
+watch(activeTab, () => {
+  currentPage.value = 1;
+  fetchReport();
+});
+
+watch(pageSize, () => {
+  currentPage.value = 1;
+  fetchReport();
+});
+
+function handlePageChange(p) {
+  if (p < 1 || (totalPages.value > 0 && p > totalPages.value) || p === currentPage.value) return;
+  currentPage.value = p;
+  fetchReport();
+}
+
 watch(selectedAgencyId, (newVal) => {
-  if (newVal) fetchReport();
+  if (newVal) {
+    currentPage.value = 1;
+    fetchReport();
+  }
 });
 
 async function handleExportExcel() {
-  if (!reportData.value) return;
-  await exportUnifiedProgressReport({
-    reportData: reportData.value,
-    agencyName: selectedAgencyName.value,
-    reportYear: 2026
-  });
+  if (!selectedAgencyId.value) return;
+  isLoading.value = true;
+  try {
+    const fullRes = await fetchWithAuth(getApiUrl(`/api/planning/agency-progress-report?agencyId=${selectedAgencyId.value}&reportYear=2026&fetchAll=true&userRole=${authState.user.value?.role || 'Admin'}&userAgencyId=${authState.user.value?.agencyId || ''}`));
+    if (!fullRes.ok) throw new Error('Không thể tải dữ liệu để xuất Excel');
+    const fullData = await fullRes.json();
+    await exportUnifiedProgressReport({
+      reportData: fullData,
+      agencyName: selectedAgencyName.value,
+      reportYear: 2026
+    });
+  } catch (err) {
+    console.error('Lỗi khi xuất excel:', err);
+    toast.error(err.message || 'Lỗi khi xuất file Excel');
+  } finally {
+    isLoading.value = false;
+  }
 }
 
 function openImportModal() {
@@ -629,9 +709,13 @@ async function handleFileUpload(e) {
 
   isParsing.value = true;
   try {
+    const fullRes = await fetchWithAuth(getApiUrl(`/api/planning/agency-progress-report?agencyId=${selectedAgencyId.value}&reportYear=2026&fetchAll=true&userRole=${authState.user.value?.role || 'Admin'}&userAgencyId=${authState.user.value?.agencyId || ''}`));
+    if (!fullRes.ok) throw new Error('Không thể đối soát dữ liệu cơ quan');
+    const fullData = await fullRes.json();
+
     const res = await parseUnifiedProgressReportFile(file, {
-      existingGoals: goalsList.value,
-      existingTasks: tasksList.value,
+      existingGoals: fullData.goals || [],
+      existingTasks: fullData.tasks || [],
       reportYear: 2026
     });
 

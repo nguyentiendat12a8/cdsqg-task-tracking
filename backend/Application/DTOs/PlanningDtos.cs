@@ -198,12 +198,20 @@ namespace Cdsqg.Application.DTOs
         public string AgencyCode { get; set; } = string.Empty;
         public string AgencyType { get; set; } = string.Empty;
         public int ReportYear { get; set; } = 2026;
+        public int Page { get; set; } = 1;
+        public int PageSize { get; set; } = 15;
+        public int TotalCount { get; set; }
+        public int TotalPages { get; set; } = 1;
+        public int TotalGoals { get; set; }
+        public int TotalTasks { get; set; }
+        public string ActiveTab { get; set; } = "goals";
         public List<AgencyProgressGoalItemDto> Goals { get; set; } = new();
         public List<AgencyProgressTaskItemDto> Tasks { get; set; } = new();
     }
 
     public class AgencyProgressGoalItemDto
     {
+        public int SequenceNumber { get; set; }
         public Guid Id { get; set; }
         public Guid DocumentId { get; set; }
         public string DocumentNumber { get; set; } = string.Empty;
@@ -227,6 +235,7 @@ namespace Cdsqg.Application.DTOs
 
     public class AgencyProgressTaskItemDto
     {
+        public int SequenceNumber { get; set; }
         public Guid Id { get; set; }
         public Guid DocumentId { get; set; }
         public string DocumentNumber { get; set; } = string.Empty;
