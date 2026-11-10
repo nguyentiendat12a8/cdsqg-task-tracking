@@ -139,31 +139,25 @@
       <div class="overflow-x-auto border border-slate-200 rounded-xl shadow-2xs">
         <table class="w-full text-left text-xs border-collapse">
           <thead>
-            <tr class="bg-slate-800 text-white font-bold text-center border-b border-slate-700">
-              <th rowspan="2" class="p-2.5 border-r border-slate-700 w-12">STT</th>
-              <th rowspan="2" class="p-2.5 border-r border-slate-700 w-20">Mã MT</th>
-              <th rowspan="2" class="p-2.5 border-r border-slate-700 min-w-[280px] text-left">Tên mục tiêu / Chỉ tiêu</th>
-              <th rowspan="2" class="p-2.5 border-r border-slate-700 w-16">ĐVT</th>
-              <th colspan="2" class="p-2 border-r border-slate-700">Kết quả theo QĐ</th>
-              <th colspan="2" class="p-2 border-r border-slate-700 bg-amber-600/90 text-white">Kết quả thực hiện</th>
-              <th colspan="4" class="p-2 border-r border-slate-700 bg-amber-500/90 text-white">Mục tiêu theo từng năm (đến 2030)</th>
-              <th rowspan="2" class="p-2.5 min-w-[220px] text-left">Ghi chú / Khó khăn & kiến nghị</th>
+            <tr class="bg-slate-100 text-slate-800 font-bold text-center border-b border-slate-200">
+              <th rowspan="2" class="p-2.5 border-r border-slate-200 w-12 font-bold text-slate-700">STT</th>
+              <th rowspan="2" class="p-2.5 border-r border-slate-200 w-20 font-bold text-slate-700">Mã MT</th>
+              <th rowspan="2" class="p-2.5 border-r border-slate-200 min-w-[280px] text-left font-bold text-slate-700">Tên mục tiêu / Chỉ tiêu</th>
+              <th rowspan="2" class="p-2.5 border-r border-slate-200 w-16 font-bold text-slate-700">ĐVT</th>
+              <th colspan="2" class="p-2 border-r border-slate-200 font-bold text-slate-700">Kết quả theo QĐ</th>
+              <th colspan="2" class="p-2 border-r border-slate-200 bg-amber-50/70 text-amber-900 font-bold">Kết quả thực hiện</th>
+              <th colspan="4" class="p-2 border-r border-slate-200 bg-blue-50/60 text-blue-900 font-bold">Mục tiêu theo từng năm (đến 2030)</th>
+              <th rowspan="2" class="p-2.5 min-w-[220px] text-left font-bold text-slate-700">Ghi chú / Khó khăn & kiến nghị</th>
             </tr>
-            <tr class="bg-slate-700 text-white font-bold text-center border-b border-slate-600">
-              <th class="p-2 border-r border-slate-600 w-28 bg-slate-700 text-white text-center">
-                <div>Giai đoạn 1</div>
-                <div class="text-xs font-normal text-slate-300">2025-2027 / 2026-2030</div>
-              </th>
-              <th class="p-2 border-r border-slate-600 w-28 bg-slate-700 text-white text-center">
-                <div>Giai đoạn 2</div>
-                <div class="text-xs font-normal text-slate-300">2028-2030 / 2031-2045</div>
-              </th>
-              <th class="p-2 border-r border-slate-600 bg-amber-700/80 text-amber-100 w-24">Kết quả 2025</th>
-              <th class="p-2 border-r border-slate-600 bg-amber-700/80 text-amber-100 w-24">Ước tính 2026</th>
-              <th class="p-2 border-r border-slate-600 bg-amber-600/80 text-amber-100 w-24">2027</th>
-              <th class="p-2 border-r border-slate-600 bg-amber-600/80 text-amber-100 w-24">2028</th>
-              <th class="p-2 border-r border-slate-600 bg-amber-600/80 text-amber-100 w-24">2029</th>
-              <th class="p-2 border-r border-slate-600 bg-amber-600/80 text-amber-100 w-24">2030</th>
+            <tr class="bg-slate-50 text-slate-700 font-bold text-center border-b border-slate-200">
+              <th class="p-2 border-r border-slate-200 w-28 text-center font-bold text-slate-700">Giai đoạn 1</th>
+              <th class="p-2 border-r border-slate-200 w-28 text-center font-bold text-slate-700">Giai đoạn 2</th>
+              <th class="p-2 border-r border-slate-200 bg-amber-50/50 text-amber-900 w-24 font-bold">Kết quả 2025</th>
+              <th class="p-2 border-r border-slate-200 bg-amber-50/50 text-amber-900 w-24 font-bold">Ước tính 2026</th>
+              <th class="p-2 border-r border-slate-200 bg-blue-50/40 text-blue-900 w-24 font-bold">2027</th>
+              <th class="p-2 border-r border-slate-200 bg-blue-50/40 text-blue-900 w-24 font-bold">2028</th>
+              <th class="p-2 border-r border-slate-200 bg-blue-50/40 text-blue-900 w-24 font-bold">2029</th>
+              <th class="p-2 border-r border-slate-200 bg-blue-50/40 text-blue-900 w-24 font-bold">2030</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-200">
@@ -177,15 +171,13 @@
                 <td colspan="4" class="p-2.5 px-3">
                   I. QUYẾT ĐỊNH SỐ 2629/QĐ-TTg NGÀY 10/12/2024
                 </td>
-                <td class="p-2 text-center border-l border-blue-800 bg-blue-950/60">
-                  <span class="inline-block px-2 py-0.5 rounded bg-amber-400 text-slate-900 font-bold text-xs">2025 - 2027</span>
+                <td class="p-2 text-center border-l border-blue-800">
+                  <span class="inline-block px-2.5 py-0.5 rounded-md bg-white/15 text-white font-semibold text-xs tracking-wide">2025 - 2027</span>
                 </td>
-                <td class="p-2 text-center border-l border-blue-800 bg-blue-950/60">
-                  <span class="inline-block px-2 py-0.5 rounded bg-amber-400 text-slate-900 font-bold text-xs">2028 - 2030</span>
+                <td class="p-2 text-center border-l border-blue-800">
+                  <span class="inline-block px-2.5 py-0.5 rounded-md bg-white/15 text-white font-semibold text-xs tracking-wide">2028 - 2030</span>
                 </td>
-                <td colspan="6" class="p-2.5 px-3 text-right text-xs text-blue-200 font-medium italic border-l border-blue-800">
-                  Kế hoạch mục tiêu từng năm (đến 2030)
-                </td>
+                <td colspan="6" class="p-2.5 border-l border-blue-800"></td>
               </tr>
               <tr
                 v-for="(g, idx) in goals2629"
@@ -218,15 +210,13 @@
                 <td colspan="4" class="p-2.5 px-3">
                   II. QUYẾT ĐỊNH SỐ 1266/QĐ-TTg NGÀY 24/10/2024
                 </td>
-                <td class="p-2 text-center border-l border-blue-800 bg-blue-950/60">
-                  <span class="inline-block px-2 py-0.5 rounded bg-amber-400 text-slate-900 font-bold text-xs">2026 - 2030</span>
+                <td class="p-2 text-center border-l border-blue-800">
+                  <span class="inline-block px-2.5 py-0.5 rounded-md bg-white/15 text-white font-semibold text-xs tracking-wide">2026 - 2030</span>
                 </td>
-                <td class="p-2 text-center border-l border-blue-800 bg-blue-950/60">
-                  <span class="inline-block px-2 py-0.5 rounded bg-amber-400 text-slate-900 font-bold text-xs">2031 - 2045</span>
+                <td class="p-2 text-center border-l border-blue-800">
+                  <span class="inline-block px-2.5 py-0.5 rounded-md bg-white/15 text-white font-semibold text-xs tracking-wide">2031 - 2045</span>
                 </td>
-                <td colspan="6" class="p-2.5 px-3 text-right text-xs text-blue-200 font-medium italic border-l border-blue-800">
-                  Kế hoạch mục tiêu từng năm (đến 2030)
-                </td>
+                <td colspan="6" class="p-2.5 border-l border-blue-800"></td>
               </tr>
               <tr
                 v-for="(g, idx) in goals1266"
@@ -274,16 +264,16 @@
       <div class="overflow-x-auto border border-slate-200 rounded-xl shadow-2xs">
         <table class="w-full text-left text-xs border-collapse">
           <thead>
-            <tr class="bg-slate-800 text-white font-bold text-center border-b border-slate-700">
-              <th class="p-2.5 border-r border-slate-700 w-12">STT</th>
-              <th class="p-2.5 border-r border-slate-700 w-20">Mã NV</th>
-              <th class="p-2.5 border-r border-slate-700 min-w-[280px] text-left">Tên nhiệm vụ</th>
-              <th class="p-2.5 border-r border-slate-700 min-w-[180px] text-left">Cơ quan phối hợp</th>
-              <th class="p-2.5 border-r border-slate-700 w-24">Hạn hoàn thành</th>
-              <th class="p-2.5 border-r border-slate-700 w-32">Trạng thái thực hiện</th>
-              <th class="p-2.5 border-r border-slate-700 w-20">Tiến độ %</th>
-              <th class="p-2.5 border-r border-slate-700 min-w-[200px] text-left">Sản phẩm bàn giao</th>
-              <th class="p-2.5 min-w-[200px] text-left">Ghi chú</th>
+            <tr class="bg-slate-100 text-slate-800 font-bold text-center border-b border-slate-200">
+              <th class="p-2.5 border-r border-slate-200 w-12 font-bold text-slate-700">STT</th>
+              <th class="p-2.5 border-r border-slate-200 w-20 font-bold text-slate-700">Mã NV</th>
+              <th class="p-2.5 border-r border-slate-200 min-w-[280px] text-left font-bold text-slate-700">Tên nhiệm vụ</th>
+              <th class="p-2.5 border-r border-slate-200 min-w-[180px] text-left font-bold text-slate-700">Cơ quan phối hợp</th>
+              <th class="p-2.5 border-r border-slate-200 w-24 font-bold text-slate-700">Hạn hoàn thành</th>
+              <th class="p-2.5 border-r border-slate-200 w-32 font-bold text-slate-700">Trạng thái thực hiện</th>
+              <th class="p-2.5 border-r border-slate-200 w-20 font-bold text-slate-700">Tiến độ %</th>
+              <th class="p-2.5 border-r border-slate-200 min-w-[200px] text-left font-bold text-slate-700">Sản phẩm bàn giao</th>
+              <th class="p-2.5 min-w-[200px] text-left font-bold text-slate-700">Ghi chú</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-200">
