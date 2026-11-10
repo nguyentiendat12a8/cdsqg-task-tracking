@@ -69,7 +69,7 @@ const mockReportData = {
       plan2029: 9000000,
       plan2030: 10000000,
       notes: null,
-      applicableYears: [2027, 2028, 2029, 2030]
+      applicableYears: [2026, 2027, 2028, 2029, 2030]
     },
     {
       id: '12660000-0000-0000-0000-000000000004',
@@ -153,9 +153,9 @@ assert.equal(wsTasks['B4'].v, 'Mã NV', 'Must NOT have Căn cứ QĐ column!');
 assert.equal(wsTasks['C4'].v, 'Tên nhiệm vụ');
 assert.equal(wsTasks['D4'].v, 'Cơ quan phối hợp');
 assert.equal(wsTasks['E4'].v, 'Hạn hoàn thành');
-assert.equal(wsTasks['F4'].v, 'TRẠNG THÁI THỰC HIỆN [CẦN CHỌN]');
-assert.equal(wsTasks['G4'].v, 'Sản phẩm bàn giao');
-assert.equal(wsTasks['H4'].v, 'GHI CHÚ / KHÓ KHĂN & KIẾN NGHỊ [CẦN ĐIỀN]');
+assert.equal(wsTasks['G4'].v, 'TRẠNG THÁI THỰC HIỆN [CẦN CHỌN]');
+assert.equal(wsTasks['F4'].v, 'Sản phẩm bàn giao');
+assert.equal(wsTasks['H4'].v, 'GHI CHÚ / KHÓ KHĂN & KIẾN NGHỊ');
 assert.equal(wsTasks['I4'].v, 'ID Nhiệm Vụ (Ẩn)');
 assert.equal(wsTasks['J4'].v, 'ID Quyết Định (Ẩn)');
 
@@ -166,10 +166,10 @@ assert.ok(wsTasks['B5'].v.includes('QUYẾT ĐỊNH SỐ 2629/QĐ-TTg'));
 // Verify Task Data row (Row 6)
 assert.equal(wsTasks['A6'].v, 1);
 assert.equal(wsTasks['B6'].v, 'NV-01');
-assert.equal(wsTasks['F6'].v, 'Chưa thực hiện');
+assert.equal(wsTasks['G6'].v, 'Chưa thực hiện');
 
 // Verify validation dropdown coordinate
-assert.ok(statusCells.includes('F6'), 'Status dropdown validation must target column F!');
+assert.ok(statusCells.includes('G6'), 'Status dropdown validation must target column G!');
 
 console.log('   Sheet 2 (Nhiệm vụ) structure verified with 8 visible columns!');
 
@@ -193,7 +193,7 @@ wsGoals['M8'] = { t: 's', v: 'Kế hoạch đã ban hành' };
 
 wsGoals['H10'] = { t: 's', v: '75%' };
 
-wsTasks['F6'] = { t: 's', v: 'Đang thực hiện' };
+wsTasks['G6'] = { t: 's', v: 'Đang thực hiện' };
 wsTasks['H6'] = { t: 's', v: 'Đang hoàn thiện thiết kế' };
 
 const testBuffer = XLSX.write(testWb, { type: 'buffer', bookType: 'xlsx' });
@@ -208,19 +208,19 @@ const parseResult = await parseUnifiedProgressReportFile(fakeFile, {
   reportYear: 2026
 });
 
-assert.equal(parseResult.goals.length, 3, 'Should parse 3 goals with estimate 2026');
+assert.equal(parseResult.goals.filter(g=>g.periodYear===2026).length, 3, 'Should parse 3 goals with estimate 2026');
 
-const pMt08 = parseResult.goals.find(g => g.code === 'MT-08');
+const pMt08 = parseResult.goals.find(g => g.periodYear === 2026 && g.code === 'MT-08');
 assert.ok(pMt08);
 assert.equal(pMt08.value, 85);
 assert.equal(pMt08.summaryNotes, 'Tiến độ rất tốt');
 
-const pMt24 = parseResult.goals.find(g => g.code === 'MT-24');
+const pMt24 = parseResult.goals.find(g => g.periodYear === 2026 && g.code === 'MT-24');
 assert.ok(pMt24);
 assert.equal(pMt24.value, 7000000, 'Must parse 7.000.000 with thousand dot correctly to 7000000');
 assert.equal(pMt24.summaryNotes, 'Kế hoạch đã ban hành');
 
-const pMt04 = parseResult.goals.find(g => g.code === 'MT-04');
+const pMt04 = parseResult.goals.find(g => g.periodYear === 2026 && g.code === 'MT-04');
 assert.ok(pMt04);
 assert.equal(pMt04.value, 75);
 
@@ -262,10 +262,10 @@ const userParseResult = await parseUnifiedProgressReportFile(userFakeFile, {
   reportYear: 2026
 });
 
-assert.equal(userParseResult.goals.length, 1, 'Should extract MT-08 from user draft');
-assert.equal(userParseResult.goals[0].code, 'MT-08');
-assert.equal(userParseResult.goals[0].value, 88);
-assert.equal(userParseResult.goals[0].summaryNotes, 'Cập nhật từ draft');
+assert.equal(userParseResult.goals.filter(g=>g.periodYear===2026).length, 1, 'Should extract MT-08 from user draft');
+assert.equal(userParseResult.goals.find(g=>g.periodYear===2026).code, 'MT-08');
+assert.equal(userParseResult.goals.find(g=>g.periodYear===2026).value, 88);
+assert.equal(userParseResult.goals.find(g=>g.periodYear===2026).summaryNotes, 'Cập nhật từ draft');
 
 assert.equal(userParseResult.plans.length, 1, 'Should extract MT-08 plan 2027 from user draft');
 assert.equal(userParseResult.plans[0].year, 2027);

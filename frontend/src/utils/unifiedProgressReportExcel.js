@@ -17,9 +17,9 @@ const HEADER_STYLE = {
   border: THIN_BORDER
 };
 
-const SUBHEADER_YELLOW_STYLE = {
-  font: { name: 'Segoe UI', sz: 9.5, bold: true, color: { rgb: '0F172A' } },
-  fill: { fgColor: { rgb: 'FEF08A' } },
+const SUBHEADER_INPUT_STYLE = {
+  font: { name: 'Segoe UI', sz: 9.5, bold: true, color: { rgb: 'FFFFFF' } },
+  fill: { fgColor: { rgb: '1E3A8A' } },
   alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
   border: THIN_BORDER
 };
@@ -33,7 +33,7 @@ const SECTION_STYLE = {
 
 const SECTION_PHASE_STYLE = {
   font: { name: 'Segoe UI', sz: 9.5, bold: true, color: { rgb: 'FFFFFF' } },
-  fill: { fgColor: { rgb: '2563EB' } },
+  fill: { fgColor: { rgb: '1E3A8A' } },
   alignment: { horizontal: 'center', vertical: 'center' },
   border: THIN_BORDER
 };
@@ -53,8 +53,8 @@ const SUBTITLE_STYLE = {
 };
 
 const GUIDE_STYLE = {
-  font: { name: 'Segoe UI', sz: 9.5, italic: true, color: { rgb: '78350F' } },
-  fill: { fgColor: { rgb: 'FFFBEB' } },
+  font: { name: 'Segoe UI', sz: 9.5, italic: true, color: { rgb: '294476' } },
+  fill: { fgColor: { rgb: 'F1F5FC' } },
   alignment: { horizontal: 'left', vertical: 'center', wrapText: true },
   border: THIN_BORDER
 };
@@ -76,20 +76,20 @@ const CELL_TEXT_CENTER = {
 const CELL_CODE = {
   font: { name: 'Segoe UI', sz: 10, bold: true, color: { rgb: '1E3A8A' } },
   fill: { fgColor: { rgb: 'F8FAFC' } },
-  alignment: { horizontal: 'center', vertical: 'center' },
+  alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
   border: THIN_BORDER
 };
 
 const CELL_EDITABLE = {
   font: { name: 'Segoe UI', sz: 10, bold: true, color: { rgb: '047857' } },
-  fill: { fgColor: { rgb: 'FEFCE8' } },
+  fill: { fgColor: { rgb: 'EAF1FC' } },
   alignment: { horizontal: 'center', vertical: 'center' },
   border: THIN_BORDER
 };
 
 const CELL_DISABLED = {
   font: { name: 'Segoe UI', sz: 10, color: { rgb: '94A3B8' } },
-  fill: { fgColor: { rgb: 'F1F5F9' } },
+  fill: { fgColor: { rgb: 'F8FAFC' } },
   alignment: { horizontal: 'center', vertical: 'center' },
   border: THIN_BORDER
 };
@@ -100,6 +100,20 @@ const CELL_NOTES = {
   alignment: { horizontal: 'left', vertical: 'center', wrapText: true },
   border: THIN_BORDER
 };
+
+function formatReportCodes(item) {
+  const raw = Array.isArray(item.subCodes) && item.subCodes.length ? item.subCodes.join('\n') : String(item.code || '');
+  return raw.replace(/(\d)(?=(?:MT|NV)-)/g, '$1\n').split(/[\r\n,;]+/).map(code => code.trim()).filter(Boolean).join('\n');
+}
+
+function reportRowHeight(row, textColumns) {
+  let lines = 1;
+  for (const [col, width] of textColumns) {
+    const wrapped = String(row[col] ?? '').split(/\r?\n/).reduce((sum, line) => sum + Math.max(1, Math.ceil(line.length / (width * 0.9))), 0);
+    lines = Math.max(lines, wrapped);
+  }
+  return Math.max(38, lines * 17 + 14);
+}
 
 function applyStyleToRange(ws, r1, c1, r2, c2, style, XLSX) {
   for (let r = r1; r <= r2; r++) {
@@ -190,7 +204,7 @@ export function buildGoalsWorksheet(goals, agencyName, dateStr, XLSX) {
 
   // Row 3: Căn cứ & Hướng dẫn (Row 2)
   rows.push([
-    'CĂN CỨ: Kế hoạch mục tiêu được xây dựng căn cứ theo Kế hoạch chuyển đổi số 5 năm của cơ quan, đơn vị đã được cấp có thẩm quyền ban hành. Trường hợp chưa ban hành kế hoạch thì khẩn trương rà soát, xây dựng và ban hành theo đúng quy định.\nHƯỚNG DẪN: Điền vào ô màu vàng (ước tính 2026 và kế hoạch 2027-2030); không điền vào ô màu xám (—).'
+    'CĂN CỨ: Kế hoạch mục tiêu được xây dựng căn cứ theo Kế hoạch chuyển đổi số 5 năm của cơ quan, đơn vị đã được cấp có thẩm quyền ban hành. Trường hợp chưa ban hành kế hoạch thì khẩn trương rà soát, xây dựng và ban hành theo đúng quy định.\nHƯỚNG DẪN: Điền vào ô màu xanh nhạt có dấu — (kết quả 2025, ước tính 2026 và kế hoạch 2027-2030); các ô dữ liệu cố định và ô không áp dụng đã khóa.'
   ]);
   merges.push({ s: { r: 2, c: 0 }, e: { r: 2, c: 12 } });
 
@@ -208,7 +222,7 @@ export function buildGoalsWorksheet(goals, agencyName, dateStr, XLSX) {
     '',
     '',
     '',
-    'GHI CHÚ / KHÓ KHĂN & KIẾN NGHỊ [CẦN ĐIỀN]'
+    'GHI CHÚ / KHÓ KHĂN & KIẾN NGHỊ'
   ]);
 
   // Row 5: Level 2 Header (Row 4)
@@ -261,12 +275,12 @@ export function buildGoalsWorksheet(goals, agencyName, dateStr, XLSX) {
       const valPlan2029 = formatExcelNumericVal(g.plan2029, isProgressReportYearApplicable(g, 2029));
       const valPlan2030 = formatExcelNumericVal(g.plan2030, isProgressReportYearApplicable(g, 2030));
 
-      const valTarget1 = formatExcelTarget(g.targetPhase1);
-      const valTarget2 = formatExcelTarget(g.targetPhase2);
+      const valTarget1 = g.targetPhase1 == null || g.targetPhase1 === '' || g.targetPhase1 === '—' ? '' : formatExcelTarget(g.targetPhase1);
+      const valTarget2 = g.targetPhase2 == null || g.targetPhase2 === '' || g.targetPhase2 === '—' ? '' : formatExcelTarget(g.targetPhase2);
 
       const row = [
         g.sequenceNumber || (idx + 1),
-        g.code || '',
+        formatReportCodes(g),
         g.title || '',
         g.unitName || '%',
         valTarget1,
@@ -297,21 +311,12 @@ export function buildGoalsWorksheet(goals, agencyName, dateStr, XLSX) {
         }
       });
 
-      // Mark editable vs disabled cells
-      const checkCell = (val, col) => {
-        if (val === '—') disabledCellCoords.push({ r: rIdx, c: col });
-        else editableCellCoords.push({ r: rIdx, c: col });
-      };
-
-      if (valAct2025 === '—') {
-        disabledCellCoords.push({ r: rIdx, c: 6 });
+      for (const [year, col] of [[2025, 6], [2026, 7], [2027, 8], [2028, 9], [2029, 10], [2030, 11]]) {
+        if (isProgressReportYearApplicable(g, year)) editableCellCoords.push({ r: rIdx, c: col });
+        else disabledCellCoords.push({ r: rIdx, c: col });
       }
+      editableCellCoords.push({ r: rIdx, c: 12 }); // Notes
 
-      checkCell(valEst2026, 7);
-      checkCell(valPlan2027, 8);
-      checkCell(valPlan2028, 9);
-      checkCell(valPlan2029, 10);
-      checkCell(valPlan2030, 11);
     });
   }
 
@@ -343,11 +348,11 @@ export function buildGoalsWorksheet(goals, agencyName, dateStr, XLSX) {
 
   // Set Row Heights
   ws['!rows'] = [
-    { hpt: 28 }, // Title
-    { hpt: 22 }, // Subtitle
-    { hpt: 48 }, // Guide
-    { hpt: 24 }, // Hdr 1
-    { hpt: 24 }  // Hdr 2
+    { hpt: 34 }, // Title
+    { hpt: 28 }, // Subtitle
+    { hpt: 66 }, // Guide
+    { hpt: 30 }, // Hdr 1
+    { hpt: 34 }  // Hdr 2
   ];
 
   // Apply Styles
@@ -360,15 +365,16 @@ export function buildGoalsWorksheet(goals, agencyName, dateStr, XLSX) {
   applyStyleToRange(ws, 3, 4, 4, 5, HEADER_STYLE, XLSX); // Kết quả theo QĐ
   applyStyleToRange(ws, 3, 6, 4, 6, HEADER_STYLE, XLSX); // Kết quả 2025
   applyStyleToRange(ws, 3, 7, 3, 7, HEADER_STYLE, XLSX);
-  applyStyleToRange(ws, 4, 7, 4, 7, SUBHEADER_YELLOW_STYLE, XLSX); // Ước tính 2026
+  applyStyleToRange(ws, 4, 7, 4, 7, SUBHEADER_INPUT_STYLE, XLSX); // Ước tính 2026
   applyStyleToRange(ws, 3, 8, 3, 11, HEADER_STYLE, XLSX);          // Mục tiêu từng năm
-  applyStyleToRange(ws, 4, 8, 4, 11, SUBHEADER_YELLOW_STYLE, XLSX); // 2027-2030
+  applyStyleToRange(ws, 4, 8, 4, 11, SUBHEADER_INPUT_STYLE, XLSX); // 2027-2030
   applyStyleToRange(ws, 3, 12, 4, 12, HEADER_STYLE, XLSX);         // Ghi chú
 
   // Section styling
   const secRowIndices = sectionRows.map(s => s.r);
   sectionRows.forEach(({ r }) => {
     applyStyleToRange(ws, r, 0, r, 3, SECTION_STYLE, XLSX);
+    applyStyleToRange(ws, r, 0, r, 0, { ...SECTION_STYLE, alignment: { horizontal: 'center', vertical: 'center' } }, XLSX);
     applyStyleToRange(ws, r, 4, r, 5, SECTION_PHASE_STYLE, XLSX);
     applyStyleToRange(ws, r, 6, r, 12, SECTION_STYLE, XLSX);
   });
@@ -389,13 +395,23 @@ export function buildGoalsWorksheet(goals, agencyName, dateStr, XLSX) {
   // Highlight editable & disabled cells
   editableCellCoords.forEach(({ r, c }) => {
     const ref = XLSX.utils.encode_cell({ r, c });
-    if (ws[ref]) ws[ref].s = { ...CELL_EDITABLE };
+    if (ws[ref]) {
+      ws[ref].s = { ...(c === 12 ? CELL_NOTES : CELL_EDITABLE), fill: { fgColor: { rgb: 'EAF1FC' } } };
+      if (ws[ref].v == null || ws[ref].v === '') { ws[ref].t = 's'; ws[ref].v = '—'; }
+    }
   });
 
   disabledCellCoords.forEach(({ r, c }) => {
     const ref = XLSX.utils.encode_cell({ r, c });
-    if (ws[ref]) ws[ref].s = { ...CELL_DISABLED };
+    if (ws[ref]) { ws[ref].s = { ...CELL_DISABLED }; ws[ref].t = 's'; ws[ref].v = ''; }
   });
+
+  for (const sec of sectionRows) ws['!rows'][sec.r] = { hpt: 32 };
+  for (let r = 5; r < rows.length; r++) {
+    if (secRowIndices.includes(r)) continue;
+    ws['!rows'][r] = { hpt: reportRowHeight(rows[r], [[1,10],[2,46],[12,45]]) };
+  }
+  ws['!reportEditableCells'] = editableCellCoords.map(({r,c})=>XLSX.utils.encode_cell({r,c}));
 
   // Number format on numeric cells
   numericCellCoords.forEach(({ r, c, val }) => {
@@ -428,7 +444,7 @@ export function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
 
   // Guide (Row 2)
   rows.push([
-    'HƯỚNG DẪN: Chọn Trạng thái thực hiện tại cột F (màu vàng); Ghi chú khó khăn vướng mắc tại cột H.'
+    'HƯỚNG DẪN: Chọn Trạng thái thực hiện tại cột G (màu xanh nhạt); Ghi chú khó khăn vướng mắc tại cột H.'
   ]);
   merges.push({ s: { r: 2, c: 0 }, e: { r: 2, c: 7 } });
 
@@ -439,9 +455,9 @@ export function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
     'Tên nhiệm vụ',
     'Cơ quan phối hợp',
     'Hạn hoàn thành',
-    'TRẠNG THÁI THỰC HIỆN [CẦN CHỌN]',
     'Sản phẩm bàn giao',
-    'GHI CHÚ / KHÓ KHĂN & KIẾN NGHỊ [CẦN ĐIỀN]',
+    'TRẠNG THÁI THỰC HIỆN [CẦN CHỌN]',
+    'GHI CHÚ / KHÓ KHĂN & KIẾN NGHỊ',
     'ID Nhiệm Vụ (Ẩn)',
     'ID Quyết Định (Ẩn)'
   ];
@@ -465,17 +481,17 @@ export function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
         t.code || '',
         t.title || '',
         t.coordinatingAgencies || '',
-        t.dueDate || '—',
-        t.statusLabel || 'Chưa thực hiện',
+        t.dueDate && t.dueDate !== '—' ? t.dueDate : '',
         t.deliverables || '',
+        t.statusLabel || 'Chưa thực hiện',
         t.notes || '',
         t.id || '',
         t.documentId || ''
       ];
       rows.push(row);
 
-      // Track cell for Excel data validation dropdown (Column F)
-      statusCells.push(`F${rIdx + 1}`);
+      // Track cell for Excel data validation dropdown (Column G)
+      statusCells.push(`G${rIdx + 1}`);
     });
   }
 
@@ -489,20 +505,20 @@ export function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
     { wch: 6 },  // STT (A)
     { wch: 12 }, // Mã NV (B)
     { wch: 45 }, // Tên NV (C)
-    { wch: 25 }, // Phối hợp (D)
+    { wch: 20 }, // Phối hợp (D) - thu gọn nhẹ
     { wch: 14 }, // Hạn (E)
-    { wch: 28 }, // Trạng thái (F) - Editable
-    { wch: 30 }, // Sản phẩm (G)
+    { wch: 32 }, // Sản phẩm (F)
+    { wch: 26 }, // Trạng thái (G) - Editable
     { wch: 40 }, // Ghi chú (H) - Editable
     { wch: 36, hidden: true }, // ID NV (I)
     { wch: 36, hidden: true }  // ID QĐ (J)
   ];
 
   ws['!rows'] = [
-    { hpt: 28 }, // Title
-    { hpt: 22 }, // Subtitle
-    { hpt: 32 }, // Guide
-    { hpt: 26 }  // Header
+    { hpt: 34 }, // Title
+    { hpt: 28 }, // Subtitle
+    { hpt: 48 }, // Guide
+    { hpt: 36 }  // Header
   ];
 
   applyStyleToRange(ws, 0, 0, 0, 7, TITLE_STYLE, XLSX);
@@ -511,12 +527,15 @@ export function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
 
   // Headers
   applyStyleToRange(ws, 3, 0, 3, 4, HEADER_STYLE, XLSX);
-  applyStyleToRange(ws, 3, 5, 3, 5, SUBHEADER_YELLOW_STYLE, XLSX);
-  applyStyleToRange(ws, 3, 6, 3, 7, HEADER_STYLE, XLSX);
+  applyStyleToRange(ws, 3, 6, 3, 6, SUBHEADER_INPUT_STYLE, XLSX);
+  applyStyleToRange(ws, 3, 7, 3, 7, HEADER_STYLE, XLSX);
+
+  applyStyleToRange(ws, 3, 5, 3, 5, HEADER_STYLE, XLSX);
 
   // Section Rows
   sectionRows.forEach(r => {
     applyStyleToRange(ws, r, 0, r, 7, SECTION_STYLE, XLSX);
+    applyStyleToRange(ws, r, 0, r, 0, { ...SECTION_STYLE, alignment: { horizontal: 'center', vertical: 'center' } }, XLSX);
   });
 
   // Data rows
@@ -527,11 +546,23 @@ export function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
     applyStyleToRange(ws, r, 2, r, 2, CELL_TEXT_LEFT, XLSX);
     applyStyleToRange(ws, r, 3, r, 3, CELL_TEXT_LEFT, XLSX);
     applyStyleToRange(ws, r, 4, r, 4, CELL_TEXT_CENTER, XLSX);
-    applyStyleToRange(ws, r, 5, r, 5, CELL_EDITABLE, XLSX); // Status
-    applyStyleToRange(ws, r, 6, r, 6, CELL_TEXT_LEFT, XLSX);
+    applyStyleToRange(ws, r, 6, r, 6, CELL_EDITABLE, XLSX); // Status
+    applyStyleToRange(ws, r, 5, r, 5, CELL_TEXT_LEFT, XLSX);
     applyStyleToRange(ws, r, 7, r, 7, CELL_NOTES, XLSX);
   }
 
+  ws['!reportEditableCells'] = [];
+  sectionRows.forEach(r => { ws['!rows'][r] = { hpt: 32 }; });
+  for (let r = 4; r < rows.length; r++) {
+    if (sectionRows.includes(r)) continue;
+    ws['!rows'][r] = { hpt: reportRowHeight(rows[r], [[2,45],[3,25],[5,30],[7,40]]) };
+    for (const c of [6,7]) {
+      const ref = XLSX.utils.encode_cell({r,c});
+      ws['!reportEditableCells'].push(ref);
+      ws[ref].s = { ...ws[ref].s, fill: { fgColor: { rgb: 'EAF1FC' } } };
+      if (ws[ref].v == null || ws[ref].v === '') { ws[ref].t = 's'; ws[ref].v = '—'; }
+    }
+  }
   return { ws, statusCells };
 }
 
@@ -613,6 +644,7 @@ export async function parseUnifiedProgressReportFile(file, { existingGoals = [],
       const colMap = {
         code: findCol(c => String(c || '').toLowerCase().includes('mã'), 1),
         notes: findCol(c => String(c || '').toLowerCase().includes('ghi chú'), 12),
+        act2025: findCol(c => String(c || '').includes('2025'), 6),
         est2026: findCol(c => String(c || '').includes('2026'), 7),
         plan2027: findCol(c => String(c || '').includes('2027'), 8),
         plan2028: findCol(c => String(c || '').includes('2028'), 9),
@@ -631,7 +663,7 @@ export async function parseUnifiedProgressReportFile(file, { existingGoals = [],
         const rowCodes = rawCode.split(/[\r\n,\/]+/).map(c => c.trim()).filter(Boolean);
 
         const matchedGoal = existingGoals.find(g => {
-          if (g.code && g.code.trim().toLowerCase() === rawCode.toLowerCase()) return true;
+          if (formatReportCodes(g).toLowerCase() === formatReportCodes({code:rawCode}).toLowerCase()) return true;
           if (g.subCodes && g.subCodes.some(sc => rowCodes.some(rc => rc.toLowerCase() === sc.toLowerCase()))) return true;
           const gCodes = (g.code || '').split(/[\r\n,\/]+/).map(c => c.trim().toLowerCase()).filter(Boolean);
           if (rowCodes.some(rc => gCodes.includes(rc.toLowerCase()))) return true;
@@ -639,22 +671,19 @@ export async function parseUnifiedProgressReportFile(file, { existingGoals = [],
         });
         if (!matchedGoal) continue;
 
-        const est2026Raw = row[colMap.est2026];
-        const notesRaw = row[colMap.notes] !== undefined && row[colMap.notes] !== null ? String(row[colMap.notes]).trim() : '';
-
-        // If progress value provided
-        const numVal = parseVNNumber(est2026Raw);
-        if (numVal != null) {
-          const goalCode = matchedGoal.subCodes?.[0] || rowCodes[0] || rawCode;
-          const goalId = matchedGoal.subGoalIds?.[0] || matchedGoal.id;
+        const notesRaw = row[colMap.notes] !== undefined && row[colMap.notes] !== null ? String(row[colMap.notes]).trim().replace(/^—$/, '') : '';
+        for (const [year, col] of [[2025, colMap.act2025], [2026, colMap.est2026]]) {
+          if (!isProgressReportYearApplicable(matchedGoal, year)) continue;
+          const numVal = parseVNNumber(row[col]);
+          if (numVal == null) continue;
           parsedGoals.push({
-            code: goalCode,
-            id: goalId,
+            code: matchedGoal.subCodes?.[0] || rowCodes[0] || rawCode,
+            id: matchedGoal.subGoalIds?.[0] || matchedGoal.id,
             documentId: matchedGoal.documentId,
             title: matchedGoal.title,
             value: numVal,
             summaryNotes: notesRaw || null,
-            periodYear: reportYear
+            periodYear: year
           });
         }
 
@@ -728,7 +757,7 @@ export async function parseUnifiedProgressReportFile(file, { existingGoals = [],
 
         const statusRaw = row[colMap.status] !== undefined && row[colMap.status] !== null ? String(row[colMap.status]).trim() : '';
         const percentRaw = row[colMap.percent];
-        const notesRaw = row[colMap.notes] !== undefined && row[colMap.notes] !== null ? String(row[colMap.notes]).trim() : '';
+        const notesRaw = row[colMap.notes] !== undefined && row[colMap.notes] !== null ? String(row[colMap.notes]).trim().replace(/^—$/, '') : '';
 
         const sLower = statusRaw.toLowerCase();
         let mappedStatus = null;
