@@ -113,3 +113,10 @@ Người dùng cho phép thay quy định font/mật độ cũ. Tự lưu Be Vie
 Nguyên nhân: bộ lọc cao cố định so với vùng nhìn; popover/select định vị bằng chiều cao ước lượng; thanh tìm kiếm không wrap; bảng dùng phép trừ chiều cao cố định bất kể header thực tế. Sửa tại OverlayPanel, SearchableSelect, DocumentFilters, accessibleData/accessibleDialog và style chung. Giữ bộ lọc kiểu cũ nếu đủ chỗ theo phản hồi người dùng; fallback cạnh phải chỉ khi không vừa. Chừa footer, cuộn field riêng, giới hạn popup theo dvh. Header của mục tiêu/nhiệm vụ/báo cáo xuống hàng theo breakpoint, giảm padding trên laptop thấp. Không thay schema, filter semantics hay dữ liệu.
 
 Kiểm chứng local: laptop-layout.browser.mjs nạp từng route hoàn chỉnh với API giả, kiểm tra 13 màn ở năm viewport. Bộ lọc, footer và select phải ở trong vùng nhìn; cuộn field không dịch footer; desktop rộng không bật fallback. Thêm popup mục tiêu/nhiệm vụ và bảng 10 dòng để kiểm tra chiều cao/phân trang. Kiểm tra này không phải chứng nhận toàn bộ màn nghiệp vụ với mọi dữ liệu production.
+
+
+## 10/11/2026 — Bảng báo cáo tiến độ theo cơ quan
+
+Gộp thanh nhóm quyết định của tab mục tiêu đủ 13 cột (bản cũ mới phủ 12), đưa nhãn giai đoạn vào cùng cell; sửa empty colspan tương ứng. Chỉnh header hai tầng sticky, khoảng cách cell, dòng xen kẽ và vùng cuộn riêng cho mục tiêu/nhiệm vụ. Chú giải trắng: dữ liệu gốc/kết quả 2025; vàng: nhập trong Excel; xám có nhãn: không áp dụng/không điền. Ô hợp lệ trống hiển thị Chưa nhập; số 0 giữ nguyên. shared/progressReportCells.js dùng ApplicableYears từ API, bắt buộc 1266 không có kết quả 2025; dùng chung cho UI và Excel để không điền số liệu vào ô loại trừ. Không thay dữ liệu đã lưu. Test progress-report-table.browser.mjs kiểm tra 2629 giai đoạn 1/2, 1266, zero/null, colspan và file Excel ở desktop/mobile.
+
+10/11/2026 — Theo phản hồi tiếp theo: bỏ chú giải và chữ Chưa nhập/Chưa có/Không áp dụng trong ô; giữ dấu — như cũ, phân biệt bằng nền vàng nhạt và xám đậm hơn. Giữ aria-label và quy tắc năm áp dụng cho UI/Excel.

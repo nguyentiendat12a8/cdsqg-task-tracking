@@ -136,8 +136,8 @@
 
     <!-- Tab 1: MỤC TIÊU -->
     <div v-else-if="activeTab === 'goals'" class="p-4 space-y-4">
-      <div class="overflow-x-auto border border-slate-200 rounded-xl shadow-2xs">
-        <table class="w-full text-left text-xs border-collapse">
+      <div class="progress-report-scroll">
+        <table class="progress-report-table progress-goals-table" aria-label="Báo cáo tiến độ mục tiêu">
           <thead>
             <tr class="bg-slate-100 text-slate-800 font-bold text-center border-b border-slate-200">
               <th rowspan="2" class="p-2.5 border-r border-slate-200 w-12 font-bold text-slate-700">STT</th>
@@ -162,27 +162,26 @@
           </thead>
           <tbody class="divide-y divide-slate-200">
             <tr v-if="goalsList.length === 0" class="text-slate-500 italic text-center">
-              <td colspan="12" class="p-6">Không có mục tiêu nào được giao cho đơn vị.</td>
+              <td colspan="13" class="p-6">Không có mục tiêu nào được giao cho đơn vị.</td>
             </tr>
 
             <!-- SECTION I: 2629 -->
             <template v-if="goals2629.length > 0">
-              <tr class="bg-blue-900 text-white font-bold border-b border-blue-800">
-                <td colspan="4" class="p-2.5 px-3">
-                  I. QUYẾT ĐỊNH SỐ 2629/QĐ-TTg NGÀY 10/12/2024
+              <tr class="report-section-row">
+                <td colspan="13">
+                  <div class="report-section-content">
+                    <span>I. QUYẾT ĐỊNH SỐ 2629/QĐ-TTg NGÀY 10/12/2024</span>
+                    <div class="report-phase-list">
+                      <span class="report-phase-chip">Giai đoạn 1: 2025 - 2027</span>
+                      <span class="report-phase-chip">Giai đoạn 2: 2028 - 2030</span>
+                    </div>
+                  </div>
                 </td>
-                <td class="p-2 text-center border-l border-blue-800">
-                  <span class="inline-block px-2.5 py-0.5 rounded-md bg-white/15 text-white font-semibold text-xs tracking-wide">2025 - 2027</span>
-                </td>
-                <td class="p-2 text-center border-l border-blue-800">
-                  <span class="inline-block px-2.5 py-0.5 rounded-md bg-white/15 text-white font-semibold text-xs tracking-wide">2028 - 2030</span>
-                </td>
-                <td colspan="6" class="p-2.5 border-l border-blue-800"></td>
               </tr>
               <tr
                 v-for="(g, idx) in goals2629"
                 :key="g.id"
-                class="hover:bg-slate-50/80 transition font-normal"
+                class="report-data-row transition font-normal"
               >
                 <td class="p-2.5 text-center font-medium text-slate-500 border-r border-slate-200">{{ g.sequenceNumber || (idx + 1) }}</td>
                 <td class="p-2.5 text-center border-r border-slate-200">
@@ -194,34 +193,45 @@
                 <td class="p-2.5 text-center border-r border-slate-200 text-slate-600">{{ g.unitName }}</td>
                 <td class="p-2.5 text-center border-r border-slate-200 font-semibold text-slate-700">{{ formatTarget(g.targetPhase1) }}</td>
                 <td class="p-2.5 text-center border-r border-slate-200 font-semibold text-slate-700">{{ formatTarget(g.targetPhase2) }}</td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.actual2025)">{{ formatCellVal(g.actual2025, g.unitName) }}</td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.estimate2026)">{{ formatCellVal(g.estimate2026, g.unitName) }}</td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2027)">{{ formatCellVal(g.plan2027, g.unitName) }}</td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2028)">{{ formatCellVal(g.plan2028, g.unitName) }}</td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2029)">{{ formatCellVal(g.plan2029, g.unitName) }}</td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2030)">{{ formatCellVal(g.plan2030, g.unitName) }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2025)" :data-report-year="2025" :aria-label="reportYearCellLabel(g, 2025)">
+                  {{ formatCellVal(progressReportYearValue(g, 2025), g.unitName) }}
+                </td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2026)" :data-report-year="2026" :aria-label="reportYearCellLabel(g, 2026)">
+                  {{ formatCellVal(progressReportYearValue(g, 2026), g.unitName) }}
+                </td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2027)" :data-report-year="2027" :aria-label="reportYearCellLabel(g, 2027)">
+                  {{ formatCellVal(progressReportYearValue(g, 2027), g.unitName) }}
+                </td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2028)" :data-report-year="2028" :aria-label="reportYearCellLabel(g, 2028)">
+                  {{ formatCellVal(progressReportYearValue(g, 2028), g.unitName) }}
+                </td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2029)" :data-report-year="2029" :aria-label="reportYearCellLabel(g, 2029)">
+                  {{ formatCellVal(progressReportYearValue(g, 2029), g.unitName) }}
+                </td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2030)" :data-report-year="2030" :aria-label="reportYearCellLabel(g, 2030)">
+                  {{ formatCellVal(progressReportYearValue(g, 2030), g.unitName) }}
+                </td>
                 <td class="p-2.5 text-slate-600 text-xs leading-relaxed">{{ g.notes || '' }}</td>
               </tr>
             </template>
 
             <!-- SECTION II: 1266 -->
             <template v-if="goals1266.length > 0">
-              <tr class="bg-blue-900 text-white font-bold border-b border-blue-800">
-                <td colspan="4" class="p-2.5 px-3">
-                  II. QUYẾT ĐỊNH SỐ 1266/QĐ-TTg NGÀY 24/10/2024
+              <tr class="report-section-row">
+                <td colspan="13">
+                  <div class="report-section-content">
+                    <span>II. QUYẾT ĐỊNH SỐ 1266/QĐ-TTg NGÀY 24/10/2024</span>
+                    <div class="report-phase-list">
+                      <span class="report-phase-chip">Giai đoạn 1: 2026 - 2030</span>
+                      <span class="report-phase-chip">Giai đoạn 2: 2031 - 2045</span>
+                    </div>
+                  </div>
                 </td>
-                <td class="p-2 text-center border-l border-blue-800">
-                  <span class="inline-block px-2.5 py-0.5 rounded-md bg-white/15 text-white font-semibold text-xs tracking-wide">2026 - 2030</span>
-                </td>
-                <td class="p-2 text-center border-l border-blue-800">
-                  <span class="inline-block px-2.5 py-0.5 rounded-md bg-white/15 text-white font-semibold text-xs tracking-wide">2031 - 2045</span>
-                </td>
-                <td colspan="6" class="p-2.5 border-l border-blue-800"></td>
               </tr>
               <tr
                 v-for="(g, idx) in goals1266"
                 :key="g.id"
-                class="hover:bg-slate-50/80 transition font-normal"
+                class="report-data-row transition font-normal"
               >
                 <td class="p-2.5 text-center font-medium text-slate-500 border-r border-slate-200">{{ g.sequenceNumber || (idx + 1) }}</td>
                 <td class="p-2.5 text-center border-r border-slate-200">
@@ -233,12 +243,24 @@
                 <td class="p-2.5 text-center border-r border-slate-200 text-slate-600">{{ g.unitName }}</td>
                 <td class="p-2.5 text-center border-r border-slate-200 font-semibold text-slate-700">{{ formatTarget(g.targetPhase1) }}</td>
                 <td class="p-2.5 text-center border-r border-slate-200 font-semibold text-slate-700">{{ formatTarget(g.targetPhase2) }}</td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.actual2025)">{{ formatCellVal(g.actual2025, g.unitName) }}</td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.estimate2026)">{{ formatCellVal(g.estimate2026, g.unitName) }}</td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2027)">{{ formatCellVal(g.plan2027, g.unitName) }}</td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2028)">{{ formatCellVal(g.plan2028, g.unitName) }}</td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2029)">{{ formatCellVal(g.plan2029, g.unitName) }}</td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2030)">{{ formatCellVal(g.plan2030, g.unitName) }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2025)" :data-report-year="2025" :aria-label="reportYearCellLabel(g, 2025)">
+                  {{ formatCellVal(progressReportYearValue(g, 2025), g.unitName) }}
+                </td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2026)" :data-report-year="2026" :aria-label="reportYearCellLabel(g, 2026)">
+                  {{ formatCellVal(progressReportYearValue(g, 2026), g.unitName) }}
+                </td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2027)" :data-report-year="2027" :aria-label="reportYearCellLabel(g, 2027)">
+                  {{ formatCellVal(progressReportYearValue(g, 2027), g.unitName) }}
+                </td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2028)" :data-report-year="2028" :aria-label="reportYearCellLabel(g, 2028)">
+                  {{ formatCellVal(progressReportYearValue(g, 2028), g.unitName) }}
+                </td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2029)" :data-report-year="2029" :aria-label="reportYearCellLabel(g, 2029)">
+                  {{ formatCellVal(progressReportYearValue(g, 2029), g.unitName) }}
+                </td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2030)" :data-report-year="2030" :aria-label="reportYearCellLabel(g, 2030)">
+                  {{ formatCellVal(progressReportYearValue(g, 2030), g.unitName) }}
+                </td>
                 <td class="p-2.5 text-slate-600 text-xs leading-relaxed">{{ g.notes || '' }}</td>
               </tr>
             </template>
@@ -261,8 +283,8 @@
 
     <!-- Tab 2: NHIỆM VỤ -->
     <div v-else-if="activeTab === 'tasks'" class="p-4 space-y-4">
-      <div class="overflow-x-auto border border-slate-200 rounded-xl shadow-2xs">
-        <table class="w-full text-left text-xs border-collapse">
+      <div class="progress-report-scroll">
+        <table class="progress-report-table progress-tasks-table" aria-label="Báo cáo tiến độ nhiệm vụ">
           <thead>
             <tr class="bg-slate-100 text-slate-800 font-bold text-center border-b border-slate-200">
               <th class="p-2.5 border-r border-slate-200 w-12 font-bold text-slate-700">STT</th>
@@ -282,7 +304,7 @@
 
             <!-- SECTION I: 2629 Tasks -->
             <template v-if="tasks2629.length > 0">
-              <tr class="bg-blue-900 text-white font-bold">
+              <tr class="report-section-row">
                 <td colspan="8" class="p-2.5 px-3">
                   I. QUYẾT ĐỊNH SỐ 2629/QĐ-TTg NGÀY 10/12/2024
                 </td>
@@ -290,7 +312,7 @@
               <tr
                 v-for="(t, idx) in tasks2629"
                 :key="t.id"
-                class="hover:bg-slate-50/80 transition font-normal"
+                class="report-data-row transition font-normal"
               >
                 <td class="p-2.5 text-center font-medium text-slate-500 border-r border-slate-200">{{ t.sequenceNumber || (idx + 1) }}</td>
                 <td class="p-2.5 text-center font-bold text-blue-900 border-r border-slate-200">{{ t.code }}</td>
@@ -309,7 +331,7 @@
 
             <!-- SECTION II: 1266 Tasks -->
             <template v-if="tasks1266.length > 0">
-              <tr class="bg-blue-900 text-white font-bold">
+              <tr class="report-section-row">
                 <td colspan="8" class="p-2.5 px-3">
                   II. QUYẾT ĐỊNH SỐ 1266/QĐ-TTg NGÀY 24/10/2024
                 </td>
@@ -317,7 +339,7 @@
               <tr
                 v-for="(t, idx) in tasks1266"
                 :key="t.id"
-                class="hover:bg-slate-50/80 transition font-normal"
+                class="report-data-row transition font-normal"
               >
                 <td class="p-2.5 text-center font-medium text-slate-500 border-r border-slate-200">{{ t.sequenceNumber || (idx + 1) }}</td>
                 <td class="p-2.5 text-center font-bold text-blue-900 border-r border-slate-200">{{ t.code }}</td>
@@ -495,6 +517,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue';
 import { fetchWithAuth, authState } from '../services/auth';
+import { isProgressReportYearApplicable, progressReportYearValue } from '../shared/progressReportCells.js';
 import { getApiUrl } from '../config/api';
 import { toast } from 'vue3-toastify';
 import { formatNumber } from '../shared/formatters';
@@ -557,10 +580,13 @@ const goals1266 = computed(() => goalsList.value.filter(g => String(g.documentNu
 const tasks2629 = computed(() => tasksList.value.filter(t => String(t.documentNumber).includes('2629')));
 const tasks1266 = computed(() => tasksList.value.filter(t => String(t.documentNumber).includes('1266')));
 
-function cellBgClass(val) {
-  if (val === '—') return 'bg-slate-100 text-slate-400 font-medium';
-  if (val != null && val !== '') return 'bg-amber-50/70 text-emerald-800 font-bold';
-  return 'bg-amber-50/30 text-slate-400';
+function reportYearCellClass(goal, year) {
+  if (!isProgressReportYearApplicable(goal, year)) return 'report-cell-disabled';
+  return year === 2025 ? 'report-cell-reference' : 'report-cell-editable';
+}
+function reportYearCellLabel(goal, year) {
+  if (!isProgressReportYearApplicable(goal, year)) return `${year}: Không áp dụng, không điền`;
+  return `${year}: ${year === 2025 ? 'Dữ liệu kết quả năm 2025' : 'Ô nhập trong biểu mẫu Excel'}`;
 }
 
 function formatCellVal(val, unitName) {
@@ -825,3 +851,66 @@ onMounted(async () => {
   }
 });
 </script>
+
+<style scoped>
+.progress-report-scroll {
+  overflow: auto;
+  max-height: min(68dvh, 760px);
+  border: 1px solid var(--color-slate-200);
+  border-radius: 12px;
+  background: white;
+  scrollbar-gutter: stable;
+}
+.progress-report-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  text-align: left;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--color-slate-800);
+}
+.progress-goals-table { min-width: 1480px; }
+.progress-tasks-table { min-width: 1120px; }
+.progress-report-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  box-shadow: 0 1px 0 var(--color-slate-300);
+}
+.progress-report-table th {
+  padding: 10px 12px;
+  background: var(--ui-header-background);
+  vertical-align: middle;
+  font-weight: 600;
+  line-height: 1.5;
+  border-bottom: 1px solid var(--color-slate-200);
+}
+.progress-report-table td { padding: 12px; vertical-align: top; border-bottom: 1px solid var(--color-slate-200); }
+.progress-report-table tbody tr:last-child td { border-bottom: 0; }
+.report-data-row:nth-child(odd) { background: var(--color-slate-50); }
+.report-data-row:hover { background: var(--color-blue-50); }
+.progress-goals-table .report-data-row td:nth-child(n+4):nth-child(-n+12) {
+  vertical-align: middle;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+  min-width: 80px;
+}
+.progress-report-table .report-section-row td {
+  padding: 12px 14px;
+  background: var(--color-blue-900);
+  color: white;
+  font-weight: 600;
+  border-bottom: 1px solid var(--color-blue-800);
+}
+.report-section-content { display: flex; align-items: center; justify-content: flex-start; flex-wrap: wrap; gap: 8px 20px; }
+.report-phase-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.report-phase-chip { display: inline-flex; padding: 3px 10px; border: 1px solid rgb(255 255 255 / 25%); border-radius: 6px; background: rgb(255 255 255 / 10%); font-size: 13px; font-weight: 500; white-space: nowrap; }
+@media (max-width: 767px) {
+  .progress-report-table td, .progress-report-table th { padding: 10px; }
+  .progress-report-scroll { max-height: 65dvh; }
+}
+.progress-report-table .report-cell-reference { background: white; }
+.progress-report-table .report-cell-editable { background: #fff7dc; color: var(--color-emerald-800); font-weight: 600; }
+.progress-report-table .report-cell-disabled { background: #dfe5ed; color: var(--color-slate-500); }
+</style>
