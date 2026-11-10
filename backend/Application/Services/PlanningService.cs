@@ -669,7 +669,14 @@ namespace Cdsqg.Application.Services
                 }
                 else
                 {
-                    tPhase1 = FormatTargetClean(bMap.ContainsKey(2030) ? bMap[2030] : null, cb.ContainsKey("2030") ? cb["2030"] : g.ResultTarget?.ToString());
+                    bool isPhase2Only = (g.Section != null && g.Section.Contains("2045")) ||
+                                        (g.DueDate.HasValue && g.DueDate.Value.Year > 2030);
+
+                    tPhase1 = FormatTargetClean(bMap.ContainsKey(2030) ? bMap[2030] : null, cb.ContainsKey("2030") ? cb["2030"] : (isPhase2Only ? null : g.ResultTarget?.ToString()));
+                    if (isPhase2Only)
+                    {
+                        tPhase2 = FormatTargetClean(bMap.ContainsKey(2045) ? bMap[2045] : null, cb.ContainsKey("2045") ? cb["2045"] : g.ResultTarget?.ToString());
+                    }
                     applicableYears.AddRange(new[] { 2026, 2027, 2028, 2029, 2030 });
                 }
 
@@ -701,6 +708,57 @@ namespace Cdsqg.Application.Services
                     Notes = latestNote,
                     ApplicableYears = applicableYears
                 });
+            }
+
+            // Group and merge multi-phase goals that share the same title
+            static string NormalizeTitle(string? t)
+            {
+                if (string.IsNullOrWhiteSpace(t)) return "";
+                var s = t.Trim().TrimEnd('.').ToLowerInvariant();
+                return System.Text.RegularExpressions.Regex.Replace(s, @"\s+", " ");
+            }
+
+            var mergedGoalsList = new List<AgencyProgressGoalItemDto>();
+            var goalGroups = goalsList.GroupBy(g => (g.DocumentId, NormalizeTitle(g.Title))).ToList();
+
+            foreach (var group in goalGroups)
+            {
+                var items = group.OrderBy(i => i.Code).ToList();
+                if (items.Count == 1)
+                {
+                    items[0].SubCodes = new List<string> { items[0].Code };
+                    items[0].SubGoalIds = new List<Guid> { items[0].Id };
+                    mergedGoalsList.Add(items[0]);
+                }
+                else
+                {
+                    var p1 = items.FirstOrDefault(x => !string.IsNullOrEmpty(x.TargetPhase1) && x.TargetPhase1 != "—") ?? items[0];
+                    var p2 = items.FirstOrDefault(x => x != p1) ?? items[items.Count - 1];
+
+                    var merged = new AgencyProgressGoalItemDto
+                    {
+                        Id = p1.Id,
+                        DocumentId = p1.DocumentId,
+                        DocumentNumber = p1.DocumentNumber,
+                        Code = $"{p1.Code}\n{p2.Code}",
+                        SubCodes = items.Select(x => x.Code).Distinct().ToList(),
+                        SubGoalIds = items.Select(x => x.Id).Distinct().ToList(),
+                        Title = p1.Title,
+                        UnitName = !string.IsNullOrEmpty(p1.UnitName) ? p1.UnitName : (p2.UnitName ?? "%"),
+                        Section = p1.Section,
+                        TargetPhase1 = !string.IsNullOrEmpty(p1.TargetPhase1) && p1.TargetPhase1 != "—" ? p1.TargetPhase1 : p2.TargetPhase1,
+                        TargetPhase2 = !string.IsNullOrEmpty(p2.TargetPhase2) && p2.TargetPhase2 != "—" ? p2.TargetPhase2 : p1.TargetPhase2,
+                        Actual2025 = p1.Actual2025 ?? p2.Actual2025,
+                        Estimate2026 = p1.Estimate2026 ?? p2.Estimate2026,
+                        Plan2027 = p1.Plan2027 != null && p1.Plan2027 != "—" ? p1.Plan2027 : p2.Plan2027,
+                        Plan2028 = p2.Plan2028 != null && p2.Plan2028 != "—" ? p2.Plan2028 : p1.Plan2028,
+                        Plan2029 = p2.Plan2029 != null && p2.Plan2029 != "—" ? p2.Plan2029 : p1.Plan2029,
+                        Plan2030 = p2.Plan2030 != null && p2.Plan2030 != "—" ? p2.Plan2030 : p1.Plan2030,
+                        Notes = string.Join("; ", items.Select(x => x.Notes).Where(n => !string.IsNullOrWhiteSpace(n)).Distinct()),
+                        ApplicableYears = items.SelectMany(x => x.ApplicableYears).Distinct().OrderBy(y => y).ToList()
+                    };
+                    mergedGoalsList.Add(merged);
+                }
             }
 
             var sortedTasks = agencyItems
@@ -761,7 +819,7 @@ namespace Cdsqg.Application.Services
                 AgencyCode = agency.Code,
                 AgencyType = agency.Type.ToString(),
                 ReportYear = reportYear,
-                Goals = goalsList,
+                Goals = mergedGoalsList,
                 Tasks = tasksList
             };
         }

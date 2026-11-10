@@ -303,4 +303,80 @@ public class AgencyProgressReportTests
         Assert.Equal(100, uTask.CompletionPercentage);
         Assert.Equal("Đã hoàn thành sớm", uTask.Notes);
     }
+
+    [Fact]
+    public async Task GetAgencyProgressReport_MergesMultiPhaseGoalsWithSameTitle()
+    {
+        var dbName = "AgencyReportMergeTest_" + Guid.NewGuid().ToString("N");
+        await using var db = CreateInMemoryDb(dbName);
+
+        var doc2629Id = Guid.Parse("26290000-0000-0000-0000-000000002629");
+        var doc2629 = new Document { Id = doc2629Id, DocumentNumber = "2629/QĐ-TTg", Name = "Chương trình 2629" };
+        var agency = new Agency { Id = Guid.NewGuid(), Code = "BCA", Name = "Bộ Công an", Type = AgencyTypeEnum.Ministry };
+
+        // Phase 1 Goal: MT-10
+        var goalPhase1 = new GoalTaskItem
+        {
+            Id = Guid.NewGuid(),
+            DocumentId = doc2629Id,
+            Document = doc2629,
+            Code = "MT-10",
+            Title = "Tỉ lệ cán bộ chuyên trách CNTT được đào tạo.",
+            ItemType = ItemTypeEnum.Goal,
+            EvaluationType = EvaluationTypeEnum.Quantitative,
+            LeadAgencyId = agency.Id,
+            Section = "Giai đoạn 2025-2027",
+            DueDate = new DateTime(2027, 12, 31),
+            Baselines = new List<TargetBaseline>
+            {
+                new() { Year = 2027, TargetQuantity = 50 }
+            },
+            ProgressLogs = new List<ProgressLog>
+            {
+                new() { AgencyId = agency.Id, PeriodYear = 2025, QuantitativeValue = 30 }
+            }
+        };
+
+        // Phase 2 Goal: MT-21 (Same title)
+        var goalPhase2 = new GoalTaskItem
+        {
+            Id = Guid.NewGuid(),
+            DocumentId = doc2629Id,
+            Document = doc2629,
+            Code = "MT-21",
+            Title = "Tỉ lệ cán bộ chuyên trách CNTT được đào tạo.",
+            ItemType = ItemTypeEnum.Goal,
+            EvaluationType = EvaluationTypeEnum.Quantitative,
+            LeadAgencyId = agency.Id,
+            Section = "Giai đoạn 2028-2030",
+            DueDate = new DateTime(2030, 12, 31),
+            Baselines = new List<TargetBaseline>
+            {
+                new() { Year = 2030, TargetQuantity = 100 }
+            }
+        };
+
+        db.Agencies.Add(agency);
+        db.Documents.Add(doc2629);
+        db.GoalTaskItems.AddRange(goalPhase1, goalPhase2);
+        await db.SaveChangesAsync();
+
+        var planningService = new PlanningService(db);
+        var report = await planningService.GetAgencyProgressReportAsync(agency.Id, 2026, agency.Id, "Admin");
+
+        // ASSERT: 2 goals are merged into 1
+        Assert.Single(report.Goals);
+        var mergedGoal = report.Goals[0];
+        Assert.Equal("MT-10\nMT-21", mergedGoal.Code);
+        Assert.Equal(2, mergedGoal.SubCodes.Count);
+        Assert.Contains("MT-10", mergedGoal.SubCodes);
+        Assert.Contains("MT-21", mergedGoal.SubCodes);
+        Assert.Equal("50", mergedGoal.TargetPhase1);
+        Assert.Equal("100", mergedGoal.TargetPhase2);
+        Assert.Equal(30, mergedGoal.Actual2025);
+        Assert.Equal("50", mergedGoal.Plan2027);
+        Assert.Equal("100", mergedGoal.Plan2030);
+        Assert.Contains(2027, mergedGoal.ApplicableYears);
+        Assert.Contains(2030, mergedGoal.ApplicableYears);
+    }
 }

@@ -208,6 +208,8 @@ namespace Cdsqg.Application.DTOs
         public Guid DocumentId { get; set; }
         public string DocumentNumber { get; set; } = string.Empty;
         public string Code { get; set; } = string.Empty;
+        public List<string> SubCodes { get; set; } = new();
+        public List<Guid> SubGoalIds { get; set; } = new();
         public string Title { get; set; } = string.Empty;
         public string UnitName { get; set; } = "%";
         public string? Section { get; set; }

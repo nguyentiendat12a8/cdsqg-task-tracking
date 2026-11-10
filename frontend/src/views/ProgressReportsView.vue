@@ -150,8 +150,14 @@
               <th rowspan="2" class="p-2.5 min-w-[220px] text-left">Ghi chú / Khó khăn & kiến nghị</th>
             </tr>
             <tr class="bg-slate-700 text-white font-bold text-center border-b border-slate-600">
-              <th class="p-2 border-r border-slate-600 w-24">2025-2027</th>
-              <th class="p-2 border-r border-slate-600 w-24">2028-2030</th>
+              <th class="p-2 border-r border-slate-600 w-28 bg-slate-700 text-white text-center">
+                <div>Giai đoạn 1</div>
+                <div class="text-xs font-normal text-slate-300">2025-2027 / 2026-2030</div>
+              </th>
+              <th class="p-2 border-r border-slate-600 w-28 bg-slate-700 text-white text-center">
+                <div>Giai đoạn 2</div>
+                <div class="text-xs font-normal text-slate-300">2028-2030 / 2031-2045</div>
+              </th>
               <th class="p-2 border-r border-slate-600 bg-amber-700/80 text-amber-100 w-24">Kết quả 2025</th>
               <th class="p-2 border-r border-slate-600 bg-amber-700/80 text-amber-100 w-24">Ước tính 2026</th>
               <th class="p-2 border-r border-slate-600 bg-amber-600/80 text-amber-100 w-24">2027</th>
@@ -162,9 +168,18 @@
           </thead>
           <tbody class="divide-y divide-slate-200">
             <!-- SECTION I: 2629 -->
-            <tr class="bg-blue-900 text-white font-bold">
-              <td colspan="12" class="p-2.5 px-3">
+            <tr class="bg-blue-900 text-white font-bold border-b border-blue-800">
+              <td colspan="4" class="p-2.5 px-3">
                 I. QUYẾT ĐỊNH SỐ 2629/QĐ-TTg NGÀY 10/12/2024
+              </td>
+              <td class="p-2 text-center border-l border-blue-800 bg-blue-950/60">
+                <span class="inline-block px-2 py-0.5 rounded bg-amber-400 text-slate-900 font-bold text-xs">2025 - 2027</span>
+              </td>
+              <td class="p-2 text-center border-l border-blue-800 bg-blue-950/60">
+                <span class="inline-block px-2 py-0.5 rounded bg-amber-400 text-slate-900 font-bold text-xs">2028 - 2030</span>
+              </td>
+              <td colspan="6" class="p-2.5 px-3 text-right text-xs text-blue-200 font-medium italic border-l border-blue-800">
+                Kế hoạch mục tiêu từng năm (đến 2030)
               </td>
             </tr>
             <tr v-if="goals2629.length === 0" class="text-slate-500 italic text-center">
@@ -176,7 +191,11 @@
               class="hover:bg-slate-50/80 transition font-normal"
             >
               <td class="p-2.5 text-center font-medium text-slate-500 border-r border-slate-200">{{ idx + 1 }}</td>
-              <td class="p-2.5 text-center font-bold text-blue-900 border-r border-slate-200">{{ g.code }}</td>
+              <td class="p-2.5 text-center border-r border-slate-200">
+                <div v-for="c in String(g.code).split('\n')" :key="c" class="font-bold text-blue-900 leading-tight">
+                  {{ c }}
+                </div>
+              </td>
               <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">{{ g.title }}</td>
               <td class="p-2.5 text-center border-r border-slate-200 text-slate-600">{{ g.unitName }}</td>
               <td class="p-2.5 text-center border-r border-slate-200 font-semibold text-slate-700">{{ formatTarget(g.targetPhase1) }}</td>
@@ -191,9 +210,18 @@
             </tr>
 
             <!-- SECTION II: 1266 -->
-            <tr class="bg-blue-900 text-white font-bold">
-              <td colspan="12" class="p-2.5 px-3">
+            <tr class="bg-blue-900 text-white font-bold border-b border-blue-800">
+              <td colspan="4" class="p-2.5 px-3">
                 II. QUYẾT ĐỊNH SỐ 1266/QĐ-TTg NGÀY 24/10/2024
+              </td>
+              <td class="p-2 text-center border-l border-blue-800 bg-blue-950/60">
+                <span class="inline-block px-2 py-0.5 rounded bg-amber-400 text-slate-900 font-bold text-xs">2026 - 2030</span>
+              </td>
+              <td class="p-2 text-center border-l border-blue-800 bg-blue-950/60">
+                <span class="inline-block px-2 py-0.5 rounded bg-amber-400 text-slate-900 font-bold text-xs">2031 - 2045</span>
+              </td>
+              <td colspan="6" class="p-2.5 px-3 text-right text-xs text-blue-200 font-medium italic border-l border-blue-800">
+                Kế hoạch mục tiêu từng năm (đến 2030)
               </td>
             </tr>
             <tr v-if="goals1266.length === 0" class="text-slate-500 italic text-center">
@@ -205,7 +233,11 @@
               class="hover:bg-slate-50/80 transition font-normal"
             >
               <td class="p-2.5 text-center font-medium text-slate-500 border-r border-slate-200">{{ idx + 1 }}</td>
-              <td class="p-2.5 text-center font-bold text-blue-900 border-r border-slate-200">{{ g.code }}</td>
+              <td class="p-2.5 text-center border-r border-slate-200">
+                <div v-for="c in String(g.code).split('\n')" :key="c" class="font-bold text-blue-900 leading-tight">
+                  {{ c }}
+                </div>
+              </td>
               <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">{{ g.title }}</td>
               <td class="p-2.5 text-center border-r border-slate-200 text-slate-600">{{ g.unitName }}</td>
               <td class="p-2.5 text-center border-r border-slate-200 font-semibold text-slate-700">{{ formatTarget(g.targetPhase1) }}</td>

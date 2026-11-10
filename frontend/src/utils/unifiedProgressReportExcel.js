@@ -148,7 +148,7 @@ function buildGoalsWorksheet(goals, agencyName, dateStr, XLSX) {
     'Mã MT',
     'Tên mục tiêu / Chỉ tiêu',
     'Đơn vị tính',
-    'Kết quả',
+    'Kết quả theo QĐ',
     '',
     'Kết quả thực hiện',
     '',
@@ -161,7 +161,9 @@ function buildGoalsWorksheet(goals, agencyName, dateStr, XLSX) {
 
   // Row 5: Level 2 Header
   rows.push([
-    '', '', '', '', '', '',
+    '', '', '', '',
+    'Giai đoạn 1',
+    'Giai đoạn 2',
     'Kết quả 2025',
     'Ước tính 2026',
     '2027',
@@ -179,7 +181,9 @@ function buildGoalsWorksheet(goals, agencyName, dateStr, XLSX) {
   merges.push({ s: { r: 3, c: 1 }, e: { r: 5, c: 1 } }); // Mã MT (B4:B6)
   merges.push({ s: { r: 3, c: 2 }, e: { r: 5, c: 2 } }); // Tên MT (C4:C6)
   merges.push({ s: { r: 3, c: 3 }, e: { r: 5, c: 3 } }); // Đơn vị tính (D4:D6)
-  merges.push({ s: { r: 3, c: 4 }, e: { r: 5, c: 5 } }); // Kết quả (E4:F6)
+  merges.push({ s: { r: 3, c: 4 }, e: { r: 3, c: 5 } }); // Kết quả theo QĐ (E4:F4)
+  merges.push({ s: { r: 4, c: 4 }, e: { r: 5, c: 4 } }); // Giai đoạn 1 (E5:E6)
+  merges.push({ s: { r: 4, c: 5 }, e: { r: 5, c: 5 } }); // Giai đoạn 2 (F5:F6)
   merges.push({ s: { r: 3, c: 6 }, e: { r: 3, c: 7 } }); // Kết quả thực hiện (G4:H4)
   merges.push({ s: { r: 4, c: 6 }, e: { r: 5, c: 6 } }); // Kết quả 2025 (G5:G6)
   merges.push({ s: { r: 4, c: 7 }, e: { r: 5, c: 7 } }); // Ước tính 2026 (H5:H6)
@@ -248,10 +252,10 @@ function buildGoalsWorksheet(goals, agencyName, dateStr, XLSX) {
   }
 
   // Section I: 2629
-  appendGoalsSection('I', 'QĐ 2629/QĐ-TTG', goals2629, '2025 -2027', '2028-2030');
+  appendGoalsSection('I', 'QĐ 2629/QĐ-TTG', goals2629, '2025 - 2027', '2028 - 2030');
 
   // Section II: 1266
-  appendGoalsSection('II', 'QĐ 1266/QĐ-TTG', goals1266, '2026-2030', '');
+  appendGoalsSection('II', 'QĐ 1266/QĐ-TTG', goals1266, '2026 - 2030', '2031 - 2045');
 
   const ws = XLSX.utils.aoa_to_sheet(rows);
   ws['!merges'] = merges;
@@ -531,10 +535,18 @@ export async function parseUnifiedProgressReportFile(file, { existingGoals = [],
       for (let r = headerRowIdx + 1; r < rows.length; r++) {
         const row = rows[r];
         if (!row || !row[colMap.code]) continue;
-        const code = String(row[colMap.code]).trim();
-        if (!code || code.startsWith('I') || code.startsWith('QĐ') || code.toLowerCase().startsWith('mã')) continue;
+        const rawCode = String(row[colMap.code]).trim();
+        if (!rawCode || rawCode.startsWith('I') || rawCode.startsWith('QĐ') || rawCode.toLowerCase().startsWith('mã')) continue;
 
-        const matchedGoal = existingGoals.find(g => g.code && g.code.trim().toLowerCase() === code.toLowerCase());
+        const rowCodes = rawCode.split(/[\r\n,\/]+/).map(c => c.trim()).filter(Boolean);
+
+        const matchedGoal = existingGoals.find(g => {
+          if (g.code && g.code.trim().toLowerCase() === rawCode.toLowerCase()) return true;
+          if (g.subCodes && g.subCodes.some(sc => rowCodes.some(rc => rc.toLowerCase() === sc.toLowerCase()))) return true;
+          const gCodes = (g.code || '').split(/[\r\n,\/]+/).map(c => c.trim().toLowerCase()).filter(Boolean);
+          if (rowCodes.some(rc => gCodes.includes(rc.toLowerCase()))) return true;
+          return false;
+        });
         if (!matchedGoal) continue;
 
         const est2026Raw = row[colMap.est2026] !== undefined && row[colMap.est2026] !== null ? String(row[colMap.est2026]).trim() : '';
@@ -544,9 +556,11 @@ export async function parseUnifiedProgressReportFile(file, { existingGoals = [],
         if (est2026Raw !== '' && est2026Raw !== '—') {
           const numVal = parseFloat(est2026Raw.replace(/%/g, '').replace(/,/g, '.'));
           if (!isNaN(numVal)) {
+            const goalCode = matchedGoal.subCodes?.[0] || rowCodes[0] || rawCode;
+            const goalId = matchedGoal.subGoalIds?.[0] || matchedGoal.id;
             parsedGoals.push({
-              code,
-              id: matchedGoal.id,
+              code: goalCode,
+              id: goalId,
               documentId: matchedGoal.documentId,
               title: matchedGoal.title,
               value: numVal,
@@ -562,9 +576,20 @@ export async function parseUnifiedProgressReportFile(file, { existingGoals = [],
           if (raw !== '' && raw !== '—') {
             const num = parseFloat(raw.replace(/%/g, '').replace(/,/g, '.'));
             if (!isNaN(num)) {
+              let targetTaskId = matchedGoal.id;
+              let targetCode = rawCode;
+              if (matchedGoal.subGoalIds && matchedGoal.subGoalIds.length > 1) {
+                if (year <= 2027) {
+                  targetTaskId = matchedGoal.subGoalIds[0];
+                  targetCode = matchedGoal.subCodes?.[0] || rawCode;
+                } else {
+                  targetTaskId = matchedGoal.subGoalIds[1];
+                  targetCode = matchedGoal.subCodes?.[1] || rawCode;
+                }
+              }
               parsedPlans.push({
-                taskId: matchedGoal.id,
-                code,
+                taskId: targetTaskId,
+                code: targetCode,
                 title: matchedGoal.title,
                 year,
                 targetQuantity: num,
