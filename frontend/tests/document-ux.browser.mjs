@@ -11,18 +11,10 @@ const f=await import('/tests/refactor-fixture.js'); f.authState.user.value={role
 const root=document.createElement('div');document.body.replaceChildren(root);
 const app=f.createApp({render:()=>f.h(f.Document,{filterItemType:type})});app.use(f.FloatingVue);app.directive('accessible-dialog',f.accessibleDialog);app.directive('accessible-data',f.accessibleData);app.mount(root);
 },type);
-const trigger=page.getByRole('button',{name:'Tính năng',exact:true});await trigger.click();
 await page.getByRole('button',{name:'Xuất Excel danh sách',exact:true}).waitFor();
-await page.waitForFunction(()=>document.activeElement?.textContent.includes('Xuất Excel báo cáo tiến độ'));
-const panel=await page.getByRole('dialog',{name:'Tính năng Excel'}).boundingBox();
-const anchor=await trigger.boundingBox();
-if(panel.x<0 || panel.x+panel.width>width+1 || panel.y < anchor.y+anchor.height-1) throw Error('menu overlaps header or viewport '+JSON.stringify({panel,anchor}));
-
-for(const name of ['Xuất Excel báo cáo tiến độ','Nhập Excel báo cáo tiến độ']) if(!await page.getByRole('button',{name,exact:true}).isVisible())throw Error(name);
-await page.getByRole('button',{name:'Xuất Excel danh sách',exact:true}).focus();await page.keyboard.press('Escape');
-if(await trigger.getAttribute('aria-expanded')!=='false')throw Error('Escape did not close');
-await trigger.click();await page.mouse.click(5,900);
-if(await trigger.getAttribute('aria-expanded')!=='false')throw Error('outside did not close');
+for(const name of ['Tính năng','Xuất Excel báo cáo tiến độ','Nhập Excel báo cáo tiến độ','Xuất biểu mẫu Bộ, ngành báo cáo','Xuất biểu mẫu Địa phương báo cáo']) {
+ if(await page.getByRole('button',{name,exact:true}).count())throw Error('Obsolete list action: '+name);
+}
 const nameHeader=page.locator('th').filter({hasText:type==='Goal'?'Tên mục tiêu':'Tên nhiệm vụ'});
 await nameHeader.press('Enter');
 if(await nameHeader.getAttribute('aria-sort')!=='ascending')throw Error('sort Enter');

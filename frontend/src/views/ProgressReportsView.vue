@@ -194,12 +194,12 @@
                 <td class="p-2.5 text-center border-r border-slate-200 text-slate-600">{{ g.unitName }}</td>
                 <td class="p-2.5 text-center border-r border-slate-200 font-semibold text-slate-700">{{ formatTarget(g.targetPhase1) }}</td>
                 <td class="p-2.5 text-center border-r border-slate-200 font-semibold text-slate-700">{{ formatTarget(g.targetPhase2) }}</td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.actual2025)">{{ formatCellVal(g.actual2025) }}</td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.estimate2026)">{{ formatCellVal(g.estimate2026) }}</td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2027)">{{ formatCellVal(g.plan2027) }}</td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2028)">{{ formatCellVal(g.plan2028) }}</td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2029)">{{ formatCellVal(g.plan2029) }}</td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2030)">{{ formatCellVal(g.plan2030) }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.actual2025)">{{ formatCellVal(g.actual2025, g.unitName) }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.estimate2026)">{{ formatCellVal(g.estimate2026, g.unitName) }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2027)">{{ formatCellVal(g.plan2027, g.unitName) }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2028)">{{ formatCellVal(g.plan2028, g.unitName) }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2029)">{{ formatCellVal(g.plan2029, g.unitName) }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2030)">{{ formatCellVal(g.plan2030, g.unitName) }}</td>
                 <td class="p-2.5 text-slate-600 text-xs leading-relaxed">{{ g.notes || '' }}</td>
               </tr>
             </template>
@@ -233,12 +233,12 @@
                 <td class="p-2.5 text-center border-r border-slate-200 text-slate-600">{{ g.unitName }}</td>
                 <td class="p-2.5 text-center border-r border-slate-200 font-semibold text-slate-700">{{ formatTarget(g.targetPhase1) }}</td>
                 <td class="p-2.5 text-center border-r border-slate-200 font-semibold text-slate-700">{{ formatTarget(g.targetPhase2) }}</td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.actual2025)">{{ formatCellVal(g.actual2025) }}</td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.estimate2026)">{{ formatCellVal(g.estimate2026) }}</td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2027)">{{ formatCellVal(g.plan2027) }}</td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2028)">{{ formatCellVal(g.plan2028) }}</td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2029)">{{ formatCellVal(g.plan2029) }}</td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2030)">{{ formatCellVal(g.plan2030) }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.actual2025)">{{ formatCellVal(g.actual2025, g.unitName) }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.estimate2026)">{{ formatCellVal(g.estimate2026, g.unitName) }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2027)">{{ formatCellVal(g.plan2027, g.unitName) }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2028)">{{ formatCellVal(g.plan2028, g.unitName) }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2029)">{{ formatCellVal(g.plan2029, g.unitName) }}</td>
+                <td class="p-2.5 text-center border-r border-slate-200" :class="cellBgClass(g.plan2030)">{{ formatCellVal(g.plan2030, g.unitName) }}</td>
                 <td class="p-2.5 text-slate-600 text-xs leading-relaxed">{{ g.notes || '' }}</td>
               </tr>
             </template>
@@ -271,20 +271,19 @@
               <th class="p-2.5 border-r border-slate-200 min-w-[180px] text-left font-bold text-slate-700">Cơ quan phối hợp</th>
               <th class="p-2.5 border-r border-slate-200 w-24 font-bold text-slate-700">Hạn hoàn thành</th>
               <th class="p-2.5 border-r border-slate-200 w-32 font-bold text-slate-700">Trạng thái thực hiện</th>
-              <th class="p-2.5 border-r border-slate-200 w-20 font-bold text-slate-700">Tiến độ %</th>
               <th class="p-2.5 border-r border-slate-200 min-w-[200px] text-left font-bold text-slate-700">Sản phẩm bàn giao</th>
               <th class="p-2.5 min-w-[200px] text-left font-bold text-slate-700">Ghi chú</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-slate-200">
             <tr v-if="tasksList.length === 0" class="text-slate-500 italic text-center">
-              <td colspan="9" class="p-6">Không có nhiệm vụ nào do đơn vị chủ trì.</td>
+              <td colspan="8" class="p-6">Không có nhiệm vụ nào do đơn vị chủ trì.</td>
             </tr>
 
             <!-- SECTION I: 2629 Tasks -->
             <template v-if="tasks2629.length > 0">
               <tr class="bg-blue-900 text-white font-bold">
-                <td colspan="9" class="p-2.5 px-3">
+                <td colspan="8" class="p-2.5 px-3">
                   I. QUYẾT ĐỊNH SỐ 2629/QĐ-TTg NGÀY 10/12/2024
                 </td>
               </tr>
@@ -303,9 +302,6 @@
                     {{ t.statusLabel }}
                   </span>
                 </td>
-                <td class="p-2.5 text-center border-r border-slate-200 font-bold" :class="t.completionPercentage != null ? 'text-emerald-700' : 'text-slate-400'">
-                  {{ t.completionPercentage != null ? `${t.completionPercentage}%` : '—' }}
-                </td>
                 <td class="p-2.5 border-r border-slate-200 text-slate-600 text-xs">{{ t.deliverables || '—' }}</td>
                 <td class="p-2.5 text-slate-600 text-xs leading-relaxed">{{ t.notes || '' }}</td>
               </tr>
@@ -314,7 +310,7 @@
             <!-- SECTION II: 1266 Tasks -->
             <template v-if="tasks1266.length > 0">
               <tr class="bg-blue-900 text-white font-bold">
-                <td colspan="9" class="p-2.5 px-3">
+                <td colspan="8" class="p-2.5 px-3">
                   II. QUYẾT ĐỊNH SỐ 1266/QĐ-TTg NGÀY 24/10/2024
                 </td>
               </tr>
@@ -332,9 +328,6 @@
                   <span :class="statusBadgeClass(t.status)">
                     {{ t.statusLabel }}
                   </span>
-                </td>
-                <td class="p-2.5 text-center border-r border-slate-200 font-bold" :class="t.completionPercentage != null ? 'text-emerald-700' : 'text-slate-400'">
-                  {{ t.completionPercentage != null ? `${t.completionPercentage}%` : '—' }}
                 </td>
                 <td class="p-2.5 border-r border-slate-200 text-slate-600 text-xs">{{ t.deliverables || '—' }}</td>
                 <td class="p-2.5 text-slate-600 text-xs leading-relaxed">{{ t.notes || '' }}</td>
@@ -504,6 +497,7 @@ import { ref, computed, onMounted, watch } from 'vue';
 import { fetchWithAuth, authState } from '../services/auth';
 import { getApiUrl } from '../config/api';
 import { toast } from 'vue3-toastify';
+import { formatNumber } from '../shared/formatters';
 import SearchableSelect from '../components/SearchableSelect.vue';
 import DocumentPagination from '../features/document/DocumentPagination.vue';
 import { exportUnifiedProgressReport, parseUnifiedProgressReportFile } from '../utils/unifiedProgressReportExcel.js';
@@ -569,21 +563,51 @@ function cellBgClass(val) {
   return 'bg-amber-50/30 text-slate-400';
 }
 
-function formatCellVal(val) {
+function formatCellVal(val, unitName) {
   if (val == null || val === '') return '—';
   if (val === '—') return '—';
-  if (typeof val === 'number') return `${val}%`;
-  return String(val);
+
+  const isPercentUnit = !unitName || unitName.trim() === '%';
+  let str = String(val).trim();
+  if (str === '—') return '—';
+
+  const hasPercentSign = str.endsWith('%');
+  if (hasPercentSign) {
+    str = str.slice(0, -1).trim();
+  }
+
+  if (/^\d{1,3}(\.\d{3})+$/.test(str)) {
+    return (hasPercentSign || isPercentUnit) ? `${str}%` : str;
+  }
+
+  const num = Number(str.replace(/,/g, '.'));
+  if (!isNaN(num) && Number.isFinite(num)) {
+    let formatted = '';
+    if (Number.isInteger(num)) {
+      formatted = formatNumber(num);
+    } else {
+      formatted = String(num);
+    }
+    return (hasPercentSign || isPercentUnit) ? `${formatted}%` : formatted;
+  }
+
+  return (hasPercentSign || isPercentUnit) && !str.endsWith('%') ? `${str}%` : str;
 }
 
 function formatTarget(val) {
   if (val == null || val === '' || val === '—') return '—';
   const str = String(val).trim();
   if (str === '—') return '—';
-  if (str.endsWith('.0')) return str.slice(0, -2);
-  if (str.endsWith('.00')) return str.slice(0, -3);
-  const n = Number(str);
-  if (!isNaN(n) && n % 1 === 0) return String(Math.round(n));
+  let cleanStr = str;
+  if (cleanStr.endsWith('.0')) cleanStr = cleanStr.slice(0, -2);
+  else if (cleanStr.endsWith('.00')) cleanStr = cleanStr.slice(0, -3);
+
+  if (/^\d{1,3}(\.\d{3})+$/.test(cleanStr)) return cleanStr;
+
+  const num = Number(cleanStr);
+  if (!isNaN(num) && Number.isFinite(num)) {
+    return formatNumber(num);
+  }
   return str;
 }
 

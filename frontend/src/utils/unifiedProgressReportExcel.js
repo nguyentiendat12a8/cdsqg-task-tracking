@@ -343,17 +343,17 @@ function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
 
   // Title
   rows.push(['BIỂU MẪU BÁO CÁO NHIỆM VỤ DO CƠ QUAN CHỦ TRÌ THEO DÕI']);
-  merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: 9 } });
+  merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: 8 } });
 
   // Subtitle
   rows.push([`Đơn vị báo cáo: ${agencyName} | Ngày xuất file: ${dateStr}`]);
-  merges.push({ s: { r: 1, c: 0 }, e: { r: 1, c: 9 } });
+  merges.push({ s: { r: 1, c: 0 }, e: { r: 1, c: 8 } });
 
   // Guide
   rows.push([
-    'HƯỚNG DẪN: Chọn Trạng thái thực hiện tại cột G (màu vàng); Cập nhật tiến độ % tại cột H; Ghi chú khó khăn vướng mắc tại cột J.'
+    'HƯỚNG DẪN: Chọn Trạng thái thực hiện tại cột G (màu vàng); Ghi chú khó khăn vướng mắc tại cột I.'
   ]);
-  merges.push({ s: { r: 2, c: 0 }, e: { r: 2, c: 9 } });
+  merges.push({ s: { r: 2, c: 0 }, e: { r: 2, c: 8 } });
 
   // Headers
   const headers = [
@@ -364,7 +364,6 @@ function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
     'Cơ quan phối hợp',
     'Hạn hoàn thành',
     'TRẠNG THÁI THỰC HIỆN [CẦN CHỌN]',
-    'TIẾN ĐỘ % [CẦN ĐIỀN]',
     'Sản phẩm bàn giao',
     'GHI CHÚ / KHÓ KHĂN & KIẾN NGHỊ [CẦN ĐIỀN]',
     'ID Nhiệm Vụ (Ẩn)',
@@ -379,9 +378,9 @@ function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
   function appendTasksSection(sectionNumberRoman, docLabel, sectionTasks) {
     const secRowIdx = rows.length;
     sectionRows.push(secRowIdx);
-    const secRow = [sectionNumberRoman, docLabel, '', '', '', '', '', '', '', '', '', ''];
+    const secRow = [sectionNumberRoman, docLabel, '', '', '', '', '', '', '', '', ''];
     rows.push(secRow);
-    merges.push({ s: { r: secRowIdx, c: 1 }, e: { r: secRowIdx, c: 9 } });
+    merges.push({ s: { r: secRowIdx, c: 1 }, e: { r: secRowIdx, c: 8 } });
 
     sectionTasks.forEach((t, idx) => {
       const rIdx = rows.length;
@@ -393,7 +392,6 @@ function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
         t.coordinatingAgencies || '',
         t.dueDate || '—',
         t.statusLabel || 'Chưa thực hiện',
-        t.completionPercentage != null ? t.completionPercentage : '',
         t.deliverables || '',
         t.notes || '',
         t.id || '',
@@ -420,11 +418,10 @@ function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
     { wch: 25 }, // Phối hợp (E)
     { wch: 14 }, // Hạn (F)
     { wch: 28 }, // Trạng thái (G) - Editable
-    { wch: 18 }, // Tiến độ % (H) - Editable
-    { wch: 30 }, // Sản phẩm (I)
-    { wch: 40 }, // Ghi chú (J) - Editable
-    { wch: 36, hidden: true }, // ID NV (K)
-    { wch: 36, hidden: true }  // ID QĐ (L)
+    { wch: 30 }, // Sản phẩm (H)
+    { wch: 40 }, // Ghi chú (I) - Editable
+    { wch: 36, hidden: true }, // ID NV (J)
+    { wch: 36, hidden: true }  // ID QĐ (K)
   ];
 
   ws['!rows'] = [
@@ -434,18 +431,18 @@ function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
     { hpt: 26 }  // Header
   ];
 
-  applyStyleToRange(ws, 0, 0, 0, 9, TITLE_STYLE, XLSX);
-  applyStyleToRange(ws, 1, 0, 1, 9, SUBTITLE_STYLE, XLSX);
-  applyStyleToRange(ws, 2, 0, 2, 9, GUIDE_STYLE, XLSX);
+  applyStyleToRange(ws, 0, 0, 0, 8, TITLE_STYLE, XLSX);
+  applyStyleToRange(ws, 1, 0, 1, 8, SUBTITLE_STYLE, XLSX);
+  applyStyleToRange(ws, 2, 0, 2, 8, GUIDE_STYLE, XLSX);
 
   // Headers
   applyStyleToRange(ws, 3, 0, 3, 5, HEADER_STYLE, XLSX);
-  applyStyleToRange(ws, 3, 6, 3, 7, SUBHEADER_YELLOW_STYLE, XLSX);
-  applyStyleToRange(ws, 3, 8, 3, 9, HEADER_STYLE, XLSX);
+  applyStyleToRange(ws, 3, 6, 3, 6, SUBHEADER_YELLOW_STYLE, XLSX);
+  applyStyleToRange(ws, 3, 7, 3, 8, HEADER_STYLE, XLSX);
 
   // Section Rows
   sectionRows.forEach(r => {
-    applyStyleToRange(ws, r, 0, r, 9, SECTION_STYLE, XLSX);
+    applyStyleToRange(ws, r, 0, r, 8, SECTION_STYLE, XLSX);
   });
 
   // Data rows
@@ -457,9 +454,9 @@ function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
     applyStyleToRange(ws, r, 3, r, 3, CELL_TEXT_LEFT, XLSX);
     applyStyleToRange(ws, r, 4, r, 4, CELL_TEXT_LEFT, XLSX);
     applyStyleToRange(ws, r, 5, r, 5, CELL_TEXT_CENTER, XLSX);
-    applyStyleToRange(ws, r, 6, r, 7, CELL_EDITABLE, XLSX); // Status & %
-    applyStyleToRange(ws, r, 8, r, 8, CELL_TEXT_LEFT, XLSX);
-    applyStyleToRange(ws, r, 9, r, 9, CELL_NOTES, XLSX);
+    applyStyleToRange(ws, r, 6, r, 6, CELL_EDITABLE, XLSX); // Status
+    applyStyleToRange(ws, r, 7, r, 7, CELL_TEXT_LEFT, XLSX);
+    applyStyleToRange(ws, r, 8, r, 8, CELL_NOTES, XLSX);
   }
 
   return { ws, statusCells };
@@ -615,14 +612,21 @@ export async function parseUnifiedProgressReportFile(file, { existingGoals = [],
     let headerRowIdx = -1;
     for (let r = 0; r < Math.min(rows.length, 10); r++) {
       const row = rows[r] || [];
-      if (row.some(c => String(c || '').toLowerCase().includes('mã nv') || String(c || '').toLowerCase().includes('nhiệm vụ'))) {
+      if (row.some(c => String(c || '').toLowerCase().includes('mã nv'))) {
         headerRowIdx = r;
         break;
       }
     }
 
     if (headerRowIdx !== -1) {
-      const colMap = { code: 2, status: 6, percent: 7, notes: 9, id: 10 };
+      // Read by header so new exports and older percentage templates both import safely.
+      const headers = rows[headerRowIdx].map(value => String(value || '').trim().toLowerCase());
+      const colMap = {
+        code: headers.findIndex(h => h.includes('mã nv')),
+        status: headers.findIndex(h => h.includes('trạng thái')),
+        percent: headers.findIndex(h => h.includes('tiến độ') && h.includes('%')),
+        notes: headers.findIndex(h => h.includes('ghi chú'))
+      };
 
       for (let r = headerRowIdx + 1; r < rows.length; r++) {
         const row = rows[r];
