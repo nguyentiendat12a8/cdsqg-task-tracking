@@ -99,6 +99,13 @@ function getFieldLabel(fieldName) {
   }
 
   const name = fieldName.toLowerCase();
+  if (name.includes('userrole')) return 'Vai trò tài khoản';
+  if (name.includes('reportingagencyid')) return 'Đơn vị nhập báo cáo';
+  const row = name.match(/items\[(\d+)\]/);
+  if (row) {
+    const field = name.endsWith('.status') ? 'trạng thái' : name.endsWith('.id') ? 'mã định danh' : name.endsWith('.value') ? 'giá trị kết quả' : name.endsWith('.periodyear') ? 'năm báo cáo' : 'dữ liệu';
+    return `Dòng ${Number(row[1]) + 1}: ${field}`;
+  }
   if (name.includes('title')) return 'Tên mục tiêu / nhiệm vụ';
   if (name.includes('leadagency')) return 'Đơn vị chủ trì';
   if (name.includes('coordinatingagency')) return 'Cơ quan phối hợp';

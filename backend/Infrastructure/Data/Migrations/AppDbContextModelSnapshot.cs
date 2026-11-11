@@ -2997,6 +2997,10 @@ namespace Cdsqg.Infrastructure.Data.Migrations
                     b.Property<DateTime?>("StartDate")
                         .HasColumnType("timestamp without time zone");
 
+                    b.Property<string>("SubAgencyIds")
+                        .IsRequired()
+                        .HasColumnType("jsonb");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("text");

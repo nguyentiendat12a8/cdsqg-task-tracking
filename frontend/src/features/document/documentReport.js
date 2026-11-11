@@ -93,7 +93,7 @@ export function createDocumentReportActions({
         item.code || '',
         item.title || '',
         item.leadAgencyName || '',
-        item.assignedAgencyName || '—',
+        Array.isArray(item.subAgencyNames) && item.subAgencyNames.length ? item.subAgencyNames.join(', ') : '—',
         Array.isArray(item.coordinatingAgencyNames) ? item.coordinatingAgencyNames.join(', ') : item.cooperatingAgencies || '',
         item.progressAgencyName || '—',
         item.assignmentKind === 'Group' ? 'Giao qua nhóm' : item.assignmentKind === 'Direct' ? 'Giao trực tiếp' : '—',

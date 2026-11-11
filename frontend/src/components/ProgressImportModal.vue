@@ -339,6 +339,7 @@ function checkUserPermission(task) {
 
   const leadAgId = task.leadAgencyId ? String(task.leadAgencyId).toLowerCase() : null;
   const assignedAgId = task.assignedAgencyId ? String(task.assignedAgencyId).toLowerCase() : null;
+  const subAgIds = (task.subAgencyIds || []).map(id => String(id).toLowerCase());
   const isGeneral = task.isGeneralTask || task.leadAgencyCode === 'ALL_AGENCIES';
 
   const isLevel2 = props.currentAgency && !props.currentAgency.parentId;
@@ -348,15 +349,16 @@ function checkUserPermission(task) {
     if (leadAgId === currAgId || isGeneral) return true;
     if (task.leadAgency?.parentId && String(task.leadAgency.parentId).toLowerCase() === currAgId) return true;
     if (assignedAgId && props.currentAgency?.children?.some(c => String(c.id).toLowerCase() === assignedAgId)) return true;
+    if (subAgIds.length && props.currentAgency?.children?.some(c => subAgIds.includes(String(c.id).toLowerCase()))) return true;
     return false;
   }
 
   if (isLevel3) {
-    if (assignedAgId === currAgId || leadAgId === currAgId) return true;
+    if (assignedAgId === currAgId || leadAgId === currAgId || subAgIds.includes(currAgId)) return true;
     return false;
   }
 
-  return leadAgId === currAgId || assignedAgId === currAgId;
+  return leadAgId === currAgId || assignedAgId === currAgId || subAgIds.includes(currAgId);
 }
 
 // Hiển thị trước; API kiểm tra lại quyền chủ trì của từng mục tiêu.

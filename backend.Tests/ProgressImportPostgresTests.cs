@@ -37,6 +37,13 @@ public class ProgressImportPostgresTests
                 ItemType = ItemTypeEnum.Task, EvaluationType = EvaluationTypeEnum.Qualitative,
                 Deliverables = new() { new() { Id = "demo_product", Title = "Sản phẩm demo" } } };
             db.AddRange(adminAgency, demoTask); await db.SaveChangesAsync();
+            var logsBeforeWrongDestination = await db.ProgressLogs.CountAsync();
+            var wrongDestination = await service.ImportProgressBulkAsync(new() { UserRole = "Admin", ReportingAgencyId = adminAgency.Id,
+                Items = new() { new() { Id = goal.Id, Code = goal.Code, Value = 999, PeriodYear = reportYear } } });
+            Assert.Equal(1, wrongDestination.FailureCount);
+            Assert.Equal(0, wrongDestination.SuccessCount);
+            Assert.Equal(logsBeforeWrongDestination, await db.ProgressLogs.CountAsync());
+
             await AssignmentTestData.PrepareAsync(db);
             foreach (var state in new[] { "Drafting", "Completed" })
             {

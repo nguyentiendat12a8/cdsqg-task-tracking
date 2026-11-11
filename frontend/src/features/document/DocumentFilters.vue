@@ -2,17 +2,13 @@
 <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 bg-slate-50/60 p-3 w-full">
           <div class="flex flex-wrap items-center gap-2 w-full min-w-0">
             <!-- Quick Search Input -->
-            <div class="relative w-full sm:w-80 max-w-full shrink-0">
-              <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-              <input
-                :aria-label="filterItemType === 'Goal' ? 'Tìm mục tiêu' : 'Tìm nhiệm vụ'"
-                :value="filterDraft.searchQuery"
-                @input="filterDraft.searchQuery = $event.target.value"
-                @keyup.enter="execFilterSearch"
-                :placeholder="filterItemType === 'Goal' ? 'Tìm theo mã, tên mục tiêu...' : 'Tìm theo mã, tên nhiệm vụ...'"
-                class="ui-single-line w-full text-xs font-semibold pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none "
-              />
-            </div>
+            <SearchInput
+              v-model="filterDraft.searchQuery"
+              :aria-label="filterItemType === 'Goal' ? 'Tìm mục tiêu' : 'Tìm nhiệm vụ'"
+              :placeholder="filterItemType === 'Goal' ? 'Tìm theo mã, tên mục tiêu...' : 'Tìm theo mã, tên nhiệm vụ...'"
+              wrapper-class="w-full sm:w-80 max-w-full shrink-0"
+              @search="execFilterSearch"
+            />
 
             <!-- Quick Search Button -->
             <button
@@ -170,6 +166,7 @@ import { computed, useId } from 'vue';
 import { currentReportingYear } from '../../config/reporting';
 import { reportYearOptions, getReportYearOptions } from '../../shared/reportYear';
 import { activeDocument } from '../../services/documentContext';
+import SearchInput from '../../components/SearchInput.vue';
 import SearchableSelect from '../../components/SearchableSelect.vue';
 import DatePicker from '../../components/DatePicker.vue';
 import OverlayPanel from '../../components/OverlayPanel.vue';

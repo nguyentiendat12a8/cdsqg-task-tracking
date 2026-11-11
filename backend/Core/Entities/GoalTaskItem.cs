@@ -61,10 +61,16 @@ namespace Cdsqg.Core.Entities
         public string? CoordinatingAgenciesDisplayText { get; set; }
 
         /// <summary>
-        /// Đơn vị trực thuộc được giao nhiệm vụ (Optional)
+        /// Cơ quan đồng chủ trì thứ hai (Optional). Đơn vị trực thuộc (Cấp 3) lưu riêng ở SubAgencyIds.
         /// </summary>
         public Guid? AssignedAgencyId { get; set; }
         public Agency? AssignedAgency { get; set; }
+
+        /// <summary>
+        /// Các đơn vị trực thuộc (Cấp 3) được giao thực hiện, độc lập với cơ quan đồng chủ trì (JSONB).
+        /// Phần tử đầu là đơn vị đầu mối.
+        /// </summary>
+        public List<Guid> SubAgencyIds { get; set; } = new List<Guid>();
 
         /// <summary>
         /// Mảng UUID các Cơ quan phối hợp (Mapped to PostgreSQL JSONB column)

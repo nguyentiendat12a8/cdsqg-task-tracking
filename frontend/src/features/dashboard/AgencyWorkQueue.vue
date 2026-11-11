@@ -8,7 +8,7 @@
       <DashboardTypeSwitch v-model="filterType" label="Loại công việc của đơn vị" />
     </header>
     <div class="flex shrink-0 flex-wrap gap-2 border-b border-slate-100 p-3">
-      <input v-model="search" type="search" aria-label="Tìm công việc của đơn vị" placeholder="Tìm mã hoặc tên công việc..." class="ui-control min-w-0 flex-1 rounded-lg border border-slate-200 px-3" />
+      <SearchInput v-model="search" placeholder="Tìm mã hoặc tên công việc..." aria-label="Tìm công việc của đơn vị" wrapper-class="min-w-0 flex-1" />
       <SearchableSelect v-model="status" :options="[{value:'all',label:'Tất cả trạng thái'},...executionStatusOptions]" :clearable="false" :is-multi="false" label="Trạng thái công việc" label-class="sr-only" class="w-full sm:w-48" />
     </div>
     <div v-if="loading" role="status" class="min-h-0 flex-1 overflow-auto p-8"><LoadingSpinner message="Đang tải công việc của đơn vị..." /></div>
@@ -80,6 +80,7 @@
 import {ref,watch,onUnmounted} from 'vue';
 import DashboardTypeSwitch from './DashboardTypeSwitch.vue';
 import SearchableSelect from '../../components/SearchableSelect.vue';
+import SearchInput from '../../components/SearchInput.vue';
 import LoadingSpinner from '../../components/LoadingSpinner.vue';
 import {executionStatusOptions} from '../../shared/statusPresentation';
 import {getStatusBadgeClass,getStatusLabel,formatDate} from './presentation';

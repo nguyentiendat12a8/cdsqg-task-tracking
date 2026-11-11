@@ -78,17 +78,13 @@
       <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3 bg-slate-50/60 w-full border-b border-slate-200/80">
         <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 flex-1 max-w-xl min-w-0">
           <!-- Search Input -->
-          <div class="relative flex-1 min-w-0 basis-full sm:basis-0">
-            <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-            </svg>
-            <input 
-              v-model="searchQuery" 
-              @keyup.enter="execSearch"
-              placeholder="Tìm theo tên cơ quan, số hiệu VB phúc đáp, quyết định, cán bộ đầu mối, SĐT, ghi chú..." 
-              class="ui-single-line w-full text-xs font-semibold pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            />
-          </div>
+          <SearchInput
+            v-model="searchQuery"
+            placeholder="Tìm theo tên cơ quan, số hiệu VB phúc đáp, quyết định, cán bộ đầu mối, SĐT, ghi chú..."
+            aria-label="Tìm kiếm cơ quan, kế hoạch chuyển đổi số"
+            wrapper-class="flex-1 min-w-0 basis-full sm:basis-0"
+            @search="execSearch"
+          />
 
           <!-- OverlayPanel Advanced Filter Popover -->
           <OverlayPanel 
@@ -923,6 +919,7 @@ import { getApiUrl } from '../config/api';
 import { confirmModal } from '../services/confirm';
 import OverlayPanel from '../components/OverlayPanel.vue';
 import SearchableSelect from '../components/SearchableSelect.vue';
+import SearchInput from '../components/SearchInput.vue';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
 
 // Navigation tab: 'ministry' (Bộ ngành), 'province' (Địa phương), 'contacts' (Đầu mối liên hệ), 'all' (Tất cả)
@@ -1122,7 +1119,9 @@ async function fetchAllAgenciesOptions() {
   }
 }
 
+let agencyPlansRequestId = 0;
 async function fetchAgencies() {
+  const currentId = ++agencyPlansRequestId;
   loading.value = true;
   try {
     const params = new URLSearchParams();
@@ -1187,6 +1186,7 @@ async function fetchAgencies() {
         totalP = 1;
       }
 
+      if (currentId !== agencyPlansRequestId) return;
       agencies.value = rawItems;
       totalCount.value = total;
       totalPages.value = totalP;
@@ -1194,7 +1194,9 @@ async function fetchAgencies() {
   } catch (err) {
     console.error('Error loading agencies:', err);
   } finally {
-    loading.value = false;
+    if (currentId === agencyPlansRequestId) {
+      loading.value = false;
+    }
   }
 }
 

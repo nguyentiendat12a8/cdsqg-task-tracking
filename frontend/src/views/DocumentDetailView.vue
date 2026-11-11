@@ -231,21 +231,19 @@
           <button @click="isAssignModalOpen = false" class="text-slate-400 hover:text-slate-600 font-bold">✕</button>
         </div>
         <div class="space-y-3">
-          <p class="text-xs text-slate-600">Chọn đơn vị trực thuộc để giao cho <strong>{{ assignItemTarget?.code }}: {{ assignItemTarget?.title }}</strong>:</p>
+          <p class="text-xs text-slate-600">Chọn một hoặc nhiều đơn vị trực thuộc Bộ Khoa học và Công nghệ để giao cho <strong>{{ assignItemTarget?.code }}: {{ assignItemTarget?.title }}</strong>:</p>
           <div v-if="assignSubAgencyOptions.length === 0" class="p-3 bg-amber-50 text-amber-800 text-xs rounded-xl border border-amber-200 font-semibold">
-            Cơ quan chủ trì <strong>{{ assignItemTarget?.leadAgencyName || 'này' }}</strong> hiện chưa có đơn vị trực thuộc nào trong hệ thống.
+            Bộ Khoa học và Công nghệ hiện chưa có đơn vị trực thuộc nào trong hệ thống.
           </div>
           <div v-else class="space-y-1">
             <SearchableSelect
-              v-model="selectedSubAgencyId"
-              :options="[
-                { value: '', label: '— Bỏ giao (chưa giao đơn vị trực thuộc) —' },
-                ...assignSubAgencyOptions.map(sub => ({ value: sub.id, label: sub.name }))
-              ]"
-              :isMulti="false"
-              :clearable="false"
-              placeholder="— Bỏ giao (chưa giao đơn vị trực thuộc) —"
+              v-model="selectedSubAgencyIds"
+              :options="assignSubAgencyOptions.map(sub => ({ value: sub.id, label: sub.name }))"
+              :isMulti="true"
+              :maxDisplayTags="3"
+              placeholder="— Chưa giao đơn vị trực thuộc —"
             />
+            <p class="text-xs text-slate-500">Đơn vị chọn đầu tiên là đơn vị đầu mối. Bỏ chọn hết để thu hồi giao.</p>
           </div>
         </div>
         <div class="flex justify-end gap-2 border-t border-slate-100 pt-3">
@@ -449,6 +447,9 @@ const SendNotificationModal = defineAsyncComponent(() => import('../components/S
 const ItemDetailModal = defineAsyncComponent(() => import('../components/ItemDetailModal.vue'));
 
 import { getApiUrl } from '../config/api';
+import { itemInvolvesBKHCN, bkhcnSubAgencies, subAgencyIdsOf, withAssignedSubAgencies, catalogMissesSubAgencies } from '../shared/subAgencies';
+import { loadAgencyCatalog } from '../services/agencyCatalog';
+import { sortAgenciesByStandardOrder } from '../shared/agencyPresentation';
 
 const props = defineProps({
   filterItemType: { type: String, default: 'Task' },
@@ -585,7 +586,7 @@ const goalUnitOptions = ref([
 ]);
 
 const coordinatingAgencyOptions = computed(() => {
-  return agencies.value.map(ag => {
+  return sortAgenciesByStandardOrder(agencies.value).map(ag => {
     if (isSpecialAgencyCode(ag.code)) {
       return { value: ag.id, label: `🌐 ${ag.name}` };
     }
@@ -629,9 +630,12 @@ function openProgressModal(item) {
 
 const isAssignModalOpen = ref(false);
 const assignItemTarget = ref(null);
-const selectedSubAgencyId = ref('');
+const selectedSubAgencyIds = ref([]);
 const assignSubAgencyOptions = computed(() => {
   if (!assignItemTarget.value) return [];
+  // Đơn vị trực thuộc Bộ KH&CN, kể cả khi Bộ là đồng chủ trì hoặc thuộc nhóm nhiệm vụ chung.
+  const bkhcnSubs = bkhcnSubAgencies(agencies.value);
+  if (bkhcnSubs.length > 0) return withAssignedSubAgencies(bkhcnSubs, assignItemTarget.value);
   const targetLeadId = assignItemTarget.value.leadAgencyId;
   const userAgencyId = authState.user.value?.agencyId || authState.user.value?.agency?.id || null;
   const isGeneral = assignItemTarget.value.isGeneralTask || assignItemTarget.value.leadAgencyCode === 'ALL_AGENCIES' || targetLeadId === '00000000-0000-0000-0000-000000009999';
@@ -659,14 +663,6 @@ const assignSubAgencyOptions = computed(() => {
   return agencies.value.filter(a => a.parentId != null && a.type !== 4 && a.type !== 'Other');
 });
 
-const isBKHCNAgency = computed(() => {
-  const userAgencyId = authState.user.value?.agencyId ? String(authState.user.value.agencyId).toLowerCase() : '';
-  const userAgency = agencies.value.find(a => String(a.id).toLowerCase() === userAgencyId);
-  const agName = (userAgency?.name || authState.user.value?.agencyName || '').toLowerCase();
-  const agCode = (userAgency?.code || authState.user.value?.agencyCode || '').toLowerCase();
-  return agCode === 'bkhcn' || agName.includes('khoa học và công nghệ') || agName.includes('khoa học & công nghệ') || agName.includes('khoa học công nghệ');
-});
-
 const isLeadAgencyFilteredByBKHCN = computed(() => {
   const selectedIds = appliedFilters.value.selectedAgencyIds || [];
   if (selectedIds.length === 0) return false;
@@ -680,35 +676,20 @@ const isLeadAgencyFilteredByBKHCN = computed(() => {
   });
 });
 
-function isItemLeadByBKHCN(item) {
-  if (!item) return false;
-  const name = (item.leadAgencyName || '').toLowerCase();
-  const code = (item.leadAgencyCode || '').toLowerCase();
-  return code === 'bkhcn' || name.includes('khoa học và công nghệ') || name.includes('khoa học & công nghệ') || name.includes('khoa học công nghệ');
-}
-
 function canAssignTask(item) {
   if (!item) return false;
-
-  // Nút giao đơn vị trực thuộc chỉ hiển thị khi cơ quan chủ trì là Bộ Khoa học và Công nghệ
-  if (!isItemLeadByBKHCN(item)) return false;
-
-  if (authState.isAdmin.value) return true;
-
-  // Cấp 2: Nếu không phải Admin, user đăng nhập phải thuộc Bộ Khoa học và Công nghệ
-  if (!isBKHCNAgency.value) return false;
-
-  const userAgencyId = authState.user.value?.agencyId || authState.user.value?.agency?.id;
-  if (userAgencyId && (String(userAgencyId).toLowerCase() === String(item.leadAgencyId).toLowerCase() || item.isGeneralTask || item.leadAgencyCode === 'ALL_AGENCIES')) {
-    return true;
-  }
-  return false;
+  // Giao đơn vị trực thuộc Bộ KH&CN khi Bộ chủ trì, đồng chủ trì hoặc thuộc nhóm nhiệm vụ chung.
+  // API giao đơn vị chỉ cho phép Quản trị viên.
+  return authState.isAdmin.value && itemInvolvesBKHCN(item, agencies.value);
 }
 
-function openAssignModalFromList(item) {
+async function openAssignModalFromList(item) {
   assignItemTarget.value = item;
-  selectedSubAgencyId.value = item.assignedAgencyId || '';
+  selectedSubAgencyIds.value = subAgencyIdsOf(item);
   isAssignModalOpen.value = true;
+  if (catalogMissesSubAgencies(agencies.value, item)) {
+    try { agencies.value = await loadAgencyCatalog({ force: true }); } catch { /* giữ danh mục cũ, tên lấy từ mục */ }
+  }
 }
 
 async function submitAssignTaskFromList() {
@@ -718,13 +699,13 @@ async function submitAssignTaskFromList() {
     const res = await fetchWithAuth(getApiUrl(`/api/planning/items/${targetId}/assign`), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ assignedAgencyId: selectedSubAgencyId.value || null })
+      body: JSON.stringify({ assignedAgencyIds: [...selectedSubAgencyIds.value] })
     });
     if (res.ok) {
       toast.success('Cập nhật giao đơn vị trực thuộc thành công!');
-      const selectedSub = agencies.value.find(a => a.id === selectedSubAgencyId.value);
-      assignItemTarget.value.assignedAgencyId = selectedSubAgencyId.value || null;
-      assignItemTarget.value.assignedAgencyName = selectedSub ? selectedSub.name : null;
+      const ids = [...selectedSubAgencyIds.value];
+      assignItemTarget.value.subAgencyIds = ids;
+      assignItemTarget.value.subAgencyNames = ids.map(id => assignSubAgencyOptions.value.find(a => String(a.id) === String(id))?.name?.trim()).filter(Boolean);
       isAssignModalOpen.value = false;
 
       try {

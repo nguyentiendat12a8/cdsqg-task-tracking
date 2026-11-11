@@ -3,7 +3,7 @@
     class="app-sidebar"
     :class="[
       { 'mobile-open': mobileOpen },
-      'relative h-full shrink-0 z-50 transition-all duration-300 ease-in-out',
+      'relative h-full shrink-0 z-50 transition-[width] duration-200 ease-out',
       isManualCollapsed ? 'w-20' : 'w-64'
     ]"
     @mouseenter="onMouseEnter"
@@ -13,7 +13,7 @@
   >
     <aside 
       :class="[
-        'app-navigation text-slate-300 transition-all duration-300 ease-in-out flex flex-col border-r border-slate-800 h-full overflow-hidden select-none',
+        'app-navigation text-slate-300 transition-[width] duration-200 ease-out flex flex-col border-r border-slate-800 h-full overflow-hidden select-none',
         isManualCollapsed ? 'absolute left-0 top-0 z-50 shadow-2xl' : 'relative z-50 shadow-xl',
         isCollapsed ? 'w-20' : 'w-64'
       ]"
@@ -68,7 +68,7 @@
       </div>
 
       <!-- Main Navigation Items -->
-      <nav aria-label="Điều hướng chính" class="flex-1 py-4 px-2.5 space-y-1.5 overflow-y-auto custom-scrollbar">
+      <nav aria-label="Điều hướng chính" :style="{ width: isCollapsed ? '80px' : '256px', flexShrink: 0 }" class="flex-1 py-4 px-2.5 space-y-1.5 overflow-y-auto custom-scrollbar">
         
         <!-- Trang chủ (Dashboard) -->
         <button 
@@ -153,7 +153,7 @@
             :class="[
               'nav-link w-full flex items-center justify-between py-3 rounded-xl font-bold text-xs transition-all duration-200 whitespace-nowrap overflow-hidden cursor-pointer',
               isCollapsed ? 'justify-center px-0 w-12 h-12 mx-auto' : 'px-3',
-              ['reports', 'reports-general', 'reports-progress'].includes(activeTab) ? 'is-active' : 'nav-idle'
+              ['reports', 'reports-general', 'reports-progress', 'reports-progress-internal'].includes(activeTab) ? 'is-active' : 'nav-idle'
             ]"
             v-tip="{ content: isCollapsed ? 'Báo cáo' : '', placement: 'right' }"
           >
@@ -184,6 +184,16 @@
             >
               Báo cáo tiến độ
             </button>
+            <button
+              @click="selectTab('reports-progress-internal')"
+              title="Báo cáo tiến độ trong Bộ"
+              :class="[
+                'nav-sublink w-full text-left py-2 px-3 rounded-lg text-xs font-semibold transition cursor-pointer',
+                activeTab === 'reports-progress-internal' ? 'is-active' : 'nav-idle'
+              ]"
+            >
+              Báo cáo tiến độ trong Bộ
+            </button>
           </div>
         </div>
 
@@ -193,7 +203,7 @@
           :class="[
             'nav-link w-full flex items-center gap-3 py-3 rounded-xl font-bold text-xs transition-all duration-200 whitespace-nowrap overflow-hidden cursor-pointer',
             isCollapsed ? 'justify-center px-0 w-12 h-12 mx-auto' : 'px-3',
-            ['reports', 'reports-general', 'reports-progress'].includes(activeTab) ? 'is-active' : 'nav-idle'
+            ['reports', 'reports-general', 'reports-progress', 'reports-progress-internal'].includes(activeTab) ? 'is-active' : 'nav-idle'
           ]"
           v-tip="{ content: isCollapsed ? 'Báo cáo tiến độ' : '', placement: 'right' }"
         >
@@ -329,7 +339,7 @@ let hoverTimer = null;
 
 const isAiOpen = ref(isAiRoute(props.activeTab));
 const isGoalsOpen = ref(props.activeTab.startsWith('goals'));
-const isReportsOpen = ref(['reports', 'reports-general', 'reports-progress'].includes(props.activeTab));
+const isReportsOpen = ref(['reports', 'reports-general', 'reports-progress', 'reports-progress-internal'].includes(props.activeTab));
 const isUtilitiesOpen = ref(['legal-documents', 'agency-plans', 'digital-news'].includes(props.activeTab));
 const isSettingsOpen = ref(['agencies', 'units', 'users', 'import-history'].includes(props.activeTab));
 
@@ -340,7 +350,7 @@ const isCollapsed = computed(() => {
 watch(() => props.activeTab, (newTab) => {
   if (isAiRoute(newTab)) isAiOpen.value = true;
   if (newTab.startsWith('goals')) isGoalsOpen.value = true;
-  if (['reports', 'reports-general', 'reports-progress'].includes(newTab)) isReportsOpen.value = true;
+  if (['reports', 'reports-general', 'reports-progress', 'reports-progress-internal'].includes(newTab)) isReportsOpen.value = true;
   if (['legal-documents', 'agency-plans', 'digital-news'].includes(newTab)) isUtilitiesOpen.value = true;
   if (['agencies', 'units', 'users', 'import-history'].includes(newTab)) isSettingsOpen.value = true;
 }, { immediate: true });
@@ -416,7 +426,9 @@ onUnmounted(() => clearTimeout(hoverTimer));
 .nav-link:not(.is-active):hover, .nav-sublink:not(.is-active):hover { background: var(--ui-nav-hover); color: white; }
 .nav-link.is-active { background: var(--ui-nav-active); color: white; border-color: rgb(255 255 255 / .12); box-shadow: 0 3px 10px rgb(10 25 51 / .12); }
 .nav-link.is-active::before { content: ''; position: absolute; left: 0; top: 25%; bottom: 25%; width: 3px; border-radius: 0 3px 3px 0; background: #a9d6ff; }
+.nav-sublink { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .nav-sublink.is-active { background: rgb(255 255 255 / .1); color: #e1edff; border-color: rgb(255 255 255 / .08); }
+@media (prefers-reduced-motion: reduce) { .app-sidebar, .app-navigation { transition: none; } }
 .app-navigation :focus-visible { outline-color: #b6d7ff; outline-offset: 2px; }
 .app-navigation .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
 .app-navigation .custom-scrollbar::-webkit-scrollbar-thumb { background: var(--ui-nav-line); }

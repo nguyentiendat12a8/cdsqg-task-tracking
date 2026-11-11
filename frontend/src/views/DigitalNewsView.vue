@@ -12,7 +12,13 @@
   <div class="p-3.5 sm:p-4 w-full">
    <div class="w-full rounded-2xl border border-slate-200/80 bg-white overflow-hidden shadow-sm flex flex-col">
    <form class="flex flex-wrap gap-2 items-center p-3 bg-slate-50/60" @submit.prevent="applyFilters">
-    <div class="relative flex-1 min-w-0 basis-64 max-w-xl"><label for="news-search" class="sr-only">Tìm bài viết</label><svg aria-hidden="true" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path stroke-linecap="round" d="m21 21-6-6"/><circle cx="10" cy="10" r="7"/></svg><input id="news-search" v-model="searchDraft" type="search" maxlength="250" class="news-field news-search font-semibold" placeholder="Tìm theo tên bài viết, bộ hoặc tỉnh…" /></div>
+    <SearchInput
+      v-model="searchDraft"
+      placeholder="Tìm theo tên bài viết, bộ hoặc tỉnh…"
+      aria-label="Tìm bài viết"
+      wrapper-class="flex-1 min-w-0 basis-64 max-w-xl"
+      @search="applyFilters"
+    />
     <div class="w-full sm:w-56"><SearchableSelect v-model="agencyDraft" :options="[{value:'',label:'Tất cả bộ/tỉnh'},...agencies.map(a=>({value:a,label:a}))]" label="Bộ / tỉnh" label-class="sr-only" :is-multi="false" :clearable="false" /></div>
     <div class="w-full sm:w-48"><SearchableSelect v-model="statusDraft" :options="statusOptions" label="Trạng thái" label-class="sr-only" :is-multi="false" :clearable="false" /></div>
     <button class="ui-btn ui-btn-primary" type="submit" :disabled="loading">Tìm kiếm</button><button class="ui-btn ui-btn-secondary" type="button" :disabled="loading" @click="resetFilters">Đặt lại</button>
@@ -54,6 +60,7 @@ import { MODULE, ACTION } from '../shared/permissions';
 import {getApiUrl} from '../config/api';
 import {formatDateTime} from '../shared/formatters';
 import SearchableSelect from '../components/SearchableSelect.vue';
+import SearchInput from '../components/SearchInput.vue';
 import DocumentPagination from '../features/document/DocumentPagination.vue';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
 import {getStatusBadgeClass} from '../shared/statusPresentation';

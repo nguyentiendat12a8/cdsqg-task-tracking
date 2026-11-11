@@ -28,15 +28,13 @@
       <!-- Search Bar -->
       <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3 border-b border-slate-200 bg-slate-50/60 w-full">
         <div class="flex items-center gap-2 flex-1 min-w-0 max-w-md">
-          <div class="relative w-full min-w-[180px]">
-            <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            <input 
-              :value="searchDraft" 
-              @input="searchDraft = $event.target.value"
-              placeholder="Tìm kiếm theo tên cơ quan..." 
-              class="ui-single-line w-full text-xs font-semibold pl-9 pr-4 py-1.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            />
-          </div>
+          <SearchInput
+            v-model="searchDraft"
+            placeholder="Tìm kiếm theo tên cơ quan..."
+            aria-label="Tìm kiếm cơ quan"
+            wrapper-class="w-full min-w-[180px]"
+            @search="execSearch"
+          />
           <button @click="resetSearch" class="ui-single-line px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition shrink-0 cursor-pointer">↺</button>
         </div>
         <span class="text-xs text-slate-500 font-bold shrink-0">
@@ -393,6 +391,7 @@ import { fetchWithAuth } from '../services/auth';
 
 import { ref, computed, watch, onMounted } from 'vue';
 import SearchableSelect from './SearchableSelect.vue';
+import SearchInput from './SearchInput.vue';
 import { toast } from 'vue3-toastify';
 import LoadingSpinner from './LoadingSpinner.vue';
 import { getApiUrl } from '../config/api';
@@ -405,9 +404,9 @@ const isLoading = ref(true);
 const pageSizeOptions = ref([10, 25, 50, 100].map(n => ({ value: n, label: String(n) })));
 
 const agencyTypeOptions = ref([
+  { value: 5, label: 'Đặc biệt' },
   { value: 1, label: 'Bộ / Ngành' },
   { value: 2, label: 'Tỉnh / Thành phố' },
-  { value: 5, label: 'Đặc biệt' },
   { value: 4, label: 'Khác (Danh mục riêng)' }
 ]);
 
@@ -515,12 +514,7 @@ function execSearch() {
   fetchAgencies();
 }
 
-watch(searchDraft, () => {
-  if (agencySearchDebounceTimer) clearTimeout(agencySearchDebounceTimer);
-  agencySearchDebounceTimer = setTimeout(() => {
-    execSearch();
-  }, 300);
-});
+
 
 function resetSearch() {
   if (agencySearchDebounceTimer) clearTimeout(agencySearchDebounceTimer);
@@ -820,7 +814,8 @@ async function deleteAgency(agency) {
         toast.success('Đã xóa dữ liệu thành công!');
         await fetchAgencies();
       } else {
-        toast.error('Không thể xóa dữ liệu này.');
+        const body = await res.json().catch(() => null);
+        toast.error(body?.error || 'Không thể xóa dữ liệu này.');
       }
     } catch (e) {
       toast.error('Không thể xóa dữ liệu này.');

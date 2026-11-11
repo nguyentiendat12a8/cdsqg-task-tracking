@@ -25,15 +25,13 @@
       <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3 bg-slate-50/60 border-b border-slate-200/80 w-full">
         <div class="flex items-center gap-2 flex-1 max-w-xl min-w-0">
           <!-- Search Input -->
-          <div class="relative flex-1 min-w-[200px]">
-            <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            <input 
-              :value="searchInput" 
-              @input="searchInput = $event.target.value"
-              placeholder="Tìm theo Username, họ tên, email..." 
-              class="ui-single-line w-full text-xs font-semibold pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none "
-            />
-          </div>
+          <SearchInput
+            v-model="searchInput"
+            placeholder="Tìm theo Username, họ tên, email..."
+            aria-label="Tìm kiếm người dùng"
+            wrapper-class="flex-1 min-w-[200px]"
+            @search="execSearch"
+          />
 
           <!-- OverlayPanel Advanced Filter -->
           <OverlayPanel
@@ -406,9 +404,11 @@ import { formatDateTime } from '../shared/formatters';
 import { ROLE, isAdminRole, isClerkRole, normalizeRole } from '../shared/roles';
 import { seesAllAgencies } from '../shared/permissions';
 import { fetchWithAuth } from '../services/auth';
+import { sortAgenciesByStandardOrder } from '../shared/agencyPresentation';
 
 import { ref, computed, watch, onMounted } from 'vue';
 import SearchableSelect from '../components/SearchableSelect.vue';
+import SearchInput from '../components/SearchInput.vue';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
 import OverlayPanel from '../components/OverlayPanel.vue';
 import { toast } from 'vue3-toastify';
@@ -461,20 +461,20 @@ const formatAgencyLabel = (ag, list) => {
 };
 
 const agencyOptions = computed(() => {
-  return agencies.value.map(ag => ({ value: ag.id, label: formatAgencyLabel(ag, agencies.value) }));
+  return sortAgenciesByStandardOrder(agencies.value).map(ag => ({ value: ag.id, label: formatAgencyLabel(ag, agencies.value) }));
 });
 
 const leadAgencyOptions = computed(() => {
-  return agencies.value.map(ag => ({ value: ag.id, label: formatAgencyLabel(ag, agencies.value) }));
+  return sortAgenciesByStandardOrder(agencies.value).map(ag => ({ value: ag.id, label: formatAgencyLabel(ag, agencies.value) }));
 });
 
 const subAgencyOptions = computed(() => {
-  return agencies.value
-    .filter(ag => ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000')
-    .map(ag => ({
-      value: ag.id,
-      label: formatAgencyLabel(ag, agencies.value)
-    }));
+  return sortAgenciesByStandardOrder(
+    agencies.value.filter(ag => ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000')
+  ).map(ag => ({
+    value: ag.id,
+    label: formatAgencyLabel(ag, agencies.value)
+  }));
 });
 
 const pageNumber = ref(1);
@@ -529,7 +529,7 @@ async function loadAgencies() {
   try {
     const res = await fetchWithAuth(getApiUrl('/api/agency'));
     if (res.ok) {
-      agencies.value = await res.json();
+      agencies.value = sortAgenciesByStandardOrder(await res.json());
     }
   } catch (e) {
     console.error('Lỗi khi tải danh sách cơ quan:', e);
@@ -584,12 +584,7 @@ function execSearch() {
   fetchUsers();
 }
 
-watch(searchInput, () => {
-  if (userSearchDebounceTimer) clearTimeout(userSearchDebounceTimer);
-  userSearchDebounceTimer = setTimeout(() => {
-    execSearch();
-  }, 300);
-});
+
 
 function resetSearch() {
   if (userSearchDebounceTimer) clearTimeout(userSearchDebounceTimer);

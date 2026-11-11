@@ -138,6 +138,8 @@ namespace Cdsqg.Application.DTOs
     public class ImportProgressBulkItemDto
     {
         public List<TaskDeliverable>? Deliverables { get; set; }
+        /// <summary>ID mục tiêu/nhiệm vụ. Ưu tiên hơn Code vì mã (NV-xx, MT-xx) trùng giữa QĐ 2629 và QĐ 1266.</summary>
+        public Guid? Id { get; set; }
         public string Code { get; set; } = string.Empty;
         public decimal? Value { get; set; }
         public TextStatusEnum? Status { get; set; }

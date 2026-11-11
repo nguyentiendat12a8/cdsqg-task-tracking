@@ -8,6 +8,7 @@ Theo yêu cầu nâng chuẩn UI/UX, kích thước chữ và control dùng than
 
 | Control | Nguồn hiện có | Quy tắc |
 | --- | --- | --- |
+| Ô tìm kiếm văn bản | `frontend/src/components/SearchInput.vue` | debounce 500ms, Enter tìm ngay, nút ✕ xóa và tìm lại, switchMap chống race condition, không phân biệt hoa thường |
 | Select tìm kiếm, multi-select | `frontend/src/components/SearchableSelect.vue` | options `{value,label}`; giá trị đơn null, nhiều là mảng; không copy dropdown |
 | Ngày | `frontend/src/components/DatePicker.vue` | ngày lịch `YYYY-MM-DD`; không tự đổi UTC |
 | Xác nhận | `frontend/src/components/ConfirmModal.vue`, `services/confirm.js` | dùng cho thao tác phá hủy; không window.confirm |

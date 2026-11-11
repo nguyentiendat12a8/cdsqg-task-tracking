@@ -1707,6 +1707,20 @@ namespace Cdsqg.Infrastructure.Data
 
 
 
+                entity.Property(e => e.SubAgencyIds)
+
+                      .HasColumnType("jsonb")
+
+                      .HasConversion(
+
+                          v => JsonSerializer.Serialize(v, (JsonSerializerOptions?)null),
+
+                          v => JsonSerializer.Deserialize<List<System.Guid>>(v, (JsonSerializerOptions?)null) ?? new List<System.Guid>()
+
+                      );
+
+
+
                 entity.Property(e => e.DynamicKPIs)
 
                       .HasColumnType("jsonb")

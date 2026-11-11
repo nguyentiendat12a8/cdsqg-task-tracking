@@ -136,9 +136,11 @@
                     <span v-else class="text-slate-400 italic">—</span>
                   </td>
                   <td v-if="isLeadAgencyFilteredByBKHCN" class="px-3 py-2.5 border-r border-slate-200 font-normal text-slate-700 text-xs leading-relaxed min-w-[180px] w-[180px] max-w-[180px]">
-                    <span v-if="item.assignedAgencyName" class="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-semibold text-xs border border-blue-100 inline-block">
-                      {{ item.assignedAgencyName }}
-                    </span>
+                    <div v-if="item.subAgencyNames?.length" class="flex flex-wrap gap-1">
+                      <span v-for="name in item.subAgencyNames" :key="name" class="px-2 py-0.5 rounded-md bg-blue-50 text-blue-700 font-semibold text-xs border border-blue-100 inline-block">
+                        {{ name }}
+                      </span>
+                    </div>
                     <span v-else class="text-slate-400 italic">—</span>
                   </td>
                   <td class="px-3 py-2.5 border-r border-slate-200 font-normal text-slate-700 text-xs leading-relaxed min-w-[180px] w-[180px] max-w-[180px]">
@@ -201,7 +203,7 @@
                       </span>
 
                       <!-- 3-Dots Dropdown Menu (Văn thư chỉ xem ở phân hệ mục tiêu/nhiệm vụ nên không có thao tác) -->
-                      <VDropdown v-if="!authState.isClerk.value" placement="bottom-end" :distance="6">
+                      <VDropdown v-if="!authState.isClerk.value" placement="bottom-end" :distance="6" popper-class="v-popper-clean-overlay">
                         <button
                           type="button"
                           @click.stop
@@ -214,7 +216,7 @@
                         </button>
 
                         <template #popper="{ hide }">
-                          <div class="py-1.5 w-44 bg-white rounded-xl shadow-xl border border-slate-200 text-xs font-normal space-y-0.5" @click.stop>
+                          <div class="py-1.5 w-48 overflow-hidden bg-white rounded-xl shadow-lg ring-1 ring-slate-200 text-xs font-normal space-y-0.5" @click.stop>
                             <button
                               v-if="canAssignTask(item)"
                               @click="openAssignModalFromList(item); hide()"

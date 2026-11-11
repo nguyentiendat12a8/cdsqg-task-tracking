@@ -187,6 +187,8 @@ namespace Cdsqg.Application.Services
                     AssignedAgencyName = item.AssignedAgencyId.HasValue && agenciesMap.ContainsKey(item.AssignedAgencyId.Value)
                         ? agenciesMap[item.AssignedAgencyId.Value].Name
                         : null,
+                    SubAgencyIds = item.SubAgencyIds,
+                    SubAgencyNames = item.SubAgencyIds.Where(agenciesMap.ContainsKey).Select(id => agenciesMap[id].Name.Trim()).ToList(),
                     CoordinatingAgencyIds = item.CoordinatingAgencyIds,
                     CoordinatingAgencyCodes = coordAgencies.Select(a => a.Code).ToList(),
                     CoordinatingAgencyNames = coordAgencies.Select(a => a.Name).ToList(),
@@ -202,6 +204,9 @@ namespace Cdsqg.Application.Services
                     ExpectedBaselineTarget = progress.Target,
                     LatestProgressStatus = latestLog?.QualitativeStatus?.ToString(),
                     LastUpdated = latestLog?.LogDate ?? item.LastUpdated ?? item.CreatedAt,
+                    LatestReportAgencyName = latestLog?.AgencyId is Guid reportAgencyId && agenciesMap.TryGetValue(reportAgencyId, out var reportAgency)
+                        ? ProvinceCatalog.DisplayName(reportAgency) : null,
+                    LatestReportedBy = latestLog?.CreatedBy,
                     CreatedAt = item.CreatedAt,
                     HasPendingApproval = item.ProgressLogs != null && item.ProgressLogs.Any(l => l.ApprovalStatus == ApprovalStatusEnum.Pending && (!contextId.HasValue || l.AgencyId == contextId) && (!reportYear.HasValue || l.PeriodYear == reportYear)),
                     CalculatedStatus = progress.Status.ToString(),
@@ -469,6 +474,19 @@ namespace Cdsqg.Application.Services
                 throw new UnauthorizedAccessException("Tài khoản chưa gắn với cơ quan.");
             if (rows.GroupBy(r => (r.TaskId, r.Year)).Any(g => g.Count() > 1))
                 throw new InvalidOperationException("Mỗi mục tiêu chỉ được nhập một kế hoạch cho mỗi năm.");
+
+            if (dto.ReportingAgencyId.HasValue)
+            {
+                var destination = await _context.Agencies.FindAsync(dto.ReportingAgencyId.Value);
+                if (destination == null || !destination.IsActive || destination.ParentId.HasValue || ReportingAgencyGroups.IsGroup(destination))
+                    throw new InvalidOperationException("Đơn vị nhập không được cập nhật kế hoạch mục tiêu của cơ quan chủ trì.");
+                if (!isAdmin && !(await AgencyScopePolicy.ResolveViewScopeAsync(_context, userAgencyId!.Value)).AgencyIds.Contains(destination.Id))
+                    throw new UnauthorizedAccessException("Đơn vị nhập nằm ngoài phạm vi được phép.");
+                var assignedIds = await AgencyAssignments.Filter(_context.GoalTaskItems.Where(t => t.DocumentId == documentId), new[] { destination.Id })
+                    .Select(t => t.Id).ToListAsync();
+                if (rows.Any(r => !assignedIds.Contains(r.TaskId)))
+                    throw new InvalidOperationException("Có mục tiêu không được phân giao cho đơn vị nhập đã chọn.");
+            }
 
             var ids = rows.Select(r => r.TaskId).Distinct().ToList();
             var tasks = await _context.GoalTaskItems

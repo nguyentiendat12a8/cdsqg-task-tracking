@@ -14,7 +14,7 @@ const bytes=encodeProgressWorkbook(wb,[[],task.statusCells],XLSX);fs.mkdirSync('
 const zip=XLSX.CFB.read(bytes,{type:'array'});const read=path=>new TextDecoder().decode(XLSX.CFB.find(zip,zip.FullPaths.find(p=>p.endsWith(path))).content);
 const styles=read('/xl/styles.xml');const xf=/color/.test(styles)&&/<cellXfs\b[^>]*>([\s\S]*?)<\/cellXfs>/.exec(styles)[1].match(/<xf\b[^>]*?\/>|<xf\b[^>]*>[\s\S]*?<\/xf>/g);
 for(let index=0;index<2;index++){const sheet=wb.Sheets[wb.SheetNames[index]],xml=read(`/xl/worksheets/sheet${index+1}.xml`);assert.match(xml,/<sheetProtection\b[^>]*password="[A-F0-9]+"[^>]*sheet="1"/);const editable=new Set(sheet['!reportEditableCells']);for(const match of xml.matchAll(/<c\b([^>]*)>/g)){const ref=/\br="([^"]+)"/.exec(match[1])[1];const style=Number(/\bs="(\d+)"/.exec(match[1])?.[1]||0);assert.equal(/<protection\b[^>]*locked="0"/.test(xf[style]),editable.has(ref),ref+' protection');}assert(!styles.includes('FEF08A'));assert(!styles.includes('FEFCE8'));}
-assert.match(read('/xl/worksheets/sheet2.xml'),/dataValidation[^>]*sqref="G6"/);assert.equal(task.ws.F4.v,'Sản phẩm bàn giao');assert.equal(task.ws.G4.v,'TRẠNG THÁI THỰC HIỆN');
+assert.match(read('/xl/worksheets/sheet2.xml'),/dataValidation[^>]*sqref="F6"/);assert.equal(task.ws.E4.v,'Sản phẩm bàn giao');assert.equal(task.ws.F4.v,'TRẠNG THÁI THỰC HIỆN');
 for(const sheet of [ws,task.ws]){const rows=XLSX.utils.sheet_to_json(sheet,{header:1});for(let i=0;i<rows.length;i++)if(['I','II'].includes(rows[i][0]))assert.equal(sheet[`A${i+1}`].s.alignment.horizontal,'center');}
 assert.equal(ws[`J${r1+1}`].s.fill.fgColor.rgb,ws[`E${r1+1}`].s.fill.fgColor.rgb);
 assert.equal(ws[`C${r1+1}`].s.fill.fgColor.rgb.slice(-6), 'FFFFFF');
@@ -33,3 +33,12 @@ assert.equal(parsed.goals.find(g=>g.id==='g1'&&g.periodYear===2025).value,33);
 assert.equal(parsed.goals.find(g=>g.id==='g1'&&g.periodYear===2026).value,44);
 assert(!parsed.goals.some(g=>g.id==='g2'&&g.periodYear===2025));
 console.log('PASS 2025/2026 import separation, merged code lines, phase colors, centered sections and product/status order');
+
+assert(!parsed.warnings.some(w=>/QUYẾT ĐỊNH SỐ/.test(w)), 'Decision group headings must not be treated as goal rows');
+
+for(const sheet of [ws,task.ws]) {
+ const text=JSON.stringify(XLSX.utils.sheet_to_json(sheet,{header:1}));
+ assert(text.includes('2629/QĐ-TTg NGÀY 01/12/2025'));
+ assert(text.includes('1266/QĐ-TTg NGÀY 14/07/2026') || sheet===task.ws);
+ assert(!text.includes('10/12/2024')&&!text.includes('24/10/2024'));
+}

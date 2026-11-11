@@ -1,5 +1,6 @@
 import { fetchWithAuth, authState } from './auth';
 import { getApiUrl } from '../config/api';
+import { sortAgenciesByStandardOrder } from '../shared/agencyPresentation';
 
 // Danh mục cơ quan (~40 KB) được nhiều màn hình/modal dùng chung. Giữ một bản trong bộ nhớ
 // theo phiên đăng nhập để không tải lại mỗi lần mở modal hay đổi bộ lọc.
@@ -13,7 +14,10 @@ export function invalidateAgencyCatalog() { cache = null; }
 
 if (typeof window !== 'undefined') window.addEventListener(AGENCY_CATALOG_STALE_EVENT, invalidateAgencyCatalog);
 
-function normalize(data) { return Array.isArray(data) ? data : (data?.items || []); }
+function normalize(data) {
+  const arr = Array.isArray(data) ? data : (data?.items || []);
+  return sortAgenciesByStandardOrder(arr);
+}
 
 /** Trả về bản sao danh sách cơ quan (mảng). Ném lỗi nếu máy chủ không trả 2xx. */
 export async function loadAgencyCatalog({ force = false } = {}) {

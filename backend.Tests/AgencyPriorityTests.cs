@@ -79,7 +79,7 @@ namespace Cdsqg.Tests
 
             var controller = new AgencyController(context, null!);
 
-            // 1. Without prioritizeContacts: alphabetical order by name
+            // 1. Without prioritizeContacts: Ministry first, then Province, alphabetical by name
             var resDefault = await controller.GetAllAgencies(excludeSpecial: true);
             var okDefault = Assert.IsType<OkObjectResult>(resDefault);
             using (var docDefault = JsonDocument.Parse(JsonSerializer.Serialize(okDefault.Value)))
@@ -87,10 +87,10 @@ namespace Cdsqg.Tests
                 var namesDefault = docDefault.RootElement.EnumerateArray()
                     .Select(e => GetPropString(e, "Name"))
                     .ToList();
-                Assert.Equal(new[] { "An Giang", "Bộ Công an", "Bộ Công Thương", "Bộ Khoa học và Công nghệ" }, namesDefault);
+                Assert.Equal(new[] { "Bộ Công an", "Bộ Công Thương", "Bộ Khoa học và Công nghệ", "An Giang" }, namesDefault);
             }
 
-            // 2. With prioritizeContacts = true: contacts first, then no contacts
+            // 2. With prioritizeContacts = true: hierarchy first, then contacts within each rank
             var resPrioritized = await controller.GetAllAgencies(excludeSpecial: true, prioritizeContacts: true);
             var okPrioritized = Assert.IsType<OkObjectResult>(resPrioritized);
             using (var docPrioritized = JsonDocument.Parse(JsonSerializer.Serialize(okPrioritized.Value)))
@@ -98,7 +98,7 @@ namespace Cdsqg.Tests
                 var namesPrioritized = docPrioritized.RootElement.EnumerateArray()
                     .Select(e => GetPropString(e, "Name"))
                     .ToList();
-                Assert.Equal(new[] { "Bộ Công Thương", "Bộ Khoa học và Công nghệ", "An Giang", "Bộ Công an" }, namesPrioritized);
+                Assert.Equal(new[] { "Bộ Công Thương", "Bộ Khoa học và Công nghệ", "Bộ Công an", "An Giang" }, namesPrioritized);
             }
 
             // 3. Paged query with prioritizeContacts = true

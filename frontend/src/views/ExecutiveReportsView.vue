@@ -88,15 +88,13 @@
     <!-- FILTER BAR WITH OVERLAY PANEL -->
     <div class="bg-slate-50/60 p-3 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full">
       <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto flex-1">
-        <div class="relative flex-1 min-w-0 basis-full sm:basis-0 max-w-xl">
-          <input
-            :value="filterDraft.searchQuery"
-            @input="filterDraft.searchQuery = $event.target.value"
-            placeholder="Tìm theo mã, tên mục tiêu / nhiệm vụ..."
-            class="ui-single-line ui-toolbar-control w-full font-medium pl-9 pr-3 py-2 bg-white rounded-xl border border-slate-200 focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
-          />
-          <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-        </div>
+        <SearchInput
+          v-model="filterDraft.searchQuery"
+          placeholder="Tìm theo mã, tên mục tiêu / nhiệm vụ..."
+          aria-label="Tìm kiếm mục tiêu hoặc nhiệm vụ"
+          wrapper-class="flex-1 min-w-0 basis-full sm:basis-0 max-w-xl"
+          @search="execFilterSearch"
+        />
 
         <!-- OverlayPanel Advanced Filter Popover -->
         <OverlayPanel
@@ -407,6 +405,7 @@ import { fetchWithAuth } from '../services/auth';
 import { ref, computed, onMounted, watch } from 'vue';
 import { activeDocument, activeDocumentId } from '../services/documentContext';
 import SearchableSelect from '../components/SearchableSelect.vue';
+import SearchInput from '../components/SearchInput.vue';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
 import OverlayPanel from '../components/OverlayPanel.vue';
 import { getApiUrl } from '../config/api';
@@ -414,6 +413,7 @@ import { loadAgencyCatalog } from '../services/agencyCatalog';
 import { GOAL_SECTIONS, GOAL_GROUPS, TASK_SECTIONS, TASK_GROUPS } from '../config/planningStructureConfig';
 import { exportToExcel, exportFormattedReportExcel } from '../utils/excelExport';
 import { authState } from '../services/auth';
+import { sortAgenciesByStandardOrder } from '../shared/agencyPresentation';
 
 const activeReportType = ref('summary');
 const isLoading = ref(false);
@@ -485,20 +485,20 @@ const formatAgencyLabel = (ag, list) => {
 };
 
 const agencyOptions = computed(() => {
-  return agencies.value.map(ag => ({ value: ag.id, label: formatAgencyLabel(ag, agencies.value) }));
+  return sortAgenciesByStandardOrder(agencies.value).map(ag => ({ value: ag.id, label: formatAgencyLabel(ag, agencies.value) }));
 });
 
 const leadAgencyOptions = computed(() => {
-  return agencies.value.map(ag => ({ value: ag.id, label: formatAgencyLabel(ag, agencies.value) }));
+  return sortAgenciesByStandardOrder(agencies.value).map(ag => ({ value: ag.id, label: formatAgencyLabel(ag, agencies.value) }));
 });
 
 const subAgencyOptions = computed(() => {
-  return agencies.value
-    .filter(ag => ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000')
-    .map(ag => ({
-      value: ag.id,
-      label: formatAgencyLabel(ag, agencies.value)
-    }));
+  return sortAgenciesByStandardOrder(
+    agencies.value.filter(ag => ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000')
+  ).map(ag => ({
+    value: ag.id,
+    label: formatAgencyLabel(ag, agencies.value)
+  }));
 });
 
 const yearOptions = computed(() => {
@@ -564,16 +564,6 @@ function execFilterSearch() {
   loadReportData();
 }
 
-watch(() => filterDraft.value.searchQuery, (newVal) => {
-  if (reportSearchTimer) clearTimeout(reportSearchTimer);
-  const currentId = ++reportSearchRequestId;
-  reportSearchTimer = setTimeout(() => {
-    if (currentId !== reportSearchRequestId) return;
-    appliedFilters.value.searchQuery = newVal || '';
-    currentPage.value = 1;
-    loadReportData();
-  }, 300);
-});
 
 function resetReportFilters() {
   if (reportSearchTimer) clearTimeout(reportSearchTimer);
@@ -621,7 +611,7 @@ function passesCommonFilters(i) {
 
   }
 
-  if (appliedFilters.value.selectedSubAgencyIds?.length > 0 && !appliedFilters.value.selectedSubAgencyIds.includes(i.assignedAgencyId)) return false;
+  if (appliedFilters.value.selectedSubAgencyIds?.length > 0 && !(i.subAgencyIds || []).some(id => appliedFilters.value.selectedSubAgencyIds.includes(id))) return false;
   if (appliedFilters.value.selectedScopes?.length > 0) {
     const isGeneral = i.isGeneralTask || isSpecialAgencyCode(i.leadAgencyCode) || ['00000000-0000-0000-0000-000000009999', '00000000-0000-0000-0000-000000009998', '00000000-0000-0000-0000-000000009997', '00000000-0000-0000-0000-000000009996', '00000000-0000-0000-0000-000000009995'].includes(i.leadAgencyId);
     const matchGen = appliedFilters.value.selectedScopes.includes('general') && isGeneral;
@@ -936,7 +926,7 @@ function exportCurrentReportToExcel() {
       i.itemType === 'Goal' ? 'Mục tiêu' : 'Nhiệm vụ',
       i.title || '',
       i.leadAgencyName || '',
-      i.assignedAgencyName || '—',
+      (i.subAgencyNames || []).join(', ') || '—',
       formatDate(i.dueDate),
       i.deadlineStatus === 'ExpiringSoon' ? 'Sắp hết hạn' : 'Quá hạn thực hiện'
     ]);

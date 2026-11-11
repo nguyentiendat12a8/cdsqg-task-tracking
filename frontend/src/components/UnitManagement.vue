@@ -20,15 +20,13 @@
       <!-- 1. Top Header: Search & Filter Bar -->
       <div class="flex items-center justify-between gap-4 p-4 border-b border-slate-200 bg-white w-full">
         <div class="flex items-center gap-2 flex-1 max-w-md">
-          <div class="relative w-full">
-            <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            <input 
-              :value="searchDraft" 
-              @input="searchDraft = $event.target.value"
-              placeholder="Tìm kiếm theo mã, tên đơn vị tính, kiểu dữ liệu..." 
-              class="ui-single-line w-full text-xs font-semibold pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:bg-white focus:ring-2 focus:ring-blue-500 focus:outline-none"
-            />
-          </div>
+          <SearchInput
+            v-model="searchDraft"
+            placeholder="Tìm kiếm theo mã, tên đơn vị tính, kiểu dữ liệu..."
+            aria-label="Tìm kiếm đơn vị tính"
+            wrapper-class="w-full"
+            @search="execSearch"
+          />
           <button @click="resetSearch" class="ui-single-line px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition cursor-pointer">↺</button>
         </div>
         <span class="text-xs text-slate-500 font-semibold shrink-0">
@@ -171,6 +169,7 @@ import { fetchWithAuth } from '../services/auth';
 
 import { ref, computed, watch, onMounted } from 'vue';
 import SearchableSelect from './SearchableSelect.vue';
+import SearchInput from './SearchInput.vue';
 import { toast } from 'vue3-toastify';
 import LoadingSpinner from './LoadingSpinner.vue';
 import { getApiUrl } from '../config/api';
@@ -213,12 +212,7 @@ function execSearch() {
   fetchUnits();
 }
 
-watch(searchDraft, () => {
-  if (unitSearchDebounceTimer) clearTimeout(unitSearchDebounceTimer);
-  unitSearchDebounceTimer = setTimeout(() => {
-    execSearch();
-  }, 300);
-});
+
 
 function resetSearch() {
   if (unitSearchDebounceTimer) clearTimeout(unitSearchDebounceTimer);

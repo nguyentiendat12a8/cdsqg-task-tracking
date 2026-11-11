@@ -73,17 +73,14 @@ namespace Cdsqg.Application.Services
                 {
 
                 }
-                else if (task.AssignedAgencyId.HasValue)
+                else if (task.SubAgencyIds.Count == 1 && (!reportingAgencyId.HasValue || reportingAgencyId.Value == Guid.Empty))
                 {
-                    var assignedAg = await _context.Agencies.FirstOrDefaultAsync(a => a.Id == task.AssignedAgencyId.Value);
+                    // Chỉ một đơn vị trực thuộc được giao: báo cáo không chỉ định cơ quan thuộc về đơn vị đó.
+                    var assignedAg = await _context.Agencies.FirstOrDefaultAsync(a => a.Id == task.SubAgencyIds[0]);
                     if (assignedAg != null && assignedAg.ParentId.HasValue)
                     {
-
-                        if (!reportingAgencyId.HasValue || reportingAgencyId.Value == Guid.Empty)
-                        {
-                            reportingAgencyId = task.AssignedAgencyId;
-                            reportingAgencyObj = assignedAg;
-                        }
+                        reportingAgencyId = assignedAg.Id;
+                        reportingAgencyObj = assignedAg;
                     }
                 }
             }
@@ -469,7 +466,8 @@ namespace Cdsqg.Application.Services
 
                 bool isLeadOrAssigned = task != null && (
                     (task.LeadAgencyId == agencyId.Value) ||
-                    (task.AssignedAgencyId.HasValue && task.AssignedAgencyId.Value == agencyId.Value)
+                    (task.AssignedAgencyId.HasValue && task.AssignedAgencyId.Value == agencyId.Value) ||
+                    task.SubAgencyIds.Contains(agencyId.Value)
                 );
 
                 if (isLeadOrAssigned || subAgencyIds.Count > 0 || (task != null && task.IsGeneralTask))
@@ -477,6 +475,7 @@ namespace Cdsqg.Application.Services
                     var allowedAgencyIds = new HashSet<Guid>(subAgencyIds) { agencyId.Value };
                     if (task != null) allowedAgencyIds.Add(task.LeadAgencyId);
                     if (task?.AssignedAgencyId.HasValue == true) allowedAgencyIds.Add(task.AssignedAgencyId.Value);
+                    if (task != null) allowedAgencyIds.UnionWith(task.SubAgencyIds);
 
                     query = query.Where(p => p.AgencyId == null || allowedAgencyIds.Contains(p.AgencyId.Value));
                 }
@@ -753,15 +752,38 @@ namespace Cdsqg.Application.Services
 
             foreach (var item in dto.Items)
             {
-                if (string.IsNullOrWhiteSpace(item.Code))
+                if (string.IsNullOrWhiteSpace(item.Code) && !item.Id.HasValue)
                     continue;
 
-                var task = await _context.GoalTaskItems
+                var taskQuery = _context.GoalTaskItems
                     .Include(t => t.LeadAgency)
                     .Include(t => t.Unit)
-                .Include(t => t.Baselines)
-                    .Include(t => t.ProgressLogs)
-                    .FirstOrDefaultAsync(t => t.Code.ToLower() == item.Code.Trim().ToLower());
+                    .Include(t => t.Baselines)
+                    .Include(t => t.ProgressLogs);
+                GoalTaskItem? task;
+                if (item.Id.HasValue && item.Id.Value != Guid.Empty)
+                {
+                    task = await taskQuery.FirstOrDefaultAsync(t => t.Id == item.Id.Value);
+                }
+                else
+                {
+                    // Mã trùng giữa các quyết định: không đoán, báo lỗi để người dùng dùng file xuất từ hệ thống.
+                    var code = item.Code.Trim().ToLower();
+                    var matches = await taskQuery.Where(t => t.Code.ToLower() == code).Take(2).ToListAsync();
+                    if (matches.Count > 1)
+                    {
+                        response.Results.Add(new ImportProgressResultItemDto
+                        {
+                            Code = item.Code,
+                            Title = "N/A",
+                            Success = false,
+                            Message = $"Mã '{item.Code}' có ở nhiều quyết định; không xác định được mục cần cập nhật."
+                        });
+                        response.FailureCount++;
+                        continue;
+                    }
+                    task = matches.FirstOrDefault();
+                }
 
                 if (task == null)
                 {
@@ -794,11 +816,30 @@ namespace Cdsqg.Application.Services
 
                 // The admin's account agency is the actor's affiliation, not the
                 // executing agency of a specific assignment.
+                var primaryId = AgencyAssignments.PrimaryAgencyId(task);
                 var reportingAgency = isAdmin
                     ? task.IsGeneralTask
                         ? dto.ReportingAgencyId.HasValue ? await _context.Agencies.FindAsync(dto.ReportingAgencyId.Value) : null
-                        : task.AssignedAgencyId.HasValue ? await _context.Agencies.FindAsync(task.AssignedAgencyId.Value) : task.LeadAgency
+                        : primaryId != task.LeadAgencyId ? await _context.Agencies.FindAsync(primaryId) : task.LeadAgency
                     : userAgency ?? task.LeadAgency;
+                // Explicit import destination must be responsible for this exact item; never fall back to another agency.
+                if (dto.ReportingAgencyId.HasValue)
+                {
+                    var requestedId = dto.ReportingAgencyId.Value;
+                    bool inScope = isAdmin || userAgency != null && (requestedId == userAgency.Id
+                        || await _context.Agencies.AnyAsync(a => a.Id == requestedId && a.ParentId == userAgency.Id));
+                    bool assigned = requestedId != Guid.Empty && await AgencyAssignments.Filter(
+                        _context.GoalTaskItems.Where(t => t.Id == task.Id), new[] { requestedId }).AnyAsync();
+                    var requestedAgency = await _context.Agencies.FindAsync(requestedId);
+                    if (!inScope || !assigned || requestedAgency == null || !requestedAgency.IsActive || ReportingAgencyGroups.IsGroup(requestedAgency))
+                    {
+                        response.Results.Add(new() { Code = task.Code, Title = task.Title, Success = false,
+                            Message = "Đơn vị nhập đã chọn không được phân giao phụ trách mục tiêu/nhiệm vụ này hoặc nằm ngoài phạm vi được phép." });
+                        response.FailureCount++;
+                        continue;
+                    }
+                    reportingAgency = requestedAgency;
+                }
                 if (task.IsGeneralTask && (reportingAgency == null || reportingAgency.Code.StartsWith("ALL_")))
                 {
                     response.Results.Add(new() { Code = task.Code, Title = task.Title, Success = false, Message = "Chọn cơ quan báo cáo cụ thể khi import mục tiêu/nhiệm vụ chung." });
@@ -824,6 +865,21 @@ namespace Cdsqg.Application.Services
                         if (task.Deliverables.Count > 0)
                         {
                             var products = item.Deliverables;
+                            if (products == null && item.Status.HasValue && allowed.Contains(item.Status.Value.ToString()))
+                            {
+                                // Biểu báo cáo tiến độ chỉ có trạng thái chung của nhiệm vụ, không có từng sản phẩm:
+                                // suy trạng thái sản phẩm từ trạng thái chung, giữ sản phẩm đã hoàn thành khi đang thực hiện.
+                                var current = PlanningService.GetDeliverablesForAgency(task, reportingAgency?.Id);
+                                var overall = item.Status.Value.ToString();
+                                products = task.Deliverables.Select(d =>
+                                {
+                                    var prev = current.FirstOrDefault(p => p.Id == d.Id)?.CurrentStatus ?? "NotStarted";
+                                    var status = overall == "Drafting" ? (prev == "Completed" ? "Completed" : "Drafting") : overall;
+                                    return new TaskDeliverable { Id = d.Id, Title = d.Title, CurrentStatus = status };
+                                }).ToList();
+                                if (overall == "Drafting" && products.All(d => d.CurrentStatus == "Completed"))
+                                    products.ForEach(d => d.CurrentStatus = "Drafting");
+                            }
                             if (products == null || products.Count != task.Deliverables.Count || products.Select(d => d.Id).Distinct().Count() != products.Count
                                 || products.Any(d => !task.Deliverables.Any(required => required.Id == d.Id) || !allowed.Contains(d.CurrentStatus)))
                                 throw new InvalidOperationException("Báo cáo phải có đúng các sản phẩm và chọn một trong ba trạng thái cho từng sản phẩm.");

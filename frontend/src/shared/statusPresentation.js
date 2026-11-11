@@ -32,3 +32,12 @@ export function getStatusBadgeClass(status) {
   return badges[executionStatuses[normalizeExecutionStatus(status)]?.tone ?? approvalTone[status] ?? 'slate'];
 }
 export const executionStatusOptions = Object.entries(executionStatuses).map(([value, { label }]) => ({ value, label }));
+
+// TextStatusEnum used by the execution API (SystemEnums.cs); distinct from display statuses.
+export function toTextStatusApiValue(status) {
+  if (status == null || status === '') return null;
+  if ([1, 2, 3, 4].includes(Number(status))) return Number(status);
+  const value = { NotStarted: 1, Drafting: 2, InProgress: 2, Reviewing: 3, Completed: 4 }[status];
+  if (value == null) throw new Error('Trạng thái nhiệm vụ không hợp lệ. Vui lòng kiểm tra lại file.');
+  return value;
+}

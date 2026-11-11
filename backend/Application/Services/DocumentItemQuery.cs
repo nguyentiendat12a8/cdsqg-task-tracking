@@ -12,6 +12,12 @@ public static class DocumentItemQuery
     public static IQueryable<GoalTaskItem> ApplyDatabase(IQueryable<GoalTaskItem> query, DocumentItemsQueryDto dto)
     {
         query = ApplyCommon(query, dto);
+        // Đơn vị trực thuộc được giao luôn có dòng phân giao chủ trì (AgencyAssignments.SyncAsync).
+        if (dto.SelectedSubAgencyIds?.Count > 0)
+        {
+            var subIds = dto.SelectedSubAgencyIds;
+            query = query.Where(i => i.AgencyExecutions.Any(e => e.IsLeadAssignment && subIds.Contains(e.AgencyId)));
+        }
         bool asc = !string.Equals(dto.SortOrder, "desc", StringComparison.OrdinalIgnoreCase);
         return dto.SortBy.Equals("title", StringComparison.OrdinalIgnoreCase)
             ? asc ? query.OrderBy(i => i.Title).ThenBy(i => i.Id) : query.OrderByDescending(i => i.Title).ThenBy(i => i.Id)
@@ -20,7 +26,6 @@ public static class DocumentItemQuery
 
     private static IQueryable<T> ApplyCommon<T>(IQueryable<T> query, DocumentItemsQueryDto dto) where T : IPlanningFilterItem
     {
-        if (dto.SelectedSubAgencyIds?.Count > 0) query = query.Where(i => i.AssignedAgencyId.HasValue && dto.SelectedSubAgencyIds.Contains(i.AssignedAgencyId.Value));
         if (dto.SelectedSections?.Count > 0) query = query.Where(i => i.Section != null && dto.SelectedSections.Contains(i.Section));
         if (dto.SelectedGroups?.Count > 0) query = query.Where(i => i.Group != null && dto.SelectedGroups.Contains(i.Group));
         if (dto.SelectedScopes?.Count > 0)
@@ -78,6 +83,7 @@ public static class DocumentItemQuery
                     (i.Title != null && i.Title.ToLower().Contains(s)) ||
                     (i.LeadAgencyName != null && i.LeadAgencyName.ToLower().Contains(s)) ||
                     (i.AssignedAgencyName != null && i.AssignedAgencyName.ToLower().Contains(s)) ||
+                    i.SubAgencyNames.Any(n => n.ToLower().Contains(s)) ||
                     (i.CoordinatingAgencyNames != null && i.CoordinatingAgencyNames.Any(c => c.ToLower().Contains(s)))
                 ).ToList();
             }
@@ -97,6 +103,12 @@ public static class DocumentItemQuery
             }
 
             list = ApplyCommon(list.AsQueryable(), queryDto).ToList();
+            if (queryDto.SelectedSubAgencyIds?.Count > 0)
+            {
+                var subIds = queryDto.SelectedSubAgencyIds.ToHashSet();
+                list = list.Where(i => i.SubAgencyIds.Any(subIds.Contains)
+                    || (i.AssignedAgencyId.HasValue && subIds.Contains(i.AssignedAgencyId.Value))).ToList();
+            }
 
             if (queryDto.SelectedStatuses != null && queryDto.SelectedStatuses.Count > 0)
             {
@@ -144,8 +156,8 @@ public static class DocumentItemQuery
                 case "assignedagency":
                 case "assignedagencyname":
                     list = isAsc
-                        ? list.OrderBy(i => i.AssignedAgencyName ?? "").ToList()
-                        : list.OrderByDescending(i => i.AssignedAgencyName ?? "").ToList();
+                        ? list.OrderBy(i => string.Join(", ", i.SubAgencyNames)).ToList()
+                        : list.OrderByDescending(i => string.Join(", ", i.SubAgencyNames)).ToList();
                     break;
                 case "coordinatingagency":
                     list = isAsc

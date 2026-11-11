@@ -389,6 +389,14 @@ app.UseRateLimiter();
 app.UseAuthorization();
 app.MapControllers();
 
+// Kiểm tra sống cho dịch vụ ping (UptimeRobot/cron-job.org) giữ máy Render không ngủ và cho health check của Render.
+// Không cần đăng nhập, không chạm database, không trả dữ liệu nội bộ.
+app.MapMethods("/api/health", new[] { "GET", "HEAD" }, (HttpContext ctx) =>
+{
+    ctx.Response.Headers.CacheControl = "no-store";
+    return Results.Ok(new { status = "ok" });
+}).AllowAnonymous().ExcludeFromDescription();
+
 app.Run();
 
 void SeedInitialData(AppDbContext db, IPasswordHasher hasher)

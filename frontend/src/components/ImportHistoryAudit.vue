@@ -43,15 +43,13 @@
       <div class="p-3 border-b border-slate-200/80 bg-slate-50/60 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full">
         <div class="flex items-center gap-2 flex-1 max-w-xl">
           <!-- Keyword Search Input -->
-          <div class="relative flex-1">
-            <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            <input 
-              :value="searchQueryDraft" 
-              @input="searchQueryDraft = $event.target.value"
-              placeholder="Tìm tên file, loại nạp, người thực hiện, ghi chú..." 
-              class="ui-single-line w-full text-xs font-semibold pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none "
-            />
-          </div>
+          <SearchInput
+            v-model="searchQueryDraft"
+            placeholder="Tìm tên file, loại nạp, người thực hiện, ghi chú..."
+            aria-label="Tìm kiếm nhật ký nạp dữ liệu"
+            wrapper-class="flex-1"
+            @search="execSearch"
+          />
 
           <!-- OverlayPanel Advanced Filter Popover -->
           <OverlayPanel
@@ -214,6 +212,7 @@ import { ref, computed, watch, onMounted } from 'vue';
 import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
 import SearchableSelect from './SearchableSelect.vue';
+import SearchInput from './SearchInput.vue';
 import { exportToExcel } from '../utils/excelExport';
 import LoadingSpinner from './LoadingSpinner.vue';
 import OverlayPanel from './OverlayPanel.vue';
@@ -369,12 +368,7 @@ function execSearch() {
   loadImportHistory();
 }
 
-watch(searchQueryDraft, () => {
-  if (importSearchDebounceTimer) clearTimeout(importSearchDebounceTimer);
-  importSearchDebounceTimer = setTimeout(() => {
-    execSearch();
-  }, 300);
-});
+
 
 function resetSearch() {
   if (importSearchDebounceTimer) clearTimeout(importSearchDebounceTimer);

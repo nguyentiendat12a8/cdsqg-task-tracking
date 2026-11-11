@@ -13,3 +13,8 @@ assert.equal(unchanged.goals.length+unchanged.plans.length+unchanged.tasks.lengt
 const notes=reconcileProgressReportImport({...parsed,goals:[],plans:[],tasks:[{id:'t',status:'Drafting',summaryNotes:'Ghi chú mới',value:null}]},goals,tasks);
 assert.equal(notes.tasks.length,1);assert(notes.preview.tasks[0].cells.notes.changed);assert(!notes.preview.tasks[0].cells.status.changed);
 console.log('PASS only two changed 2025 cells; unchanged results/plans/status ignored; notes-only diff highlighted');
+
+const {toTextStatusApiValue}=await import('../src/shared/statusPresentation.js');
+for(const [status,expected] of [['NotStarted',1],['Drafting',2],['InProgress',2],['Reviewing',3],['Completed',4],[4,4],[null,null]]) assert.equal(toTextStatusApiValue(status),expected);
+assert.throws(()=>toTextStatusApiValue('unknown'));
+console.log('PASS execution API payload uses numeric TextStatusEnum, rejects invalid statuses');

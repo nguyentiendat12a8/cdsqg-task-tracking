@@ -173,6 +173,7 @@ import DatePicker from './DatePicker.vue';
 import { getApiUrl } from '../config/api';
 import { loadAgencyCatalog } from '../services/agencyCatalog';
 import { parseApiError } from '../utils/errorUtils';
+import { sortAgenciesByStandardOrder } from '../shared/agencyPresentation';
 
 const props = defineProps({
   isOpen: { type: Boolean, default: false },
@@ -236,7 +237,7 @@ const isCoordinatingDropdownOpen = ref(false);
 const isSpecialAgencyCode = (code) => code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES' || code === 'ALL_PROVINCES_UBND' || code === 'ALL_MINISTRIES_DIRECT';
 
 const leadAgencyOptions = computed(() => {
-  return agencies.value.map(ag => {
+  return sortAgenciesByStandardOrder(agencies.value).map(ag => {
     if (isSpecialAgencyCode(ag.code)) {
       return { value: ag.id, label: `🌐 ${ag.name}` };
     }
@@ -250,13 +251,13 @@ const leadAgencyOptions = computed(() => {
 
 const assignedAgencyOptions = computed(() => {
   if (!form.value.leadAgencyId) return [];
-  return agencies.value
-    .filter(ag => ag.parentId === form.value.leadAgencyId)
-    .map(ag => ({ value: ag.id, label: ag.name }));
+  return sortAgenciesByStandardOrder(
+    agencies.value.filter(ag => ag.parentId === form.value.leadAgencyId)
+  ).map(ag => ({ value: ag.id, label: ag.name }));
 });
 
 const coordinatingAgencyOptions = computed(() => {
-  return agencies.value.map(ag => {
+  return sortAgenciesByStandardOrder(agencies.value).map(ag => {
     if (isSpecialAgencyCode(ag.code)) {
       return { value: ag.id, label: `🌐 ${ag.name}` };
     }

@@ -57,6 +57,7 @@ public class AgencyAssignmentPostgresTests
                 ALTER TABLE "GoalTaskItems" ADD COLUMN "ResultTarget" numeric NULL;
                 ALTER TABLE "GoalTaskItems" ADD COLUMN "LeadAgencyDisplayText" text NULL;
                 ALTER TABLE "GoalTaskItems" ADD COLUMN "CoordinatingAgenciesDisplayText" text NULL;
+                ALTER TABLE "GoalTaskItems" ADD COLUMN "SubAgencyIds" jsonb NOT NULL DEFAULT '[]'::jsonb;
                 """);
             var bca = new Agency { Code="BCA", Name="Bộ Công an", Type=AgencyTypeEnum.Ministry };
             var btc = new Agency { Code="BTC", Name="Bộ Tài chính", Type=AgencyTypeEnum.Ministry };
@@ -78,6 +79,7 @@ public class AgencyAssignmentPostgresTests
             var legacyId=Guid.NewGuid();
             await db.Database.ExecuteSqlInterpolatedAsync($"INSERT INTO \"AgencyTaskExecutions\" (\"Id\",\"GoalTaskId\",\"AgencyId\",\"CalculatedStatus\",\"ApprovalStatus\",\"CompletionPercentage\",\"Deliverables\",\"AttachmentFileUrls\",\"CreatedAt\",\"UpdatedAt\") VALUES ({legacyId},{direct.Id},{bca.Id},'CompletedOnTime',3,999,'[]'::jsonb,'[]'::jsonb,CURRENT_TIMESTAMP,CURRENT_TIMESTAMP)");
             await db.Database.ExecuteSqlRawAsync("ALTER TABLE \"GoalTaskItems\" DROP COLUMN \"ResultTarget\"");
+            await db.Database.ExecuteSqlRawAsync("ALTER TABLE \"GoalTaskItems\" DROP COLUMN \"SubAgencyIds\"");
             await db.Database.MigrateAsync(); db.ChangeTracker.Clear();
             Assert.False(db.Database.HasPendingModelChanges());
             Assert.Equal(originalLogIds.Order(), (await db.ProgressLogs.Select(l=>l.Id).ToListAsync()).Order());

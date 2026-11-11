@@ -154,3 +154,46 @@ progressWorkbook chỉ bật protection cho sheet có metadata !reportEditableCe
 - Đối chiếu ID nhiệm vụ/ID quyết định ở cột ẩn và quyết định của khối thay vì lấy dòng đầu tiên cùng mã NV. File cũ dùng mã + khối quyết định; nếu không duy nhất thì bỏ qua và cảnh báo, không đoán.
 - Chuẩn hóa xuống dòng ghi chú để tránh báo thay đổi do CRLF/LF.
 - Kiểm chứng: xuất/nhập nguyên file có hai NV-03 khác quyết định không sinh cập nhật; sửa một trạng thái chỉ highlight đúng nhiệm vụ của quyết định đó.
+
+
+### 11/11/2026 — Tách báo cáo tiến độ trong Bộ
+
+- Tách tab đơn vị thuộc Bộ thành submenu Báo cáo tiến độ trong Bộ (#reports-progress-internal), tái sử dụng ProgressReportsView theo chế độ unitsOnly, remount khi đổi màn để không giữ nhầm cơ quan/tab.
+- Giữ chọn đơn vị, mục tiêu/nhiệm vụ và luồng nhập/xuất hiện có; báo cáo thông thường chỉ còn hai tab.
+- Kiểm chứng build và trình duyệt laptop/mobile: deep link, reload, chuyển về báo cáo cơ quan và đúng bộ chọn đơn vị.
+
+
+### 11/11/2026 — Xác nhận đơn vị nhập báo cáo Excel
+
+- Popup nhập có đơn vị đích độc lập, mặc định lấy từ màn danh sách; đổi đơn vị xóa preview cũ để đối chiếu lại. Request đọc/ghi dùng cùng đơn vị đích.
+- API tiến độ kiểm tra phạm vi và phân giao của đơn vị đích kể cả Admin; không âm thầm ghi sang đơn vị mặc định. API kế hoạch kiểm tra đơn vị chủ trì nếu request có ReportingAgencyId; đơn vị thuộc Bộ không sửa kế hoạch dùng chung.
+- Không hiển thị thành công khi API trả lỗi từng dòng. Kiểm chứng unit/backend, PostgreSQL và trình duyệt desktop/mobile: mặc định, đổi đơn vị, đối chiếu lại và payload.
+
+
+### 11/11/2026 — Đồng bộ cấu trúc báo cáo web và Excel
+
+- Web mục tiêu bỏ ĐVT (Excel giữ); preview có STT, mã, tên, hai giai đoạn, kết quả thực hiện, kế hoạch năm và ghi chú như Excel, chia khối theo quyết định. Highlight cũ → mới chỉ ở ô thay đổi.
+- Web/preview/Excel nhiệm vụ bỏ cơ quan phối hợp. Excel còn 7 cột: STT, mã, tên, hạn, sản phẩm, trạng thái, ghi chú; dropdown ở F, ghi chú G, metadata ẩn H/I. Khóa ô/validation và chiều cao theo cột mới.
+- Parser tìm cột theo tiêu đề, giữ tương thích file cũ còn cơ quan phối hợp. Kiểm chứng bảo vệ XML, export/import số liệu, mã trùng hai quyết định, file cũ và trình duyệt desktop/mobile.
+
+
+### 11/11/2026 — Sửa bố cục preview nhập báo cáo
+
+- Loại Ghi chú khỏi hàng tiêu đề phụ của mục tiêu (đã rowspan ở hàng trên), giữ 12 cột khớp dữ liệu/khối quyết định. Cột mã tối thiểu 112px, chỉ xuống dòng giữa các mã ghép.
+- Hai ô tổng đếm mục tiêu/nhiệm vụ thay đổi theo dòng preview, bao gồm thay đổi kế hoạch; không đếm một mục tiêu nhiều lần theo năm.
+- Popup giới hạn theo dynamic viewport, vùng preview có min-height/min-width 0 và cuộn riêng, footer xác nhận cố định ngoài vùng cuộn; bảng rộng cuộn ngang bên trong.
+- Kiểm chứng browser 1366×650, 390×844, 360×640, 844×390: một tiêu đề Ghi chú, 12/7 cột, mã không gãy, hai ô tổng, popup/footer nằm trong viewport và không tràn ngang trang; build thành công.
+
+
+### 11/11/2026 — Sửa HTTP 400 khi xác nhận nhập tiến độ
+
+- Payload nhiệm vụ chuyển trạng thái chữ sang mã TextStatusEnum của API (1/2/3/4) qua adapter trong statusPresentation; không gửi Completed/Drafting dưới dạng chuỗi cho enum mặc định của ASP.NET. Giá trị null cho mục tiêu giữ nguyên.
+- Dùng parseApiError cho lỗi tiến độ/kế hoạch để đọc ValidationProblemDetails thay vì mất chi tiết lỗi.
+- Kiểm chứng mapping tất cả trạng thái và trình duyệt bốn kích thước: payload nhiệm vụ numeric, đúng đơn vị đích và đúng năm kết quả; build frontend.
+
+
+### 11/11/2026 — Hiển thị lỗi nhập và bỏ vai trò tài khoản khỏi payload
+
+- Tái hiện lỗi JSON userRole số 1 không chuyển được sang string của DTO, dẫn đến HTTP 400 trước khi controller xử lý. FE không gửi userRole/userAgencyId trong bulk import; ApiPermissionFilter lấy thông tin từ claims như hiện có.
+- Đăng ký Vue3Toastify và stylesheet ở bootstrap để toast thực sự hiển thị; thêm lỗi tồn tại ngay trong popup nhập với role alert, giữ preview khi thất bại. Tên lỗi validation nhận diện đơn vị nhập, vai trò và dòng/trường cụ thể.
+- Kiểm chứng JSON contract .NET và browser bốn viewport: API 400 hiện cả toast và alert, không báo thành công, thử lại được, payload không chứa vai trò giả định; build frontend.

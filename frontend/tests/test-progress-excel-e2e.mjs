@@ -151,13 +151,12 @@ console.log('   Sheet 1 (Mục tiêu) structure & formatting verified 100%!');
 assert.equal(wsTasks['A4'].v, 'STT');
 assert.equal(wsTasks['B4'].v, 'Mã NV', 'Must NOT have Căn cứ QĐ column!');
 assert.equal(wsTasks['C4'].v, 'Tên nhiệm vụ');
-assert.equal(wsTasks['D4'].v, 'Cơ quan phối hợp');
-assert.equal(wsTasks['E4'].v, 'Hạn hoàn thành');
-assert.equal(wsTasks['G4'].v, 'TRẠNG THÁI THỰC HIỆN');
-assert.equal(wsTasks['F4'].v, 'Sản phẩm bàn giao');
-assert.equal(wsTasks['H4'].v, 'GHI CHÚ / KHÓ KHĂN & KIẾN NGHỊ');
-assert.equal(wsTasks['I4'].v, 'ID Nhiệm Vụ (Ẩn)');
-assert.equal(wsTasks['J4'].v, 'ID Quyết Định (Ẩn)');
+assert.equal(wsTasks['D4'].v, 'Hạn hoàn thành');
+assert.equal(wsTasks['F4'].v, 'TRẠNG THÁI THỰC HIỆN');
+assert.equal(wsTasks['E4'].v, 'Sản phẩm bàn giao');
+assert.equal(wsTasks['G4'].v, 'GHI CHÚ / KHÓ KHĂN & KIẾN NGHỊ');
+assert.equal(wsTasks['H4'].v, 'ID Nhiệm Vụ (Ẩn)');
+assert.equal(wsTasks['I4'].v, 'ID Quyết Định (Ẩn)');
 
 // Verify Task Section I
 assert.equal(wsTasks['A5'].v, 'I');
@@ -166,12 +165,12 @@ assert.ok(wsTasks['B5'].v.includes('QUYẾT ĐỊNH SỐ 2629/QĐ-TTg'));
 // Verify Task Data row (Row 6)
 assert.equal(wsTasks['A6'].v, 1);
 assert.equal(wsTasks['B6'].v, 'NV-01');
-assert.equal(wsTasks['G6'].v, 'Chưa thực hiện');
+assert.equal(wsTasks['F6'].v, 'Chưa thực hiện');
 
 // Verify validation dropdown coordinate
-assert.ok(statusCells.includes('G6'), 'Status dropdown validation must target column G!');
+assert.ok(statusCells.includes('F6'), 'Status dropdown validation must target column F!');
 
-console.log('   Sheet 2 (Nhiệm vụ) structure verified with 8 visible columns!');
+console.log('   Sheet 2 (Nhiệm vụ) structure verified with 7 visible columns!');
 
 // 2. TEST PARSING THE GENERATED EXCEL FILE AFTER USER ENTERS DATA
 console.log('2. Simulating user filling data into exported workbook & parsing...');
@@ -193,8 +192,8 @@ wsGoals['M8'] = { t: 's', v: 'Kế hoạch đã ban hành' };
 
 wsGoals['H10'] = { t: 's', v: '75%' };
 
-wsTasks['G6'] = { t: 's', v: 'Đang thực hiện' };
-wsTasks['H6'] = { t: 's', v: 'Đang hoàn thiện thiết kế' };
+wsTasks['F6'] = { t: 's', v: 'Đang thực hiện' };
+wsTasks['G6'] = { t: 's', v: 'Đang hoàn thiện thiết kế' };
 
 const testBuffer = XLSX.write(testWb, { type: 'buffer', bookType: 'xlsx' });
 const fakeFile = {

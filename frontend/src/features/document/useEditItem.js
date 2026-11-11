@@ -5,6 +5,7 @@ import { toast } from 'vue3-toastify';
 import { authState } from '../../services/auth';
 import { getApiUrl } from '../../config/api';
 import { parseApiError } from '../../utils/errorUtils';
+import { subAgencyOptionsFor } from '../../shared/subAgencies';
 
 export function useEditItem({ planningGridRef, agencies, loadData, hasProgress }) {
   const isEditModalOpen = ref(false);
@@ -27,6 +28,7 @@ export function useEditItem({ planningGridRef, agencies, loadData, hasProgress }
     leadAgencyId: '',
     leadAgencyDisplayText: '',
     assignedAgencyId: '',
+    subAgencyIds: [],
     coordinatingAgencyIds: [],
     coordinatingAgenciesDisplayText: '',
     deliverables: []
@@ -43,17 +45,17 @@ export function useEditItem({ planningGridRef, agencies, loadData, hasProgress }
     }
   });
 
-  const editAssignedAgencyOptions = computed(() => {
-    if (!editForm.value.leadAgencyId) return [];
-    return agencies.value
-      .filter(ag => ag.parentId === editForm.value.leadAgencyId)
-      .map(ag => ({ value: ag.id, label: ag.name }));
-  });
+  // Đơn vị trực thuộc (chọn nhiều); assignedAgencyId là cơ quan đồng chủ trì, giữ nguyên khi sửa.
+  const editAssignedAgencyOptions = computed(() => subAgencyOptionsFor(agencies.value, {
+    leadAgencyId: editForm.value.leadAgencyId,
+    assignedAgencyId: editForm.value.assignedAgencyId,
+    isGeneralTask: editForm.value.isGeneralTask
+  }));
 
   watch(() => editForm.value.leadAgencyId, (newId) => {
-    if (editForm.value.assignedAgencyId) {
-      const isChild = agencies.value.some(a => a.id === editForm.value.assignedAgencyId && a.parentId === newId);
-      if (!isChild) editForm.value.assignedAgencyId = '';
+    const allowed = new Set(editAssignedAgencyOptions.value.map(o => String(o.value)));
+    if (editForm.value.subAgencyIds?.length) {
+      editForm.value.subAgencyIds = editForm.value.subAgencyIds.filter(id => allowed.has(String(id)));
     }
   });
 
@@ -109,6 +111,7 @@ export function useEditItem({ planningGridRef, agencies, loadData, hasProgress }
       leadAgencyId: item.leadAgencyId || agencies.value[0]?.id || '',
       leadAgencyDisplayText: item.leadAgencyDisplayText || '',
       assignedAgencyId: item.assignedAgencyId || '',
+      subAgencyIds: Array.isArray(item.subAgencyIds) ? item.subAgencyIds.map(String) : [],
       coordinatingAgencyIds: item.coordinatingAgencyIds ? [...item.coordinatingAgencyIds] : [],
       coordinatingAgenciesDisplayText: item.coordinatingAgenciesDisplayText || '',
       deliverables: item.deliverables ? JSON.parse(JSON.stringify(item.deliverables)) : []
@@ -210,6 +213,7 @@ export function useEditItem({ planningGridRef, agencies, loadData, hasProgress }
         leadAgencyId: editForm.value.leadAgencyId,
         leadAgencyDisplayText: editForm.value.leadAgencyDisplayText?.trim() || null,
         assignedAgencyId: editForm.value.assignedAgencyId || null,
+        subAgencyIds: [...(editForm.value.subAgencyIds || [])],
         coordinatingAgencyIds: editForm.value.coordinatingAgencyIds || [],
         coordinatingAgenciesDisplayText: editForm.value.coordinatingAgenciesDisplayText?.trim() || null,
         deliverables: editForm.value.deliverables || []

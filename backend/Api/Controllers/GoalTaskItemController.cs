@@ -123,6 +123,7 @@ namespace Cdsqg.Api.Controllers
                     if (targetUnit != null) unitIdToAssign = targetUnit.Id;
                 }
 
+                var createAssignment = await AgencyAssignments.SplitAssignedAsync(_context, dto.AssignedAgencyId, dto.SubAgencyIds);
                 var newItem = new GoalTaskItem
                 {
                     Id = Guid.NewGuid(),
@@ -139,7 +140,7 @@ namespace Cdsqg.Api.Controllers
                     DueDate = dto.IsOngoing ? (dto.DueDate ?? new DateTime(2030, 12, 31, 23, 59, 59, DateTimeKind.Utc)) : dto.DueDate,
                     LeadAgencyId = dto.LeadAgencyId,
                     LeadAgencyDisplayText = string.IsNullOrWhiteSpace(dto.LeadAgencyDisplayText) ? null : dto.LeadAgencyDisplayText.Trim(),
-                    AssignedAgencyId = dto.AssignedAgencyId,
+                    AssignedAgencyId = createAssignment.CoLead,
                     CoordinatingAgencyIds = dto.CoordinatingAgencyIds ?? new List<Guid>(),
                     CoordinatingAgenciesDisplayText = string.IsNullOrWhiteSpace(dto.CoordinatingAgenciesDisplayText) ? null : dto.CoordinatingAgenciesDisplayText.Trim(),
                     ResultTarget = dto.ResultTarget,
@@ -154,6 +155,7 @@ namespace Cdsqg.Api.Controllers
                 GoalResultPlan.Validate(newItem);
                 PlanningYears.ValidateTargets(newItem, (dto.YearlyTargets?.Keys.AsEnumerable() ?? Enumerable.Empty<int>())
                     .Concat((dto.CustomBaseline?.Keys.AsEnumerable() ?? Enumerable.Empty<string>()).Select(int.Parse)));
+                await AgencyAssignments.SetSubAgenciesAsync(_context, newItem, createAssignment.SubAgencies);
                 _context.GoalTaskItems.Add(newItem);
                 await AgencyAssignments.SyncAsync(_context, newItem);
 
@@ -240,23 +242,10 @@ namespace Cdsqg.Api.Controllers
                     return NotFound(new { error = "Không tìm thấy Mục tiêu / Nhiệm vụ để giao." });
                 }
 
-                if (dto.AssignedAgencyId.HasValue && dto.AssignedAgencyId.Value != Guid.Empty)
-                {
-                    var assignedAgency = await _context.Agencies.FirstOrDefaultAsync(a => a.Id == dto.AssignedAgencyId.Value);
-                    if (assignedAgency == null)
-                    {
-                        return BadRequest(new { error = "Không tìm thấy đơn vị trực thuộc được chọn." });
-                    }
-                    if (!assignedAgency.ParentId.HasValue)
-                    {
-                        return BadRequest(new { error = "Đơn vị được chọn phải là đơn vị trực thuộc (Cấp 3)." });
-                    }
-                    item.AssignedAgencyId = dto.AssignedAgencyId.Value;
-                }
-                else
-                {
-                    item.AssignedAgencyId = null;
-                }
+                // Danh sách đơn vị trực thuộc thay thế toàn bộ; cơ quan đồng chủ trì (AssignedAgencyId) giữ nguyên.
+                var ids = dto.AssignedAgencyIds
+                    ?? (dto.AssignedAgencyId is Guid single && single != Guid.Empty ? new List<Guid> { single } : new List<Guid>());
+                await AgencyAssignments.SetSubAgenciesAsync(_context, item, ids);
 
                 await AgencyAssignments.SyncAsync(_context, item, refreshCoordination: false);
                 await _context.SaveChangesAsync();
@@ -404,7 +393,13 @@ namespace Cdsqg.Api.Controllers
                 bool isSpecialGeneralAgency = leadAgency != null && (leadAgency.Code.StartsWith("ALL_") || leadAgency.Code == "ALL_AGENCIES" || leadAgency.Code == "ALL_MINISTRIES" || leadAgency.Code == "ALL_PROVINCES" || leadAgency.Code == "ALL_PROVINCES_UBND" || leadAgency.Code == "ALL_MINISTRIES_DIRECT");
                 bool isGeneral = isSpecialGeneralAgency || (dto.IsGeneralTask && leadAgency == null);
 
-                var refreshLead = item.LeadAgencyId != dto.LeadAgencyId || item.AssignedAgencyId != dto.AssignedAgencyId;
+                // SubAgencyIds = null nghĩa là giữ nguyên danh sách đơn vị trực thuộc hiện có.
+                var updateAssignment = await AgencyAssignments.SplitAssignedAsync(_context, dto.AssignedAgencyId, dto.SubAgencyIds);
+                var subAgenciesChanged = dto.SubAgencyIds != null || updateAssignment.SubAgencies.Count > 0;
+                var newSubAgencies = dto.SubAgencyIds != null ? updateAssignment.SubAgencies
+                    : item.SubAgencyIds.Union(updateAssignment.SubAgencies).ToList();
+                var refreshLead = item.LeadAgencyId != dto.LeadAgencyId || item.AssignedAgencyId != updateAssignment.CoLead
+                    || (subAgenciesChanged && !item.SubAgencyIds.SequenceEqual(newSubAgencies));
                 var refreshCoordination = !item.CoordinatingAgencyIds.ToHashSet().SetEquals(dto.CoordinatingAgencyIds ?? new());
                 item.Title = dto.Title.Trim();
                 item.Section = dto.Section;
@@ -415,7 +410,8 @@ namespace Cdsqg.Api.Controllers
                 item.DueDate = dto.IsOngoing ? (dto.DueDate ?? new DateTime(2030, 12, 31, 23, 59, 59, DateTimeKind.Utc)) : dto.DueDate;
                 item.LeadAgencyId = dto.LeadAgencyId;
                 item.LeadAgencyDisplayText = string.IsNullOrWhiteSpace(dto.LeadAgencyDisplayText) ? null : dto.LeadAgencyDisplayText.Trim();
-                item.AssignedAgencyId = dto.AssignedAgencyId;
+                item.AssignedAgencyId = updateAssignment.CoLead;
+                if (subAgenciesChanged) await AgencyAssignments.SetSubAgenciesAsync(_context, item, newSubAgencies);
                 item.CoordinatingAgencyIds = dto.CoordinatingAgencyIds ?? new List<Guid>();
                 item.CoordinatingAgenciesDisplayText = string.IsNullOrWhiteSpace(dto.CoordinatingAgenciesDisplayText) ? null : dto.CoordinatingAgenciesDisplayText.Trim();
                 item.Deliverables = dto.Deliverables ?? new List<TaskDeliverable>();

@@ -487,4 +487,38 @@ public class AgencyProgressReportTests
         }
     }
 
+    [Fact]
+    public async Task ImportRejectsUnassignedDestinationEvenForAdminWithoutFallback()
+    {
+        await using var db = CreateInMemoryDb("ImportDestination_" + Guid.NewGuid());
+        var a = new Agency { Id = Guid.NewGuid(), Code = "A", Name = "Agency A", Type = AgencyTypeEnum.Ministry, IsActive = true };
+        var b = new Agency { Id = Guid.NewGuid(), Code = "B", Name = "Agency B", Type = AgencyTypeEnum.Ministry, IsActive = true };
+        var doc = new Document { Id = Guid.NewGuid(), DocumentNumber = "2629/QĐ-TTg", Name = "Test" };
+        var goal = new GoalTaskItem { Id = Guid.NewGuid(), DocumentId = doc.Id, Code = "MT-01", Title = "Goal", LeadAgencyId = a.Id,
+            ItemType = ItemTypeEnum.Goal, EvaluationType = EvaluationTypeEnum.Quantitative, StartDate = new DateTime(2025,1,1), DueDate = new DateTime(2030,12,31) };
+        db.Agencies.AddRange(a,b); db.Documents.Add(doc); db.GoalTaskItems.Add(goal); await db.SaveChangesAsync();
+        var execution = new ExecutionService(db,null!);
+        var result = await execution.ImportProgressBulkAsync(new() { UserRole = "Admin", ReportingAgencyId = b.Id,
+            Items = new() { new() { Id = goal.Id, Code = goal.Code, Value = 20, PeriodYear = 2026 } } });
+        Assert.Equal(1,result.FailureCount); Assert.Equal(0,result.SuccessCount); Assert.Empty(db.ProgressLogs);
+        Assert.Contains("không được phân giao",result.Results.Single().Message);
+        var planning = new PlanningService(db);
+        await Assert.ThrowsAsync<InvalidOperationException>(() => planning.ImportYearlyTargetsAsync(doc.Id,
+            new() { ReportingAgencyId = b.Id, ConfirmOverwrite = true, Rows = new() { new() { TaskId = goal.Id, Year = 2027, TargetQuantity = 40 } } },null,true));
+        Assert.Empty(db.TargetBaselines);
+    }
+
+    [Fact]
+    public void BulkImportJsonContractAcceptsDestinationAndNumericStatusWithoutClientRole()
+    {
+        var options = new System.Text.Json.JsonSerializerOptions(System.Text.Json.JsonSerializerDefaults.Web);
+        Assert.Throws<System.Text.Json.JsonException>(() => System.Text.Json.JsonSerializer.Deserialize<ImportProgressBulkRequestDto>(
+            """{"userRole":1,"items":[{"code":"NV-01","status":4}]}""", options));
+        var parsed = System.Text.Json.JsonSerializer.Deserialize<ImportProgressBulkRequestDto>(
+            """{"reportingAgencyId":"ddfd2ca9-4596-412c-b854-d4a7839043d5","items":[{"id":"00000000-0000-0000-0000-000000000001","code":"NV-01","value":null,"deliverables":null,"status":4,"summaryNotes":"Test","periodYear":2026}]}""", options)!;
+        Assert.Null(parsed.UserAgencyId);
+        Assert.Equal(TextStatusEnum.Completed, Assert.Single(parsed.Items).Status);
+        Assert.Equal(Guid.Parse("ddfd2ca9-4596-412c-b854-d4a7839043d5"), parsed.ReportingAgencyId);
+    }
+
 }

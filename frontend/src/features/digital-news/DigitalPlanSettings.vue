@@ -20,7 +20,7 @@
     </div>
     <template v-else>
      <div class="flex flex-wrap items-end gap-3">
-     <label class="block flex-1 min-w-0 basis-64">Tìm cấu hình<input v-model="search" type="search" class="field mt-2" placeholder="Tên nguồn, bộ/tỉnh hoặc từ khóa…"/></label>
+     <SearchInput v-model="search" placeholder="Tên nguồn, bộ/tỉnh hoặc từ khóa…" aria-label="Tìm cấu hình" wrapper-class="flex-1 min-w-0 basis-64" />
      <button type="button" class="ui-btn ui-btn-secondary" @click="add">+ {{ tab==='sources'?'Thêm nguồn':'Thêm từ khóa' }}</button>
      </div>
      <div v-if="tab==='sources'" class="space-y-3"><article v-for="source in visibleSources" :key="source.id" class="border border-slate-200 rounded-xl p-3 space-y-3"><div class="flex justify-between gap-3"><label class="flex gap-2 items-center font-semibold"><input v-model="source.enabled" type="checkbox"/>{{ source.name||'Nguồn mới' }}</label><button type="button" class="ui-btn ui-btn-secondary" @click="remove('sources',source)">Xóa</button></div><div class="grid sm:grid-cols-2 gap-3"><label>Tên nguồn<input v-model.trim="source.name" :data-new-entry="source.id===newEntryId ? '' : null" required maxlength="300" class="field mt-1"/></label><label>Bộ / tỉnh<input v-model.trim="source.agencyName" required maxlength="300" class="field mt-1"/></label><label>Tên miền<input v-model.trim="source.domain" required maxlength="250" class="field mt-1" placeholder="hanoi.gov.vn"/></label><label>Từ khóa bổ sung<input v-model.trim="source.requiredTerms" maxlength="300" class="field mt-1"/></label></div></article></div>
@@ -33,6 +33,7 @@
 </template>
 <script setup>
 import {ref,computed,nextTick} from 'vue';
+import SearchInput from '../../components/SearchInput.vue';
 import DatePicker from '../../components/DatePicker.vue';
 import {fetchWithAuth} from '../../services/auth';
 import {getApiUrl} from '../../config/api';

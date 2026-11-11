@@ -7,15 +7,27 @@ const goals=[{id:'a',documentNumber:'2629/QĐ-TTg',code:'MT-08',title:'Mục ti�
 const tasks=[{id:'t',code:'NV-01',documentNumber:'2629/QĐ-TTg',title:'Nhiệm vụ giữ nguyên',status:'InProgress',statusLabel:'Đang thực hiện',notes:''}];
 const ws=buildGoalsWorksheet(goals,'Bộ Công an','11/11/2026',XLSX),wb=XLSX.utils.book_new();
 const rows=XLSX.utils.sheet_to_json(ws,{header:1});for(let i=0;i<rows.length;i++){if(rows[i][1]==='MT-08')ws[`G${i+1}`]={t:'n',v:40};if(rows[i][1]==='MT-10')ws[`G${i+1}`]={t:'n',v:30};}
-XLSX.utils.book_append_sheet(wb,ws,'Mục tiêu');XLSX.utils.book_append_sheet(wb,buildTasksWorksheet(tasks,'Bộ Công an','11/11/2026',XLSX).ws,'Nhiệm vụ');
+XLSX.utils.book_append_sheet(wb,ws,'Mục tiêu');const taskSheet=buildTasksWorksheet(tasks,'Bộ Công an','11/11/2026',XLSX).ws;taskSheet.G6={t:'s',v:'Ghi chú mới'};XLSX.utils.book_append_sheet(wb,taskSheet,'Nhiệm vụ');
 const buffer=XLSX.write(wb,{type:'buffer',bookType:'xlsx'});
 const b=await chromium.launch({channel:'msedge',headless:true});
-try{for(const viewport of [{width:1366,height:768},{width:390,height:844}]){
-const writes=[];const p=await b.newPage({viewport});await p.addInitScript(()=>{localStorage.setItem('cdsqg_auth_token','fixture');localStorage.setItem('cdsqg_auth_user',JSON.stringify({role:1,username:'fixture'}));});
-await p.route('**/api/**',r=>{const path=new URL(r.request().url()).pathname;if(r.request().method()==='POST')writes.push({path,body:r.request().postDataJSON()});return r.fulfill({json:path==='/api/agencies'?[{id:'agency',name:'Bộ Công an'}]:path==='/api/planning/agency-progress-report'?{goals,tasks,totalGoals:2,totalTasks:1,totalCount:2,totalPages:1}:[]});});
-await p.goto('http://127.0.0.1:5189/#reports-progress');await p.getByRole('button',{name:'Nhập báo cáo',exact:true}).click();await p.locator('input[type=file]').setInputFiles({name:'report.xlsx',mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',buffer});
+try{for(const viewport of [{width:1366,height:650},{width:390,height:844},{width:360,height:640},{width:844,height:390}]){
+let rejectImport=true;const writes=[];const p=await b.newPage({viewport});await p.addInitScript(()=>{localStorage.setItem('cdsqg_auth_token','fixture');localStorage.setItem('cdsqg_auth_user',JSON.stringify({role:1,username:'fixture'}));});
+await p.route('**/api/**',r=>{const path=new URL(r.request().url()).pathname;if(r.request().method()==='POST'){writes.push({path,body:r.request().postDataJSON()});if(rejectImport)return r.fulfill({status:400,json:{errors:{'$.items[0].status':['The JSON value could not be converted.']}}});}return r.fulfill({json:path==='/api/agencies'?[{id:'agency',name:'Bộ Công an'},{id:'other',name:'Đơn vị khác'}]:path==='/api/planning/agency-progress-report'?{goals,tasks,totalGoals:2,totalTasks:1,totalCount:2,totalPages:1}:[]});});
+await p.goto('http://127.0.0.1:5189/#reports-progress');await p.getByRole('button',{name:'Nhập báo cáo',exact:true}).click();assert.equal(await p.getByRole('dialog').getByRole('combobox').count(),0);assert(await p.getByRole('dialog').getByText('Đơn vị nhập báo cáo: Bộ Công an',{exact:true}).isVisible());await p.locator('input[type=file]').setInputFiles({name:'report.xlsx',mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',buffer});
 await p.getByText('Chỉ cập nhật dữ liệu thay đổi.',{exact:false}).waitFor();
-assert.equal(await p.locator('td.bg-amber-100').count(),2);assert(await p.getByText('→ 40',{exact:true}).isVisible());assert(await p.getByText('→ 30',{exact:true}).isVisible());
+assert.equal(await p.locator('td.bg-amber-100').count(),3);assert.equal(await p.locator('.import-preview-table').first().evaluate(t=>getComputedStyle(t).borderCollapse),'separate');assert.equal(await p.locator('.import-preview-table thead').first().getByText('Giai đoạn 1',{exact:true}).count(),1);assert.equal(await p.locator('.import-preview-table th').getByText('ĐVT',{exact:true}).count(),0);assert(await p.getByText('→ 40',{exact:true}).isVisible());assert(await p.getByText('→ 30',{exact:true}).isVisible());
 assert.equal(await p.locator('body').evaluate(e=>e.scrollWidth>innerWidth),false);
-await p.getByRole('button',{name:'Xác nhận cập nhật',exact:true}).click();await p.getByText('Cập nhật dữ liệu thành công!',{exact:true}).waitFor();assert.equal(writes.length,1);assert.equal(writes[0].body.items.length,2);assert(writes[0].body.items.every(i=>i.periodYear===2025));await p.close();}
+assert.equal(await p.locator('.import-summary').count(),0);assert.equal(await p.getByText('Dữ liệu trong file sẽ được đối chiếu theo đơn vị này trước khi cập nhật.',{exact:true}).count(),0);
+assert.equal(await p.locator('.preview-goals thead th').filter({hasText:'Ghi chú'}).count(),1);
+assert.equal(await p.locator('.preview-goals thead tr').last().locator('th').count(),8);
+assert.equal(await p.locator('.preview-goals tbody tr').last().locator('td').count(),12);
+assert.equal(await p.locator('.preview-tasks thead th').count(),7);
+for(const code of await p.locator('.preview-code').evaluateAll(cells=>cells.map(c=>({w:c.getBoundingClientRect().width,whiteSpace:getComputedStyle(c).whiteSpace})))){assert(code.w>=112);assert.equal(code.whiteSpace,'pre');}
+const footer=await p.locator('.import-preview-footer').boundingBox();assert(footer.y>=0&&footer.y+footer.height<=viewport.height);
+const dialog=await p.getByRole('dialog',{name:'Nhập báo cáo tiến độ',exact:true}).boundingBox();assert(dialog.x>=0&&dialog.y>=0&&dialog.x+dialog.width<=viewport.width&&dialog.y+dialog.height<=viewport.height);
+
+await p.getByRole('button',{name:'Xác nhận cập nhật',exact:true}).click();
+await p.getByRole('alert').filter({hasText:'Chưa thể cập nhật báo cáo'}).waitFor();assert(await p.getByText('Dòng 1: trạng thái không hợp lệ',{exact:false}).first().isVisible());assert(await p.locator('.Toastify__toast--error').first().isVisible());assert.equal(await p.getByText('Cập nhật dữ liệu thành công!',{exact:true}).count(),0);
+assert(!('userRole' in writes[0].body));assert(!('userAgencyId' in writes[0].body));rejectImport=false;
+await p.getByRole('button',{name:'Xác nhận cập nhật',exact:true}).click();await p.getByText('Cập nhật dữ liệu thành công!',{exact:true}).waitFor();assert.equal(writes.length,2);assert.equal(writes[0].body.reportingAgencyId,'agency');assert.equal(writes[0].body.items.length,3);assert.equal(writes[0].body.items.find(i=>i.id==='t').status,2);assert.equal(writes[0].body.items.filter(i=>i.periodYear===2025).length,2);await p.close();}
 console.log('PASS desktop/mobile upload preview highlights exactly two changed 2025 cells');}finally{await b.close();}

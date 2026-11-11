@@ -2,6 +2,7 @@ import { defaultDashboardTimeFilters } from './dashboardTimeFilters';
 import { activeDocument } from '../../services/documentContext';
 import { ref, computed } from 'vue';
 import { GOAL_SECTIONS, GOAL_GROUPS, TASK_SECTIONS, TASK_GROUPS } from '../../config/planningStructureConfig';
+import { sortAgenciesByStandardOrder } from '../../shared/agencyPresentation';
 
 export function useDashboardFilters({ agencies, loadDashboardMetrics }) {
   const dashboardFilter = ref('all'); // Both types are loaded; each visualization switches independently.
@@ -75,7 +76,7 @@ export function useDashboardFilters({ agencies, loadDashboardMetrics }) {
   const isSpecialAgencyCode = (code) => code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES' || code === 'ALL_PROVINCES_UBND' || code === 'ALL_MINISTRIES_DIRECT';
 
   const leadAgencyOptions = computed(() => {
-    return agencies.value.map(ag => {
+    return sortAgenciesByStandardOrder(agencies.value).map(ag => {
       if (isSpecialAgencyCode(ag.code)) {
         return { value: ag.id, label: `🌐 ${ag.name}` };
       }
@@ -88,13 +89,13 @@ export function useDashboardFilters({ agencies, loadDashboardMetrics }) {
   });
 
   const subAgencyOptions = computed(() => {
-    return agencies.value
-      .filter(ag => ag.parentId != null && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000')
-      .map(ag => {
-        const parentAg = agencies.value.find(p => p.id === ag.parentId);
-        const parentSuffix = parentAg ? ` (Trực thuộc ${parentAg.name})` : '';
-        return { value: ag.id, label: `${ag.name}${parentSuffix}` };
-      });
+    return sortAgenciesByStandardOrder(
+      agencies.value.filter(ag => ag.parentId != null && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000')
+    ).map(ag => {
+      const parentAg = agencies.value.find(p => p.id === ag.parentId);
+      const parentSuffix = parentAg ? ` (Trực thuộc ${parentAg.name})` : '';
+      return { value: ag.id, label: `${ag.name}${parentSuffix}` };
+    });
   });
 
   const agencyOptions = computed(() => leadAgencyOptions.value);

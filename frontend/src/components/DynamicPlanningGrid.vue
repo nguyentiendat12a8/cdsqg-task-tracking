@@ -13,15 +13,13 @@
     <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-50/60 p-3 w-full rounded-2xl border border-slate-200/80">
       <div class="flex items-center gap-2 flex-1 max-w-xl">
         <!-- Quick Search Input -->
-        <div class="relative flex-1">
-          <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-          <input 
-            :value="filterDraft.searchQuery" 
-            @input="filterDraft.searchQuery = $event.target.value"
-            placeholder="Tìm theo mã, tên chỉ tiêu kế hoạch..." 
-            class="ui-single-line w-full text-xs font-semibold pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none "
-          />
-        </div>
+        <SearchInput
+          v-model="filterDraft.searchQuery"
+          placeholder="Tìm theo mã, tên chỉ tiêu kế hoạch..."
+          aria-label="Tìm kiếm chỉ tiêu kế hoạch"
+          wrapper-class="flex-1"
+          @search="execGridFilterSearch"
+        />
 
         <!-- OverlayPanel Advanced Filter Popover -->
         <OverlayPanel 
@@ -387,10 +385,12 @@ import { authState } from '../services/auth';
 import { MODULE, ACTION } from '../shared/permissions';
 import LoadingSpinner from './LoadingSpinner.vue';
 import SearchableSelect from './SearchableSelect.vue';
+import SearchInput from './SearchInput.vue';
 import OverlayPanel from './OverlayPanel.vue';
 import { getApiUrl } from '../config/api';
 import { SUPPORTED_DOCUMENTS } from '../services/documentContext';
 import { loadAgencyCatalog } from '../services/agencyCatalog';
+import { sortAgenciesByStandardOrder } from '../shared/agencyPresentation';
 import { GOAL_SECTIONS, GOAL_GROUPS, TASK_SECTIONS, TASK_GROUPS } from '../config/planningStructureConfig';
 
 const props = defineProps({
@@ -410,15 +410,15 @@ const toastMessage = ref('');
 let toastTimeout = null;
 
 const agencyOptions = computed(() => {
-  return agencies.value
-    .filter(ag => ag.type !== 4 && ag.type !== 'Other')
-    .map(ag => ({ value: ag.id, label: ag.name }));
+  return sortAgenciesByStandardOrder(
+    agencies.value.filter(ag => ag.type !== 4 && ag.type !== 'Other')
+  ).map(ag => ({ value: ag.id, label: ag.name }));
 });
 
 const isSpecialAgencyCode = (code) => code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES' || code === 'ALL_PROVINCES_UBND' || code === 'ALL_MINISTRIES_DIRECT';
 
 const leadAgencyOptions = computed(() => {
-  return agencies.value.map(ag => {
+  return sortAgenciesByStandardOrder(agencies.value).map(ag => {
     if (isSpecialAgencyCode(ag.code)) {
       return { value: ag.id, label: `🌐 ${ag.name}` };
     }
@@ -431,15 +431,15 @@ const leadAgencyOptions = computed(() => {
 });
 
 const subAgencyOptions = computed(() => {
-  return agencies.value
-    .filter(ag => ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000' && ag.type !== 4 && ag.type !== 'Other')
-    .map(ag => {
-      const parentAg = agencies.value.find(p => p.id === ag.parentId);
-      return {
-        value: ag.id,
-        label: parentAg ? `${ag.name} (Trực thuộc ${parentAg.name})` : ag.name
-      };
-    });
+  return sortAgenciesByStandardOrder(
+    agencies.value.filter(ag => ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000' && ag.type !== 4 && ag.type !== 'Other')
+  ).map(ag => {
+    const parentAg = agencies.value.find(p => p.id === ag.parentId);
+    return {
+      value: ag.id,
+      label: parentAg ? `${ag.name} (Trực thuộc ${parentAg.name})` : ag.name
+    };
+  });
 });
 
 const sectionFilterOptions = computed(() => {
@@ -566,15 +566,6 @@ function execGridFilterSearch() {
   }
 }
 
-watch(() => filterDraft.value.searchQuery, (newVal) => {
-  if (gridSearchTimer) clearTimeout(gridSearchTimer);
-  const currentId = ++gridSearchRequestId;
-  gridSearchTimer = setTimeout(() => {
-    if (currentId !== gridSearchRequestId) return;
-    appliedFilters.value.searchQuery = newVal || '';
-    gridCurrentPage.value = 1;
-  }, 300);
-});
 
 function resetGridFilterSearch() {
   if (gridSearchTimer) clearTimeout(gridSearchTimer);

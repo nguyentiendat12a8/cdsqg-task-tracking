@@ -63,10 +63,32 @@ public static class ProgressCalculator
     private static IEnumerable<ProgressLog> ScopedLogs(GoalTaskItem item, Guid? agencyId)
     {
         if (agencyId == Guid.Empty) agencyId = null;
-        var id = agencyId ?? (item.IsGeneralTask ? (Guid?)null : item.AssignedAgencyId ?? item.LeadAgencyId);
+        if (!agencyId.HasValue && !item.IsGeneralTask)
+        {
+            // Trạng thái chung: báo cáo mới nhất của bất kỳ cơ quan/đơn vị chủ trì nào của mục
+            // (chủ trì, đồng chủ trì, đơn vị trực thuộc được giao). Ai báo cáo thì ghi ở AgencyId của báo cáo.
+            var team = LeadSideAgencyIds(item);
+            return item.ProgressLogs.Where(l => !l.AgencyId.HasValue || team.Contains(l.AgencyId.Value));
+        }
+        var id = agencyId ?? (item.IsGeneralTask ? (Guid?)null : AgencyAssignments.PrimaryAgencyId(item));
         // A general task has independent reports per agency. No cross-agency accumulation.
         if (item.IsGeneralTask && !id.HasValue) return Enumerable.Empty<ProgressLog>();
         return item.ProgressLogs.Where(l => l.AgencyId == id || (!item.IsGeneralTask && l.AgencyId == null && id == item.LeadAgencyId));
+    }
+
+    /// <summary>
+    /// Các cơ quan/đơn vị cùng chịu trách nhiệm chủ trì một mục (không phải nhiệm vụ chung).
+    /// Đơn vị nhận qua nhóm (ví dụ "Tất cả cơ quan, đơn vị thuộc Bộ") chỉ tính khi mục có giao đơn vị trực thuộc,
+    /// để mục do nhóm bộ/ngành chủ trì không bị trộn báo cáo giữa các bộ.
+    /// </summary>
+    public static HashSet<Guid> LeadSideAgencyIds(GoalTaskItem item)
+    {
+        var ids = new HashSet<Guid> { item.LeadAgencyId };
+        if (item.AssignedAgencyId.HasValue) ids.Add(item.AssignedAgencyId.Value);
+        foreach (var id in item.SubAgencyIds) if (id != Guid.Empty) ids.Add(id);
+        if (item.SubAgencyIds.Count > 0 && item.AgencyExecutions != null)
+            foreach (var e in item.AgencyExecutions.Where(e => e.IsLeadAssignment)) ids.Add(e.AgencyId);
+        return ids;
     }
 
     public static int FinalTargetYear(GoalTaskItem item, int fallbackYear)
@@ -153,6 +175,8 @@ public static class ProgressCalculator
     public static Result EvaluateOverall(GoalTaskItem item, IEnumerable<Agency> agencies, DateTime? evaluatedAt = null, int? reportYear = null)
     {
         if (!item.IsGeneralTask && !item.AgencyExecutions.Any(e => e.IsLeadGroupAssignment && e.IsLeadAssignment)) return Evaluate(item, year: reportYear, evaluatedAt: evaluatedAt);
+        // Giao qua nhóm đơn vị thuộc Bộ: vẫn một trạng thái chung theo báo cáo mới nhất (trừ chỉ tiêu cộng dồn số lượng).
+        if (!item.IsGeneralTask && item.SubAgencyIds.Count > 0 && !SumsAcrossAgencies(item)) return Evaluate(item, year: reportYear, evaluatedAt: evaluatedAt);
         var activeAgencyIds = agencies.Select(a => a.Id).ToHashSet();
         var ids = item.AgencyExecutions.Where(e => e.IsLeadAssignment && activeAgencyIds.Contains(e.AgencyId)).Select(e => e.AgencyId).Distinct().ToList();
         return EvaluateRecipients(item, ids, reportYear, evaluatedAt, aggregate: true);

@@ -37,6 +37,11 @@ export const SUPPORTED_DOCUMENTS = [
 
 const STORAGE_KEY = 'cdsqg_active_doc_code';
 
+export function getDocumentReportHeading(code) {
+  const document = SUPPORTED_DOCUMENTS.find(d => d.code === String(code));
+  return document ? `QUYẾT ĐỊNH SỐ ${document.documentNumber} NGÀY ${document.issueDate}` : '';
+}
+
 function getInitialDocumentCode() {
   try {
     const saved = localStorage.getItem(STORAGE_KEY);

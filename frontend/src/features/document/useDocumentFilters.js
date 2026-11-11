@@ -5,6 +5,7 @@ import { getReportYearOptions } from '../../shared/reportYear';
 import { ref, computed, watch, onUnmounted } from 'vue';
 import { authState } from '../../services/auth';
 import { GOAL_SECTIONS, GOAL_GROUPS, TASK_SECTIONS, TASK_GROUPS } from '../../config/planningStructureConfig';
+import { sortAgenciesByStandardOrder } from '../../shared/agencyPresentation';
 
 export function useDocumentFilters({ props, userAgencyId, agencies, rawItemsList, serverTotalCount, serverTotalPages, isGeneralTaskOrAllAgencies, loadData }) {
   const filterDraft = ref({
@@ -92,17 +93,7 @@ export function useDocumentFilters({ props, userAgencyId, agencies, rawItemsList
     loadData();
   }
 
-  watch(() => filterDraft.value.searchQuery, (newVal) => {
-    if (docDetailSearchTimer) clearTimeout(docDetailSearchTimer);
-    const currentId = ++docDetailSearchRequestId;
-    docDetailSearchTimer = setTimeout(() => {
-      if (currentId !== docDetailSearchRequestId) return;
-      appliedFilters.value = JSON.parse(JSON.stringify(filterDraft.value));
-      currentPage.value = 1;
-      loadData();
-    }, 300);
-  });
-
+  
   function resetFilterSearch() {
     if (docDetailSearchTimer) clearTimeout(docDetailSearchTimer);
     docDetailSearchRequestId++;
@@ -143,7 +134,7 @@ export function useDocumentFilters({ props, userAgencyId, agencies, rawItemsList
   });
 
   const agencyOptions = computed(() => {
-    return agencies.value.map(ag => {
+    return sortAgenciesByStandardOrder(agencies.value).map(ag => {
       if (isSpecialAgencyCode(ag.code)) {
         return { value: ag.id, label: `🌐 ${ag.name}` };
       }
@@ -158,7 +149,7 @@ export function useDocumentFilters({ props, userAgencyId, agencies, rawItemsList
   const isSpecialAgencyCode = (code) => code === 'ALL_AGENCIES' || code === 'ALL_MINISTRIES' || code === 'ALL_PROVINCES' || code === 'ALL_PROVINCES_UBND' || code === 'ALL_MINISTRIES_DIRECT';
 
   const leadAgencyOptions = computed(() => {
-    return agencies.value.map(ag => {
+    return sortAgenciesByStandardOrder(agencies.value).map(ag => {
       if (isSpecialAgencyCode(ag.code)) {
         return { value: ag.id, label: `🌐 ${ag.name}` };
       }
@@ -171,15 +162,15 @@ export function useDocumentFilters({ props, userAgencyId, agencies, rawItemsList
   });
 
   const subAgencyOptions = computed(() => {
-    return agencies.value
-      .filter(ag => ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000')
-      .map(ag => {
-        const parentAg = agencies.value.find(p => p.id === ag.parentId);
-        return {
-          value: ag.id,
-          label: parentAg ? `${ag.name} (Trực thuộc ${parentAg.name})` : ag.name
-        };
-      });
+    return sortAgenciesByStandardOrder(
+      agencies.value.filter(ag => ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000')
+    ).map(ag => {
+      const parentAg = agencies.value.find(p => p.id === ag.parentId);
+      return {
+        value: ag.id,
+        label: parentAg ? `${ag.name} (Trực thuộc ${parentAg.name})` : ag.name
+      };
+    });
   });
 
   const yearOptions = computed(() => {

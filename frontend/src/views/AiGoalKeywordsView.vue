@@ -75,29 +75,13 @@
         <div class="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-slate-50/70 p-3 border-b border-slate-200 w-full">
           <div class="flex flex-wrap items-center gap-2.5 flex-1 min-w-0">
             <!-- Ô tìm kiếm nhanh chuẩn DocumentFilters -->
-            <div class="relative flex-1 min-w-[240px]">
-              <svg class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-              </svg>
-              <input
-                v-model="searchTerm"
-                type="text"
-                class="ui-single-line w-full text-xs font-semibold pl-9 pr-8 py-2 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none shadow-2xs"
-                placeholder="Tìm theo mã mục tiêu, tên mục tiêu, từ khóa..."
-                @input="onSearchInput"
-              />
-              <button
-                v-if="searchTerm"
-                type="button"
-                class="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 p-0.5"
-                aria-label="Xóa tìm kiếm"
-                @click="searchTerm = ''; page = 1; load()"
-              >
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
+            <SearchInput
+              v-model="searchTerm"
+              placeholder="Tìm theo mã mục tiêu, tên mục tiêu, từ khóa..."
+              aria-label="Tìm kiếm bộ từ khóa AI"
+              wrapper-class="flex-1 min-w-[240px]"
+              @search="onSearch"
+            />
 
             <!-- Bộ lọc đơn vị đo chuẩn SearchableSelect -->
             <div class="w-48 shrink-0">
@@ -446,6 +430,7 @@ import { formatDateTime } from '../shared/formatters';
 import { confirmModal } from '../services/confirm';
 import { activeDocumentId, activeDocument } from '../services/documentContext';
 import SearchableSelect from '../components/SearchableSelect.vue';
+import SearchInput from '../components/SearchInput.vue';
 import AiPageHeader from '../components/AiPageHeader.vue';
 import ActionButton from '../components/ActionButton.vue';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
@@ -510,13 +495,9 @@ function splitKeywords(text) {
     .filter(Boolean);
 }
 
-let searchTimer = null;
-function onSearchInput() {
-  clearTimeout(searchTimer);
-  searchTimer = setTimeout(() => {
-    page.value = 1;
-    load();
-  }, 300);
+function onSearch() {
+  page.value = 1;
+  load();
 }
 
 function onUnitFilterChange() {
@@ -537,7 +518,9 @@ function resetFilters() {
   load();
 }
 
+let aiKeywordsRequestId = 0;
 async function load() {
+  const currentId = ++aiKeywordsRequestId;
   loading.value = true;
   error.value = '';
   try {
@@ -556,6 +539,7 @@ async function load() {
       throw new Error(data.message || `Lỗi tải danh sách từ khóa (HTTP ${res.status})`);
     }
     const data = await res.json();
+    if (currentId !== aiKeywordsRequestId) return;
     items.value = Array.isArray(data.items) ? data.items : [];
     total.value = data.total || 0;
     if (Array.isArray(data.availableGoals)) {
@@ -564,7 +548,9 @@ async function load() {
   } catch (err) {
     error.value = err.message || 'Không thể tải danh sách từ khóa AI.';
   } finally {
-    loading.value = false;
+    if (currentId === aiKeywordsRequestId) {
+      loading.value = false;
+    }
   }
 }
 

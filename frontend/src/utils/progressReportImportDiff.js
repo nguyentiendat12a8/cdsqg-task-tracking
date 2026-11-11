@@ -11,7 +11,7 @@ export function reconcileProgressReportImport(parsed, goals, tasks) {
   const rows = new Map();
   const goalRow = goal => {
     if (!rows.has(goal.id)) {
-      const row = { id: goal.id, code: goal.subCodes?.join(' / ') || goal.code, title: goal.title, documentNumber: goal.documentNumber, cells: {} };
+      const row = { ...goal, id: goal.id, code: goal.subCodes?.join(' / ') || goal.code, title: goal.title, documentNumber: goal.documentNumber, cells: { targetPhase1: { value: goal.targetPhase1 }, targetPhase2: { value: goal.targetPhase2 } } };
       for (const year of [2025, 2026, 2027, 2028, 2029, 2030]) row.cells[year] = { value: goal[yearKey(year)], changed: false };
       row.cells.notes = { value: goal.notes, changed: false };
       rows.set(goal.id, row);
@@ -46,7 +46,7 @@ export function reconcileProgressReportImport(parsed, goals, tasks) {
     const percentChanged = item.value != null && !sameNumber(item.value, task.completionPercentage);
     if (!Object.values(cells).some(c => c.changed) && !percentChanged) return false;
     if (percentChanged) cells.percent = { value: item.value, previous: task.completionPercentage, changed: true };
-    preview.tasks.push({ id: task.id, code: task.code, title: task.title, documentNumber: task.documentNumber, cells });
+    preview.tasks.push({ ...task, id: task.id, code: task.code, title: task.title, documentNumber: task.documentNumber, cells: { ...cells, dueDate: { value: task.dueDate }, deliverables: { value: task.deliverables } } });
     return true;
   });
   preview.goals = [...rows.values()];

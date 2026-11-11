@@ -6,6 +6,7 @@ import { getApiUrl } from '../../config/api';
 import { activeDocumentId } from '../../services/documentContext';
 import { GOAL_SECTIONS, GOAL_GROUPS, TASK_SECTIONS, TASK_GROUPS } from '../../config/planningStructureConfig';
 import { parseApiError } from '../../utils/errorUtils';
+import { subAgencyOptionsFor } from '../../shared/subAgencies';
 
 export function useCreateItem({ planningGridRef, agencies, rawItemsList, loadData, isSpecialAgencyCode }) {
   const isCreateModalOpen = ref(false);
@@ -28,6 +29,7 @@ export function useCreateItem({ planningGridRef, agencies, rawItemsList, loadDat
     leadAgencyId: '',
     leadAgencyDisplayText: '',
     assignedAgencyId: '',
+    subAgencyIds: [],
     coordinatingAgencyIds: [],
     coordinatingAgenciesDisplayText: '',
     deliverables: []
@@ -78,12 +80,12 @@ export function useCreateItem({ planningGridRef, agencies, rawItemsList, loadDat
     return groups.filter(g => g.section === createForm.value.section);
   });
 
-  const createAssignedAgencyOptions = computed(() => {
-    if (!createForm.value.leadAgencyId) return [];
-    return agencies.value
-      .filter(ag => ag.parentId === createForm.value.leadAgencyId)
-      .map(ag => ({ value: ag.id, label: ag.name }));
-  });
+  // Đơn vị trực thuộc (chọn nhiều); assignedAgencyId là cơ quan đồng chủ trì, giữ nguyên khi sửa.
+  const createAssignedAgencyOptions = computed(() => subAgencyOptionsFor(agencies.value, {
+    leadAgencyId: createForm.value.leadAgencyId,
+    assignedAgencyId: createForm.value.assignedAgencyId,
+    isGeneralTask: createForm.value.isGeneralTask
+  }));
 
   watch(() => createForm.value.leadAgencyId, (newId) => {
     const selected = agencies.value.find(a => a.id === newId);
@@ -92,9 +94,9 @@ export function useCreateItem({ planningGridRef, agencies, rawItemsList, loadDat
     } else {
       createForm.value.isGeneralTask = false;
     }
-    if (createForm.value.assignedAgencyId) {
-      const isChild = agencies.value.some(a => a.id === createForm.value.assignedAgencyId && a.parentId === newId);
-      if (!isChild) createForm.value.assignedAgencyId = '';
+    const allowed = new Set(createAssignedAgencyOptions.value.map(o => String(o.value)));
+    if (createForm.value.subAgencyIds?.length) {
+      createForm.value.subAgencyIds = createForm.value.subAgencyIds.filter(id => allowed.has(String(id)));
     }
   }, { immediate: true });
 
@@ -121,6 +123,7 @@ export function useCreateItem({ planningGridRef, agencies, rawItemsList, loadDat
       leadAgencyId: agencies.value[0]?.id || '',
       leadAgencyDisplayText: '',
       assignedAgencyId: '',
+      subAgencyIds: [],
       coordinatingAgencyIds: [],
       coordinatingAgenciesDisplayText: '',
       deliverables: []
@@ -201,6 +204,7 @@ export function useCreateItem({ planningGridRef, agencies, rawItemsList, loadDat
         leadAgencyId: createForm.value.leadAgencyId,
         leadAgencyDisplayText: createForm.value.leadAgencyDisplayText?.trim() || null,
         assignedAgencyId: createForm.value.assignedAgencyId || null,
+        subAgencyIds: [...(createForm.value.subAgencyIds || [])],
         coordinatingAgencyIds: createForm.value.coordinatingAgencyIds || [],
         coordinatingAgenciesDisplayText: createForm.value.coordinatingAgenciesDisplayText?.trim() || null,
         evaluationType: createItemType.value === 'Goal' ? 'Quantitative' : 'Qualitative',

@@ -68,15 +68,13 @@
       <div class="p-3 border-b border-slate-200/80 bg-slate-50/60 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 w-full">
         <div class="flex items-center gap-2 flex-1 max-w-xl">
           <!-- Text Search Input -->
-          <div class="relative flex-1">
-            <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            <input 
-              :value="searchQueryDraft" 
-              @input="searchQueryDraft = $event.target.value"
-              placeholder="Tìm theo mã, tên nhiệm vụ, nội dung..." 
-              class="ui-single-line w-full text-xs font-semibold pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-rose-500 focus:outline-none "
-            />
-          </div>
+          <SearchInput
+            v-model="searchQueryDraft"
+            placeholder="Tìm theo mã, tên nhiệm vụ, nội dung..."
+            aria-label="Tìm kiếm lịch sử đôn đốc"
+            wrapper-class="flex-1"
+            @search="execSearch"
+          />
 
           <!-- OverlayPanel Advanced Filter Popover -->
           <OverlayPanel
@@ -245,6 +243,7 @@ import { fetchWithAuth } from '../services/auth';
 
 import { ref, computed, onMounted, watch } from 'vue';
 import SearchableSelect from '../components/SearchableSelect.vue';
+import SearchInput from '../components/SearchInput.vue';
 import { exportToExcel } from '../utils/excelExport';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
 import UrgeDetailModal from '../components/UrgeDetailModal.vue';
@@ -252,6 +251,7 @@ import OverlayPanel from '../components/OverlayPanel.vue';
 import DatePicker from '../components/DatePicker.vue';
 import { getApiUrl } from '../config/api';
 import { loadAgencyCatalog } from '../services/agencyCatalog';
+import { sortAgenciesByStandardOrder } from '../shared/agencyPresentation';
 
 const STORAGE_KEY = 'cdsqg_urge_history_query';
 
@@ -281,19 +281,19 @@ const formatAgencyLabel = (ag, list) => {
 };
 
 const leadAgencyOptions = computed(() => {
-  return agencies.value.map(ag => ({
+  return sortAgenciesByStandardOrder(agencies.value).map(ag => ({
     value: ag.id,
     label: formatAgencyLabel(ag, agencies.value)
   }));
 });
 
 const subAgencyOptions = computed(() => {
-  return agencies.value
-    .filter(ag => ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000')
-    .map(ag => ({
-      value: ag.id,
-      label: formatAgencyLabel(ag, agencies.value)
-    }));
+  return sortAgenciesByStandardOrder(
+    agencies.value.filter(ag => ag.parentId && ag.parentId !== '' && String(ag.parentId) !== '00000000-0000-0000-0000-000000000000')
+  ).map(ag => ({
+    value: ag.id,
+    label: formatAgencyLabel(ag, agencies.value)
+  }));
 });
 
 const fromDate = ref('');
@@ -374,12 +374,7 @@ function execSearch() {
   loadLogs();
 }
 
-watch(searchQueryDraft, () => {
-  if (urgeSearchDebounceTimer) clearTimeout(urgeSearchDebounceTimer);
-  urgeSearchDebounceTimer = setTimeout(() => {
-    execSearch();
-  }, 300);
-});
+
 
 function resetSearch() {
   if (urgeSearchDebounceTimer) clearTimeout(urgeSearchDebounceTimer);

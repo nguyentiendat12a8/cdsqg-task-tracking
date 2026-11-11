@@ -24,6 +24,10 @@ namespace Cdsqg.Application.DTOs
         public List<Guid> CoordinatingAssignmentAgencyIds { get; set; } = new();
         public Guid? ProgressAgencyId { get; set; }
         public string? ProgressAgencyName { get; set; }
+        /// <summary>Cơ quan/đơn vị gửi báo cáo đang làm căn cứ trạng thái (ví dụ Viện ... khi nhiệm vụ giao nhiều đơn vị).</summary>
+        public string? LatestReportAgencyName { get; set; }
+        /// <summary>Người gửi báo cáo đang làm căn cứ trạng thái.</summary>
+        public string? LatestReportedBy { get; set; }
         public string? AssignmentKind { get; set; }
         public Guid TaskId { get; set; }
         public string ItemType { get; set; } = "Task"; // Goal (1A) or Task (1B)
@@ -45,6 +49,8 @@ namespace Cdsqg.Application.DTOs
         public Guid? AssignedAgencyId { get; set; }
         public string? AssignedAgencyCode { get; set; }
         public string? AssignedAgencyName { get; set; }
+        public List<Guid> SubAgencyIds { get; set; } = new List<Guid>();
+        public List<string> SubAgencyNames { get; set; } = new List<string>();
         public List<Guid> CoordinatingAgencyIds { get; set; } = new List<Guid>();
         public List<string> CoordinatingAgencyCodes { get; set; } = new List<string>();
         public List<string> CoordinatingAgencyNames { get; set; } = new List<string>();
@@ -100,6 +106,8 @@ namespace Cdsqg.Application.DTOs
         public Guid LeadAgencyId { get; set; }
         public string? LeadAgencyDisplayText { get; set; }
         public Guid? AssignedAgencyId { get; set; }
+        /// <summary>Đơn vị trực thuộc (Cấp 3). Khi cập nhật: null = giữ nguyên.</summary>
+        public List<Guid>? SubAgencyIds { get; set; }
         public List<Guid> CoordinatingAgencyIds { get; set; } = new List<Guid>();
         public string? CoordinatingAgenciesDisplayText { get; set; }
 
@@ -128,6 +136,7 @@ namespace Cdsqg.Application.DTOs
     /// <summary>Kế hoạch mục tiêu theo năm do đơn vị chủ trì nhập từ Excel (sheet "Kế hoạch mục tiêu").</summary>
     public class ImportYearlyTargetsRequestDto
     {
+        public Guid? ReportingAgencyId { get; set; }
         public List<ImportYearlyTargetRowDto> Rows { get; set; } = new();
         /// <summary>false: chỉ kiểm tra và trả danh sách kế hoạch đã có; true: ghi đè sau khi người dùng xác nhận.</summary>
         public bool ConfirmOverwrite { get; set; }
@@ -171,6 +180,8 @@ namespace Cdsqg.Application.DTOs
         public Guid LeadAgencyId { get; set; }
         public string? LeadAgencyDisplayText { get; set; }
         public Guid? AssignedAgencyId { get; set; }
+        /// <summary>Đơn vị trực thuộc (Cấp 3). Khi cập nhật: null = giữ nguyên.</summary>
+        public List<Guid>? SubAgencyIds { get; set; }
         public List<Guid> CoordinatingAgencyIds { get; set; } = new List<Guid>();
         public string? CoordinatingAgenciesDisplayText { get; set; }
         private decimal? _resultTarget;
@@ -188,7 +199,10 @@ namespace Cdsqg.Application.DTOs
 
     public class AssignGoalTaskItemRequestDto
     {
+        /// <summary>Legacy: một đơn vị trực thuộc. Dùng AssignedAgencyIds để giao nhiều đơn vị.</summary>
         public Guid? AssignedAgencyId { get; set; }
+        /// <summary>Danh sách đơn vị trực thuộc (thay thế toàn bộ). Danh sách rỗng = bỏ giao.</summary>
+        public List<Guid>? AssignedAgencyIds { get; set; }
     }
 
     public class AgencyProgressReportDto

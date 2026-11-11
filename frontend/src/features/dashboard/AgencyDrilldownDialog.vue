@@ -114,17 +114,12 @@
           <div v-if="modalDeadlineFilter==='Overdue'" class="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-900" role="status"><strong>Đang xem mục tiêu, nhiệm vụ quá hạn của đơn vị</strong><button type="button" class="ui-btn ui-btn-secondary" @click="modalDeadlineFilter='all'">Xem tất cả công việc</button></div>
           <!-- Local Filters Toolbar -->
           <div class="flex flex-wrap items-center justify-between gap-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200/80">
-            <div class="flex items-center gap-2 flex-1 min-w-[200px]">
-              <div class="relative w-full">
-                <span class="absolute inset-y-0 left-0 flex items-center pl-2.5 text-slate-400 text-xs">🔍</span>
-                <input
-                  v-model="modalSearchKeyword"
-                  type="text"
-                  :placeholder="drilldownTab === 'goals' ? 'Tìm mã, tên mục tiêu, lĩnh vực...' : 'Tìm mã, tên nhiệm vụ, lĩnh vực...'"
-                  class="ui-single-line w-full pl-8 pr-3 py-1.5 bg-white text-xs border border-slate-200 rounded-lg focus:outline-none focus:border-blue-500 text-slate-800"
-                />
-              </div>
-            </div>
+            <SearchInput
+                v-model="modalSearchKeyword"
+                :placeholder="drilldownTab === 'goals' ? 'Tìm mã, tên mục tiêu, lĩnh vực...' : 'Tìm mã, tên nhiệm vụ, lĩnh vực...'"
+                :aria-label="drilldownTab === 'goals' ? 'Tìm mục tiêu' : 'Tìm nhiệm vụ'"
+                wrapper-class="flex-1 min-w-[200px]"
+              />
 
             <div class="flex flex-wrap items-center gap-2 min-w-0">
               <div class="w-48 max-w-full"><SearchableSelect v-model="modalDeadlineFilter" :options="[{value:'all',label:'Tất cả thời hạn'},{value:'Overdue',label:'Quá hạn'},{value:'ExpiringSoon',label:'Sắp hết hạn'}]" :is-multi="false" :clearable="false" label="Tình trạng thời hạn" label-class="sr-only" /></div>
@@ -299,6 +294,7 @@
 import ExecutionStatusBreakdown from '../../components/ExecutionStatusBreakdown.vue';
 import { formatNumber } from "../../shared/formatters";
 import SearchableSelect from '../../components/SearchableSelect.vue';
+import SearchInput from '../../components/SearchInput.vue';
 import { executionStatusOptions } from '../../shared/statusPresentation';
 import LoadingSpinner from '../../components/LoadingSpinner.vue';
 import MiniStatusDonut from '../../components/MiniStatusDonut.vue';

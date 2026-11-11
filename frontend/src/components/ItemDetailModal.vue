@@ -82,7 +82,7 @@
             <div class="border-t border-slate-200/60 pt-2">
               <span class="text-slate-500 font-semibold block text-xs">Đơn vị trực thuộc được giao</span>
               <span class="font-medium text-slate-800 mt-0.5 block">
-                <span>{{ item?.assignedAgencyName || 'Chưa giao đơn vị trực thuộc' }}</span>
+                <span>{{ subAgencyLabel(item) || 'Chưa giao đơn vị trực thuộc' }}</span>
               </span>
             </div>
 
@@ -204,7 +204,8 @@
                 </div>
                 <div class="flex items-center gap-2">
                   <div class="text-slate-600 font-semibold text-xs">
-                    ✍️ Đơn vị thực hiện: <strong class="text-slate-900 font-bold">{{ formatReportActor(rep.createdBy, rep.agencyName) }}</strong>
+                    🏢 Đơn vị báo cáo: <strong class="text-slate-900 font-bold">{{ rep.agencyName || 'Chưa ghi nhận đơn vị báo cáo' }}</strong>
+                    <span class="block mt-1 text-slate-500">✍️ Người thao tác: <strong class="text-slate-900 font-bold">{{ formatReportActor(rep.createdBy, rep.agencyName) }}</strong></span>
                   </div>
 
                   <!-- Action Buttons for Parent Agency to Approve / Reject -->
@@ -365,26 +366,12 @@
               <button v-if="authState.isAdmin.value" type="button" @click="refreshAssignments" :disabled="isRefreshingAssignments || isLoadingMatrix" class="ui-single-line px-3 text-xs font-semibold rounded-lg border border-blue-200 text-blue-700 bg-blue-50 disabled:opacity-50">{{ isRefreshingAssignments ? 'Đang đồng bộ...' : 'Đồng bộ danh sách đơn vị' }}</button>
 
               <!-- Row 2: Search Input for Agency Name (Full Width on separate row below) -->
-              <div class="relative w-full">
-                <input 
-                  v-model="agencyMatrixSearchKeyword"
-                  type="text" 
-                  placeholder="Tìm kiếm theo tên cơ quan / địa phương..." 
-                  class="ui-single-line w-full text-xs font-semibold pl-9 pr-8 py-2.5 bg-slate-50 border border-slate-300 rounded-xl focus:bg-white focus:border-blue-600 focus:ring-2 focus:ring-blue-500/20 focus:outline-none transition shadow-2xs"
-                />
-                <svg class="w-4 h-4 text-slate-400 absolute left-3 top-3 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <button 
-                  v-if="agencyMatrixSearchKeyword"
-                  @click="agencyMatrixSearchKeyword = ''"
-                  type="button"
-                  class="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600 text-xs font-bold cursor-pointer p-0.5"
-                  v-tip="'Xóa từ khóa tìm kiếm'"
-                >
-                  ✕
-                </button>
-              </div>
+              <SearchInput
+                v-model="agencyMatrixSearchKeyword"
+                placeholder="Tìm kiếm theo tên cơ quan / địa phương..."
+                aria-label="Tìm kiếm cơ quan hoặc địa phương"
+                wrapper-class="w-full"
+              />
             </div>
 
             <!-- Agency Executions Table Container -->
@@ -473,24 +460,22 @@
           <button @click="isAssignModalOpen = false" class="text-slate-400 hover:text-slate-600">✕</button>
         </div>
         <div class="space-y-3">
-          <p class="text-xs text-slate-600">Chọn đơn vị trực thuộc để giao cho <strong>{{ item?.code }}: {{ item?.title }}</strong>:</p>
+          <p class="text-xs text-slate-600">Chọn một hoặc nhiều đơn vị trực thuộc Bộ Khoa học và Công nghệ để giao cho <strong>{{ item?.code }}: {{ item?.title }}</strong>:</p>
           <div v-if="isLoadingSubAgencies" class="py-4 text-center">
             <LoadingSpinner size="sm" message="Đang tải danh sách đơn vị..." />
           </div>
           <div v-else-if="subAgencyOptions.length === 0" class="p-3 bg-amber-50 text-amber-800 text-xs rounded-xl border border-amber-200">
-            Cơ quan chủ trì <strong>{{ item?.leadAgencyName }}</strong> hiện chưa có đơn vị trực thuộc nào trong hệ thống.
+            Bộ Khoa học và Công nghệ hiện chưa có đơn vị trực thuộc nào trong hệ thống.
           </div>
           <div v-else class="space-y-1">
             <SearchableSelect
-              v-model="selectedSubAgencyId"
-              :options="[
-                { value: '', label: '— Bỏ giao (chưa giao đơn vị trực thuộc) —' },
-                ...subAgencyOptions.map(sub => ({ value: sub.id, label: sub.name }))
-              ]"
-              :isMulti="false"
-              :clearable="false"
-              placeholder="— Bỏ giao (chưa giao đơn vị trực thuộc) —"
+              v-model="selectedSubAgencyIds"
+              :options="subAgencyOptions.map(sub => ({ value: sub.id, label: sub.name }))"
+              :isMulti="true"
+              :maxDisplayTags="3"
+              placeholder="— Chưa giao đơn vị trực thuộc —"
             />
+            <p class="text-xs text-slate-500">Đơn vị chọn đầu tiên là đơn vị đầu mối. Bỏ chọn hết để thu hồi giao.</p>
           </div>
         </div>
         <div class="flex justify-end gap-2 border-t border-slate-100 pt-3">
@@ -539,8 +524,10 @@ import { ref, computed, watch } from 'vue';
 import { toast } from 'vue3-toastify';
 import LoadingSpinner from './LoadingSpinner.vue';
 import SearchableSelect from './SearchableSelect.vue';
+import SearchInput from './SearchInput.vue';
 import { getApiUrl } from '../config/api';
 import { loadAgencyCatalog } from '../services/agencyCatalog';
+import { itemInvolvesBKHCN, bkhcnSubAgencies, subAgencyIdsOf, subAgencyLabel, withAssignedSubAgencies, catalogMissesSubAgencies } from '../shared/subAgencies';
 import { authState } from '../services/auth';
 
 const props = defineProps({
@@ -728,37 +715,21 @@ async function loadHistories() {
 
 
 const isAssignModalOpen = ref(false);
-const selectedSubAgencyId = ref('');
+const selectedSubAgencyIds = ref([]);
 const subAgencyOptions = ref([]);
+const agencyCatalog = ref([]);
+loadAgencyCatalog().then(list => { agencyCatalog.value = list || []; }).catch(() => {});
 const isLoadingSubAgencies = ref(false);
 
 const isRejectModalOpen = ref(false);
 const rejectTargetLogId = ref(null);
 const rejectionReasonInput = ref('');
 
-const userAgencyId = computed(() => authState.user.value?.agencyId ? String(authState.user.value.agencyId).toLowerCase() : '');
-
 const canAssignTask = computed(() => {
   if (!props.item) return false;
-
-  // Chỉ hiển thị khi cơ quan chủ trì của mục tiêu/nhiệm vụ là Bộ Khoa học và Công nghệ
-  const itemLeadName = (props.item.leadAgencyName || '').toLowerCase();
-  const itemLeadCode = (props.item.leadAgencyCode || '').toLowerCase();
-  const isItemBKHCN = itemLeadCode === 'bkhcn' || itemLeadName.includes('khoa học và công nghệ') || itemLeadName.includes('khoa học & công nghệ') || itemLeadName.includes('khoa học công nghệ');
-  if (!isItemBKHCN) return false;
-
-  if (authState.isAdmin.value) return true;
-
-  // Cấp 2: Nếu không phải Admin, user phải thuộc Bộ Khoa học và Công nghệ
-  const agName = (authState.user.value?.agencyName || authState.user.value?.agency?.name || '').toLowerCase();
-  const agCode = (authState.user.value?.agencyCode || authState.user.value?.agency?.code || '').toLowerCase();
-  const isBkhcn = agCode === 'bkhcn' || agName.includes('khoa học và công nghệ') || agName.includes('khoa học & công nghệ') || agName.includes('khoa học công nghệ');
-  if (!isBkhcn) return false;
-
-  if (userAgencyId.value && props.item.leadAgencyId && String(props.item.leadAgencyId).toLowerCase() === userAgencyId.value) {
-    return true;
-  }
-  return false;
+  // Giao đơn vị trực thuộc Bộ KH&CN khi Bộ chủ trì, đồng chủ trì hoặc thuộc nhóm nhiệm vụ chung.
+  // API giao đơn vị chỉ cho phép Quản trị viên.
+  return authState.isAdmin.value && itemInvolvesBKHCN(props.item, agencyCatalog.value);
 });
 
 const canApproveProgress = computed(() => {
@@ -771,35 +742,12 @@ async function openAssignModal() {
   if (!props.item) return;
   isAssignModalOpen.value = true;
   isLoadingSubAgencies.value = true;
-  selectedSubAgencyId.value = props.item.assignedAgencyId || '';
+  selectedSubAgencyIds.value = subAgencyIdsOf(props.item);
   try {
-    {
-      const allAgencies = await loadAgencyCatalog();
-      const userAgencyId = authState.user.value?.agencyId || authState.user.value?.agency?.id || authState.currentAgency?.value?.id;
-      
-      let targetLeadId = props.item.leadAgencyId || props.item.agencyId || (props.item.leadAgency && props.item.leadAgency.id);
-      if (!targetLeadId && props.item.leadAgencyName) {
-        const leadAg = allAgencies.find(a => a.name && a.name.trim().toLowerCase() === props.item.leadAgencyName.trim().toLowerCase());
-        if (leadAg) {
-          targetLeadId = leadAg.id;
-        }
-      }
-
-      let filtered = [];
-      if (targetLeadId) {
-        filtered = allAgencies.filter(a => a.parentId && String(a.parentId).toLowerCase() === String(targetLeadId).toLowerCase() && a.type !== 4 && a.type !== 'Other');
-      }
-
-      if (filtered.length === 0 && userAgencyId) {
-        filtered = allAgencies.filter(a => a.parentId && String(a.parentId).toLowerCase() === String(userAgencyId).toLowerCase() && a.type !== 4 && a.type !== 'Other');
-      }
-
-      if (filtered.length === 0 && (authState.isAdmin.value || props.item.isGeneralTask)) {
-        filtered = allAgencies.filter(a => a.parentId != null && a.parentId !== '' && String(a.parentId) !== '00000000-0000-0000-0000-000000000000' && a.type !== 4 && a.type !== 'Other');
-      }
-
-      subAgencyOptions.value = filtered;
-    }
+    let allAgencies = await loadAgencyCatalog();
+    if (catalogMissesSubAgencies(allAgencies, props.item)) allAgencies = await loadAgencyCatalog({ force: true });
+    agencyCatalog.value = allAgencies || [];
+    subAgencyOptions.value = withAssignedSubAgencies(bkhcnSubAgencies(agencyCatalog.value), props.item);
   } catch (e) {
     toast.error('Không thể tải danh sách đơn vị trực thuộc.');
   } finally {
@@ -814,14 +762,14 @@ async function submitAssignTask() {
     const res = await fetchWithAuth(getApiUrl(`/api/planning/items/${taskId}/assign`), {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ assignedAgencyId: selectedSubAgencyId.value || null })
+      body: JSON.stringify({ assignedAgencyIds: [...selectedSubAgencyIds.value] })
     });
 
     if (res.ok) {
       toast.success('Đã giao cho đơn vị trực thuộc thành công.');
-      const selectedSub = subAgencyOptions.value.find(s => s.id === selectedSubAgencyId.value);
-      props.item.assignedAgencyId = selectedSubAgencyId.value || null;
-      props.item.assignedAgencyName = selectedSub ? selectedSub.name : null;
+      const ids = [...selectedSubAgencyIds.value];
+      props.item.subAgencyIds = ids;
+      props.item.subAgencyNames = ids.map(id => subAgencyOptions.value.find(s => String(s.id) === String(id))?.name?.trim()).filter(Boolean);
       isAssignModalOpen.value = false;
     } else {
       const err = await res.json().catch(() => ({}));

@@ -9,6 +9,9 @@ public static class ReportingAgencyGroups
         || agency.Name.Trim().ToLowerInvariant() is "các doanh nghiệp công nghệ số" or "các doanh nghiệp viễn thông";
     public static List<Agency> Members(Agency group, IEnumerable<Agency> agencies)
     {
+        // Nhóm đặt dưới một cơ quan (ví dụ "Tất cả cơ quan, đơn vị thuộc Bộ"): mọi đơn vị trực thuộc đang hoạt động của cơ quan đó.
+        if (group.ParentId.HasValue)
+            return agencies.Where(a => a.IsActive && a.ParentId == group.ParentId && a.Id != group.Id && !IsGroup(a)).ToList();
         var candidates = agencies.Where(a => a.IsActive && !a.ParentId.HasValue && !IsGroup(a));
         return group.Code.ToUpperInvariant() switch
         {

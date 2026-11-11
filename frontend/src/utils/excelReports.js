@@ -610,6 +610,7 @@ export function exportProgressReportTemplate({
           if (item.leadAgencyId && agId && String(item.leadAgencyId).toLowerCase() === agId) return true;
           if (item.leadAgencyCode && agCode && item.leadAgencyCode.toUpperCase() === agCode) return true;
           if (item.assignedAgencyId && agId && String(item.assignedAgencyId).toLowerCase() === agId) return true;
+          if (agId && (item.subAgencyIds || []).some(id => String(id).toLowerCase() === agId)) return true;
           if (item.isGeneralTask || item.leadAgencyCode === 'ALL_AGENCIES' || item.leadAgencyCode === 'ALL_MINISTRIES') return true;
           const lead = (item.leadAgencyName || '').toLowerCase();
           if (lead.includes(agName.replace('bộ ', '').replace('ban ', '').trim())) return true;

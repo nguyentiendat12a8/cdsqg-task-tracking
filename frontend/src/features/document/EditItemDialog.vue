@@ -138,11 +138,12 @@
             </div>
             <div>
               <SearchableSelect
-                v-model="editForm.assignedAgencyId"
+                v-model="editForm.subAgencyIds"
                 :options="editAssignedAgencyOptions"
-                :isMulti="false"
+                :isMulti="true"
+                :maxDisplayTags="2"
                 label="Giao đơn vị trực thuộc"
-                placeholder="-- Chọn đơn vị trực thuộc --"
+                placeholder="-- Chọn một hoặc nhiều đơn vị trực thuộc --"
                 :disabled="!editForm.leadAgencyId || editAssignedAgencyOptions.length === 0"
               />
             </div>

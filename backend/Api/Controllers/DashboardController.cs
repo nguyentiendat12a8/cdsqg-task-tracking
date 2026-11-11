@@ -209,6 +209,8 @@ namespace Cdsqg.Api.Controllers
                             LeadAgencyName = recipient != null ? ProvinceCatalog.DisplayName(recipient) : item.LeadAgency?.Name ?? "—",
                             Category = item.Category, Section = item.Section, Group = item.Group,
                             AssignedAgencyId = item.AssignedAgencyId,
+                            SubAgencyIds = item.SubAgencyIds,
+                            SubAgencyNames = allAgencies.Where(a => item.SubAgencyIds.Contains(a.Id)).Select(ProvinceCatalog.DisplayName).ToList(),
                             CoordinatingAgencyIds = item.CoordinatingAgencyIds,
                             CoordinatingAgencyNames = allAgencies.Where(a => item.CoordinatingAgencyIds.Contains(a.Id)).Select(ProvinceCatalog.DisplayName).ToList(),
                             ProgressAgencyId = recipient?.Id, ProgressAgencyName = recipient == null ? null : ProvinceCatalog.DisplayName(recipient),
@@ -569,6 +571,8 @@ namespace Cdsqg.Api.Controllers
                         AssignedAgencyId = item.AssignedAgencyId,
                         AssignedAgencyCode = assignedAgency?.Code,
                         AssignedAgencyName = assignedAgency == null ? null : ProvinceCatalog.DisplayName(assignedAgency),
+                        SubAgencyIds = item.SubAgencyIds,
+                        SubAgencyNames = allAgencies.Where(a => item.SubAgencyIds.Contains(a.Id)).Select(ProvinceCatalog.DisplayName).ToList(),
                         CoordinatingAgencyIds = item.CoordinatingAgencyIds ?? new List<Guid>(),
                         CoordinatingAgencyCodes = coordAgencies.Select(a => a.Code).ToList(),
                         CoordinatingAgencyNames = coordAgencies.Select(ProvinceCatalog.DisplayName).ToList(),
@@ -738,6 +742,8 @@ namespace Cdsqg.Api.Controllers
         public Guid? AssignedAgencyId { get; set; }
         public string? AssignedAgencyCode { get; set; }
         public string? AssignedAgencyName { get; set; }
+        public List<Guid> SubAgencyIds { get; set; } = new List<Guid>();
+        public List<string> SubAgencyNames { get; set; } = new List<string>();
         public List<Guid> CoordinatingAgencyIds { get; set; } = new List<Guid>();
         public List<string> CoordinatingAgencyCodes { get; set; } = new List<string>();
         public List<string> CoordinatingAgencyNames { get; set; } = new List<string>();

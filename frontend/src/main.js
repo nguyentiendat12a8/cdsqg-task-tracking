@@ -1,5 +1,7 @@
 import { createApp } from 'vue';
 import { createPinia } from 'pinia';
+import Vue3Toastify from 'vue3-toastify';
+import 'vue3-toastify/dist/index.css';
 import FloatingVue from 'floating-vue';
 import 'floating-vue/dist/style.css';
 import App from './App.vue';
@@ -13,6 +15,7 @@ app.directive('accessible-dialog', accessibleDialog);
 app.directive('accessible-data', accessibleData);
 app.directive('tip', appTooltip);
 app.use(createPinia());
+app.use(Vue3Toastify, { autoClose: 6000, position: 'top-right', theme: 'light' });
 app.use(FloatingVue, {
   themes: {
     'custom-dark': {

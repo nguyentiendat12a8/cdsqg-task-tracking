@@ -50,15 +50,13 @@
       <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 p-3 bg-slate-50/60 w-full">
         <div class="flex flex-wrap sm:flex-nowrap items-center gap-2 flex-1 max-w-xl min-w-0">
           <!-- Search Input -->
-          <div class="relative flex-1 min-w-0 basis-full sm:basis-0">
-            <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
-            <input 
-              v-model="filterDraft.searchQuery" 
-              @keyup.enter="execSearch"
-              placeholder="Tìm theo số ký hiệu, trích yếu, người ký, cơ quan..." 
-              class="ui-single-line w-full text-xs font-semibold pl-9 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none "
-            />
-          </div>
+          <SearchInput
+            v-model="filterDraft.searchQuery"
+            placeholder="Tìm theo số ký hiệu, trích yếu, người ký, cơ quan..."
+            aria-label="Tìm kiếm văn bản quy phạm pháp luật"
+            wrapper-class="flex-1 min-w-0 basis-full sm:basis-0"
+            @search="execSearch"
+          />
 
           <!-- OverlayPanel Advanced Filter -->
           <OverlayPanel 
@@ -318,6 +316,7 @@ import { toast } from 'vue3-toastify';
 import 'vue3-toastify/dist/index.css';
 import { loadExcelReader } from '../utils/excelRuntime';
 import SearchableSelect from '../components/SearchableSelect.vue';
+import SearchInput from '../components/SearchInput.vue';
 import OverlayPanel from '../components/OverlayPanel.vue';
 import LoadingSpinner from '../components/LoadingSpinner.vue';
 import LegalDocumentModal from '../components/LegalDocumentModal.vue';
@@ -325,6 +324,7 @@ import LegalFileViewerModal from '../components/LegalFileViewerModal.vue';
 import { exportFormattedReportExcel, styleWorksheet } from '../utils/excelExport';
 import { getApiUrl } from '../config/api';
 import { loadAgencyCatalog } from '../services/agencyCatalog';
+import { sortAgenciesByStandardOrder } from '../shared/agencyPresentation';
 import { authState } from '../services/auth';
 import { MODULE, ACTION } from '../shared/permissions';
 import { openFileInNewWindow } from '../utils/fileViewer';
@@ -685,8 +685,7 @@ const fieldFilterOptions = [
 ];
 
 const agencyFilterOptions = computed(() => {
-  return (agencies.value || [])
-    .filter(a => a.code !== 'ALL_AGENCIES')
+  return sortAgenciesByStandardOrder((agencies.value || []).filter(a => a.code !== 'ALL_AGENCIES'))
     .map(a => ({ value: a.id, label: a.name }));
 });
 
@@ -724,7 +723,9 @@ function buildListQuery() {
     return params;
 }
 
+let legalDocRequestId = 0;
 async function fetchDocuments() {
+  const currentId = ++legalDocRequestId;
   isLoading.value = true;
   try {
     const params = buildListQuery();
@@ -732,6 +733,7 @@ async function fetchDocuments() {
     if (res.ok) {
       const data = await res.json();
       loadedExportUrl = getApiUrl(`/api/legaldocuments?${params.toString()}`);
+      if (currentId !== legalDocRequestId) return;
       documents.value = data.items || [];
       totalCount.value = data.totalCount || 0;
       totalPages.value = data.totalPages || 1;
@@ -739,7 +741,9 @@ async function fetchDocuments() {
   } catch (err) {
     console.error('Error fetching legal documents:', err);
   } finally {
-    isLoading.value = false;
+    if (currentId === legalDocRequestId) {
+      isLoading.value = false;
+    }
   }
 }
 

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
@@ -23,6 +24,29 @@ namespace Cdsqg.Api.Controllers
         {
             _context = context;
             _fileStorageService = fileStorageService;
+        }
+
+        /// <summary>
+        /// Thứ tự sắp xếp cơ quan:
+        /// 1: Đặc biệt (Special, ALL_*)
+        /// 2: Bộ, ngành (Ministry)
+        /// 3: Địa phương (Province / Danh mục tỉnh/thành)
+        /// 4: Đơn vị trực thuộc / Nội bộ (Internal / Child agencies)
+        /// 5: Khác (Other)
+        /// </summary>
+        public static int GetAgencyTypeSortOrder(Agency a)
+        {
+            if (a.ParentId.HasValue && a.ParentId.Value != Guid.Empty)
+                return 4;
+            if (a.Type == AgencyTypeEnum.Special || (!string.IsNullOrEmpty(a.Code) && a.Code.StartsWith("ALL_", StringComparison.OrdinalIgnoreCase)))
+                return 1;
+            if (a.Type == AgencyTypeEnum.Ministry)
+                return 2;
+            if (a.Type == AgencyTypeEnum.Province || ProvinceCatalog.IsFixed(a))
+                return 3;
+            if (a.Type == AgencyTypeEnum.Internal)
+                return 4;
+            return 5;
         }
 
         [HttpGet]
@@ -97,14 +121,16 @@ namespace Cdsqg.Api.Controllers
                 query = query.Where(a => matchedIds.Contains(a.Id));
             }
 
-            var list = await query
-                .OrderByDescending(a => a.Code == "ALL_AGENCIES" || a.Code == "ALL_MINISTRIES" || a.Code == "ALL_PROVINCES" || a.Code == "ALL_PROVINCES_UBND" || a.Code == "ALL_MINISTRIES_DIRECT")
-                .ThenBy(a => a.Name)
-                .ToListAsync();
+            var viComparer = StringComparer.Create(new CultureInfo("vi-VN"), false);
+            var list = await query.ToListAsync();
+            list = list
+                .OrderBy(GetAgencyTypeSortOrder)
+                .ThenBy(a => ProvinceCatalog.DisplayName(a), viComparer)
+                .ToList();
 
             if (excludeSpecial == true)
             {
-                list = list.Where(a => a.Code != "ALL_AGENCIES" && a.Code != "ALL_MINISTRIES" && a.Code != "ALL_PROVINCES" && a.Code != "ALL_PROVINCES_UBND" && a.Code != "ALL_MINISTRIES_DIRECT").ToList();
+                list = list.Where(a => a.Type != AgencyTypeEnum.Special && (string.IsNullOrEmpty(a.Code) || !a.Code.StartsWith("ALL_", StringComparison.OrdinalIgnoreCase) || a.ParentId.HasValue)).ToList();
             }
 
             if (restrictForUser == true && userAgencyId.HasValue && userAgencyId.Value != Guid.Empty)
@@ -230,9 +256,9 @@ namespace Cdsqg.Api.Controllers
             if (prioritizeContacts == true)
             {
                 list = list
-                    .OrderByDescending(a => a.Code == "ALL_AGENCIES" || a.Code == "ALL_MINISTRIES" || a.Code == "ALL_PROVINCES" || a.Code == "ALL_PROVINCES_UBND" || a.Code == "ALL_MINISTRIES_DIRECT")
+                    .OrderBy(GetAgencyTypeSortOrder)
                     .ThenByDescending(a => a.ContactPersons != null && a.ContactPersons.Any(c => !string.IsNullOrWhiteSpace(c.Name)))
-                    .ThenBy(a => ProvinceCatalog.DisplayName(a))
+                    .ThenBy(a => ProvinceCatalog.DisplayName(a), viComparer)
                     .ToList();
             }
 
@@ -524,22 +550,72 @@ namespace Cdsqg.Api.Controllers
                 return BadRequest(new { error = "Cơ quan / Đơn vị hệ thống cố định không thể xóa." });
             }
 
-            if (await _context.AgencyTaskExecutions.AnyAsync(e => e.AgencyId == id))
-                return BadRequest(new { error = "Cơ quan có phân giao hoặc lịch sử thực hiện; không thể xóa." });
-
-            int leadCount = await _context.GoalTaskItems.CountAsync(g => g.LeadAgencyId == id);
-            int urgeCount = await _context.TaskUrgeLogs.CountAsync(u => u.LeadAgencyId == id);
-            int childAgencyCount = await _context.Agencies.CountAsync(a => a.ParentId == id);
-            int totalUsage = leadCount + urgeCount + childAgencyCount;
-
-            if (totalUsage > 0)
+            var usages = await GetAgencyUsagesAsync(existing);
+            if (usages.Count > 0)
             {
-                return BadRequest(new { error = $"Không thể xóa cơ quan này vì đang được sử dụng hoặc có cơ quan trực thuộc liên quan." });
+                return Conflict(new
+                {
+                    error = "Không thể xóa cơ quan/đơn vị đã phát sinh dữ liệu: " + string.Join("; ", usages) +
+                            ". Nếu không còn sử dụng, hãy chuyển sang trạng thái ngừng hoạt động thay vì xóa.",
+                    usages
+                });
             }
 
             _context.Agencies.Remove(existing);
             await _context.SaveChangesAsync();
             return Ok(new { success = true });
+        }
+
+        /// <summary>
+        /// Liệt kê mọi dữ liệu đã phát sinh gắn với cơ quan/đơn vị. Danh sách rỗng mới được phép xóa.
+        /// Phải kiểm tra đủ vì nhiều liên kết không có khóa ngoại chặn (jsonb) hoặc bị SetNull/Cascade âm thầm khi xóa.
+        /// </summary>
+        private async Task<List<string>> GetAgencyUsagesAsync(Agency agency)
+        {
+            var id = agency.Id;
+            var idText = id.ToString();
+            var usages = new List<string>();
+            void Add(int count, string label) { if (count > 0) usages.Add($"{label} ({count})"); }
+
+            Add(await _context.Agencies.CountAsync(a => a.ParentId == id), "cơ quan/đơn vị trực thuộc");
+            Add(await _context.GoalTaskItems.CountAsync(g => g.LeadAgencyId == id), "mục tiêu/nhiệm vụ chủ trì");
+            Add(await _context.GoalTaskItems.CountAsync(g => g.AssignedAgencyId == id), "mục tiêu/nhiệm vụ đồng chủ trì");
+
+            var jsonRefs = await _context.Database.SqlQuery<int>($@"
+                SELECT count(*)::int AS ""Value"" FROM ""GoalTaskItems""
+                WHERE ""CoordinatingAgencyIds"" @> jsonb_build_array({idText}::text)
+                   OR ""SubAgencyIds"" @> jsonb_build_array({idText}::text)
+                   OR jsonb_exists(coalesce(""AgencyDeliverables"", '{{}}'::jsonb), {idText}::text)").SingleAsync();
+            Add(jsonRefs, "mục tiêu/nhiệm vụ phối hợp, đơn vị trực thuộc hoặc sản phẩm riêng");
+
+            Add(await _context.AgencyTaskExecutions.CountAsync(e => e.AgencyId == id || e.AssignedAgencyId == id), "phân giao/kết quả thực hiện");
+            Add(await _context.ProgressLogs.CountAsync(p => p.AgencyId == id), "báo cáo tiến độ");
+            Add(await _context.TaskUrgeLogs.CountAsync(u => u.LeadAgencyId == id), "văn bản đôn đốc");
+            Add(await _context.Users.CountAsync(u => u.AgencyId == id), "tài khoản người dùng");
+            Add(await _context.Notifications.CountAsync(n => n.AgencyId == id), "thông báo");
+            Add(await _context.DataImportLogs.CountAsync(l => l.AgencyId == id), "lịch sử nhập dữ liệu");
+            Add(await _context.LegalDocuments.CountAsync(d => d.IssuingAgencyId == id || d.DraftingAgencyId == id || d.CreatedByAgencyId == id), "văn bản pháp lý");
+            Add(await _context.AiDataSuggestions.CountAsync(s => s.TargetAgencyId == id), "dữ liệu AI đề xuất");
+            Add(await _context.AiAlertFeeds.CountAsync(f => f.DeletedAt == null && f.AgencyIdsJson.Contains(idText)), "nguồn cảnh báo AI");
+
+            if (HasPlanData(agency)) usages.Add("kế hoạch/kiến trúc số đã cập nhật hoặc tệp đính kèm");
+            return usages;
+        }
+
+        private static bool HasPlanData(Agency a)
+        {
+            static bool AnyFiles(List<AgencyPlanFile>? files) => files != null && files.Count > 0;
+            if (AnyFiles(a.PlanFiles)) return true;
+            var f = a.FiveYearPlan;
+            if (f != null && (f.IsIssued || f.HasReviewedPlan || f.IsUpdated1266 || f.IssueDate.HasValue || AnyFiles(f.Files) ||
+                              !string.IsNullOrWhiteSpace(f.ResponseDocument) || !string.IsNullOrWhiteSpace(f.DocumentNumber) ||
+                              !string.IsNullOrWhiteSpace(f.Notes))) return true;
+            if ((a.AnnualPlans ?? new List<AgencyAnnualPlan>()).Any(p => p != null && (p.IsIssued || p.IssueDate.HasValue || AnyFiles(p.Files) ||
+                                       !string.IsNullOrWhiteSpace(p.DocumentNumber) || !string.IsNullOrWhiteSpace(p.Notes)))) return true;
+            var d = a.DigitalArchitecture;
+            return d != null && (d.IsIssued || d.IssueDate.HasValue || AnyFiles(d.Files) ||
+                                 !string.IsNullOrWhiteSpace(d.DocumentNumber) || !string.IsNullOrWhiteSpace(d.Version) ||
+                                 !string.IsNullOrWhiteSpace(d.Notes));
         }
 
         [HttpPut("{id:guid}/plans-and-contacts")]

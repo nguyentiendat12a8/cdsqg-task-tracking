@@ -1,3 +1,4 @@
+import { getDocumentReportHeading } from '../services/documentContext.js';
 import { loadExcelWriter, loadExcelReader } from './excelRuntime.js';
 import { downloadProgressWorkbook } from './progressWorkbook.js';
 import { isProgressReportYearApplicable } from '../shared/progressReportCells.js';
@@ -326,10 +327,10 @@ export function buildGoalsWorksheet(goals, agencyName, dateStr, XLSX) {
   }
 
   // Section I: 2629
-  appendGoalsSection('I', 'QUYẾT ĐỊNH SỐ 2629/QĐ-TTg NGÀY 10/12/2024', goals2629, '2025 - 2027', '2028 - 2030');
+  appendGoalsSection('I', getDocumentReportHeading('2629'), goals2629, '2025 - 2027', '2028 - 2030');
 
   // Section II: 1266
-  appendGoalsSection('II', 'QUYẾT ĐỊNH SỐ 1266/QĐ-TTg NGÀY 24/10/2024', goals1266, '2026 - 2030', '2031 - 2045');
+  appendGoalsSection('II', getDocumentReportHeading('1266'), goals1266, '2026 - 2030', '2031 - 2045');
 
   const ws = XLSX.utils.aoa_to_sheet(rows);
   ws['!merges'] = merges;
@@ -441,24 +442,23 @@ export function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
 
   // Title (Row 0)
   rows.push(['BIỂU MẪU BÁO CÁO NHIỆM VỤ DO CƠ QUAN CHỦ TRÌ THEO DÕI']);
-  merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: 7 } });
+  merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } });
 
   // Subtitle (Row 1)
   rows.push([`Đơn vị báo cáo: ${agencyName} | Ngày xuất file: ${dateStr}`]);
-  merges.push({ s: { r: 1, c: 0 }, e: { r: 1, c: 7 } });
+  merges.push({ s: { r: 1, c: 0 }, e: { r: 1, c: 6 } });
 
   // Guide (Row 2)
   rows.push([
-    'HƯỚNG DẪN: Chọn Trạng thái thực hiện tại cột G (màu xanh nhạt); Ghi chú khó khăn vướng mắc tại cột H.'
+    'HƯỚNG DẪN: Chọn Trạng thái thực hiện tại cột F (màu xanh nhạt); Ghi chú khó khăn vướng mắc tại cột G.'
   ]);
-  merges.push({ s: { r: 2, c: 0 }, e: { r: 2, c: 7 } });
+  merges.push({ s: { r: 2, c: 0 }, e: { r: 2, c: 6 } });
 
   // Headers (Row 3)
   const headers = [
     'STT',
     'Mã NV',
     'Tên nhiệm vụ',
-    'Cơ quan phối hợp',
     'Hạn hoàn thành',
     'Sản phẩm bàn giao',
     'TRẠNG THÁI THỰC HIỆN',
@@ -475,9 +475,9 @@ export function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
   function appendTasksSection(sectionNumberRoman, docLabel, sectionTasks) {
     const secRowIdx = rows.length;
     sectionRows.push(secRowIdx);
-    const secRow = [sectionNumberRoman, docLabel, '', '', '', '', '', '', '', ''];
+    const secRow = [sectionNumberRoman, docLabel, '', '', '', '', '', '', ''];
     rows.push(secRow);
-    merges.push({ s: { r: secRowIdx, c: 1 }, e: { r: secRowIdx, c: 7 } });
+    merges.push({ s: { r: secRowIdx, c: 1 }, e: { r: secRowIdx, c: 6 } });
 
     sectionTasks.forEach((t, idx) => {
       const rIdx = rows.length;
@@ -485,7 +485,6 @@ export function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
         t.sequenceNumber || (idx + 1),
         t.code || '',
         t.title || '',
-        t.coordinatingAgencies || '',
         t.dueDate && t.dueDate !== '—' ? t.dueDate : '',
         t.deliverables || '',
         t.statusLabel || 'Chưa thực hiện',
@@ -495,13 +494,13 @@ export function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
       ];
       rows.push(row);
 
-      // Track cell for Excel data validation dropdown (Column G)
-      statusCells.push(`G${rIdx + 1}`);
+      // Track cell for Excel data validation dropdown (Column F)
+      statusCells.push(`F${rIdx + 1}`);
     });
   }
 
-  appendTasksSection('I', 'QUYẾT ĐỊNH SỐ 2629/QĐ-TTg NGÀY 10/12/2024', tasks2629);
-  appendTasksSection('II', 'QUYẾT ĐỊNH SỐ 1266/QĐ-TTg NGÀY 24/10/2024', tasks1266);
+  appendTasksSection('I', getDocumentReportHeading('2629'), tasks2629);
+  appendTasksSection('II', getDocumentReportHeading('1266'), tasks1266);
 
   const ws = XLSX.utils.aoa_to_sheet(rows);
   ws['!merges'] = merges;
@@ -510,13 +509,12 @@ export function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
     { wch: 6 },  // STT (A)
     { wch: 12 }, // Mã NV (B)
     { wch: 45 }, // Tên NV (C)
-    { wch: 20 }, // Phối hợp (D) - thu gọn nhẹ
-    { wch: 14 }, // Hạn (E)
-    { wch: 32 }, // Sản phẩm (F)
-    { wch: 26 }, // Trạng thái (G) - Editable
-    { wch: 40 }, // Ghi chú (H) - Editable
-    { wch: 36, hidden: true }, // ID NV (I)
-    { wch: 36, hidden: true }  // ID QĐ (J)
+    { wch: 14 }, // Hạn (D)
+    { wch: 32 }, // Sản phẩm (E)
+    { wch: 26 }, // Trạng thái (F) - Editable
+    { wch: 40 }, // Ghi chú (G) - Editable
+    { wch: 36, hidden: true }, // ID NV (H)
+    { wch: 36, hidden: true }  // ID QĐ (I)
   ];
 
   ws['!rows'] = [
@@ -526,42 +524,26 @@ export function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
     { hpt: 36 }  // Header
   ];
 
-  applyStyleToRange(ws, 0, 0, 0, 7, TITLE_STYLE, XLSX);
-  applyStyleToRange(ws, 1, 0, 1, 7, SUBTITLE_STYLE, XLSX);
-  applyStyleToRange(ws, 2, 0, 2, 7, GUIDE_STYLE, XLSX);
-
-  // Headers
-  applyStyleToRange(ws, 3, 0, 3, 4, HEADER_STYLE, XLSX);
-  applyStyleToRange(ws, 3, 6, 3, 6, SUBHEADER_INPUT_STYLE, XLSX);
-  applyStyleToRange(ws, 3, 7, 3, 7, HEADER_STYLE, XLSX);
-
-  applyStyleToRange(ws, 3, 5, 3, 5, HEADER_STYLE, XLSX);
-
-  // Section Rows
-  sectionRows.forEach(r => {
-    applyStyleToRange(ws, r, 0, r, 7, SECTION_STYLE, XLSX);
+  applyStyleToRange(ws, 0, 0, 0, 6, TITLE_STYLE, XLSX);
+  applyStyleToRange(ws, 1, 0, 1, 6, SUBTITLE_STYLE, XLSX);
+  applyStyleToRange(ws, 2, 0, 2, 6, GUIDE_STYLE, XLSX);
+  applyStyleToRange(ws, 3, 0, 3, 6, HEADER_STYLE, XLSX);
+  for (const r of sectionRows) {
+    applyStyleToRange(ws, r, 0, r, 6, SECTION_STYLE, XLSX);
     applyStyleToRange(ws, r, 0, r, 0, { ...SECTION_STYLE, alignment: { horizontal: 'center', vertical: 'center' } }, XLSX);
-  });
-
-  // Data rows
+  }
   for (let r = 4; r < rows.length; r++) {
     if (sectionRows.includes(r)) continue;
-    applyStyleToRange(ws, r, 0, r, 0, CELL_TEXT_CENTER, XLSX);
-    applyStyleToRange(ws, r, 1, r, 1, CELL_CODE, XLSX);
-    applyStyleToRange(ws, r, 2, r, 2, CELL_TEXT_LEFT, XLSX);
-    applyStyleToRange(ws, r, 3, r, 3, CELL_TEXT_LEFT, XLSX);
-    applyStyleToRange(ws, r, 4, r, 4, CELL_TEXT_CENTER, XLSX);
-    applyStyleToRange(ws, r, 6, r, 6, CELL_EDITABLE, XLSX); // Status
-    applyStyleToRange(ws, r, 5, r, 5, CELL_TEXT_LEFT, XLSX);
-    applyStyleToRange(ws, r, 7, r, 7, CELL_NOTES, XLSX);
+    for (const [c, style] of [[0,CELL_TEXT_CENTER],[1,CELL_CODE],[2,CELL_TEXT_LEFT],[3,CELL_TEXT_CENTER],[4,CELL_TEXT_LEFT],[5,CELL_EDITABLE],[6,CELL_NOTES]])
+      applyStyleToRange(ws,r,c,r,c,style,XLSX);
   }
 
   ws['!reportEditableCells'] = [];
   sectionRows.forEach(r => { ws['!rows'][r] = { hpt: 32 }; });
   for (let r = 4; r < rows.length; r++) {
     if (sectionRows.includes(r)) continue;
-    ws['!rows'][r] = { hpt: reportRowHeight(rows[r], [[2,45],[3,25],[5,30],[7,40]]) };
-    for (const c of [6,7]) {
+    ws['!rows'][r] = { hpt: reportRowHeight(rows[r], [[2,45],[4,30],[6,40]]) };
+    for (const c of [5,6]) {
       const ref = XLSX.utils.encode_cell({r,c});
       ws['!reportEditableCells'].push(ref);
       ws[ref].s = { ...ws[ref].s, fill: { fgColor: { rgb: 'EAF1FC' } } };
@@ -595,8 +577,9 @@ export async function exportUnifiedProgressReport({ reportData, agencyName, repo
   const { ws: tasksWs, statusCells } = buildTasksWorksheet(reportData.tasks || [], agencyName || reportData.agencyName || 'Cơ quan', dateStr, XLSX);
   XLSX.utils.book_append_sheet(wb, tasksWs, 'Nhiệm vụ');
 
-  const safeAgencyCode = (reportData.agencyCode || reportData.agencyName || 'Don_Vi').replace(/\s+/g, '_').slice(0, 20);
-  const fileName = `Bao_Cao_Tien_Do_${safeAgencyCode}_${dateFileStr}.xlsx`;
+  const safeAgencyName = (agencyName || reportData.agencyName || reportData.agencyCode || 'Don_Vi')
+    .normalize('NFC').replace(/[<>:"/\\|?*\x00-\x1F]/g, '_').trim().replace(/\s+/g, '_').replace(/[. ]+$/, '');
+  const fileName = `Bao_Cao_Tien_Do_${safeAgencyName}_${dateFileStr}.xlsx`;
 
   // Download with dropdown validations on sheet 2
   downloadProgressWorkbook(wb, [[], statusCells], fileName, XLSX);
@@ -663,6 +646,7 @@ export async function parseUnifiedProgressReportFile(file, { existingGoals = [],
         const row = rows[r];
         if (!row || !row[colMap.code]) continue;
         const rawCode = String(row[colMap.code]).trim();
+        if (/^(?:QUYẾT ĐỊNH|QUYET DINH)\b/iu.test(rawCode)) continue;
         if (!rawCode || rawCode.startsWith('I') || rawCode.startsWith('QĐ') || rawCode.toLowerCase().startsWith('mã')) continue;
 
         const rowCodes = rawCode.split(/[\r\n,\/]+/).map(c => c.trim()).filter(Boolean);
@@ -674,7 +658,10 @@ export async function parseUnifiedProgressReportFile(file, { existingGoals = [],
           if (rowCodes.some(rc => gCodes.includes(rc.toLowerCase()))) return true;
           return false;
         });
-        if (!matchedGoal) continue;
+        if (!matchedGoal) {
+          warnings.push(`Mục tiêu ${rawCode} không thuộc dữ liệu được phân giao cho đơn vị nhập đã chọn; không cập nhật dòng này.`);
+          continue;
+        }
 
         const notesRaw = row[colMap.notes] !== undefined && row[colMap.notes] !== null ? String(row[colMap.notes]).trim().replace(/^—$/, '') : '';
         for (const [year, col] of [[2025, colMap.act2025], [2026, colMap.est2026]]) {

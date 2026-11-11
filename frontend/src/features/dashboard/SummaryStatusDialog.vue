@@ -14,7 +14,7 @@
         <button type="button" aria-label="Đóng danh sách thống kê" class="ui-btn ui-btn-secondary shrink-0" @click="emit('close')">Đóng</button>
       </header>
       <div class="flex flex-wrap items-center gap-3">
-        <input v-model="search" class="ui-single-line border border-slate-200 rounded-lg px-3 w-full sm:w-96" aria-label="Tìm trong danh sách thống kê" placeholder="Tìm mã, tên, cơ quan..." />
+        <SearchInput v-model="search" placeholder="Tìm mã, tên, cơ quan..." aria-label="Tìm trong danh sách thống kê" wrapper-class="w-full sm:w-96" />
         <span v-if="!loading && !error" class="text-xs text-slate-600">{{ formatNumber(total) }} bản ghi</span>
       </div>
       <div v-if="error" role="alert" class="text-xs text-rose-700">{{ error }} <button class="underline" type="button" @click="load">Thử lại</button></div>
@@ -40,6 +40,7 @@
 </template>
 <script setup>
 import { computed, ref, watch, onUnmounted } from 'vue';
+import SearchInput from '../../components/SearchInput.vue';
 import LoadingSpinner from '../../components/LoadingSpinner.vue';
 import { fetchWithAuth } from '../../services/auth';
 import { getApiUrl } from '../../config/api';

@@ -36,6 +36,49 @@ public static class AgencyAssignments
         return result.ToList();
     }
 
+    /// <summary>
+    /// Cơ quan có báo cáo đại diện cho tiến độ chung của mục riêng (không phải nhiệm vụ chung):
+    /// cơ quan đồng chủ trì, nếu không có thì đơn vị trực thuộc đầu mối, cuối cùng là cơ quan chủ trì.
+    /// </summary>
+    public static Guid PrimaryAgencyId(GoalTaskItem item)
+    {
+        if (item.AssignedAgencyId.HasValue) return item.AssignedAgencyId.Value;
+        // Nhóm đơn vị (ví dụ "Tất cả cơ quan, đơn vị thuộc Bộ") không có dòng phân giao riêng nên không đại diện báo cáo.
+        var leadRows = item.AgencyExecutions.Where(e => e.IsLeadAssignment).Select(e => e.AgencyId).ToHashSet();
+        foreach (var id in item.SubAgencyIds)
+            if (id != Guid.Empty && (leadRows.Count == 0 || leadRows.Contains(id))) return id;
+        return item.LeadAgencyId;
+    }
+
+    /// <summary>
+    /// Ghi danh sách đơn vị trực thuộc (Cấp 3). Mỗi đơn vị phải tồn tại và có cơ quan cấp trên.
+    /// Giá trị cũ trong AssignedAgencyId mà là đơn vị trực thuộc được chuyển sang danh sách mới.
+    /// </summary>
+    public static async Task SetSubAgenciesAsync(AppDbContext db, GoalTaskItem item, IEnumerable<Guid> ids)
+    {
+        var list = ids.Where(id => id != Guid.Empty).Distinct().ToList();
+        var found = await db.Agencies.AsNoTracking().Where(a => list.Contains(a.Id)).ToListAsync();
+        if (found.Count != list.Count) throw new InvalidOperationException("Không tìm thấy đơn vị trực thuộc được chọn.");
+        if (found.Any(a => !a.ParentId.HasValue)) throw new InvalidOperationException("Đơn vị được chọn phải là đơn vị trực thuộc (Cấp 3).");
+        if (item.AssignedAgencyId is Guid legacy && await db.Agencies.AnyAsync(a => a.Id == legacy && a.ParentId != null))
+            item.AssignedAgencyId = null;
+        // Đơn vị cụ thể đứng trước nhóm đơn vị để đơn vị đầu mối luôn là đơn vị có thể báo cáo.
+        var groups = found.Where(ReportingAgencyGroups.IsGroup).Select(a => a.Id).ToHashSet();
+        item.SubAgencyIds = list.Where(id => !groups.Contains(id)).Concat(list.Where(groups.Contains)).ToList();
+    }
+
+    /// <summary>Tách giá trị AssignedAgencyId gửi từ form: đơn vị trực thuộc thì đưa vào danh sách đơn vị trực thuộc.</summary>
+    public static async Task<(Guid? CoLead, List<Guid> SubAgencies)> SplitAssignedAsync(AppDbContext db, Guid? assigned, IEnumerable<Guid>? subAgencyIds)
+    {
+        var subs = (subAgencyIds ?? Enumerable.Empty<Guid>()).ToList();
+        if (assigned is Guid id && id != Guid.Empty && await db.Agencies.AnyAsync(a => a.Id == id && a.ParentId != null))
+        {
+            if (!subs.Contains(id)) subs.Insert(0, id);
+            return (null, subs);
+        }
+        return (assigned == Guid.Empty ? null : assigned, subs);
+    }
+
     // Seed/import repair only: never rebuild an existing assignment snapshot.
     public static async Task<int> InitializeMissingAsync(AppDbContext db)
     {
@@ -69,6 +112,7 @@ public static class AgencyAssignments
             item.IsGeneralTask = agencies.FirstOrDefault(a => a.Id == item.LeadAgencyId) is { } lead && ReportingAgencyGroups.IsGroup(lead);
             Expand(item.LeadAgencyId, leadIds, leadGroups);
             if (item.AssignedAgencyId.HasValue) Expand(item.AssignedAgencyId.Value, leadIds, leadGroups);
+            foreach (var id in item.SubAgencyIds.Distinct()) Expand(id, leadIds, leadGroups);
         }
         if (refreshCoordination) foreach (var id in item.CoordinatingAgencyIds.Distinct()) Expand(id, coordinationIds, coordinationGroups);
         foreach (var id in leadIds.Union(coordinationIds))
