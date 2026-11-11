@@ -52,7 +52,7 @@ public class AgencyProgressReportTests
             DueDate = new DateTime(2027, 12, 31),
             Baselines = new List<TargetBaseline>
             {
-                new() { Year = 2027, TargetQuantity = 100 }
+                new() { Year = 2027, TargetQuantity = 100, ConfiguredTargetQuantity = 60 }
             },
             ProgressLogs = new List<ProgressLog>
             {
@@ -147,6 +147,7 @@ public class AgencyProgressReportTests
         var rGoal1 = report.Goals.Single(g => g.Code == "MT-08");
         Assert.Equal("2629/QĐ-TTg", rGoal1.DocumentNumber);
         Assert.Equal("100", rGoal1.TargetPhase1);
+        Assert.Equal("60", rGoal1.Plan2027);
         Assert.Equal(50, rGoal1.Actual2025);
         Assert.Contains(2027, rGoal1.ApplicableYears);
         Assert.DoesNotContain(2028, rGoal1.ApplicableYears);
@@ -154,12 +155,14 @@ public class AgencyProgressReportTests
 
         var rGoal2 = report.Goals.Single(g => g.Code == "MT-16");
         Assert.Equal("100", rGoal2.TargetPhase2);
+        Assert.Equal("", rGoal2.Plan2030);
         Assert.DoesNotContain(2025, rGoal2.ApplicableYears);
         Assert.Equal("—", rGoal2.Plan2027);
 
         var rGoal3 = report.Goals.Single(g => g.Code == "MT-04");
         Assert.Equal("1266/QĐ-TTg", rGoal3.DocumentNumber);
         Assert.Contains(2030, rGoal3.ApplicableYears);
+        Assert.Equal("", rGoal3.Plan2030);
 
         // Check Tasks
         Assert.Single(report.Tasks);
@@ -374,8 +377,8 @@ public class AgencyProgressReportTests
         Assert.Equal("50", mergedGoal.TargetPhase1);
         Assert.Equal("100", mergedGoal.TargetPhase2);
         Assert.Equal(30, mergedGoal.Actual2025);
-        Assert.Equal("50", mergedGoal.Plan2027);
-        Assert.Equal("100", mergedGoal.Plan2030);
+        Assert.Equal("", mergedGoal.Plan2027);
+        Assert.Equal("", mergedGoal.Plan2030);
         Assert.Contains(2027, mergedGoal.ApplicableYears);
         Assert.Contains(2030, mergedGoal.ApplicableYears);
     }

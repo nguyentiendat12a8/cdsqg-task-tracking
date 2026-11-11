@@ -16,6 +16,8 @@ Chọn bản approved mới nhất của đúng cơ quan/năm; màn hình tổng
 
 Baseline: custom đúng YYYY → TargetBaseline đúng năm → lũy kế mặc định từ ResultTarget (nếu có) →100 chỉ cho đơn vị phần trăm/legacy không đơn vị theo rule hiện tại. Đơn vị số lượng thiếu baseline: phần trăm null, không bịa 100. Custom phải dương, invariant decimal, năm 1900–9999. Một baseline dùng cho cả tỷ lệ và hoàn thành. Null hiển thị “—”, không đồng nghĩa 0.
 
+Bảng báo cáo tiến độ theo cơ quan: cột “Mục tiêu theo từng năm” và Excel báo cáo lấy riêng `ConfiguredTargetQuantity` của bản kế hoạch thiết lập. Năm áp dụng nhưng chưa có bản thiết lập để trống; năm không áp dụng hiển thị “—”. Cột “Kết quả theo QĐ” vẫn lấy chỉ tiêu của quyết định, không thay bằng kế hoạch thiết lập. Quy tắc fallback baseline của ProgressCalculator dùng để tính tiến độ không tự điền vào cột kế hoạch năm.
+
 Định lượng: actual/target×100, decimal, làm tròn 2 số; hoàn thành so giá trị chưa làm tròn. Nếu làm tròn thành 100 nhưng chưa đạt target, hiển thị 99.99. Không cap số thực tế; thanh progress có thể cap độ rộng 100% nhưng giữ tỷ lệ thật trong text. Định tính: sản phẩm NotStarted 0, Drafting 25, Reviewing 60, Submitted 85, Completed 100; lấy trung bình, tất cả sản phẩm phải complete. Không sản phẩm mới dùng trạng thái báo cáo 0/25/60/100.
 
 Mục chung: đúng tập cơ quan đủ điều kiện, cùng năm, trung bình tỷ lệ clamped 0–100; chưa báo cáo góp 0. Hoàn thành chỉ khi tất cả cơ quan hoàn thành; không cộng số giữa cơ quan. Thời hạn/cảnh báo theo ProgressCalculator; không suy ra lại trong FE. Thời điểm hoàn thành hiện dùng LogDate, không phải ApprovedAt. Đây là quy tắc đang có; thay đổi cần nghiệp vụ xác nhận và test.
