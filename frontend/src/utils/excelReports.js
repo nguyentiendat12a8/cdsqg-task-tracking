@@ -4,8 +4,6 @@ import { styleWorksheet } from './worksheetStyle.js';
 import { formatDateRange, formatMeasuredValue } from '../shared/formatters.js';
 import { reportStatusLabel, reportStatusOptions } from '../shared/reportStatuses.js';
 import { downloadProgressWorkbook } from './progressWorkbook.js';
-import { GOAL_GUIDANCE_2629 } from '../config/goalGuidance2629.js';
-import { GOAL_GUIDANCE_1266 } from '../config/goalGuidance1266.js';
 import { isAgencySumGoal } from '../shared/agencyPresentation.js';
 import {
   GOAL_PLAN_SHEET_NAME, planYearHeader, isPlanEligibleGoal, leadsGoal, planYears, isPlanYearInRange, configuredPlanValue
@@ -279,8 +277,7 @@ function createGoalReportingWorksheet({
   sheetTitle = 'BÁO CÁO TIẾN ĐỘ THỰC HIỆN CÁC MỤC TIÊU CHIẾN LƯỢC',
   agencyName = 'Bộ, Ngành, Địa phương',
   dateStr = '',
-  guideText = GOAL_REPORT_GUIDE,
-  guidanceMap = GOAL_GUIDANCE_2629
+  guideText = GOAL_REPORT_GUIDE
 }) {
   const headers = [
     'STT',
@@ -302,9 +299,8 @@ function createGoalReportingWorksheet({
   ];
 
   items.forEach((item, idx) => {
-    const guidance = guidanceMap[item.code] || {};
-    const unit = guidance.unit || item.unitName || item.unit?.name || '%';
-    const leadAgency = guidance.leadAgency || item.leadAgencyName || item.leadAgency?.name || '—';
+    const unit = item.unitName || item.unit?.name || '%';
+    const leadAgency = item.leadAgencyName || item.leadAgency?.name || '—';
 
     const qualitative = ['Qualitative', '2', 2].includes(item.evaluationType);
     let currentVal = 'Chưa cập nhật';
@@ -330,7 +326,7 @@ function createGoalReportingWorksheet({
   const numCols = headers.length;
   ws['!cols'] = [
     { wch: 6 },  // STT
-    { wch: 10 }, // Mã MT
+    { wch: 14 }, // Mã MT
     { wch: 52 }, // Tên mục tiêu / Chỉ tiêu
     { wch: 26 }, // Cơ quan chủ trì
     { wch: 14 }, // Đơn vị tính
@@ -359,8 +355,7 @@ function createGoalPlanWorksheet({
   sheetTitle = 'KẾ HOẠCH MỤC TIÊU DO CƠ QUAN CHỦ TRÌ',
   agencyName = 'Bộ, Ngành, Địa phương',
   dateStr = '',
-  showLeadAgency = false,
-  guidanceMap = GOAL_GUIDANCE_2629
+  showLeadAgency = false
 }) {
   const goals = items.filter(isPlanEligibleGoal);
   const years = planYears(goals.length ? goals : items);
@@ -385,13 +380,12 @@ function createGoalPlanWorksheet({
   ];
 
   goals.forEach((item, idx) => {
-    const guidance = guidanceMap[item.code] || {};
     rows.push([
       idx + 1,
       item.code || '',
       item.title || '',
-      ...(showLeadAgency ? [guidance.leadAgency || item.leadAgencyName || item.leadAgency?.name || '—'] : []),
-      guidance.unit || item.unitName || item.unit?.name || '%',
+      ...(showLeadAgency ? [item.leadAgencyName || item.leadAgency?.name || '—'] : []),
+      item.unitName || item.unit?.name || '%',
       ...years.map(year => isPlanYearInRange(item, year, years) ? (configuredPlanValue(item, year) ?? '') : '—')
     ]);
   });
@@ -401,7 +395,7 @@ function createGoalPlanWorksheet({
   const numCols = headers.length;
   ws['!cols'] = [
     { wch: 6 },
-    { wch: 10 },
+    { wch: 14 },
     { wch: 52 },
     ...(showLeadAgency ? [{ wch: 26 }] : []),
     { wch: 14 },
@@ -758,8 +752,7 @@ export function exportProgressReportTemplate({
     String(documentNumber || '').includes('2629') ||
     String(documentNumber || '').includes('1266') ||
     String(documentTitle || '').includes('2629') ||
-    String(documentTitle || '').includes('1266') ||
-    items.some(i => GOAL_GUIDANCE_2629[i.code] || GOAL_GUIDANCE_1266[i.code])
+    String(documentTitle || '').includes('1266')
   );
 
   if (isGoal && !isSpecializedGoalReport) {
@@ -807,8 +800,7 @@ export function exportProgressReportTemplate({
       sheetTitle: `KẾ HOẠCH MỤC TIÊU DO CƠ QUAN CHỦ TRÌ${docSuffix}`,
       agencyName,
       dateStr,
-      showLeadAgency: !planAgency,
-      guidanceMap: {}
+      showLeadAgency: !planAgency
     });
     XLSX.utils.book_append_sheet(wb, wsPlan, GOAL_PLAN_SHEET_NAME);
     downloadProgressWorkbook(wb, [statusCells, []], `${fileName}_${dateFileStr}.xlsx`, XLSX);
@@ -823,9 +815,7 @@ export function exportProgressReportTemplate({
   const statusCellsBySheet = [];
   const is1266 = String(documentCode || '').includes('1266') ||
                  String(documentNumber || '').includes('1266') ||
-                 String(documentTitle || '').includes('1266') ||
-                 items.some(i => i.code && GOAL_GUIDANCE_1266[i.code] && !GOAL_GUIDANCE_2629[i.code]);
-  const activeGuidanceMap = is1266 ? GOAL_GUIDANCE_1266 : GOAL_GUIDANCE_2629;
+                 String(documentTitle || '').includes('1266');
   const docCode = is1266 ? '1266' : (documentCode || (documentNumber ? documentNumber.replace(/\D/g, '') : '2629'));
   const typeText = documentShortTitle ? ` ${documentShortTitle.toUpperCase()}` : '';
   const docSuffix = documentTitle
@@ -842,21 +832,14 @@ export function exportProgressReportTemplate({
       sheetTitle: planTitle,
       agencyName: agencyLabel,
       dateStr,
-      showLeadAgency,
-      guidanceMap: activeGuidanceMap
+      showLeadAgency
     });
     XLSX.utils.book_append_sheet(wb, wsPlan, GOAL_PLAN_SHEET_NAME);
     statusCellsBySheet.push([]);
   };
 
-  // Helper to filter goals that localities measure & report
-  const filterGoalsForLocality = (goalList) => {
-    return goalList.filter(item => {
-      const g = activeGuidanceMap[item.code];
-      if (g) return g.isLocalReporting !== false;
-      return true;
-    });
-  };
+  // Địa phương báo cáo toàn bộ mục tiêu của văn bản.
+  const filterGoalsForLocality = (goalList) => goalList;
 
   // 1. SPECIFIC SINGLE AGENCY REPORT (When filtered to 1 agency, e.g. Bộ Công an)
   if (effectiveAgency && templateMode === 'auto') {
@@ -878,8 +861,7 @@ export function exportProgressReportTemplate({
       items: filteredItems,
       sheetTitle,
       agencyName: `${effectiveAgency.name} (${agencyRoleTag})`,
-      dateStr,
-      guidanceMap: activeGuidanceMap
+      dateStr
     });
 
     const sheetName = `Báo Cáo - ${(effectiveAgency.code || effectiveAgency.name).slice(0, 20)}`;
@@ -904,8 +886,7 @@ export function exportProgressReportTemplate({
       items,
       sheetTitle,
       agencyName: 'Các Bộ, Cơ quan ngang Bộ, Cơ quan thuộc Chính phủ chủ trì mục tiêu',
-      dateStr,
-      guidanceMap: activeGuidanceMap
+      dateStr
     });
 
     XLSX.utils.book_append_sheet(wb, wsReport, 'Bộ ngành báo cáo');
@@ -927,8 +908,7 @@ export function exportProgressReportTemplate({
       items: localityItems,
       sheetTitle,
       agencyName: 'Ủy ban nhân dân các Tỉnh, Thành phố trực thuộc Trung ương',
-      dateStr,
-      guidanceMap: activeGuidanceMap
+      dateStr
     });
 
     XLSX.utils.book_append_sheet(wb, wsReport, 'Địa phương báo cáo');
@@ -949,8 +929,7 @@ export function exportProgressReportTemplate({
     items,
     sheetTitle: ministryTitle,
     agencyName: 'Các Bộ, cơ quan chủ trì theo dõi mục tiêu toàn quốc',
-    dateStr,
-    guidanceMap: activeGuidanceMap
+    dateStr
   });
   XLSX.utils.book_append_sheet(wb, wsMinistry, 'Bộ ngành báo cáo');
   statusCellsBySheet.push([]);
@@ -962,8 +941,7 @@ export function exportProgressReportTemplate({
     items: localityItems,
     sheetTitle: localityTitle,
     agencyName: 'Ủy ban nhân dân các Tỉnh, Thành phố trực thuộc Trung ương',
-    dateStr,
-    guidanceMap: activeGuidanceMap
+    dateStr
   });
   XLSX.utils.book_append_sheet(wb, wsLocality, 'Địa phương báo cáo');
   statusCellsBySheet.push([]);

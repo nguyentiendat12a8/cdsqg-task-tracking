@@ -12,6 +12,8 @@ public sealed record AiMetric(string Key, string Name, string Unit, string Defin
 
 public sealed record AiMetricScope(Guid? AgencyId, string Name, string[] Aliases);
 
+// Mã mục tiêu trong danh mục chỉ số (MT-12, MT-25...) là số thứ tự gốc theo QĐ 1266 (GoalTaskItem.OriginalCode),
+// không phải mã hiển thị theo cơ quan chủ trì; khóa nội bộ này không đổi khi đánh lại mã.
 public static class AiMetricCatalog
 
 {
@@ -108,13 +110,13 @@ public static class AiMetricCatalog
 
 
 
-        var kwGoal = await db.AiGoalKeywords.AsNoTracking().FirstOrDefaultAsync(k => k.DocumentId == goal.DocumentId && k.GoalCode == goal.Code, ct);
+        var kwGoal = await db.AiGoalKeywords.AsNoTracking().FirstOrDefaultAsync(k => k.DocumentId == goal.DocumentId && k.GoalCode == goal.OriginalCode, ct);
 
 
 
         var isRank = (kwGoal != null && kwGoal.ExpectedUnit.Equals("rank", StringComparison.OrdinalIgnoreCase))
 
-            || (goal.DocumentId == Guid.Parse("12660000-0000-0000-0000-000000001266") && goal.Code is ("MT-12" or "MT-25"))
+            || (goal.DocumentId == Guid.Parse("12660000-0000-0000-0000-000000001266") && goal.OriginalCode is ("MT-12" or "MT-25"))
 
             || goal.Unit?.Code.Equals("RANK", StringComparison.OrdinalIgnoreCase) == true
 
@@ -148,7 +150,7 @@ public static class AiMetricCatalog
 
             prompt,
 
-            [goal.Code],
+            [goal.OriginalCode],
 
             kwGoal?.KeywordsVi ?? goal.Title,
 

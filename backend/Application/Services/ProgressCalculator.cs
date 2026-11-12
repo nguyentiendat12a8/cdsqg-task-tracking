@@ -12,7 +12,7 @@ public static class ProgressCalculator
     public static bool IsLowerBetter(GoalTaskItem item) => item.Unit?.Code.Equals("RANK", StringComparison.OrdinalIgnoreCase)==true
         || item.Unit?.Name.Trim().ToLowerInvariant() is "hạng" or "thứ hạng" or "rank"
         // Legacy EGDI goals may use the numeric SL dictionary while storing actual ranks.
-        || item.ItemType==ItemTypeEnum.Goal && item.Code is ("MT-12" or "MT-25")
+        || item.ItemType==ItemTypeEnum.Goal && item.OriginalCode is ("MT-12" or "MT-25")
            && item.Unit?.Code.Equals("SL",StringComparison.OrdinalIgnoreCase)==true
            && item.Title.Contains("chính phủ",StringComparison.OrdinalIgnoreCase)
            && item.Title.Contains("Liên hợp quốc",StringComparison.OrdinalIgnoreCase);

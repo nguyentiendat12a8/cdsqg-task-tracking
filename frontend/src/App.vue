@@ -220,7 +220,7 @@ async function handleOpenNotificationDetail(event) {
   const targetId = guidMatch ? guidMatch[1] : null;
 
   const titleAndMsg = notifTitle + ' ' + notifMsg;
-  const codeMatch = titleAndMsg.match(/(NV-?\d+|MT-?\d+|SUB-?\d+)/i);
+  const codeMatch = titleAndMsg.match(/((?:NV|MT)-[A-ZĐ0-9]+-\d+|NV-?\d+|MT-?\d+|SUB-?\d+)/i);
   const targetCode = codeMatch ? codeMatch[1].toUpperCase() : null;
 
   const tabParamMatch = linkUrl.match(/[?&](?:tab|initialTab)=([^&]+)/i);

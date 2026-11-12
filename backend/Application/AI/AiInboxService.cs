@@ -160,7 +160,7 @@ public sealed class AiInboxService(AppDbContext db,IWebHostEnvironment environme
                 var scopeDocument=AiDocumentScope.AllDocument(key);
                 var allGoalKeys=await db.GoalTaskItems.AsNoTracking()
                     .Where(g=>g.ItemType==ItemTypeEnum.Goal && g.EvaluationType==EvaluationTypeEnum.Quantitative && g.DocumentId==scopeDocument)
-                    .OrderBy(g=>g.Code)
+                    .OrderBy(g=>g.OriginalCode).ThenBy(g=>g.Code)
                     .Select(g=>"GOAL_"+g.Id)
                     .ToListAsync(ct);
                 metrics.AddRange(allGoalKeys);

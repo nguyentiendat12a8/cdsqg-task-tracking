@@ -138,7 +138,7 @@
           <thead>
             <tr class="bg-slate-100 text-slate-800 font-bold text-center border-b border-slate-200">
               <th rowspan="2" class="p-2.5 border-r border-slate-200 w-12 font-bold text-slate-700">STT</th>
-              <th rowspan="2" class="p-2.5 border-r border-slate-200 w-20 font-bold text-slate-700">Mã MT</th>
+              <th rowspan="2" class="p-2.5 border-r border-slate-200 w-32 min-w-32 max-w-32 whitespace-nowrap font-bold text-slate-700">Mã MT</th>
               <th rowspan="2" class="p-2.5 border-r border-slate-200 min-w-[280px] text-left font-bold text-slate-700">Tên mục tiêu / Chỉ tiêu</th>
               <th colspan="2" class="p-2 border-r border-slate-200 font-bold text-slate-700">Kết quả theo QĐ</th>
               <th colspan="2" class="p-2 border-r border-slate-200 bg-amber-50/70 text-amber-900 font-bold">Kết quả thực hiện</th>
@@ -169,40 +169,48 @@
                 <td class="p-2.5 text-center whitespace-nowrap" aria-label="Giai đoạn 2: 2028 - 2030">2028 - 2030</td>
                 <td colspan="7" class="p-2.5"></td>
               </tr>
-              <tr
-                v-for="(g, idx) in goals2629"
-                :key="g.id"
-                class="hover:bg-slate-50/80 transition font-normal"
-              >
-                <td class="p-2.5 text-center font-medium text-slate-500 border-r border-slate-200">{{ g.sequenceNumber || (idx + 1) }}</td>
-                <td class="p-2.5 text-center border-r border-slate-200">
-                  <div v-for="c in String(g.code).split('\n')" :key="c" class="font-bold text-blue-900 leading-tight">
-                    {{ c }}
-                  </div>
-                </td>
-                <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">{{ g.title }} <span v-if="g.isCoordinatingAssignment" class="ml-1 inline-flex rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold text-amber-800">Phối hợp</span></td>
-                <td class="p-2.5 text-center border-r border-slate-200 bg-slate-50 font-semibold text-slate-700" aria-label="Kết quả theo quyết định, dữ liệu cố định">{{ formatTarget(g.targetPhase1) }}</td>
-                <td class="p-2.5 text-center border-r border-slate-200 bg-slate-50 font-semibold text-slate-700" aria-label="Kết quả theo quyết định, dữ liệu cố định">{{ formatTarget(g.targetPhase2) }}</td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2025)" :data-report-year="2025" :aria-label="reportYearCellLabel(g, 2025)">
-                  <span v-if="isProgressReportYearApplicable(g, 2025)">{{ formatCellVal(progressReportYearValue(g, 2025), g.unitName) }}</span>
-                </td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2026)" :data-report-year="2026" :aria-label="reportYearCellLabel(g, 2026)">
-                  <span v-if="isProgressReportYearApplicable(g, 2026)">{{ formatCellVal(progressReportYearValue(g, 2026), g.unitName) }}</span>
-                </td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2027)" :data-report-year="2027" :aria-label="reportYearCellLabel(g, 2027)">
-                  <span v-if="isProgressReportYearApplicable(g, 2027)">{{ formatCellVal(progressReportYearValue(g, 2027), g.unitName) }}</span>
-                </td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2028)" :data-report-year="2028" :aria-label="reportYearCellLabel(g, 2028)">
-                  <span v-if="isProgressReportYearApplicable(g, 2028)">{{ formatCellVal(progressReportYearValue(g, 2028), g.unitName) }}</span>
-                </td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2029)" :data-report-year="2029" :aria-label="reportYearCellLabel(g, 2029)">
-                  <span v-if="isProgressReportYearApplicable(g, 2029)">{{ formatCellVal(progressReportYearValue(g, 2029), g.unitName) }}</span>
-                </td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2030)" :data-report-year="2030" :aria-label="reportYearCellLabel(g, 2030)">
-                  <span v-if="isProgressReportYearApplicable(g, 2030)">{{ formatCellVal(progressReportYearValue(g, 2030), g.unitName) }}</span>
-                </td>
-                <td class="p-2.5 text-slate-600 text-xs leading-relaxed">{{ g.notes || '' }}</td>
-              </tr>
+              <template v-for="(g, idx) in goals2629" :key="g.id">
+                <tr v-if="isGroupStart(goals2629, idx)" class="bg-slate-100 border-b border-slate-200">
+                  <td :colspan="12" class="p-2 px-3 font-bold text-slate-800">{{ groupLabel(g) }}</td>
+                </tr>
+                <tr
+                  class="hover:bg-slate-50/80 transition font-normal"
+                >
+                  <td class="p-2.5 text-center font-medium text-slate-500 border-r border-slate-200">{{ g.sequenceNumber || (idx + 1) }}</td>
+                  <td class="p-2.5 text-center border-r border-slate-200 w-32 min-w-32 max-w-32 whitespace-nowrap">
+                    <div v-for="c in String(g.code).split('\n')" :key="c" class="font-bold text-blue-900 leading-tight">
+                      {{ c }}
+                    </div>
+                  </td>
+                  <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">
+                    <div class="flex items-start gap-1.5">
+                      <span class="line-clamp-3" v-tip="g.title">{{ g.title }}</span>
+                      <span v-if="g.isCoordinatingAssignment" class="shrink-0 inline-flex rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold text-amber-800">Phối hợp</span>
+                    </div>
+                  </td>
+                  <td class="p-2.5 text-center border-r border-slate-200 bg-slate-50 font-semibold text-slate-700" aria-label="Kết quả theo quyết định, dữ liệu cố định">{{ formatTarget(g.targetPhase1) }}</td>
+                  <td class="p-2.5 text-center border-r border-slate-200 bg-slate-50 font-semibold text-slate-700" aria-label="Kết quả theo quyết định, dữ liệu cố định">{{ formatTarget(g.targetPhase2) }}</td>
+                  <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2025)" :data-report-year="2025" :aria-label="reportYearCellLabel(g, 2025)">
+                    <span v-if="isProgressReportYearApplicable(g, 2025)">{{ formatCellVal(progressReportYearValue(g, 2025), g.unitName) }}</span>
+                  </td>
+                  <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2026)" :data-report-year="2026" :aria-label="reportYearCellLabel(g, 2026)">
+                    <span v-if="isProgressReportYearApplicable(g, 2026)">{{ formatCellVal(progressReportYearValue(g, 2026), g.unitName) }}</span>
+                  </td>
+                  <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2027)" :data-report-year="2027" :aria-label="reportYearCellLabel(g, 2027)">
+                    <span v-if="isProgressReportYearApplicable(g, 2027)">{{ formatCellVal(progressReportYearValue(g, 2027), g.unitName) }}</span>
+                  </td>
+                  <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2028)" :data-report-year="2028" :aria-label="reportYearCellLabel(g, 2028)">
+                    <span v-if="isProgressReportYearApplicable(g, 2028)">{{ formatCellVal(progressReportYearValue(g, 2028), g.unitName) }}</span>
+                  </td>
+                  <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2029)" :data-report-year="2029" :aria-label="reportYearCellLabel(g, 2029)">
+                    <span v-if="isProgressReportYearApplicable(g, 2029)">{{ formatCellVal(progressReportYearValue(g, 2029), g.unitName) }}</span>
+                  </td>
+                  <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2030)" :data-report-year="2030" :aria-label="reportYearCellLabel(g, 2030)">
+                    <span v-if="isProgressReportYearApplicable(g, 2030)">{{ formatCellVal(progressReportYearValue(g, 2030), g.unitName) }}</span>
+                  </td>
+                  <td class="p-2.5 text-slate-600 text-xs leading-relaxed">{{ g.notes || '' }}</td>
+                </tr>
+              </template>
             </template>
 
             <!-- SECTION II: 1266 -->
@@ -213,40 +221,48 @@
                 <td class="p-2.5 text-center whitespace-nowrap" aria-label="Giai đoạn 2: 2031 - 2045">2031 - 2045</td>
                 <td colspan="7" class="p-2.5"></td>
               </tr>
-              <tr
-                v-for="(g, idx) in goals1266"
-                :key="g.id"
-                class="hover:bg-slate-50/80 transition font-normal"
-              >
-                <td class="p-2.5 text-center font-medium text-slate-500 border-r border-slate-200">{{ g.sequenceNumber || (idx + 1) }}</td>
-                <td class="p-2.5 text-center border-r border-slate-200">
-                  <div v-for="c in String(g.code).split('\n')" :key="c" class="font-bold text-blue-900 leading-tight">
-                    {{ c }}
-                  </div>
-                </td>
-                <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">{{ g.title }} <span v-if="g.isCoordinatingAssignment" class="ml-1 inline-flex rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold text-amber-800">Phối hợp</span></td>
-                <td class="p-2.5 text-center border-r border-slate-200 bg-slate-50 font-semibold text-slate-700" aria-label="Kết quả theo quyết định, dữ liệu cố định">{{ formatTarget(g.targetPhase1) }}</td>
-                <td class="p-2.5 text-center border-r border-slate-200 bg-slate-50 font-semibold text-slate-700" aria-label="Kết quả theo quyết định, dữ liệu cố định">{{ formatTarget(g.targetPhase2) }}</td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2025)" :data-report-year="2025" :aria-label="reportYearCellLabel(g, 2025)">
-                  <span v-if="isProgressReportYearApplicable(g, 2025)">{{ formatCellVal(progressReportYearValue(g, 2025), g.unitName) }}</span>
-                </td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2026)" :data-report-year="2026" :aria-label="reportYearCellLabel(g, 2026)">
-                  <span v-if="isProgressReportYearApplicable(g, 2026)">{{ formatCellVal(progressReportYearValue(g, 2026), g.unitName) }}</span>
-                </td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2027)" :data-report-year="2027" :aria-label="reportYearCellLabel(g, 2027)">
-                  <span v-if="isProgressReportYearApplicable(g, 2027)">{{ formatCellVal(progressReportYearValue(g, 2027), g.unitName) }}</span>
-                </td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2028)" :data-report-year="2028" :aria-label="reportYearCellLabel(g, 2028)">
-                  <span v-if="isProgressReportYearApplicable(g, 2028)">{{ formatCellVal(progressReportYearValue(g, 2028), g.unitName) }}</span>
-                </td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2029)" :data-report-year="2029" :aria-label="reportYearCellLabel(g, 2029)">
-                  <span v-if="isProgressReportYearApplicable(g, 2029)">{{ formatCellVal(progressReportYearValue(g, 2029), g.unitName) }}</span>
-                </td>
-                <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2030)" :data-report-year="2030" :aria-label="reportYearCellLabel(g, 2030)">
-                  <span v-if="isProgressReportYearApplicable(g, 2030)">{{ formatCellVal(progressReportYearValue(g, 2030), g.unitName) }}</span>
-                </td>
-                <td class="p-2.5 text-slate-600 text-xs leading-relaxed">{{ g.notes || '' }}</td>
-              </tr>
+              <template v-for="(g, idx) in goals1266" :key="g.id">
+                <tr v-if="isGroupStart(goals1266, idx)" class="bg-slate-100 border-b border-slate-200">
+                  <td :colspan="12" class="p-2 px-3 font-bold text-slate-800">{{ groupLabel(g) }}</td>
+                </tr>
+                <tr
+                  class="hover:bg-slate-50/80 transition font-normal"
+                >
+                  <td class="p-2.5 text-center font-medium text-slate-500 border-r border-slate-200">{{ g.sequenceNumber || (idx + 1) }}</td>
+                  <td class="p-2.5 text-center border-r border-slate-200 w-32 min-w-32 max-w-32 whitespace-nowrap">
+                    <div v-for="c in String(g.code).split('\n')" :key="c" class="font-bold text-blue-900 leading-tight">
+                      {{ c }}
+                    </div>
+                  </td>
+                  <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">
+                    <div class="flex items-start gap-1.5">
+                      <span class="line-clamp-3" v-tip="g.title">{{ g.title }}</span>
+                      <span v-if="g.isCoordinatingAssignment" class="shrink-0 inline-flex rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold text-amber-800">Phối hợp</span>
+                    </div>
+                  </td>
+                  <td class="p-2.5 text-center border-r border-slate-200 bg-slate-50 font-semibold text-slate-700" aria-label="Kết quả theo quyết định, dữ liệu cố định">{{ formatTarget(g.targetPhase1) }}</td>
+                  <td class="p-2.5 text-center border-r border-slate-200 bg-slate-50 font-semibold text-slate-700" aria-label="Kết quả theo quyết định, dữ liệu cố định">{{ formatTarget(g.targetPhase2) }}</td>
+                  <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2025)" :data-report-year="2025" :aria-label="reportYearCellLabel(g, 2025)">
+                    <span v-if="isProgressReportYearApplicable(g, 2025)">{{ formatCellVal(progressReportYearValue(g, 2025), g.unitName) }}</span>
+                  </td>
+                  <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2026)" :data-report-year="2026" :aria-label="reportYearCellLabel(g, 2026)">
+                    <span v-if="isProgressReportYearApplicable(g, 2026)">{{ formatCellVal(progressReportYearValue(g, 2026), g.unitName) }}</span>
+                  </td>
+                  <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2027)" :data-report-year="2027" :aria-label="reportYearCellLabel(g, 2027)">
+                    <span v-if="isProgressReportYearApplicable(g, 2027)">{{ formatCellVal(progressReportYearValue(g, 2027), g.unitName) }}</span>
+                  </td>
+                  <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2028)" :data-report-year="2028" :aria-label="reportYearCellLabel(g, 2028)">
+                    <span v-if="isProgressReportYearApplicable(g, 2028)">{{ formatCellVal(progressReportYearValue(g, 2028), g.unitName) }}</span>
+                  </td>
+                  <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2029)" :data-report-year="2029" :aria-label="reportYearCellLabel(g, 2029)">
+                    <span v-if="isProgressReportYearApplicable(g, 2029)">{{ formatCellVal(progressReportYearValue(g, 2029), g.unitName) }}</span>
+                  </td>
+                  <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2030)" :data-report-year="2030" :aria-label="reportYearCellLabel(g, 2030)">
+                    <span v-if="isProgressReportYearApplicable(g, 2030)">{{ formatCellVal(progressReportYearValue(g, 2030), g.unitName) }}</span>
+                  </td>
+                  <td class="p-2.5 text-slate-600 text-xs leading-relaxed">{{ g.notes || '' }}</td>
+                </tr>
+              </template>
             </template>
           </tbody>
         </table>
@@ -273,7 +289,7 @@
           <thead>
             <tr class="bg-slate-100 text-slate-800 font-bold text-center border-b border-slate-200">
               <th class="p-2.5 border-r border-slate-200 w-12 font-bold text-slate-700">STT</th>
-              <th class="p-2.5 border-r border-slate-200 w-20 font-bold text-slate-700">Mã NV</th>
+              <th class="p-2.5 border-r border-slate-200 w-32 min-w-32 max-w-32 whitespace-nowrap font-bold text-slate-700">Mã NV</th>
               <th class="p-2.5 border-r border-slate-200 min-w-[280px] text-left font-bold text-slate-700">Tên nhiệm vụ</th>
               <th class="p-2.5 border-r border-slate-200 w-24 font-bold text-slate-700 whitespace-nowrap">Hạn hoàn thành</th>
               <th class="p-2.5 border-r border-slate-200 min-w-[200px] text-left font-bold text-slate-700">Sản phẩm bàn giao</th>
@@ -293,23 +309,31 @@
                   I. {{ getDocumentReportHeading('2629') }}
                 </td>
               </tr>
-              <tr
-                v-for="(t, idx) in tasks2629"
-                :key="t.id"
-                class="hover:bg-slate-50/80 transition font-normal"
-              >
-                <td class="p-2.5 text-center font-medium text-slate-500 border-r border-slate-200">{{ t.sequenceNumber || (idx + 1) }}</td>
-                <td class="p-2.5 text-center font-bold text-blue-900 border-r border-slate-200">{{ t.code }}</td>
-                <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">{{ t.title }} <span v-if="t.isCoordinatingAssignment" class="ml-1 inline-flex rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold text-amber-800">Phối hợp</span></td>
-                <td class="p-2.5 text-center border-r border-slate-200 text-slate-600 whitespace-nowrap">{{ t.dueDate || '—' }}</td>
-                <td class="p-2.5 border-r border-slate-200 text-slate-600 text-xs">{{ t.deliverables || '—' }}</td>
-                <td class="p-2.5 text-center border-r border-slate-200 whitespace-nowrap">
-                  <span :class="statusBadgeClass(t.status)">
-                    {{ t.statusLabel }}
-                  </span>
-                </td>
-                <td class="p-2.5 text-slate-600 text-xs leading-relaxed">{{ t.notes || '' }}</td>
-              </tr>
+              <template v-for="(t, idx) in tasks2629" :key="t.id">
+                <tr v-if="isGroupStart(tasks2629, idx)" class="bg-slate-100 border-b border-slate-200">
+                  <td :colspan="7" class="p-2 px-3 font-bold text-slate-800">{{ groupLabel(t) }}</td>
+                </tr>
+                <tr
+                  class="hover:bg-slate-50/80 transition font-normal"
+                >
+                  <td class="p-2.5 text-center font-medium text-slate-500 border-r border-slate-200">{{ t.sequenceNumber || (idx + 1) }}</td>
+                  <td class="p-2.5 text-center font-bold text-blue-900 border-r border-slate-200 w-32 min-w-32 max-w-32 whitespace-nowrap">{{ t.code }}</td>
+                  <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">
+                    <div class="flex items-start gap-1.5">
+                      <span class="line-clamp-3" v-tip="t.title">{{ t.title }}</span>
+                      <span v-if="t.isCoordinatingAssignment" class="shrink-0 inline-flex rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold text-amber-800">Phối hợp</span>
+                    </div>
+                  </td>
+                  <td class="p-2.5 text-center border-r border-slate-200 text-slate-600 whitespace-nowrap">{{ t.dueDate || '—' }}</td>
+                  <td class="p-2.5 border-r border-slate-200 text-slate-600 text-xs">{{ t.deliverables || '—' }}</td>
+                  <td class="p-2.5 text-center border-r border-slate-200 whitespace-nowrap">
+                    <span :class="statusBadgeClass(t.status)">
+                      {{ t.statusLabel }}
+                    </span>
+                  </td>
+                  <td class="p-2.5 text-slate-600 text-xs leading-relaxed">{{ t.notes || '' }}</td>
+                </tr>
+              </template>
             </template>
 
             <!-- SECTION II: 1266 Tasks -->
@@ -319,23 +343,31 @@
                   II. {{ getDocumentReportHeading('1266') }}
                 </td>
               </tr>
-              <tr
-                v-for="(t, idx) in tasks1266"
-                :key="t.id"
-                class="hover:bg-slate-50/80 transition font-normal"
-              >
-                <td class="p-2.5 text-center font-medium text-slate-500 border-r border-slate-200">{{ t.sequenceNumber || (idx + 1) }}</td>
-                <td class="p-2.5 text-center font-bold text-blue-900 border-r border-slate-200">{{ t.code }}</td>
-                <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">{{ t.title }} <span v-if="t.isCoordinatingAssignment" class="ml-1 inline-flex rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold text-amber-800">Phối hợp</span></td>
-                <td class="p-2.5 text-center border-r border-slate-200 text-slate-600 whitespace-nowrap">{{ t.dueDate || '—' }}</td>
-                <td class="p-2.5 border-r border-slate-200 text-slate-600 text-xs">{{ t.deliverables || '—' }}</td>
-                <td class="p-2.5 text-center border-r border-slate-200 whitespace-nowrap">
-                  <span :class="statusBadgeClass(t.status)">
-                    {{ t.statusLabel }}
-                  </span>
-                </td>
-                <td class="p-2.5 text-slate-600 text-xs leading-relaxed">{{ t.notes || '' }}</td>
-              </tr>
+              <template v-for="(t, idx) in tasks1266" :key="t.id">
+                <tr v-if="isGroupStart(tasks1266, idx)" class="bg-slate-100 border-b border-slate-200">
+                  <td :colspan="7" class="p-2 px-3 font-bold text-slate-800">{{ groupLabel(t) }}</td>
+                </tr>
+                <tr
+                  class="hover:bg-slate-50/80 transition font-normal"
+                >
+                  <td class="p-2.5 text-center font-medium text-slate-500 border-r border-slate-200">{{ t.sequenceNumber || (idx + 1) }}</td>
+                  <td class="p-2.5 text-center font-bold text-blue-900 border-r border-slate-200 w-32 min-w-32 max-w-32 whitespace-nowrap">{{ t.code }}</td>
+                  <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">
+                    <div class="flex items-start gap-1.5">
+                      <span class="line-clamp-3" v-tip="t.title">{{ t.title }}</span>
+                      <span v-if="t.isCoordinatingAssignment" class="shrink-0 inline-flex rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold text-amber-800">Phối hợp</span>
+                    </div>
+                  </td>
+                  <td class="p-2.5 text-center border-r border-slate-200 text-slate-600 whitespace-nowrap">{{ t.dueDate || '—' }}</td>
+                  <td class="p-2.5 border-r border-slate-200 text-slate-600 text-xs">{{ t.deliverables || '—' }}</td>
+                  <td class="p-2.5 text-center border-r border-slate-200 whitespace-nowrap">
+                    <span :class="statusBadgeClass(t.status)">
+                      {{ t.statusLabel }}
+                    </span>
+                  </td>
+                  <td class="p-2.5 text-slate-600 text-xs leading-relaxed">{{ t.notes || '' }}</td>
+                </tr>
+              </template>
             </template>
           </tbody>
         </table>
@@ -617,6 +649,13 @@ const goals1266 = computed(() => goalsList.value.filter(g => String(g.documentNu
 
 const tasks2629 = computed(() => tasksList.value.filter(t => String(t.documentNumber).includes('2629')));
 const tasks1266 = computed(() => tasksList.value.filter(t => String(t.documentNumber).includes('1266')));
+// Dòng tiêu đề nhóm (theo phụ lục quyết định) chèn trước mục đầu tiên của mỗi nhóm.
+function groupLabel(item) {
+  return String(item?.group || '').trim() || 'Chưa phân nhóm';
+}
+function isGroupStart(list, idx) {
+  return idx === 0 || groupLabel(list[idx - 1]) !== groupLabel(list[idx]);
+}
 
 function reportYearCellClass(goal, year) {
   if (!isProgressReportYearApplicable(goal, year)) return 'bg-slate-50 text-slate-400 font-medium';

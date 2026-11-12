@@ -34,10 +34,10 @@ public static class AiInternetTracking
             if(!metric.Key.StartsWith("GOAL_")){result.Add(metric);continue;}
             var goalId=Guid.Parse(metric.Key[5..]);
             var goal=await db.GoalTaskItems.AsNoTracking().SingleAsync(g=>g.Id==goalId,ct);
-            var national=goal.DocumentId==AiDocumentScope.PriorityDocument&&AiMetricCatalog.Metrics.Any(m=>m.GoalCodes.Contains(goal.Code));
+            var national=goal.DocumentId==AiDocumentScope.PriorityDocument&&AiMetricCatalog.Metrics.Any(m=>m.GoalCodes.Contains(goal.OriginalCode));
             if(national)
             {
-                var legacy=AiMetricCatalog.Metrics.First(m=>m.GoalCodes.Contains(goal.Code));
+                var legacy=AiMetricCatalog.Metrics.First(m=>m.GoalCodes.Contains(goal.OriginalCode));
                 var definition=legacy.Definition;
                 var resolved=metric with{Definition=definition,ExtractionPrompt=definition+" "+metric.ExtractionPrompt};
                 result.Add(resolved);

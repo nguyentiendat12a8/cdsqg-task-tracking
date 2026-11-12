@@ -91,13 +91,15 @@ public sealed class AiGoalKeywordsController(AppDbContext db) : ControllerBase
         }
 
         var availableGoals = await goalsQuery
-            .OrderBy(g => g.Code)
+            .OrderBy(g => g.OriginalCode).ThenBy(g => g.Code)
             .Select(g => new
             {
                 g.Id,
                 g.DocumentId,
                 DocumentNumber = g.Document != null ? g.Document.DocumentNumber : "",
                 g.Code,
+                // Bộ từ khóa lưu theo số thứ tự gốc của mục tiêu (MT-12), không đổi khi đánh lại mã theo cơ quan.
+                g.OriginalCode,
                 g.Title,
                 EvaluationType = g.EvaluationType.ToString(),
                 Unit = g.Unit != null ? g.Unit.Name : ""

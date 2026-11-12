@@ -145,7 +145,7 @@
                 <!-- Mã -->
                 <td class="px-3 py-3 border-r border-slate-200 text-center">
                   <span class="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-bold font-mono bg-blue-50 text-blue-700 border border-blue-200 shadow-2xs">
-                    {{ item.goalCode }}
+                    {{ displayGoalCode(item) }}
                   </span>
                 </td>
 
@@ -305,7 +305,7 @@
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label for="kw-goal-code" class="block font-semibold text-xs text-slate-700 mb-1">
-                Mã mục tiêu <span class="text-rose-600">*</span>
+                STT mục tiêu theo quyết định <span class="text-rose-600">*</span>
               </label>
               <input
                 id="kw-goal-code"
@@ -468,10 +468,17 @@ const modalPresetGoalOptions = computed(() => {
   const docId = activeDocumentId.value;
   const filtered = docId ? availableGoals.value.filter(g => g.documentId === docId) : availableGoals.value;
   return filtered.map(g => ({
-    value: g.code,
+    value: goalKey(g),
     label: `${g.code} · ${g.title} (${g.unit || g.evaluationType})`
   }));
 });
+
+// Bộ từ khóa lưu theo số thứ tự gốc của mục tiêu (MT-12); hiển thị mã hiện tại theo cơ quan chủ trì (MT-BKHCN-05).
+const goalKey = g => g.originalCode || g.code;
+function displayGoalCode(item) {
+  const goal = availableGoals.value.find(g => g.documentId === item.documentId && goalKey(g) === item.goalCode);
+  return goal?.code || item.goalCode;
+}
 
 const modalOpen = ref(false);
 const formError = ref('');
@@ -596,9 +603,9 @@ function closeModal() {
 function applyPresetGoal() {
   if (!selectedPresetGoal.value) return;
   const docId = activeDocumentId.value;
-  const found = availableGoals.value.find(g => (!docId || g.documentId === docId) && g.code === selectedPresetGoal.value);
+  const found = availableGoals.value.find(g => (!docId || g.documentId === docId) && goalKey(g) === selectedPresetGoal.value);
   if (found) {
-    form.value.goalCode = found.code;
+    form.value.goalCode = goalKey(found);
     form.value.goalTitle = found.title;
     if (found.unit) {
       form.value.expectedUnit = found.unit === 'PERCENT' ? '%' : found.unit;

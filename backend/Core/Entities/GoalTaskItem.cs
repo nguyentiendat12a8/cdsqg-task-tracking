@@ -22,7 +22,10 @@ namespace Cdsqg.Core.Entities
         public ItemTypeEnum ItemType { get; set; } = ItemTypeEnum.Task;
 
 
+        /// <summary>Mã theo cơ quan chủ trì (MT-BCA-01, NV-BKHCN-03); giao chung/nhiều cơ quan chủ trì: NV-C-01.</summary>
         public string Code { get; set; } = string.Empty;
+        /// <summary>Số thứ tự gốc theo quyết định (MT-01, NV-31): dùng để sắp xếp, đối chiếu quyết định và khóa nội bộ.</summary>
+        public string OriginalCode { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
         public string Category { get; set; } = string.Empty;
         public string? Section { get; set; }

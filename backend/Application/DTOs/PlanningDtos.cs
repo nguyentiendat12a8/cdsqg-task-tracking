@@ -32,6 +32,8 @@ namespace Cdsqg.Application.DTOs
         public Guid TaskId { get; set; }
         public string ItemType { get; set; } = "Task"; // Goal (1A) or Task (1B)
         public string Code { get; set; } = string.Empty;
+        /// <summary>Số thứ tự gốc theo quyết định (MT-01, NV-31).</summary>
+        public string OriginalCode { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
         public string Category { get; set; } = string.Empty;
         public string Section { get; set; } = string.Empty;
@@ -225,17 +227,20 @@ namespace Cdsqg.Application.DTOs
 
     public class AgencyProgressGoalItemDto
     {
+        public bool IsCoordinatingAssignment { get; set; }
         public int SequenceNumber { get; set; }
         public Guid Id { get; set; }
-        public bool IsCoordinatingAssignment { get; set; }
         public Guid DocumentId { get; set; }
         public string DocumentNumber { get; set; } = string.Empty;
         public string Code { get; set; } = string.Empty;
+        public string OriginalCode { get; set; } = string.Empty;
         public List<string> SubCodes { get; set; } = new();
         public List<Guid> SubGoalIds { get; set; } = new();
         public string Title { get; set; } = string.Empty;
         public string UnitName { get; set; } = "%";
         public string? Section { get; set; }
+        /// <summary>Nhóm mục tiêu theo phụ lục quyết định (GoalTaskItem.Group).</summary>
+        public string? Group { get; set; }
         public string? TargetPhase1 { get; set; }
         public string? TargetPhase2 { get; set; }
         public decimal? Actual2025 { get; set; }
@@ -250,13 +255,16 @@ namespace Cdsqg.Application.DTOs
 
     public class AgencyProgressTaskItemDto
     {
+        public bool IsCoordinatingAssignment { get; set; }
         public int SequenceNumber { get; set; }
         public Guid Id { get; set; }
         public Guid DocumentId { get; set; }
         public string DocumentNumber { get; set; } = string.Empty;
         public string Code { get; set; } = string.Empty;
-        public bool IsCoordinatingAssignment { get; set; }
+        public string OriginalCode { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
+        /// <summary>Nhóm nhiệm vụ theo phụ lục quyết định (GoalTaskItem.Group).</summary>
+        public string? Group { get; set; }
         public string? CoordinatingAgencies { get; set; }
         public string? DueDate { get; set; }
         public string Status { get; set; } = "NotStarted";

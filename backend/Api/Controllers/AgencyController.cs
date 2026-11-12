@@ -287,6 +287,7 @@ namespace Cdsqg.Api.Controllers
                     {
                         a.Id,
                         a.Code,
+                        a.ShortCode,
                         Name = ProvinceCatalog.DisplayName(a),
                         a.Type,
                         a.ParentId,
@@ -322,6 +323,7 @@ namespace Cdsqg.Api.Controllers
             {
                 a.Id,
                 a.Code,
+                a.ShortCode,
                 Name = ProvinceCatalog.DisplayName(a),
                 a.Type,
                 a.ParentId,
@@ -374,6 +376,9 @@ namespace Cdsqg.Api.Controllers
                 return BadRequest(new { error = $"Mã cơ quan '{agency.Code}' đã tồn tại trong hệ thống." });
             }
 
+            var shortCodeError = await ApplyShortCodeAsync(agency, agency.ShortCode, null);
+            if (shortCodeError != null) return BadRequest(new { error = shortCodeError });
+
             agency.Id = Guid.NewGuid();
             if (string.IsNullOrWhiteSpace(agency.Code))
             {
@@ -387,6 +392,25 @@ namespace Cdsqg.Api.Controllers
             await _context.SaveChangesAsync();
 
             return Ok(agency);
+        }
+
+        /// <summary>
+        /// Viết tắt dùng đánh mã mục tiêu/nhiệm vụ (NV-BCA-01). Không đổi mã các mục đã có; mục mới tạo sau mới dùng viết tắt mới.
+        /// </summary>
+        private async Task<string?> ApplyShortCodeAsync(Agency target, string? value, Guid? currentId)
+        {
+            if (string.IsNullOrWhiteSpace(value))
+            {
+                target.ShortCode = null;
+                return null;
+            }
+            var shortCode = ItemCodes.NormalizeShortCode(value);
+            if (shortCode == null)
+                return "Viết tắt chỉ gồm chữ in hoa và số (tối đa 15 ký tự), không dùng \"C\" (mã chung).";
+            if (await _context.Agencies.AnyAsync(a => a.Id != currentId && a.ShortCode == shortCode))
+                return $"Viết tắt '{shortCode}' đã được dùng cho cơ quan khác.";
+            target.ShortCode = shortCode;
+            return null;
         }
 
         [HttpPut("{id:guid}")]
@@ -457,6 +481,9 @@ namespace Cdsqg.Api.Controllers
             {
                 existing.Code = "AG-" + Guid.NewGuid().ToString("N")[..8];
             }
+
+            var updateShortCodeError = await ApplyShortCodeAsync(existing, dto.ShortCode, id);
+            if (updateShortCodeError != null) return BadRequest(new { error = updateShortCodeError });
 
             if (!string.IsNullOrWhiteSpace(dto.Name))
             {

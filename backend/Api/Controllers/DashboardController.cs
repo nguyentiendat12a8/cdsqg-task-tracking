@@ -204,7 +204,7 @@ namespace Cdsqg.Api.Controllers
                             : IsGeneralItem(item) ? ProgressCalculator.EvaluateOverall(item, allAgencies, ProgressCalculator.AnnualEvaluationDate(reportYear ?? reportToYear), reportYear)
                             : ProgressCalculator.Evaluate(item, report, year: reportYear, evaluatedAt: ProgressCalculator.AnnualEvaluationDate(reportYear ?? reportToYear));
                         return new DashboardAgencyItemDto {
-                            Id = item.Id, Code = item.Code, Title = item.Title, ItemType = item.ItemType.ToString(),
+                            Id = item.Id, Code = item.Code, OriginalCode = item.OriginalCode, Title = item.Title, ItemType = item.ItemType.ToString(),
                             IsGeneralTask = IsGeneralItem(item), LeadAgencyId = recipient?.Id ?? item.LeadAgencyId,
                             LeadAgencyName = recipient != null ? ProvinceCatalog.DisplayName(recipient) : item.LeadAgency?.Name ?? "—",
                             Category = item.Category, Section = item.Section, Group = item.Group,
@@ -228,8 +228,8 @@ namespace Cdsqg.Api.Controllers
                         ? targetAgencies.SelectMany(a => itemsByAgency[a.Id].DistinctBy(i => i.Id).Select(i => DetailRow(i, a)))
                         : items.Where(i => detailScope == "all" || (detailScope == "general" ? IsGeneralItem(i) : !IsGeneralItem(i))).Select(i => DetailRow(i, null));
                     if (requestedStatus.HasValue) rows = rows.Where(r => r.CalculatedStatus == requestedStatus.Value.ToString());
-                    if (!string.IsNullOrWhiteSpace(search)) rows = rows.Where(r => new[] { r.Code, r.Title, r.LeadAgencyName }.Any(t => t?.Contains(search.Trim(), StringComparison.OrdinalIgnoreCase) == true));
-                    var detailRows = rows.OrderBy(r => r.Code).ThenBy(r => r.LeadAgencyName).ThenBy(r => r.Id).ToList();
+                    if (!string.IsNullOrWhiteSpace(search)) rows = rows.Where(r => new[] { r.Code, r.OriginalCode, r.Title, r.LeadAgencyName }.Any(t => t?.Contains(search.Trim(), StringComparison.OrdinalIgnoreCase) == true));
+                    var detailRows = rows.OrderBy(r => r.OriginalCode).ThenBy(r => r.Code).ThenBy(r => r.LeadAgencyName).ThenBy(r => r.Id).ToList();
                     pageNumber = Math.Max(1, pageNumber); pageSize = Math.Clamp(pageSize, 1, 100);
                     return Ok(new PagedResultDto<DashboardAgencyItemDto> {
                         Items = detailRows.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList(),
@@ -560,6 +560,7 @@ namespace Cdsqg.Api.Controllers
                         AssignmentKind = contextId.HasValue ? (AgencyAssignments.Coordinating(assignmentRole) ? item.AgencyExecutions.FirstOrDefault(e => e.AgencyId == contextId)?.IsCoordinatingGroupAssignment : item.AgencyExecutions.FirstOrDefault(e => e.AgencyId == contextId)?.IsLeadGroupAssignment) == true ? "Group" : "Direct" : null,
                         Id = item.Id,
                         Code = item.Code,
+                        OriginalCode = item.OriginalCode,
                         Title = item.Title,
                         ItemType = item.ItemType.ToString(),
                         IsGeneralTask = item.IsGeneralTask,
@@ -599,6 +600,7 @@ namespace Cdsqg.Api.Controllers
                     var searchLower = q.Trim().ToLower();
                     resultList = resultList.Where(i =>
                         (i.Code != null && i.Code.ToLower().Contains(searchLower)) ||
+                        (i.OriginalCode != null && i.OriginalCode.ToLower().Contains(searchLower)) ||
                         (i.Title != null && i.Title.ToLower().Contains(searchLower)) ||
                         (i.Category != null && i.Category.ToLower().Contains(searchLower)) ||
                         (i.Section != null && i.Section.ToLower().Contains(searchLower)) ||
@@ -731,6 +733,8 @@ namespace Cdsqg.Api.Controllers
         public string? AssignmentKind { get; set; }
         public Guid Id { get; set; }
         public string Code { get; set; } = string.Empty;
+        /// <summary>Số thứ tự gốc theo quyết định (MT-01, NV-31).</summary>
+        public string OriginalCode { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
         public string ItemType { get; set; } = "Task";
         public bool IsGeneralTask { get; set; }

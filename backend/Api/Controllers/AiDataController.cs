@@ -38,19 +38,19 @@ public sealed class AiDataController(AppDbContext db,AiReviewService reviews,AiS
 
         var codes=AiMetricCatalog.Metrics.SelectMany(m=>m.GoalCodes).ToArray();
 
-        var goals=await db.GoalTaskItems.AsNoTracking().Where(g=>g.ItemType==ItemTypeEnum.Goal && (g.DocumentId==Guid.Parse("12660000-0000-0000-0000-000000001266")||g.Document!.DocumentNumber=="1266/QĐ-TTg")&&(!documentId.HasValue||g.DocumentId==documentId)&&codes.Contains(g.Code)).Select(g=>new{g.Id,g.Code,g.Title}).ToListAsync(ct);
+        var goals=await db.GoalTaskItems.AsNoTracking().Where(g=>g.ItemType==ItemTypeEnum.Goal && (g.DocumentId==Guid.Parse("12660000-0000-0000-0000-000000001266")||g.Document!.DocumentNumber=="1266/QĐ-TTg")&&(!documentId.HasValue||g.DocumentId==documentId)&&codes.Contains(g.OriginalCode)).Select(g=>new{g.Id,Code=g.OriginalCode,DisplayCode=g.Code,g.Title}).ToListAsync(ct);
 
         var options=await savedSettings.GetAsync(ct);
 
         var metrics=AiMetricCatalog.Metrics.Where(m=>!documentId.HasValue||documentId==AiDocumentScope.PriorityDocument).Select(m=>m with{GoalCodes=m.GoalCodes.Where(code=>goals.Any(g=>g.Code==code)).ToArray()});
 
-        var uploadGoals=await db.GoalTaskItems.Include(g=>g.Unit).Include(g=>g.Document).AsNoTracking().Where(g=>g.ItemType==ItemTypeEnum.Goal&&(!documentId.HasValue||g.DocumentId==documentId)).OrderBy(g=>g.Code).ToListAsync(ct);
+        var uploadGoals=await db.GoalTaskItems.Include(g=>g.Unit).Include(g=>g.Document).AsNoTracking().Where(g=>g.ItemType==ItemTypeEnum.Goal&&(!documentId.HasValue||g.DocumentId==documentId)).OrderBy(g=>g.OriginalCode).ThenBy(g=>g.Code).ToListAsync(ct);
 
-        var uploadMetrics=uploadGoals.Select(g=>new{key="GOAL_"+g.Id,name=(!documentId.HasValue&&g.Document!=null?g.Document.DocumentNumber+" · ":"")+g.Code+" · "+g.Title,documentId=g.DocumentId,unit=(!g.UnitId.HasValue||g.Unit?.Name=="%"||g.Unit?.Code=="PERCENT")?"%":"số lượng",goalCodes=new[]{g.Code}});
+        var uploadMetrics=uploadGoals.Select(g=>new{key="GOAL_"+g.Id,name=(!documentId.HasValue&&g.Document!=null?g.Document.DocumentNumber+" · ":"")+g.Code+" · "+g.Title,documentId=g.DocumentId,unit=(!g.UnitId.HasValue||g.Unit?.Name=="%"||g.Unit?.Code=="PERCENT")?"%":"số lượng",goalCodes=new[]{g.OriginalCode}});
 
         var configuredGoals=await db.AiGoalKeywords.AsNoTracking().Select(k=>new{k.DocumentId,k.GoalCode}).ToListAsync(ct);
 
-        var internetMetrics=uploadGoals.Where(g=>g.EvaluationType==EvaluationTypeEnum.Quantitative&&configuredGoals.Any(k=>k.DocumentId==g.DocumentId&&k.GoalCode==g.Code)).Select(g=>new{key="GOAL_"+g.Id,name=(!documentId.HasValue&&g.Document!=null?g.Document.DocumentNumber+" · ":"")+g.Code+" · "+g.Title,documentId=g.DocumentId,unit=g.Unit?.Name??"%",goalCodes=new[]{g.Code}});
+        var internetMetrics=uploadGoals.Where(g=>g.EvaluationType==EvaluationTypeEnum.Quantitative&&configuredGoals.Any(k=>k.DocumentId==g.DocumentId&&k.GoalCode==g.OriginalCode)).Select(g=>new{key="GOAL_"+g.Id,name=(!documentId.HasValue&&g.Document!=null?g.Document.DocumentNumber+" · ":"")+g.Code+" · "+g.Title,documentId=g.DocumentId,unit=g.Unit?.Name??"%",goalCodes=new[]{g.OriginalCode}});
 
         var agencies=await db.Agencies.AsNoTracking().Where(a=>a.IsActive&&a.Type!=AgencyTypeEnum.Special).OrderBy(a=>a.Name).Select(a=>new{a.Id,a.Name}).ToListAsync(ct);
 

@@ -1512,6 +1512,8 @@ namespace Cdsqg.Infrastructure.Data
 
                 entity.HasIndex(e => e.Code).IsUnique();
 
+                entity.Property(e => e.ShortCode).HasMaxLength(20);
+
                 entity.Property(e => e.Name).IsRequired().HasMaxLength(250);
 
                 entity.Property(e => e.Type).HasConversion<string>();

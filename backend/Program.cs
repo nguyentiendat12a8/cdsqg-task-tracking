@@ -284,6 +284,9 @@ using (var scope = app.Services.CreateScope())
         var importedKeys = await AiCredentialProtection.ImportLegacyKeysAsync(context, builder.Configuration, app.Environment.ContentRootPath);
         if (importedKeys > 0) app.Logger.LogInformation("Imported {Count} existing AI protection keys into the database.", importedKeys);
         SeedInitialData(context, hasher);
+        // Mục tạo bởi dữ liệu mẫu chưa có số thứ tự gốc theo quyết định: lấy theo mã hiện tại.
+        if (context.Database.IsRelational())
+            await context.GoalTaskItems.Where(i => i.OriginalCode == "").ExecuteUpdateAsync(s => s.SetProperty(i => i.OriginalCode, i => i.Code));
         await AgencyAssignments.InitializeMissingAsync(context);
         EnsureSampleFilesExist(app.Environment);
     }

@@ -23,7 +23,8 @@
               <input
                 v-model="createForm.code"
                 type="text"
-                :placeholder="createItemType === 'Goal' ? 'e.g. MT-01' : 'e.g. NV-01'"
+                placeholder="Để trống: tự cấp theo cơ quan chủ trì"
+                v-tip="'Để trống để hệ thống tự cấp mã theo cơ quan chủ trì, ví dụ NV-BCA-01; giao chung hoặc đồng chủ trì: NV-C-01.'"
                 class="ui-single-line ui-control w-full text-base sm:text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 focus:bg-white focus:ring-2 focus:ring-blue-500 uppercase  "
               />
             </div>

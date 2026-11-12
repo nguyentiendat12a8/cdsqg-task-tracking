@@ -98,20 +98,6 @@ namespace Cdsqg.Api.Controllers
                         Enum.TryParse<CalculationMethodEnum>(dto.CalculationMethod, true, out calcMethod);
                 }
 
-                string finalCode = dto.Code?.Trim() ?? string.Empty;
-                if (string.IsNullOrWhiteSpace(finalCode) || finalCode == "MT-" || finalCode == "NV-" || finalCode.EndsWith("-"))
-                {
-                    var existingCount = await _context.GoalTaskItems.CountAsync(i => i.DocumentId == dto.DocumentId && i.ItemType == itemType);
-                    string prefix = itemType == ItemTypeEnum.Goal ? "MT" : "NV";
-                    finalCode = $"{prefix}-{(existingCount + 1):D2}";
-                }
-
-                bool isDuplicateCode = await _context.GoalTaskItems.AnyAsync(i => i.DocumentId == dto.DocumentId && i.Code.ToLower() == finalCode.ToLower());
-                if (isDuplicateCode)
-                {
-                    return BadRequest(new { error = $"Mã '{finalCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác." });
-                }
-
                 var leadAgency = await _context.Agencies.FirstOrDefaultAsync(a => a.Id == dto.LeadAgencyId);
                 bool isSpecialGeneralAgency = leadAgency != null && (leadAgency.Code.StartsWith("ALL_") || leadAgency.Code == "ALL_AGENCIES" || leadAgency.Code == "ALL_MINISTRIES" || leadAgency.Code == "ALL_PROVINCES" || leadAgency.Code == "ALL_PROVINCES_UBND" || leadAgency.Code == "ALL_MINISTRIES_DIRECT");
                 bool isGeneral = isSpecialGeneralAgency || (dto.IsGeneralTask && leadAgency == null);
@@ -124,12 +110,24 @@ namespace Cdsqg.Api.Controllers
                 }
 
                 var createAssignment = await AgencyAssignments.SplitAssignedAsync(_context, dto.AssignedAgencyId, dto.SubAgencyIds);
+
+                // Mã theo cơ quan chủ trì (NV-BCA-01; giao chung/đồng chủ trì: NV-C-01) và STT gốc tiếp theo trong văn bản.
+                var nextCodes = await ItemCodes.NextAsync(_context, dto.DocumentId, itemType,
+                    ItemCodes.Abbreviation(leadAgency, isGeneral, createAssignment.CoLead));
+                string finalCode = ItemCodes.NeedsGeneratedCode(dto.Code) ? nextCodes.Code : dto.Code.Trim();
+                bool isDuplicateCode = await _context.GoalTaskItems.AnyAsync(i => i.DocumentId == dto.DocumentId && i.Code.ToLower() == finalCode.ToLower());
+                if (isDuplicateCode)
+                {
+                    return BadRequest(new { error = $"Mã '{finalCode}' đã tồn tại trong hệ thống. Vui lòng nhập mã khác." });
+                }
+
                 var newItem = new GoalTaskItem
                 {
                     Id = Guid.NewGuid(),
                     DocumentId = dto.DocumentId,
                     ItemType = itemType,
                     Code = finalCode,
+                    OriginalCode = nextCodes.OriginalCode,
                     Title = dto.Title.Trim(),
                     Category = dto.Category?.Trim() ?? string.Empty,
                     Section = dto.Section,

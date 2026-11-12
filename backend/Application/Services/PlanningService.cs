@@ -168,6 +168,7 @@ namespace Cdsqg.Application.Services
                     TaskId = item.Id,
                     ItemType = item.ItemType.ToString(),
                     Code = safeCode,
+                    OriginalCode = item.OriginalCode,
                     Title = item.Title,
                     Category = item.Category,
                     Section = item.Section ?? string.Empty,
@@ -370,6 +371,7 @@ namespace Cdsqg.Application.Services
                 DocumentId = dto.DocumentId,
                 ItemType = itemType,
                 Code = code,
+                OriginalCode = code,
                 Title = dto.Title,
                 Category = dto.Category ?? "Chính phủ số",
                 Section = dto.Section ?? string.Empty,
@@ -640,11 +642,11 @@ namespace Cdsqg.Application.Services
                 .AsNoTrackingWithIdentityResolution()
                 .ToListAsync();
 
-            var agenciesMap = await _context.Agencies.AsNoTracking().ToDictionaryAsync(a => a.Id);
-
             bool IsCoordinationOnly(GoalTaskItem item) =>
                 !item.AgencyExecutions.Any(e => e.AgencyId == agencyId && e.IsLeadAssignment)
                 && item.AgencyExecutions.Any(e => e.AgencyId == agencyId && e.IsCoordinatingAssignment);
+
+            var agenciesMap = await _context.Agencies.AsNoTracking().ToDictionaryAsync(a => a.Id);
 
             bool loadAll = fetchAll || string.IsNullOrWhiteSpace(tab);
             bool loadGoals = loadAll || string.Equals(tab, "goals", StringComparison.OrdinalIgnoreCase);
@@ -658,10 +660,21 @@ namespace Cdsqg.Application.Services
                 return System.Text.RegularExpressions.Regex.Replace(s, @"\s+", " ");
             }
 
+            // Nhóm theo phụ lục quyết định: các nhóm xếp theo STT nhỏ nhất của nhóm,
+            // trong nhóm giữ thứ tự cũ, để mỗi nhóm hiển thị liền một khối dưới dòng tiêu đề nhóm.
+            static string GroupKey(GoalTaskItem i) => (i.Group ?? string.Empty).Trim();
+            static int CodeNumber(string? code)
+                => int.TryParse(System.Text.RegularExpressions.Regex.Match(code ?? string.Empty, @"(\d+)$").Value, out var n) ? n : int.MaxValue;
+            var groupRank = agencyItems
+                .GroupBy(i => (i.DocumentId, i.ItemType, Group: GroupKey(i)))
+                .ToDictionary(g => g.Key, g => g.Min(i => CodeNumber(i.OriginalCode)));
+            int GroupRank(GoalTaskItem i) => groupRank[(i.DocumentId, i.ItemType, GroupKey(i))];
+
             var allGoalItems = agencyItems
                 .Where(i => i.ItemType == ItemTypeEnum.Goal)
                 .OrderByDescending(i => i.DocumentId == doc2629Id)
-                .ThenBy(i => i.Code)
+                .ThenBy(i => GroupRank(i))
+                .ThenBy(i => i.OriginalCode).ThenBy(i => i.Code)
                 .ToList();
 
             var mergedGoalsList = new List<AgencyProgressGoalItemDto>();
@@ -674,11 +687,13 @@ namespace Cdsqg.Application.Services
             var sortedGoals = agencyItems
                 .Where(i => i.ItemType == ItemTypeEnum.Goal)
                 .OrderByDescending(i => i.DocumentId == doc2629Id)
-                .ThenBy(i => i.Code)
+                .ThenBy(i => GroupRank(i))
+                .ThenBy(i => i.OriginalCode).ThenBy(i => i.Code)
                 .ToList();
 
             foreach (var g in sortedGoals)
             {
+                bool coordinating = IsCoordinationOnly(g);
                 bool is2629 = g.DocumentId == doc2629Id;
                 string docNum = is2629 ? "2629/QĐ-TTg" : "1266/QĐ-TTg";
 
@@ -694,7 +709,6 @@ namespace Cdsqg.Application.Services
                 var p2025 = pLogs.FirstOrDefault(p => p.PeriodYear == 2025)?.QuantitativeValue;
                 var p2026 = pLogs.FirstOrDefault(p => p.PeriodYear == 2026)?.QuantitativeValue;
                 var latestNote = pLogs.FirstOrDefault()?.SummaryNotes;
-                bool coordinating = IsCoordinationOnly(g);
 
                 var cb = g.CustomBaseline ?? new Dictionary<string, string>();
 
@@ -732,9 +746,12 @@ namespace Cdsqg.Application.Services
                     applicableYears.AddRange(new[] { 2026, 2027, 2028, 2029, 2030 });
                 }
 
+                if (coordinating) applicableYears.RemoveAll(year => year >= 2027);
+
                 string? GetPlanVal(int yr)
                 {
                     if (!applicableYears.Contains(yr)) return "—";
+                    if (coordinating) return "";
                     var configured = baselines.FirstOrDefault(b => b.Year == yr)?.ConfiguredTargetQuantity;
                     if (configured.HasValue) return FormatTargetClean(configured, null);
                     return "";
@@ -742,16 +759,16 @@ namespace Cdsqg.Application.Services
 
                 goalsList.Add(new AgencyProgressGoalItemDto
                 {
+                    IsCoordinatingAssignment = coordinating,
                     Id = g.Id,
                     DocumentId = g.DocumentId,
                     DocumentNumber = docNum,
                     Code = g.Code,
-                if (coordinating) applicableYears.RemoveAll(year => year >= 2027);
-
+                    OriginalCode = g.OriginalCode,
                     Title = g.Title,
                     UnitName = g.Unit?.Name ?? "%",
                     Section = g.Section,
-                    if (coordinating) return "";
+                    Group = string.IsNullOrWhiteSpace(g.Group) ? null : g.Group.Trim(),
                     TargetPhase1 = tPhase1,
                     TargetPhase2 = tPhase2,
                     Actual2025 = applicableYears.Contains(2025) ? p2025 : null,
@@ -759,7 +776,6 @@ namespace Cdsqg.Application.Services
                     Plan2027 = GetPlanVal(2027),
                     Plan2028 = GetPlanVal(2028),
                     Plan2029 = GetPlanVal(2029),
-                    IsCoordinatingAssignment = coordinating,
                     Plan2030 = GetPlanVal(2030),
                     Notes = latestNote,
                     ApplicableYears = applicableYears
@@ -771,7 +787,7 @@ namespace Cdsqg.Application.Services
 
             foreach (var group in goalGroups)
             {
-                var items = group.OrderBy(i => i.Code).ToList();
+                var items = group.OrderBy(i => i.OriginalCode).ThenBy(i => i.Code).ToList();
                 if (items.Count == 1)
                 {
                     items[0].SubCodes = new List<string> { items[0].Code };
@@ -785,15 +801,18 @@ namespace Cdsqg.Application.Services
 
                     var merged = new AgencyProgressGoalItemDto
                     {
+                        IsCoordinatingAssignment = p1.IsCoordinatingAssignment,
                         Id = p1.Id,
                         DocumentId = p1.DocumentId,
                         DocumentNumber = p1.DocumentNumber,
                         Code = $"{p1.Code}\n{p2.Code}",
+                        OriginalCode = p1.OriginalCode,
                         SubCodes = items.Select(x => x.Code).Distinct().ToList(),
                         SubGoalIds = items.Select(x => x.Id).Distinct().ToList(),
                         Title = p1.Title,
                         UnitName = !string.IsNullOrEmpty(p1.UnitName) ? p1.UnitName : (p2.UnitName ?? "%"),
                         Section = p1.Section,
+                        Group = p1.Group,
                         TargetPhase1 = !string.IsNullOrEmpty(p1.TargetPhase1) && p1.TargetPhase1 != "—" ? p1.TargetPhase1 : p2.TargetPhase1,
                         TargetPhase2 = !string.IsNullOrEmpty(p2.TargetPhase2) && p2.TargetPhase2 != "—" ? p2.TargetPhase2 : p1.TargetPhase2,
                         Actual2025 = p1.Actual2025 ?? p2.Actual2025,
@@ -801,7 +820,6 @@ namespace Cdsqg.Application.Services
                         Plan2027 = p1.Plan2027 != null && p1.Plan2027 != "—" ? p1.Plan2027 : p2.Plan2027,
                         Plan2028 = p2.Plan2028 != null && p2.Plan2028 != "—" ? p2.Plan2028 : p1.Plan2028,
                         Plan2029 = p2.Plan2029 != null && p2.Plan2029 != "—" ? p2.Plan2029 : p1.Plan2029,
-                        IsCoordinatingAssignment = p1.IsCoordinatingAssignment,
                         Plan2030 = p2.Plan2030 != null && p2.Plan2030 != "—" ? p2.Plan2030 : p1.Plan2030,
                         Notes = string.Join("; ", items.Select(x => x.Notes).Where(n => !string.IsNullOrWhiteSpace(n)).Distinct()),
                         ApplicableYears = items.SelectMany(x => x.ApplicableYears).Distinct().OrderBy(y => y).ToList()
@@ -828,8 +846,9 @@ namespace Cdsqg.Application.Services
         var allTaskItems = agencyItems
             .Where(i => i.ItemType == ItemTypeEnum.Task)
             .OrderByDescending(i => i.DocumentId == doc2629Id)
+            .ThenBy(i => GroupRank(i))
             .ThenBy(i => i.DueDate ?? DateTime.MaxValue)
-            .ThenBy(i => i.Code)
+            .ThenBy(i => i.OriginalCode).ThenBy(i => i.Code)
             .ToList();
 
         int totalTasks = allTaskItems.Count;
@@ -852,6 +871,7 @@ namespace Cdsqg.Application.Services
 
             foreach (var t in tasksToProcess)
             {
+                bool coordinating = IsCoordinationOnly(t);
                 bool is2629 = t.DocumentId == doc2629Id;
                 string docNum = is2629 ? "2629/QĐ-TTg" : "1266/QĐ-TTg";
 
@@ -877,7 +897,6 @@ namespace Cdsqg.Application.Services
                     .Select(id => agenciesMap[id].Name)
                     .ToList();
                 string coordText = !string.IsNullOrWhiteSpace(t.CoordinatingAgenciesDisplayText)
-                bool coordinating = IsCoordinationOnly(t);
                     ? t.CoordinatingAgenciesDisplayText
                     : string.Join(", ", coordNames);
 
@@ -887,12 +906,15 @@ namespace Cdsqg.Application.Services
 
                 finalTasksList.Add(new AgencyProgressTaskItemDto
                 {
+                    IsCoordinatingAssignment = coordinating,
                     SequenceNumber = taskSeqMap.ContainsKey(t.Id) ? taskSeqMap[t.Id] : 0,
                     Id = t.Id,
                     DocumentId = t.DocumentId,
                     DocumentNumber = docNum,
                     Code = t.Code,
+                    OriginalCode = t.OriginalCode,
                     Title = t.Title,
+                    Group = string.IsNullOrWhiteSpace(t.Group) ? null : t.Group.Trim(),
                     CoordinatingAgencies = coordText,
                     DueDate = t.DueDate?.ToString("dd/MM/yyyy"),
                     Status = statusKey,
@@ -906,7 +928,6 @@ namespace Cdsqg.Application.Services
 
         var pagedGoals = fetchAll || !loadGoals
             ? mergedGoalsList
-                    IsCoordinatingAssignment = coordinating,
             : mergedGoalsList.Skip((Math.Max(1, page) - 1) * pageSize).Take(pageSize).ToList();
 
         int totalCount = activeTab == "tasks" ? totalTasks : totalGoals;

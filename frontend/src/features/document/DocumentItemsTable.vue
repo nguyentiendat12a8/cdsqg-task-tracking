@@ -3,7 +3,7 @@
           <table class="w-full min-w-[1280px] text-left text-sm text-slate-700 border-collapse">
             <thead class="bg-slate-100 text-xs text-slate-700 font-semibold border-b border-slate-200 sticky top-0 z-30 shadow-xs select-none">
               <tr>
-                <th tabindex="0" :aria-sort="sortBy === 'code' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'" @keydown.enter.prevent="handleSort('code')" @keydown.space.prevent="handleSort('code')" @click="handleSort('code')" class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 whitespace-nowrap min-w-[75px] w-[75px] max-w-[75px] sticky left-0 z-30 cursor-pointer hover:bg-slate-200 transition" v-tip="'Bấm để sắp xếp theo Mã'">
+                <th tabindex="0" :aria-sort="sortBy === 'code' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'" @keydown.enter.prevent="handleSort('code')" @keydown.space.prevent="handleSort('code')" @click="handleSort('code')" class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 whitespace-nowrap min-w-[112px] w-[112px] max-w-[112px] sticky left-0 z-30 cursor-pointer hover:bg-slate-200 transition" v-tip="'Bấm để sắp xếp theo Mã'">
                   <div class="flex items-center justify-between gap-1">
                     <span>Mã</span>
                     <span class="text-xs font-bold text-slate-400">
@@ -13,7 +13,7 @@
                     </span>
                   </div>
                 </th>
-                <th tabindex="0" :aria-sort="sortBy === 'title' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'" @keydown.enter.prevent="handleSort('title')" @keydown.space.prevent="handleSort('title')" @click="handleSort('title')" class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[280px] w-[280px] max-w-[280px] sticky left-[75px] z-30 shadow-[3px_0_6px_-1px_rgba(0,0,0,0.12)] cursor-pointer hover:bg-slate-200 transition" v-tip="'Bấm để sắp xếp theo Tên'">
+                <th tabindex="0" :aria-sort="sortBy === 'title' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'" @keydown.enter.prevent="handleSort('title')" @keydown.space.prevent="handleSort('title')" @click="handleSort('title')" class="px-3 py-2.5 border-r border-slate-200 bg-slate-100 min-w-[280px] w-[280px] max-w-[280px] sticky left-[112px] z-30 shadow-[3px_0_6px_-1px_rgba(0,0,0,0.12)] cursor-pointer hover:bg-slate-200 transition" v-tip="'Bấm để sắp xếp theo Tên'">
                   <div class="flex items-center justify-between gap-1">
                     <span>{{ filterItemType === 'Goal' ? 'Tên mục tiêu' : (filterItemType === 'Task' ? 'Tên nhiệm vụ' : 'Tên mục tiêu / nhiệm vụ') }}</span>
                     <span class="text-xs font-bold text-slate-400">
@@ -90,10 +90,10 @@
               <template v-for="item in paginatedPrimaryList" :key="item.taskId">
                 <!-- Parent Row -->
                 <tr @click="openItemDetailModal(item)" class="group hover:bg-blue-100/90 cursor-pointer">
-                  <td class="px-3 py-2.5 font-normal text-slate-700 border-r border-slate-200 whitespace-nowrap min-w-[75px] w-[75px] max-w-[75px] sticky left-0 z-20 bg-white group-hover:bg-blue-100">
-                    {{ item.code }}
+                  <td class="px-3 py-2.5 font-normal text-slate-700 border-r border-slate-200 whitespace-nowrap min-w-[112px] w-[112px] max-w-[112px] sticky left-0 z-20 bg-white group-hover:bg-blue-100">
+                    <span v-tip="item.originalCode && item.originalCode !== item.code ? `STT theo quyết định: ${item.originalCode}` : ''">{{ item.code }}</span>
                   </td>
-                  <td class="px-3 py-2.5 font-normal text-slate-800 border-r border-slate-200 leading-relaxed min-w-[280px] w-[280px] max-w-[280px] sticky left-[75px] z-20 bg-white group-hover:bg-blue-100 shadow-[3px_0_6px_-1px_rgba(0,0,0,0.12)]">
+                  <td class="px-3 py-2.5 font-normal text-slate-800 border-r border-slate-200 leading-relaxed min-w-[280px] w-[280px] max-w-[280px] sticky left-[112px] z-20 bg-white group-hover:bg-blue-100 shadow-[3px_0_6px_-1px_rgba(0,0,0,0.12)]">
                     <VTooltip
                       theme="custom-dark"
                       placement="top"

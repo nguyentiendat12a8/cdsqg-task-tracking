@@ -21,7 +21,7 @@ public static class DocumentItemQuery
         bool asc = !string.Equals(dto.SortOrder, "desc", StringComparison.OrdinalIgnoreCase);
         return dto.SortBy.Equals("title", StringComparison.OrdinalIgnoreCase)
             ? asc ? query.OrderBy(i => i.Title).ThenBy(i => i.Id) : query.OrderByDescending(i => i.Title).ThenBy(i => i.Id)
-            : asc ? query.OrderBy(i => i.Code.ToLower()).ThenBy(i => i.Id) : query.OrderByDescending(i => i.Code.ToLower()).ThenBy(i => i.Id);
+            : asc ? query.OrderBy(i => i.OriginalCode).ThenBy(i => i.Code).ThenBy(i => i.Id) : query.OrderByDescending(i => i.OriginalCode).ThenByDescending(i => i.Code).ThenBy(i => i.Id);
     }
 
     private static IQueryable<T> ApplyCommon<T>(IQueryable<T> query, DocumentItemsQueryDto dto) where T : IPlanningFilterItem
@@ -80,6 +80,7 @@ public static class DocumentItemQuery
                 var s = queryDto.Search.Trim().ToLower();
                 list = list.Where(i =>
                     (i.Code != null && i.Code.ToLower().Contains(s)) ||
+                    (i.OriginalCode != null && i.OriginalCode.ToLower().Contains(s)) ||
                     (i.Title != null && i.Title.ToLower().Contains(s)) ||
                     (i.LeadAgencyName != null && i.LeadAgencyName.ToLower().Contains(s)) ||
                     (i.AssignedAgencyName != null && i.AssignedAgencyName.ToLower().Contains(s)) ||
@@ -139,8 +140,8 @@ public static class DocumentItemQuery
             {
                 case "code":
                     list = isAsc
-                        ? list.OrderBy(i => i.Code, StringComparer.OrdinalIgnoreCase).ToList()
-                        : list.OrderByDescending(i => i.Code, StringComparer.OrdinalIgnoreCase).ToList();
+                        ? list.OrderBy(i => i.OriginalCode, StringComparer.OrdinalIgnoreCase).ThenBy(i => i.Code, StringComparer.OrdinalIgnoreCase).ToList()
+                        : list.OrderByDescending(i => i.OriginalCode, StringComparer.OrdinalIgnoreCase).ThenByDescending(i => i.Code, StringComparer.OrdinalIgnoreCase).ToList();
                     break;
                 case "title":
                     list = isAsc
@@ -183,8 +184,8 @@ public static class DocumentItemQuery
                 case "createdat":
                 default:
                     list = isAsc
-                        ? list.OrderBy(i => i.LastUpdated ?? i.CreatedAt).ThenBy(i => i.Code).ToList()
-                        : list.OrderByDescending(i => i.LastUpdated ?? i.CreatedAt).ThenBy(i => i.Code).ToList();
+                        ? list.OrderBy(i => i.LastUpdated ?? i.CreatedAt).ThenBy(i => i.OriginalCode).ToList()
+                        : list.OrderByDescending(i => i.LastUpdated ?? i.CreatedAt).ThenBy(i => i.OriginalCode).ToList();
                     break;
             }
 

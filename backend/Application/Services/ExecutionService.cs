@@ -90,6 +90,9 @@ namespace Cdsqg.Application.Services
                 reportingAgencyId = task.LeadAgencyId;
             }
 
+            if (dto.IsCoordinatingReport)
+                return await SubmitCoordinatingProgressAsync(task, dto, reportingAgencyId.Value, periodKey);
+
             if (!await _context.AgencyTaskExecutions.AnyAsync(e => e.GoalTaskId == task.Id && e.AgencyId == reportingAgencyId && e.IsLeadAssignment))
             {
                 // A parent may act for its single delegated child, but the report belongs to that child.
@@ -346,6 +349,55 @@ namespace Cdsqg.Application.Services
                 LogDate = progressLog.LogDate,
                 ApprovalStatus = initialApprovalStatus.ToString(),
                 Message = "Ghi nhận báo cáo tiến độ và lưu file minh chứng thành công."
+            };
+        }
+
+        private async Task<SubmitProgressResponseDto> SubmitCoordinatingProgressAsync(
+            GoalTaskItem task, SubmitProgressRequestDto dto, Guid agencyId, string periodKey)
+        {
+            if (!await _context.AgencyTaskExecutions.AnyAsync(e => e.GoalTaskId == task.Id && e.AgencyId == agencyId
+                && e.IsCoordinatingAssignment && !e.IsLeadAssignment))
+                throw new InvalidOperationException("Cơ quan không được phân giao phối hợp nhiệm vụ/mục tiêu này.");
+            if (task.EvaluationType == EvaluationTypeEnum.Qualitative && !dto.Status.HasValue)
+                throw new InvalidOperationException("Chọn trạng thái thực hiện của nhiệm vụ phối hợp.");
+
+            bool admin = string.Equals(dto.UserRole, "Admin", StringComparison.OrdinalIgnoreCase);
+            var approval = admin ? ApprovalStatusEnum.Approved : ApprovalStatusEnum.Pending;
+            var preview = new ProgressLog { GoalTaskId = task.Id, AgencyId = agencyId,
+                PeriodYear = dto.PeriodYear, IsCoordinatingReport = true,
+                QuantitativeValue = dto.Value, QualitativeStatus = dto.Status, Deliverables = dto.Deliverables };
+            var result = ProgressCalculator.Evaluate(task, preview, dto.Deliverables, agencyId);
+            var existing = !admin ? await _context.ProgressLogs
+                .Where(p => p.GoalTaskId == task.Id && p.AgencyId == agencyId && p.IsCoordinatingReport
+                    && p.PeriodYear == dto.PeriodYear && p.ApprovalStatus == ApprovalStatusEnum.Pending)
+                .OrderByDescending(p => p.LogDate).FirstOrDefaultAsync() : null;
+            var log = existing ?? new ProgressLog { GoalTaskId = task.Id, AgencyId = agencyId, IsCoordinatingReport = true };
+            log.PeriodYear = dto.PeriodYear;
+            log.LogDate = DateTime.UtcNow;
+            log.QuantitativeValue = dto.Value;
+            log.QualitativeStatus = dto.Status;
+            // Cột Deliverables là NOT NULL: mục tiêu định lượng không có sản phẩm thì lưu danh sách rỗng.
+            log.Deliverables = dto.Deliverables ?? new List<TaskDeliverable>();
+            log.SummaryNotes = dto.SummaryNotes ?? string.Empty;
+            log.CalculatedProgressPercentage = result.Percentage;
+            log.CalculatedAlert = result.Alert;
+            log.CreatedBy = dto.CreatedBy ?? "Đơn vị phối hợp";
+            log.ApprovalStatus = approval;
+            // Báo cáo phối hợp chỉ là dữ liệu tham khảo; không ghi vào AgencyTaskExecution,
+            // sản phẩm đầu ra của nhiệm vụ hay cache tiến độ chính thức.
+            if (existing == null) _context.ProgressLogs.Add(log);
+            await _context.SaveChangesAsync();
+
+            return new SubmitProgressResponseDto
+            {
+                ProgressLogId = log.Id, ReportingAgencyIds = new() { agencyId },
+                TaskId = task.Id, TaskCode = task.Code, TaskTitle = task.Title,
+                PeriodKey = periodKey, ActualValue = dto.Value, LogDate = log.LogDate,
+                CompletionPercentage = result.Percentage, CalculatedAlert = result.Alert,
+                ApprovalStatus = approval.ToString(),
+                Message = approval == ApprovalStatusEnum.Pending
+                    ? "Đã gửi báo cáo phối hợp, đang chờ phê duyệt."
+                    : "Đã lưu báo cáo phối hợp."
             };
         }
 
@@ -799,7 +851,7 @@ namespace Cdsqg.Application.Services
                 }
 
                 // Import uses the same persisted assignment permission as interactive reporting.
-                bool hasPermission = isAdmin || userAgency != null && await AgencyScopePolicy.CanReportAsync(_context, task.Id, userAgency.Id);
+                bool hasPermission = isAdmin || userAgency != null && await AgencyScopePolicy.CanReportAnyAsync(_context, task.Id, userAgency.Id);
 
                 if (!hasPermission)
                 {
@@ -829,7 +881,7 @@ namespace Cdsqg.Application.Services
                     bool inScope = isAdmin || userAgency != null && (requestedId == userAgency.Id
                         || await _context.Agencies.AnyAsync(a => a.Id == requestedId && a.ParentId == userAgency.Id));
                     bool assigned = requestedId != Guid.Empty && await AgencyAssignments.Filter(
-                        _context.GoalTaskItems.Where(t => t.Id == task.Id), new[] { requestedId }).AnyAsync();
+                        _context.GoalTaskItems.Where(t => t.Id == task.Id), new[] { requestedId }, "Any").AnyAsync();
                     var requestedAgency = await _context.Agencies.FindAsync(requestedId);
                     if (!inScope || !assigned || requestedAgency == null || !requestedAgency.IsActive || ReportingAgencyGroups.IsGroup(requestedAgency))
                     {
@@ -848,6 +900,8 @@ namespace Cdsqg.Application.Services
                 }
                 var submitDto = new SubmitProgressRequestDto
                 {
+                    IsCoordinatingReport = reportingAgency != null && await _context.AgencyTaskExecutions.AnyAsync(e =>
+                        e.GoalTaskId == task.Id && e.AgencyId == reportingAgency.Id && e.IsCoordinatingAssignment && !e.IsLeadAssignment),
                     PeriodYear = item.PeriodYear > 0 ? item.PeriodYear : 2026,
                     Value = item.Value,
                     Status = item.Status,
@@ -929,7 +983,7 @@ namespace Cdsqg.Application.Services
                         Code = task.Code,
                         Title = task.Title,
                         Success = false,
-                        Message = "Lỗi khi lưu tiến độ: " + ex.Message
+                        Message = "Lỗi khi lưu tiến độ: " + (ex.InnerException?.Message ?? ex.Message)
                     });
                     response.FailureCount++;
                 }

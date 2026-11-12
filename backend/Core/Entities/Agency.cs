@@ -18,6 +18,11 @@ namespace Cdsqg.Core.Entities
         public string Code { get; set; } = string.Empty;
 
         /// <summary>
+        /// Viết tắt dùng trong mã mục tiêu/nhiệm vụ (ví dụ BCA → NV-BCA-01). Trống: mục do cơ quan này chủ trì dùng mã chung (NV-C-01).
+        /// </summary>
+        public string? ShortCode { get; set; }
+
+        /// <summary>
         /// Tên đầy đủ cơ quan
         /// </summary>
         public string Name { get; set; } = string.Empty;

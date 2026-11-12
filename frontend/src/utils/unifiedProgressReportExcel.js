@@ -32,6 +32,18 @@ const SECTION_STYLE = {
   border: THIN_BORDER
 };
 
+// Dòng tiêu đề nhóm theo phụ lục quyết định (nằm dưới dòng quyết định, trên các mục của nhóm).
+const GROUP_STYLE = {
+  font: { name: 'Segoe UI', sz: 10, bold: true, color: { rgb: '1E293B' } },
+  fill: { fgColor: { rgb: 'E2E8F0' } },
+  alignment: { horizontal: 'left', vertical: 'center', wrapText: true },
+  border: THIN_BORDER
+};
+
+export function reportGroupLabel(item) {
+  return String(item?.group || '').trim() || 'Chưa phân nhóm';
+}
+
 const SECTION_PHASE_STYLE = {
   font: { name: 'Segoe UI', sz: 9.5, bold: true, color: { rgb: 'FFFFFF' } },
   fill: { fgColor: { rgb: '1E3A8A' } },
@@ -259,6 +271,7 @@ export function buildGoalsWorksheet(goals, agencyName, dateStr, XLSX) {
   const goals1266 = (goals || []).filter(g => String(g.documentNumber).includes('1266'));
 
   const sectionRows = [];
+  const groupRows = [];
   const editableCellCoords = [];
   const disabledCellCoords = [];
   const numericCellCoords = [];
@@ -272,6 +285,13 @@ export function buildGoalsWorksheet(goals, agencyName, dateStr, XLSX) {
     merges.push({ s: { r: secRowIdx, c: 1 }, e: { r: secRowIdx, c: 3 } });
 
     sectionGoals.forEach((g, idx) => {
+      // Nhãn nhóm đặt ở cột A và gộp cả dòng; cột Mã để trống nên khi nhập lại file dòng này được bỏ qua.
+      if (idx === 0 || reportGroupLabel(sectionGoals[idx - 1]) !== reportGroupLabel(g)) {
+        const gRowIdx = rows.length;
+        groupRows.push(gRowIdx);
+        rows.push([reportGroupLabel(g), '', '', '', '', '', '', '', '', '', '', '', '']);
+        merges.push({ s: { r: gRowIdx, c: 0 }, e: { r: gRowIdx, c: 12 } });
+      }
       const rIdx = rows.length;
 
       const valAct2025 = formatExcelNumericVal(g.actual2025, isProgressReportYearApplicable(g, 2025));
@@ -338,7 +358,7 @@ export function buildGoalsWorksheet(goals, agencyName, dateStr, XLSX) {
   // Column Widths
   ws['!cols'] = [
     { wch: 6 },  // STT (A)
-    { wch: 10 }, // Mã MT (B)
+    { wch: 14 }, // Mã MT (B)
     { wch: 46 }, // Tên mục tiêu (C)
     { wch: 10 }, // ĐVT (D)
     { wch: 14 }, // Kết quả 1 (E)
@@ -385,10 +405,12 @@ export function buildGoalsWorksheet(goals, agencyName, dateStr, XLSX) {
     applyStyleToRange(ws, r, 6, r, 12, SECTION_STYLE, XLSX);
   });
 
+  groupRows.forEach(r => applyStyleToRange(ws, r, 0, r, 12, GROUP_STYLE, XLSX));
+
   // Base Data Rows styling
   const headerCount = 5;
   for (let r = headerCount; r < rows.length; r++) {
-    if (secRowIndices.includes(r)) continue;
+    if (secRowIndices.includes(r) || groupRows.includes(r)) continue;
     applyStyleToRange(ws, r, 0, r, 0, CELL_TEXT_CENTER, XLSX); // STT
     applyStyleToRange(ws, r, 1, r, 1, CELL_CODE, XLSX);        // Mã
     applyStyleToRange(ws, r, 2, r, 2, CELL_TEXT_LEFT, XLSX);   // Tên
@@ -413,8 +435,9 @@ export function buildGoalsWorksheet(goals, agencyName, dateStr, XLSX) {
   });
 
   for (const sec of sectionRows) ws['!rows'][sec.r] = { hpt: 32 };
+  for (const r of groupRows) ws['!rows'][r] = { hpt: 24 };
   for (let r = 5; r < rows.length; r++) {
-    if (secRowIndices.includes(r)) continue;
+    if (secRowIndices.includes(r) || groupRows.includes(r)) continue;
     ws['!rows'][r] = { hpt: reportRowHeight(rows[r], [[1,10],[2,46],[12,45]]) };
   }
   ws['!reportEditableCells'] = editableCellCoords.map(({r,c})=>XLSX.utils.encode_cell({r,c}));
@@ -469,6 +492,7 @@ export function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
   rows.push(headers);
 
   const sectionRows = [];
+  const groupRows = [];
   const tasks2629 = (tasks || []).filter(t => String(t.documentNumber).includes('2629'));
   const tasks1266 = (tasks || []).filter(t => String(t.documentNumber).includes('1266'));
 
@@ -480,6 +504,12 @@ export function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
     merges.push({ s: { r: secRowIdx, c: 1 }, e: { r: secRowIdx, c: 6 } });
 
     sectionTasks.forEach((t, idx) => {
+      if (idx === 0 || reportGroupLabel(sectionTasks[idx - 1]) !== reportGroupLabel(t)) {
+        const gRowIdx = rows.length;
+        groupRows.push(gRowIdx);
+        rows.push([reportGroupLabel(t), '', '', '', '', '', '', '', '']);
+        merges.push({ s: { r: gRowIdx, c: 0 }, e: { r: gRowIdx, c: 6 } });
+      }
       const rIdx = rows.length;
       const row = [
         t.sequenceNumber || (idx + 1),
@@ -507,7 +537,7 @@ export function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
 
   ws['!cols'] = [
     { wch: 6 },  // STT (A)
-    { wch: 12 }, // Mã NV (B)
+    { wch: 14 }, // Mã NV (B)
     { wch: 45 }, // Tên NV (C)
     { wch: 14 }, // Hạn (D)
     { wch: 32 }, // Sản phẩm (E)
@@ -532,16 +562,18 @@ export function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
     applyStyleToRange(ws, r, 0, r, 6, SECTION_STYLE, XLSX);
     applyStyleToRange(ws, r, 0, r, 0, { ...SECTION_STYLE, alignment: { horizontal: 'center', vertical: 'center' } }, XLSX);
   }
+  groupRows.forEach(r => applyStyleToRange(ws, r, 0, r, 6, GROUP_STYLE, XLSX));
   for (let r = 4; r < rows.length; r++) {
-    if (sectionRows.includes(r)) continue;
+    if (sectionRows.includes(r) || groupRows.includes(r)) continue;
     for (const [c, style] of [[0,CELL_TEXT_CENTER],[1,CELL_CODE],[2,CELL_TEXT_LEFT],[3,CELL_TEXT_CENTER],[4,CELL_TEXT_LEFT],[5,CELL_EDITABLE],[6,CELL_NOTES]])
       applyStyleToRange(ws,r,c,r,c,style,XLSX);
   }
 
   ws['!reportEditableCells'] = [];
   sectionRows.forEach(r => { ws['!rows'][r] = { hpt: 32 }; });
+  groupRows.forEach(r => { ws['!rows'][r] = { hpt: 24 }; });
   for (let r = 4; r < rows.length; r++) {
-    if (sectionRows.includes(r)) continue;
+    if (sectionRows.includes(r) || groupRows.includes(r)) continue;
     ws['!rows'][r] = { hpt: reportRowHeight(rows[r], [[2,45],[4,30],[6,40]]) };
     for (const c of [5,6]) {
       const ref = XLSX.utils.encode_cell({r,c});
@@ -681,6 +713,7 @@ export async function parseUnifiedProgressReportFile(file, { existingGoals = [],
 
         // Check plans 2027-2030
         const checkPlan = (year, colIdx) => {
+          if (matchedGoal.isCoordinatingAssignment) return;
           const raw = row[colIdx];
           const num = parseVNNumber(raw);
           if (num != null) {
@@ -713,7 +746,6 @@ export async function parseUnifiedProgressReportFile(file, { existingGoals = [],
       }
     }
   }
-          if (matchedGoal.isCoordinatingAssignment) return;
 
   // 2. Parse Sheet 2 (Nhiệm vụ)
   const tasksSheetName = workbook.SheetNames.find(n => n.toLowerCase().includes('nhiệm vụ') || n.toLowerCase().includes('nhiemvu')) || (workbook.SheetNames.length > 1 ? workbook.SheetNames[1] : null);

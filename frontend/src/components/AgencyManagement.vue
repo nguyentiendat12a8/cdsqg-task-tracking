@@ -194,9 +194,22 @@
               <input v-model="form.name" @input="onNameInput" required placeholder="Nhập tên cơ quan / đơn vị..." class="ui-single-line w-full text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 mt-1 focus:bg-white focus:ring-2 focus:ring-blue-500" />
             </div>
             <div>
-              <label class="text-xs font-semibold text-slate-700">Mã cơ quan / viết tắt <span class="text-rose-500">*</span></label>
+              <label class="text-xs font-semibold text-slate-700">Mã cơ quan <span class="text-rose-500">*</span></label>
               <input v-model="form.code" required placeholder="VD: TTCDS (Tự động)..." class="ui-single-line w-full text-sm font-bold bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 mt-1 focus:bg-white focus:ring-2 focus:ring-blue-500" />
             </div>
+          </div>
+
+          <div v-if="!form.parentId">
+            <label for="agency-short-code" class="text-xs font-semibold text-slate-700">Viết tắt dùng đánh mã mục tiêu, nhiệm vụ</label>
+            <input
+              id="agency-short-code"
+              v-model="form.shortCode"
+              maxlength="15"
+              placeholder="VD: BCA → NV-BCA-01"
+              class="ui-single-line w-full text-sm font-bold uppercase bg-slate-50 border border-slate-300 rounded-xl px-3 py-2 mt-1 focus:bg-white focus:ring-2 focus:ring-blue-500"
+              @input="form.shortCode = String(form.shortCode || '').toUpperCase().replace(/[^A-ZĐ0-9]/g, '')"
+            />
+            <p class="mt-1 text-xs text-slate-500">Chữ in hoa, số. Để trống: mục do cơ quan này chủ trì dùng mã chung (NV-C-01). Chỉ áp dụng cho mục tạo mới.</p>
           </div>
 
           <div class="grid grid-cols-2 gap-3">
@@ -458,7 +471,7 @@ function openContactPersonsModal(agency) {
   isContactModalOpen.value = true;
 }
 
-const form = ref({ code: '', name: '', parentId: null, type: 1, contactPersons: [] });
+const form = ref({ code: '', shortCode: '', name: '', parentId: null, type: 1, contactPersons: [] });
 
 function generateAgencyCode(name) {
   if (!name || typeof name !== 'string') return '';
@@ -651,6 +664,7 @@ function openCreateModal(parentAgencyId = null) {
   editingUsedCount.value = 0;
   form.value = { 
     code: '', 
+    shortCode: '',
     name: '', 
     parentId: parentAgencyId, 
     type: parentAgencyId ? 3 : 1,
@@ -677,6 +691,7 @@ function openEditModal(agency) {
 
   form.value = { 
     code: agency.code, 
+    shortCode: agency.shortCode || '',
     name: agency.name, 
     parentId: agency.parentId || null,
     type: mappedType,
@@ -753,6 +768,7 @@ async function saveAgency() {
 
     const payload = {
       code: finalCode,
+      shortCode: form.value.parentId ? null : (String(form.value.shortCode || '').trim() || null),
       name: form.value.name,
       parentId: form.value.parentId || null,
       type: finalType,

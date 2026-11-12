@@ -102,12 +102,9 @@ export function useCreateItem({ planningGridRef, agencies, rawItemsList, loadDat
 
   function openCreateModal(type) {
     createItemType.value = type;
-    const count = rawItemsList.value.filter(i => i.itemType === type || (type === 'Goal' && (i.itemType === 1 || i.itemType === '1')) || (type === 'Task' && (i.itemType === 2 || i.itemType === '2'))).length;
-    const prefix = type === 'Goal' ? 'MT' : 'NV';
-    const autoCode = `${prefix}-${String(count + 1).padStart(2, '0')}`;
-
+    // Để trống: hệ thống tự cấp mã theo cơ quan chủ trì (NV-BCA-01; giao chung/đồng chủ trì: NV-C-01).
     createForm.value = {
-      code: autoCode,
+      code: '',
       title: '',
     resultTarget: null,
       section: type === 'Goal' ? 'Mục A' : '',

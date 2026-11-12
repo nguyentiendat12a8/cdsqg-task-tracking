@@ -67,7 +67,7 @@ public sealed class AiCollectionService(AppDbContext db, IAiSourceReader reader,
                 if(!string.IsNullOrWhiteSpace(value.Warnings))warnings.Add(value.Warnings[..Math.Min(value.Warnings.Length,1000)]);
                 var suggestion=new AiDataSuggestion{DocumentId=document.Id,MetricKey=metric.Key,DataYear=value.DataYear,PeriodLabel=value.PeriodLabel[..Math.Min(250,value.PeriodLabel.Length)],Value=value.Value,Unit=metric.Unit,Scope=targetAgencyId.HasValue?metric.Scopes!.Single(s=>s.AgencyId==targetAgencyId).Name:"Việt Nam",TargetAgencyId=targetAgencyId,Quote=value.Quote,Page=value.Page,Methodology=value.Methodology[..Math.Min(2000,value.Methodology.Length)],Warnings=string.Join(" ",warnings)};
                 db.Add(suggestion);
-                var goals=db.GoalTaskItems.Where(g=>g.ItemType==Cdsqg.Core.Enums.ItemTypeEnum.Goal&&(metric.Key.StartsWith("GOAL_")?g.Id==Guid.Parse(metric.Key.Substring(5)):metric.GoalCodes.Contains(g.Code)));
+                var goals=db.GoalTaskItems.Where(g=>g.ItemType==Cdsqg.Core.Enums.ItemTypeEnum.Goal&&(metric.Key.StartsWith("GOAL_")?g.Id==Guid.Parse(metric.Key.Substring(5)):metric.GoalCodes.Contains(g.OriginalCode)));
                 if(metric.Internet) {
                     if(!metric.Key.StartsWith("GOAL_"))goals=goals.Where(g=>g.DocumentId==Guid.Parse("12660000-0000-0000-0000-000000001266")||g.Document!.DocumentNumber=="1266/QĐ-TTg");
                     goals=goals.Where(g=>(!g.StartDate.HasValue||g.StartDate.Value.Year<=value.DataYear)&&(!g.DueDate.HasValue||g.DueDate.Value.Year>=value.DataYear));

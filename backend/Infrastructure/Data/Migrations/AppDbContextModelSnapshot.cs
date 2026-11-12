@@ -66,6 +66,10 @@ namespace Cdsqg.Infrastructure.Data.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
+                    b.Property<string>("ShortCode")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
+
                     b.Property<string>("Type")
                         .IsRequired()
                         .HasColumnType("text");
@@ -2988,6 +2992,10 @@ namespace Cdsqg.Infrastructure.Data.Migrations
                     b.Property<Guid>("LeadAgencyId")
                         .HasColumnType("uuid");
 
+                    b.Property<string>("OriginalCode")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<decimal?>("ResultTarget")
                         .HasColumnType("numeric");
 
@@ -3177,6 +3185,9 @@ namespace Cdsqg.Infrastructure.Data.Migrations
                     b.Property<Guid>("GoalTaskId")
                         .HasColumnType("uuid");
 
+                    b.Property<bool>("IsCoordinatingReport")
+                        .HasColumnType("boolean");
+
                     b.Property<DateTime>("LogDate")
                         .HasColumnType("timestamp without time zone");
 
@@ -3185,9 +3196,6 @@ namespace Cdsqg.Infrastructure.Data.Migrations
 
                     b.Property<string>("QualitativeStatus")
                         .HasColumnType("text");
-                    b.Property<bool>("IsCoordinatingReport")
-                        .HasColumnType("boolean");
-
 
                     b.Property<decimal?>("QuantitativeValue")
                         .HasColumnType("numeric");
