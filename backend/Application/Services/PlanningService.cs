@@ -817,6 +817,7 @@ namespace Cdsqg.Application.Services
         var allTaskItems = agencyItems
             .Where(i => i.ItemType == ItemTypeEnum.Task)
             .OrderByDescending(i => i.DocumentId == doc2629Id)
+            .ThenBy(i => i.DueDate ?? DateTime.MaxValue)
             .ThenBy(i => i.Code)
             .ToList();
 

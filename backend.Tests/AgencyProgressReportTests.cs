@@ -23,6 +23,45 @@ public class AgencyProgressReportTests
     }
 
     [Fact]
+    public async Task AgencyProgressReport_TasksSortByDueDateWithinEachDecisionBeforePaging()
+    {
+        await using var db = CreateInMemoryDb("AgencyReportDueDate_" + Guid.NewGuid().ToString("N"));
+        var agency = new Agency { Id = Guid.NewGuid(), Code = "A", Name = "Cơ quan A", Type = AgencyTypeEnum.Ministry };
+        db.Agencies.Add(agency);
+        var documents = new[]
+        {
+            new Document { Id = Guid.Parse("26290000-0000-0000-0000-000000002629"), DocumentNumber = "2629/QĐ-TTg", Name = "2629" },
+            new Document { Id = Guid.Parse("12660000-0000-0000-0000-000000001266"), DocumentNumber = "1266/QĐ-TTg", Name = "1266" }
+        };
+        db.Documents.AddRange(documents);
+        var tasks = new[]
+        {
+            (documents[0], "NV-01", (DateTime?)new DateTime(2030, 12, 31)),
+            (documents[0], "NV-02", (DateTime?)new DateTime(2026, 6, 30)),
+            (documents[0], "NV-03", (DateTime?)null),
+            (documents[1], "NV-04", (DateTime?)new DateTime(2030, 12, 31)),
+            (documents[1], "NV-05", (DateTime?)new DateTime(2027, 12, 31))
+        };
+        db.GoalTaskItems.AddRange(tasks.Select(t => new GoalTaskItem
+        {
+            Id = Guid.NewGuid(), DocumentId = t.Item1.Id, Document = t.Item1,
+            Code = t.Item2, Title = t.Item2, ItemType = ItemTypeEnum.Task,
+            EvaluationType = EvaluationTypeEnum.Qualitative, LeadAgencyId = agency.Id,
+            DueDate = t.Item3
+        }));
+        await db.SaveChangesAsync();
+
+        var service = new PlanningService(db);
+        var firstPage = await service.GetAgencyProgressReportAsync(agency.Id, 2026, agency.Id, "Admin", "tasks", 1, 2);
+        var secondPage = await service.GetAgencyProgressReportAsync(agency.Id, 2026, agency.Id, "Admin", "tasks", 2, 2);
+        var fullReport = await service.GetAgencyProgressReportAsync(agency.Id, 2026, agency.Id, "Admin", "tasks", fetchAll: true);
+
+        Assert.Equal(new[] { "NV-02", "NV-01" }, firstPage.Tasks.Select(t => t.Code));
+        Assert.Equal(new[] { "NV-03", "NV-05" }, secondPage.Tasks.Select(t => t.Code));
+        Assert.Equal(new[] { "NV-02", "NV-01", "NV-03", "NV-05", "NV-04" }, fullReport.Tasks.Select(t => t.Code));
+    }
+
+    [Fact]
     public async Task GetAgencyProgressReport_ReturnsCorrectGoalsAndTasksForAgency()
     {
         var dbName = "AgencyReportTest_" + Guid.NewGuid().ToString("N");
