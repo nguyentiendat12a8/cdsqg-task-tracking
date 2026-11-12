@@ -369,10 +369,18 @@ namespace Cdsqg.Api.Controllers
                 foreach (var ag in relevantAgencies)
                 {
                     var exec = executions.FirstOrDefault(e => e.AgencyId == ag.Id);
-                    var pendingLog = pendingLogs.FirstOrDefault(p => p.AgencyId == ag.Id);
+                    bool coordinationOnly = exec?.IsCoordinatingAssignment == true && exec.IsLeadAssignment == false;
+                    var pendingLog = pendingLogs.Where(p => p.AgencyId == ag.Id && p.IsCoordinatingReport == coordinationOnly)
+                        .OrderByDescending(p => p.LogDate).FirstOrDefault();
 
-                    var approved = ProgressCalculator.LatestApproved(task, ag.Id);
-                    var progress = ProgressCalculator.Evaluate(task, approved, approved?.Deliverables, ag.Id);
+                    var approved = coordinationOnly
+                        ? task.ProgressLogs.Where(p => p.AgencyId == ag.Id && p.IsCoordinatingReport
+                            && p.ApprovalStatus == Cdsqg.Core.Enums.ApprovalStatusEnum.Approved)
+                            .OrderByDescending(p => p.PeriodYear).ThenByDescending(p => p.LogDate).FirstOrDefault()
+                        : ProgressCalculator.LatestApproved(task, ag.Id);
+                    var progress = ProgressCalculator.Evaluate(task,
+                        coordinationOnly ? approved ?? new Cdsqg.Core.Entities.ProgressLog { IsCoordinatingReport = true, AgencyId = ag.Id } : approved,
+                        approved?.Deliverables, ag.Id);
                     var itemDto = new AgencyExecutionItemDto
                     {
                         IsLeadAssignment = exec?.IsLeadAssignment == true,
@@ -385,7 +393,9 @@ namespace Cdsqg.Api.Controllers
                         ParentAgencyId = ag.ParentId,
                         ParentAgencyName = ag.ParentAgency?.Name,
                         CalculatedStatus = progress.Status.ToString(),
-                        ApprovalStatus = pendingLog != null ? "Pending" : (exec?.LastReportedAt != null ? exec.ApprovalStatus.ToString() : approved != null ? "Approved" : "NotReported"),
+                        ApprovalStatus = pendingLog != null ? "Pending" : (coordinationOnly
+                            ? approved != null ? "Approved" : "NotReported"
+                            : exec?.LastReportedAt != null ? exec.ApprovalStatus.ToString() : approved != null ? "Approved" : "NotReported"),
                         RejectionReason = exec?.RejectionReason ?? pendingLog?.RejectionReason,
                         LatestProgressValue = progress.ActualValue,
                         LatestQualitativeStatus = approved?.QualitativeStatus?.ToString(),
@@ -440,7 +450,7 @@ namespace Cdsqg.Api.Controllers
                 log.ApprovedBy = approvedBy ?? "Cơ quan cấp trên";
                 log.ApprovedAt = DateTime.UtcNow;
 
-                if (log.GoalTaskItem != null)
+                if (log.GoalTaskItem != null && !log.IsCoordinatingReport)
                 {
                     if (log.Deliverables != null && log.Deliverables.Count > 0)
                     {
@@ -461,7 +471,7 @@ namespace Cdsqg.Api.Controllers
                 }
 
                 // Sync with AgencyTaskExecution
-                if (log.AgencyId.HasValue)
+                if (log.AgencyId.HasValue && !log.IsCoordinatingReport)
                 {
                     var execution = await _context.AgencyTaskExecutions
                         .FirstOrDefaultAsync(e => e.GoalTaskId == log.GoalTaskId && e.AgencyId == log.AgencyId.Value);
@@ -508,7 +518,7 @@ namespace Cdsqg.Api.Controllers
                     _context.Notifications.Add(notif);
                 }
 
-                if (log.GoalTaskItem != null) await ProgressCalculator.RefreshCachesAsync(_context, log.GoalTaskItem);
+                if (log.GoalTaskItem != null && !log.IsCoordinatingReport) await ProgressCalculator.RefreshCachesAsync(_context, log.GoalTaskItem);
                 await _context.SaveChangesAsync();
                 return Ok(new { success = true, message = "Đã phê duyệt báo cáo tiến độ thành công." });
             }
@@ -539,7 +549,7 @@ namespace Cdsqg.Api.Controllers
                 log.ApprovedAt = DateTime.UtcNow;
 
                 // Sync with AgencyTaskExecution
-                if (log.AgencyId.HasValue)
+                if (log.AgencyId.HasValue && !log.IsCoordinatingReport)
                 {
                     var execution = await _context.AgencyTaskExecutions
                         .FirstOrDefaultAsync(e => e.GoalTaskId == log.GoalTaskId && e.AgencyId == log.AgencyId.Value);
@@ -626,7 +636,7 @@ namespace Cdsqg.Api.Controllers
                 }
 
                 var rejectedTask = await _context.GoalTaskItems.FindAsync(log.GoalTaskId);
-                if (rejectedTask != null) await ProgressCalculator.RefreshCachesAsync(_context, rejectedTask);
+                if (rejectedTask != null && !log.IsCoordinatingReport) await ProgressCalculator.RefreshCachesAsync(_context, rejectedTask);
                 await _context.SaveChangesAsync();
                 return Ok(new { success = true, message = "Đã từ chối báo cáo tiến độ." });
             }

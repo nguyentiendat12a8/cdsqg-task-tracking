@@ -9,6 +9,7 @@ namespace Cdsqg.Application.DTOs
     [System.Text.Json.Serialization.JsonUnmappedMemberHandling(System.Text.Json.Serialization.JsonUnmappedMemberHandling.Disallow)]
     public class SubmitProgressRequestDto
     {
+        public bool IsCoordinatingReport { get; set; }
         public int PeriodYear { get; set; } = 2026;
         public string PeriodKey => PeriodYear.ToString(System.Globalization.CultureInfo.InvariantCulture);
 

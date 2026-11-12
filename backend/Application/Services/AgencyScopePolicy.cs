@@ -26,4 +26,8 @@ public static class AgencyScopePolicy
     public static Task<bool> CanReportAsync(AppDbContext db, Guid taskId, Guid agencyId)
         => db.AgencyTaskExecutions.AnyAsync(e => e.GoalTaskId == taskId && e.IsLeadAssignment
             && (e.AgencyId == agencyId || db.Agencies.Any(a => a.Id == e.AgencyId && a.ParentId == agencyId)));
+
+    public static Task<bool> CanReportAnyAsync(AppDbContext db, Guid taskId, Guid agencyId)
+        => db.AgencyTaskExecutions.AnyAsync(e => e.GoalTaskId == taskId && (e.IsLeadAssignment || e.IsCoordinatingAssignment)
+            && (e.AgencyId == agencyId || db.Agencies.Any(a => a.Id == e.AgencyId && a.ParentId == agencyId)));
 }

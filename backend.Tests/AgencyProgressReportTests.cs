@@ -23,6 +23,59 @@ public class AgencyProgressReportTests
     }
 
     [Fact]
+    public async Task CoordinatingAgency_ReportsSeparatelyWithoutChangingLeadProgress()
+    {
+        await using var db = CreateInMemoryDb("CoordinatingReport_" + Guid.NewGuid().ToString("N"));
+        var lead = new Agency { Id = Guid.NewGuid(), Code = "LEAD", Name = "Chủ trì", Type = AgencyTypeEnum.Ministry, IsActive = true };
+        var coordinator = new Agency { Id = Guid.NewGuid(), Code = "COORD", Name = "Phối hợp", Type = AgencyTypeEnum.Ministry, IsActive = true };
+        var doc = new Document { Id = Guid.Parse("26290000-0000-0000-0000-000000002629"), DocumentNumber = "2629/QĐ-TTg", Name = "2629" };
+        var task = new GoalTaskItem { Id = Guid.NewGuid(), DocumentId = doc.Id, Document = doc,
+            Code = "NV-01", Title = "Nhiệm vụ phối hợp", LeadAgencyId = lead.Id,
+            ItemType = ItemTypeEnum.Task, EvaluationType = EvaluationTypeEnum.Qualitative,
+            DueDate = new DateTime(2030, 12, 31) };
+        db.Agencies.AddRange(lead, coordinator);
+        db.Documents.Add(doc);
+        db.GoalTaskItems.Add(task);
+        db.AgencyTaskExecutions.AddRange(
+            new AgencyTaskExecution { GoalTaskId = task.Id, AgencyId = lead.Id, IsLeadAssignment = true },
+            new AgencyTaskExecution { GoalTaskId = task.Id, AgencyId = coordinator.Id, IsCoordinatingAssignment = true });
+        await db.SaveChangesAsync();
+
+        var planning = new PlanningService(db);
+        var before = await planning.GetAgencyProgressReportAsync(coordinator.Id, 2026, coordinator.Id, "AgencyUser", "tasks");
+        Assert.Single(before.Tasks);
+        Assert.True(before.Tasks[0].IsCoordinatingAssignment);
+        Assert.Equal("Chưa thực hiện", before.Tasks[0].StatusLabel);
+        db.ProgressLogs.Add(new ProgressLog { GoalTaskId = task.Id, AgencyId = lead.Id,
+            PeriodYear = 2026, QualitativeStatus = TextStatusEnum.Completed,
+            ApprovalStatus = ApprovalStatusEnum.Approved });
+        await db.SaveChangesAsync();
+        before = await planning.GetAgencyProgressReportAsync(coordinator.Id, 2026, coordinator.Id, "AgencyUser", "tasks");
+        Assert.Equal("Chưa thực hiện", Assert.Single(before.Tasks).StatusLabel);
+
+        var execution = new ExecutionService(db, null!);
+        var imported = await execution.ImportProgressBulkAsync(new()
+        {
+            UserRole = "AgencyUser", UserAgencyId = coordinator.Id, ReportingAgencyId = coordinator.Id,
+            Items = new() { new() { Id = task.Id, Code = task.Code, Status = TextStatusEnum.Drafting, PeriodYear = 2026 } }
+        });
+        Assert.Equal(1, imported.PendingCount);
+        Assert.Equal(0, imported.FailureCount);
+        var log = Assert.Single(db.ProgressLogs.Where(p => p.IsCoordinatingReport));
+        Assert.True(log.IsCoordinatingReport);
+        Assert.Equal(ApprovalStatusEnum.Pending, log.ApprovalStatus);
+        Assert.Equal(lead.Id, ProgressCalculator.LatestApproved(task)?.AgencyId);
+
+        log.ApprovalStatus = ApprovalStatusEnum.Approved;
+        await db.SaveChangesAsync();
+        var after = await planning.GetAgencyProgressReportAsync(coordinator.Id, 2026, coordinator.Id, "AgencyUser", "tasks");
+        Assert.Equal("Đang thực hiện", Assert.Single(after.Tasks).StatusLabel);
+        Assert.Equal(lead.Id, ProgressCalculator.LatestApproved(task)?.AgencyId);
+        Assert.Equal(ExecutionStatusEnum.NotStarted,
+            Assert.Single(db.AgencyTaskExecutions.Where(e => e.AgencyId == lead.Id)).CalculatedStatus);
+    }
+
+    [Fact]
     public async Task AgencyProgressReport_TasksSortByDueDateWithinEachDecisionBeforePaging()
     {
         await using var db = CreateInMemoryDb("AgencyReportDueDate_" + Guid.NewGuid().ToString("N"));
@@ -505,7 +558,7 @@ public class AgencyProgressReportTests
         Assert.Equal(5, allReport.Tasks.Count);
     }
     [Fact]
-    public async Task Report_OnlyIncludesActualLeadAssignments_NotDisplayTextOrCoordination()
+    public async Task Report_IncludesLeadAndCoordinationAssignments_NotDisplayText()
     {
         await using var db = CreateInMemoryDb("ReportScope_" + Guid.NewGuid());
         var doc = new Document { Id = Guid.Parse("26290000-0000-0000-0000-000000002629"), DocumentNumber = "2629/QĐ-TTg", Name = "Test" };
@@ -521,8 +574,9 @@ public class AgencyProgressReportTests
         foreach (var fetchAll in new[] { false, true })
         {
             var report = await service.GetAgencyProgressReportAsync(a.Id,2026,a.Id,"Admin",tab:"tasks",fetchAll:fetchAll);
-            Assert.Equal(2,report.TotalTasks);
-            Assert.Equal(new[] { "NV-01", "NV-02" },report.Tasks.Select(t=>t.Code));
+            Assert.Equal(3,report.TotalTasks);
+            Assert.Equal(new[] { "NV-01", "NV-02", "NV-04" },report.Tasks.Select(t=>t.Code));
+            Assert.True(report.Tasks.Single(t => t.Code == "NV-04").IsCoordinatingAssignment);
         }
     }
 

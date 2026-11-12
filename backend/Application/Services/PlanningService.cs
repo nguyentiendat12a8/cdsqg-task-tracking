@@ -636,11 +636,15 @@ namespace Cdsqg.Application.Services
                 .Where(i => i.DocumentId == doc1266Id || i.DocumentId == doc2629Id);
 
             // Use persisted lead assignments, never a substring in a display label.
-            var agencyItems = await AgencyAssignments.Filter(reportItemsQuery, new[] { agencyId })
+            var agencyItems = await AgencyAssignments.Filter(reportItemsQuery, new[] { agencyId }, "Any")
                 .AsNoTrackingWithIdentityResolution()
                 .ToListAsync();
 
             var agenciesMap = await _context.Agencies.AsNoTracking().ToDictionaryAsync(a => a.Id);
+
+            bool IsCoordinationOnly(GoalTaskItem item) =>
+                !item.AgencyExecutions.Any(e => e.AgencyId == agencyId && e.IsLeadAssignment)
+                && item.AgencyExecutions.Any(e => e.AgencyId == agencyId && e.IsCoordinatingAssignment);
 
             bool loadAll = fetchAll || string.IsNullOrWhiteSpace(tab);
             bool loadGoals = loadAll || string.Equals(tab, "goals", StringComparison.OrdinalIgnoreCase);
@@ -682,13 +686,15 @@ namespace Cdsqg.Application.Services
                 // The decision targets and the configured annual plan are separate data sources.
                 var bMap = baselines.ToDictionary(b => b.Year, b => b.TargetQuantity);
 
-                var pLogs = g.ProgressLogs?.Where(p => p.AgencyId == agencyId && (p.PeriodYear == 2025 || p.PeriodYear == 2026))
+                var pLogs = g.ProgressLogs?.Where(p => p.AgencyId == agencyId && p.IsCoordinatingReport == coordinating
+                    && p.ApprovalStatus == ApprovalStatusEnum.Approved && (p.PeriodYear == 2025 || p.PeriodYear == 2026))
                     .OrderByDescending(p => p.LogDate)
                     .ToList() ?? new List<ProgressLog>();
 
                 var p2025 = pLogs.FirstOrDefault(p => p.PeriodYear == 2025)?.QuantitativeValue;
                 var p2026 = pLogs.FirstOrDefault(p => p.PeriodYear == 2026)?.QuantitativeValue;
                 var latestNote = pLogs.FirstOrDefault()?.SummaryNotes;
+                bool coordinating = IsCoordinationOnly(g);
 
                 var cb = g.CustomBaseline ?? new Dictionary<string, string>();
 
@@ -740,9 +746,12 @@ namespace Cdsqg.Application.Services
                     DocumentId = g.DocumentId,
                     DocumentNumber = docNum,
                     Code = g.Code,
+                if (coordinating) applicableYears.RemoveAll(year => year >= 2027);
+
                     Title = g.Title,
                     UnitName = g.Unit?.Name ?? "%",
                     Section = g.Section,
+                    if (coordinating) return "";
                     TargetPhase1 = tPhase1,
                     TargetPhase2 = tPhase2,
                     Actual2025 = applicableYears.Contains(2025) ? p2025 : null,
@@ -750,6 +759,7 @@ namespace Cdsqg.Application.Services
                     Plan2027 = GetPlanVal(2027),
                     Plan2028 = GetPlanVal(2028),
                     Plan2029 = GetPlanVal(2029),
+                    IsCoordinatingAssignment = coordinating,
                     Plan2030 = GetPlanVal(2030),
                     Notes = latestNote,
                     ApplicableYears = applicableYears
@@ -791,6 +801,7 @@ namespace Cdsqg.Application.Services
                         Plan2027 = p1.Plan2027 != null && p1.Plan2027 != "—" ? p1.Plan2027 : p2.Plan2027,
                         Plan2028 = p2.Plan2028 != null && p2.Plan2028 != "—" ? p2.Plan2028 : p1.Plan2028,
                         Plan2029 = p2.Plan2029 != null && p2.Plan2029 != "—" ? p2.Plan2029 : p1.Plan2029,
+                        IsCoordinatingAssignment = p1.IsCoordinatingAssignment,
                         Plan2030 = p2.Plan2030 != null && p2.Plan2030 != "—" ? p2.Plan2030 : p1.Plan2030,
                         Notes = string.Join("; ", items.Select(x => x.Notes).Where(n => !string.IsNullOrWhiteSpace(n)).Distinct()),
                         ApplicableYears = items.SelectMany(x => x.ApplicableYears).Distinct().OrderBy(y => y).ToList()
@@ -844,8 +855,14 @@ namespace Cdsqg.Application.Services
                 bool is2629 = t.DocumentId == doc2629Id;
                 string docNum = is2629 ? "2629/QĐ-TTg" : "1266/QĐ-TTg";
 
-                var latestLog = PlanningService.GetLatestProgressLogForAgency(t, agencyId);
-                var eval = ProgressCalculator.Evaluate(t, latestLog, null, agencyId);
+                var latestLog = coordinating
+                    ? t.ProgressLogs.Where(p => p.AgencyId == agencyId && p.IsCoordinatingReport
+                        && p.ApprovalStatus == ApprovalStatusEnum.Approved)
+                        .OrderByDescending(p => p.PeriodYear).ThenByDescending(p => p.LogDate).FirstOrDefault()
+                    : PlanningService.GetLatestProgressLogForAgency(t, agencyId);
+                var eval = ProgressCalculator.Evaluate(t,
+                    coordinating ? latestLog ?? new ProgressLog { IsCoordinatingReport = true, AgencyId = agencyId, PeriodYear = reportYear } : latestLog,
+                    null, agencyId);
 
                 string statusKey = eval.Status.ToString();
                 string statusLabel = statusKey switch
@@ -860,6 +877,7 @@ namespace Cdsqg.Application.Services
                     .Select(id => agenciesMap[id].Name)
                     .ToList();
                 string coordText = !string.IsNullOrWhiteSpace(t.CoordinatingAgenciesDisplayText)
+                bool coordinating = IsCoordinationOnly(t);
                     ? t.CoordinatingAgenciesDisplayText
                     : string.Join(", ", coordNames);
 
@@ -888,6 +906,7 @@ namespace Cdsqg.Application.Services
 
         var pagedGoals = fetchAll || !loadGoals
             ? mergedGoalsList
+                    IsCoordinatingAssignment = coordinating,
             : mergedGoalsList.Skip((Math.Max(1, page) - 1) * pageSize).Take(pageSize).ToList();
 
         int totalCount = activeTab == "tasks" ? totalTasks : totalGoals;

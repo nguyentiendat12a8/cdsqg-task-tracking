@@ -180,7 +180,7 @@
                     {{ c }}
                   </div>
                 </td>
-                <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">{{ g.title }}</td>
+                <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">{{ g.title }} <span v-if="g.isCoordinatingAssignment" class="ml-1 inline-flex rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold text-amber-800">Phối hợp</span></td>
                 <td class="p-2.5 text-center border-r border-slate-200 bg-slate-50 font-semibold text-slate-700" aria-label="Kết quả theo quyết định, dữ liệu cố định">{{ formatTarget(g.targetPhase1) }}</td>
                 <td class="p-2.5 text-center border-r border-slate-200 bg-slate-50 font-semibold text-slate-700" aria-label="Kết quả theo quyết định, dữ liệu cố định">{{ formatTarget(g.targetPhase2) }}</td>
                 <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2025)" :data-report-year="2025" :aria-label="reportYearCellLabel(g, 2025)">
@@ -224,7 +224,7 @@
                     {{ c }}
                   </div>
                 </td>
-                <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">{{ g.title }}</td>
+                <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">{{ g.title }} <span v-if="g.isCoordinatingAssignment" class="ml-1 inline-flex rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold text-amber-800">Phối hợp</span></td>
                 <td class="p-2.5 text-center border-r border-slate-200 bg-slate-50 font-semibold text-slate-700" aria-label="Kết quả theo quyết định, dữ liệu cố định">{{ formatTarget(g.targetPhase1) }}</td>
                 <td class="p-2.5 text-center border-r border-slate-200 bg-slate-50 font-semibold text-slate-700" aria-label="Kết quả theo quyết định, dữ liệu cố định">{{ formatTarget(g.targetPhase2) }}</td>
                 <td class="p-2.5 text-center border-r border-slate-200" :class="reportYearCellClass(g, 2025)" :data-report-year="2025" :aria-label="reportYearCellLabel(g, 2025)">
@@ -300,7 +300,7 @@
               >
                 <td class="p-2.5 text-center font-medium text-slate-500 border-r border-slate-200">{{ t.sequenceNumber || (idx + 1) }}</td>
                 <td class="p-2.5 text-center font-bold text-blue-900 border-r border-slate-200">{{ t.code }}</td>
-                <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">{{ t.title }}</td>
+                <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">{{ t.title }} <span v-if="t.isCoordinatingAssignment" class="ml-1 inline-flex rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold text-amber-800">Phối hợp</span></td>
                 <td class="p-2.5 text-center border-r border-slate-200 text-slate-600 whitespace-nowrap">{{ t.dueDate || '—' }}</td>
                 <td class="p-2.5 border-r border-slate-200 text-slate-600 text-xs">{{ t.deliverables || '—' }}</td>
                 <td class="p-2.5 text-center border-r border-slate-200 whitespace-nowrap">
@@ -326,7 +326,7 @@
               >
                 <td class="p-2.5 text-center font-medium text-slate-500 border-r border-slate-200">{{ t.sequenceNumber || (idx + 1) }}</td>
                 <td class="p-2.5 text-center font-bold text-blue-900 border-r border-slate-200">{{ t.code }}</td>
-                <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">{{ t.title }}</td>
+                <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">{{ t.title }} <span v-if="t.isCoordinatingAssignment" class="ml-1 inline-flex rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold text-amber-800">Phối hợp</span></td>
                 <td class="p-2.5 text-center border-r border-slate-200 text-slate-600 whitespace-nowrap">{{ t.dueDate || '—' }}</td>
                 <td class="p-2.5 border-r border-slate-200 text-slate-600 text-xs">{{ t.deliverables || '—' }}</td>
                 <td class="p-2.5 text-center border-r border-slate-200 whitespace-nowrap">

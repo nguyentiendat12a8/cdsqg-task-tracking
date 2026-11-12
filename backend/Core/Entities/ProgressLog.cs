@@ -53,6 +53,9 @@ namespace Cdsqg.Core.Entities
         public Guid? AgencyId { get; set; }
         public Agency? Agency { get; set; }
 
+        /// <summary>Báo cáo của cơ quan phối hợp được lưu riêng và không tham gia tính tiến độ chính thức.</summary>
+        public bool IsCoordinatingReport { get; set; }
+
         /// <summary>
         /// Trạng thái phê duyệt báo cáo tiến độ (Approved = 1, Pending = 2, Rejected = 3)
         /// </summary>

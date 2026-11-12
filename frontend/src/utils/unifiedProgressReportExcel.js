@@ -201,7 +201,7 @@ export function buildGoalsWorksheet(goals, agencyName, dateStr, XLSX) {
   const merges = [];
 
   // Row 1: Title (Row 0)
-  rows.push(['BIỂU MẪU BÁO CÁO MỤC TIÊU DO CƠ QUAN CHỦ TRÌ THEO DÕI']);
+  rows.push(['BIỂU MẪU BÁO CÁO MỤC TIÊU THEO PHÂN CÔNG CHỦ TRÌ, PHỐI HỢP']);
   merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: 12 } });
 
   // Row 2: Subtitle (Row 1)
@@ -287,7 +287,7 @@ export function buildGoalsWorksheet(goals, agencyName, dateStr, XLSX) {
       const row = [
         g.sequenceNumber || (idx + 1),
         formatReportCodes(g),
-        g.title || '',
+        `${g.title || ''}${g.isCoordinatingAssignment ? '\n(Vai trò: Phối hợp)' : ''}`,
         g.unitName || '%',
         valTarget1,
         valTarget2,
@@ -441,7 +441,7 @@ export function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
   const statusCells = [];
 
   // Title (Row 0)
-  rows.push(['BIỂU MẪU BÁO CÁO NHIỆM VỤ DO CƠ QUAN CHỦ TRÌ THEO DÕI']);
+  rows.push(['BIỂU MẪU BÁO CÁO NHIỆM VỤ THEO PHÂN CÔNG CHỦ TRÌ, PHỐI HỢP']);
   merges.push({ s: { r: 0, c: 0 }, e: { r: 0, c: 6 } });
 
   // Subtitle (Row 1)
@@ -484,7 +484,7 @@ export function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
       const row = [
         t.sequenceNumber || (idx + 1),
         t.code || '',
-        t.title || '',
+        `${t.title || ''}${t.isCoordinatingAssignment ? '\n(Vai trò: Phối hợp)' : ''}`,
         t.dueDate && t.dueDate !== '—' ? t.dueDate : '',
         t.deliverables || '',
         t.statusLabel || 'Chưa thực hiện',
@@ -713,6 +713,7 @@ export async function parseUnifiedProgressReportFile(file, { existingGoals = [],
       }
     }
   }
+          if (matchedGoal.isCoordinatingAssignment) return;
 
   // 2. Parse Sheet 2 (Nhiệm vụ)
   const tasksSheetName = workbook.SheetNames.find(n => n.toLowerCase().includes('nhiệm vụ') || n.toLowerCase().includes('nhiemvu')) || (workbook.SheetNames.length > 1 ? workbook.SheetNames[1] : null);

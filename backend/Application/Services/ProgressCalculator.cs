@@ -68,12 +68,12 @@ public static class ProgressCalculator
             // Trạng thái chung: báo cáo mới nhất của bất kỳ cơ quan/đơn vị chủ trì nào của mục
             // (chủ trì, đồng chủ trì, đơn vị trực thuộc được giao). Ai báo cáo thì ghi ở AgencyId của báo cáo.
             var team = LeadSideAgencyIds(item);
-            return item.ProgressLogs.Where(l => !l.AgencyId.HasValue || team.Contains(l.AgencyId.Value));
+            return item.ProgressLogs.Where(l => !l.IsCoordinatingReport && (!l.AgencyId.HasValue || team.Contains(l.AgencyId.Value)));
         }
         var id = agencyId ?? (item.IsGeneralTask ? (Guid?)null : AgencyAssignments.PrimaryAgencyId(item));
         // A general task has independent reports per agency. No cross-agency accumulation.
         if (item.IsGeneralTask && !id.HasValue) return Enumerable.Empty<ProgressLog>();
-        return item.ProgressLogs.Where(l => l.AgencyId == id || (!item.IsGeneralTask && l.AgencyId == null && id == item.LeadAgencyId));
+        return item.ProgressLogs.Where(l => !l.IsCoordinatingReport && (l.AgencyId == id || (!item.IsGeneralTask && l.AgencyId == null && id == item.LeadAgencyId)));
     }
 
     /// <summary>
@@ -140,7 +140,9 @@ public static class ProgressCalculator
         // Annual input is the total achieved through the report year, including for the
         // legacy Cumulative identifier. Adding previous reports would count results twice.
         var products = deliverables is { Count: > 0 } ? deliverables
-            : report?.Deliverables is { Count: > 0 } ? report.Deliverables : year.HasValue ? AnnualDeliverables(item, report) : item.Deliverables;
+            : report?.Deliverables is { Count: > 0 } ? report.Deliverables
+            : report?.IsCoordinatingReport == true ? new List<TaskDeliverable>()
+            : year.HasValue ? AnnualDeliverables(item, report) : item.Deliverables;
         decimal? percentage = item.EvaluationType == EvaluationTypeEnum.Quantitative
             ? (actual.HasValue && target > 0 ? IsLowerBetter(item)
                 ? actual>0 ? Math.Round(target.Value / actual.Value * 100m, 2) : 0m

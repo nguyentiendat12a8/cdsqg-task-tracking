@@ -81,7 +81,9 @@ public sealed class ApiPermissionFilter(AppDbContext db) : IAsyncActionFilter
             progress.UserRole = admin ? "Admin" : "AgencyUser";
             progress.CreatedBy = user.FindFirstValue("FullName") ?? user.Identity?.Name;
             if (!admin) progress.AgencyId = agencyId;
-            if (!admin && (!agencyId.HasValue || !await CanReportAsync((Guid)args["taskId"]!, agencyId.Value)))
+            if (!admin && (!agencyId.HasValue || !(progress.IsCoordinatingReport
+                ? await Cdsqg.Application.Services.AgencyScopePolicy.CanReportAnyAsync(db, (Guid)args["taskId"]!, agencyId.Value)
+                : await CanReportAsync((Guid)args["taskId"]!, agencyId.Value))))
             { context.Result = new ForbidResult(); return; }
         }
         if (controller == "Execution" && action == "ImportProgressBulk" && args["dto"] is ImportProgressBulkRequestDto bulk)

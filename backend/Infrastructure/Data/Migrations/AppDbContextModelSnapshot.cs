@@ -3185,6 +3185,9 @@ namespace Cdsqg.Infrastructure.Data.Migrations
 
                     b.Property<string>("QualitativeStatus")
                         .HasColumnType("text");
+                    b.Property<bool>("IsCoordinatingReport")
+                        .HasColumnType("boolean");
+
 
                     b.Property<decimal?>("QuantitativeValue")
                         .HasColumnType("numeric");

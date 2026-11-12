@@ -227,6 +227,7 @@ namespace Cdsqg.Application.DTOs
     {
         public int SequenceNumber { get; set; }
         public Guid Id { get; set; }
+        public bool IsCoordinatingAssignment { get; set; }
         public Guid DocumentId { get; set; }
         public string DocumentNumber { get; set; } = string.Empty;
         public string Code { get; set; } = string.Empty;
@@ -254,6 +255,7 @@ namespace Cdsqg.Application.DTOs
         public Guid DocumentId { get; set; }
         public string DocumentNumber { get; set; } = string.Empty;
         public string Code { get; set; } = string.Empty;
+        public bool IsCoordinatingAssignment { get; set; }
         public string Title { get; set; } = string.Empty;
         public string? CoordinatingAgencies { get; set; }
         public string? DueDate { get; set; }
