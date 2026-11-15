@@ -185,7 +185,7 @@
                   <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">
                     <div class="flex items-start gap-1.5">
                       <span class="line-clamp-3" v-tip="g.title">{{ g.title }}</span>
-                      <span v-if="g.isCoordinatingAssignment" class="shrink-0 inline-flex rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold text-amber-800">Phối hợp</span>
+                      <span v-if="g.isCoordinatingAssignment" class="shrink-0 inline-flex rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-xs font-semibold text-amber-800">Phối hợp</span>
                     </div>
                   </td>
                   <td class="p-2.5 text-center border-r border-slate-200 bg-slate-50 font-semibold text-slate-700" aria-label="Kết quả theo quyết định, dữ liệu cố định">{{ formatTarget(g.targetPhase1) }}</td>
@@ -237,7 +237,7 @@
                   <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">
                     <div class="flex items-start gap-1.5">
                       <span class="line-clamp-3" v-tip="g.title">{{ g.title }}</span>
-                      <span v-if="g.isCoordinatingAssignment" class="shrink-0 inline-flex rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold text-amber-800">Phối hợp</span>
+                      <span v-if="g.isCoordinatingAssignment" class="shrink-0 inline-flex rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-xs font-semibold text-amber-800">Phối hợp</span>
                     </div>
                   </td>
                   <td class="p-2.5 text-center border-r border-slate-200 bg-slate-50 font-semibold text-slate-700" aria-label="Kết quả theo quyết định, dữ liệu cố định">{{ formatTarget(g.targetPhase1) }}</td>
@@ -321,7 +321,7 @@
                   <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">
                     <div class="flex items-start gap-1.5">
                       <span class="line-clamp-3" v-tip="t.title">{{ t.title }}</span>
-                      <span v-if="t.isCoordinatingAssignment" class="shrink-0 inline-flex rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold text-amber-800">Phối hợp</span>
+                      <span v-if="t.isCoordinatingAssignment" class="shrink-0 inline-flex rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-xs font-semibold text-amber-800">Phối hợp</span>
                     </div>
                   </td>
                   <td class="p-2.5 text-center border-r border-slate-200 text-slate-600 whitespace-nowrap">{{ t.dueDate || '—' }}</td>
@@ -355,7 +355,7 @@
                   <td class="p-2.5 border-r border-slate-200 text-slate-800 leading-relaxed">
                     <div class="flex items-start gap-1.5">
                       <span class="line-clamp-3" v-tip="t.title">{{ t.title }}</span>
-                      <span v-if="t.isCoordinatingAssignment" class="shrink-0 inline-flex rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[11px] font-semibold text-amber-800">Phối hợp</span>
+                      <span v-if="t.isCoordinatingAssignment" class="shrink-0 inline-flex rounded-md border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-xs font-semibold text-amber-800">Phối hợp</span>
                     </div>
                   </td>
                   <td class="p-2.5 text-center border-r border-slate-200 text-slate-600 whitespace-nowrap">{{ t.dueDate || '—' }}</td>
@@ -907,6 +907,7 @@ async function handleFileUpload(e) {
 async function submitImportData() {
   importError.value = '';
   isSubmitting.value = true;
+  let progressSaved = false;
   try {
     // 1. Submit goals and tasks progress to /api/execution/import-progress-bulk
     const progressItems = [
@@ -951,6 +952,8 @@ async function submitImportData() {
         const sample = failed.slice(0, 3).map(r => `${r.code}: ${r.message}`).join('\n');
         throw new Error(`${failed.length} dòng chưa được cập nhật:\n${sample}${failed.length > 3 ? '\n…' : ''}`);
       }
+
+      progressSaved = true;
     }
 
     // 2. Submit plans if any
@@ -971,7 +974,9 @@ async function submitImportData() {
         });
         if (!planResponse.ok) {
           const error = await planResponse.json().catch(() => ({}));
-          throw new Error(parseApiError(error, 'Không thể cập nhật kế hoạch mục tiêu. Vui lòng kiểm tra và thử lại.'));
+          const reason = parseApiError(error, 'Không thể cập nhật kế hoạch mục tiêu. Vui lòng kiểm tra và thử lại.');
+          // Kết quả/trạng thái đã lưu ở bước trước; nói rõ để người dùng không nhập lại phần đó.
+          throw new Error(progressSaved ? `Đã lưu kết quả thực hiện và trạng thái nhiệm vụ, nhưng kế hoạch 2027-2030 chưa được lưu:\n${reason}` : reason);
         }
       }
     }
@@ -983,6 +988,7 @@ async function submitImportData() {
     console.error('Lỗi khi lưu dữ liệu import:', err);
     importError.value = err.message || 'Lỗi khi lưu dữ liệu import.';
     toast.error(importError.value, { autoClose: 10000 });
+    if (progressSaved) await fetchReport();
   } finally {
     isSubmitting.value = false;
   }

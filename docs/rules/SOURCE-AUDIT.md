@@ -197,3 +197,11 @@ progressWorkbook chỉ bật protection cho sheet có metadata !reportEditableCe
 - Tái hiện lỗi JSON userRole số 1 không chuyển được sang string của DTO, dẫn đến HTTP 400 trước khi controller xử lý. FE không gửi userRole/userAgencyId trong bulk import; ApiPermissionFilter lấy thông tin từ claims như hiện có.
 - Đăng ký Vue3Toastify và stylesheet ở bootstrap để toast thực sự hiển thị; thêm lỗi tồn tại ngay trong popup nhập với role alert, giữ preview khi thất bại. Tên lỗi validation nhận diện đơn vị nhập, vai trò và dòng/trường cụ thể.
 - Kiểm chứng JSON contract .NET và browser bốn viewport: API 400 hiện cả toast và alert, không báo thành công, thử lại được, payload không chứa vai trò giả định; build frontend.
+
+
+### 15/11/2026 — Kiểm chứng xuất/nhập báo cáo cơ quan phối hợp
+
+- Thêm kiểm thử Excel thật: nhãn Phối hợp, khóa kế hoạch 2027–2030, xuất/nhập giữ nguyên không phát sinh thay đổi; sửa kết quả 2025/2026 của hai quyết định trùng mã và trạng thái/ghi chú nhiệm vụ được đối chiếu đúng.
+- Thêm PostgreSQL test schema riêng: báo cáo phối hợp đúng AgencyId/IsCoordinatingReport/năm; Admin duyệt ngay, tài khoản đơn vị chờ duyệt; Pending không thay thế kết quả Approved; không ảnh hưởng số liệu/trạng thái chủ trì; từ chối đơn vị không được giao và sửa kế hoạch qua vai trò phối hợp.
+- Phát hiện và sửa việc import sản phẩm phối hợp mượn minh chứng từ master/chủ trì. GetDeliverablesForAgency có context phối hợp/năm, lấy đúng báo cáo Approved của đơn vị hoặc danh mục sản phẩm sạch; pending products lọc cùng vai trò. Kiểm thử số văn bản chủ trì không xuất hiện trong báo cáo phối hợp và minh chứng riêng của phối hợp được giữ ở lần nhập tiếp theo.
+- Kết quả: 12 backend tests qua, bao gồm PostgreSQL; các test Excel/diff qua. Dữ liệu ứng dụng không bị sửa, schema thử nghiệm được xóa sau chạy.

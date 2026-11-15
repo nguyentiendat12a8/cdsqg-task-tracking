@@ -556,14 +556,19 @@ namespace Cdsqg.Application.Services
             return result;
         }
 
-        public static List<TaskDeliverable> GetDeliverablesForAgency(GoalTaskItem item, Guid? agencyId)
+        public static List<TaskDeliverable> GetDeliverablesForAgency(GoalTaskItem item, Guid? agencyId, bool isCoordinatingReport = false, int? reportYear = null)
         {
             if (item == null) return new List<TaskDeliverable>();
             var masterList = item.Deliverables ?? new List<TaskDeliverable>();
 
-            var approved = ProgressCalculator.LatestApproved(item, agencyId);
+            var approved = isCoordinatingReport
+                ? item.ProgressLogs.Where(p => p.IsCoordinatingReport && p.AgencyId == agencyId
+                    && p.ApprovalStatus == ApprovalStatusEnum.Approved && (!reportYear.HasValue || p.PeriodYear == reportYear))
+                    .OrderByDescending(p => p.PeriodYear).ThenByDescending(p => p.LogDate).FirstOrDefault()
+                : ProgressCalculator.LatestApproved(item, agencyId);
             if (approved?.Deliverables is { Count: > 0 }) return approved.Deliverables;
-            if (!item.IsGeneralTask) return masterList;
+            // The master products may contain the lead agency's evidence. Coordination starts with clean evidence.
+            if (!item.IsGeneralTask && !isCoordinatingReport) return masterList;
 
             return masterList.Select(d => new TaskDeliverable
             {
@@ -665,10 +670,15 @@ namespace Cdsqg.Application.Services
             static string GroupKey(GoalTaskItem i) => (i.Group ?? string.Empty).Trim();
             static int CodeNumber(string? code)
                 => int.TryParse(System.Text.RegularExpressions.Regex.Match(code ?? string.Empty, @"(\d+)$").Value, out var n) ? n : int.MaxValue;
-            var groupRank = agencyItems
-                .GroupBy(i => (i.DocumentId, i.ItemType, Group: GroupKey(i)))
+            // Thứ tự nhóm lấy theo toàn bộ quyết định (không chỉ các mục của cơ quan đang xem)
+            // để mọi cơ quan đều thấy các nhóm theo cùng một thứ tự như trong phụ lục.
+            var groupRank = (await _context.GoalTaskItems.AsNoTracking()
+                    .Where(i => i.DocumentId == doc1266Id || i.DocumentId == doc2629Id)
+                    .Select(i => new { i.DocumentId, i.ItemType, i.Group, i.OriginalCode })
+                    .ToListAsync())
+                .GroupBy(i => (i.DocumentId, i.ItemType, Group: (i.Group ?? string.Empty).Trim()))
                 .ToDictionary(g => g.Key, g => g.Min(i => CodeNumber(i.OriginalCode)));
-            int GroupRank(GoalTaskItem i) => groupRank[(i.DocumentId, i.ItemType, GroupKey(i))];
+            int GroupRank(GoalTaskItem i) => groupRank.TryGetValue((i.DocumentId, i.ItemType, GroupKey(i)), out var rank) ? rank : int.MaxValue;
 
             var allGoalItems = agencyItems
                 .Where(i => i.ItemType == ItemTypeEnum.Goal)
@@ -746,7 +756,10 @@ namespace Cdsqg.Application.Services
                     applicableYears.AddRange(new[] { 2026, 2027, 2028, 2029, 2030 });
                 }
 
-                if (coordinating) applicableYears.RemoveAll(year => year >= 2027);
+                // Mục tiêu giao chung (chủ trì là nhóm cơ quan) không có kế hoạch riêng từng cơ quan:
+                // API nhập kế hoạch từ chối các mục này, nên biểu mẫu cũng không mở ô 2027-2030.
+                bool sharedLead = g.IsGeneralTask || g.AgencyExecutions.Any(e => e.IsLeadAssignment && e.IsLeadGroupAssignment);
+                if (coordinating || sharedLead) applicableYears.RemoveAll(year => year >= 2027);
 
                 string? GetPlanVal(int yr)
                 {

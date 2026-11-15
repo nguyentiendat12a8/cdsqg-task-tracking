@@ -1,7 +1,7 @@
 import { getDocumentReportHeading } from '../services/documentContext.js';
 import { loadExcelWriter, loadExcelReader } from './excelRuntime.js';
 import { downloadProgressWorkbook } from './progressWorkbook.js';
-import { isProgressReportYearApplicable } from '../shared/progressReportCells.js';
+import { isProgressReportYearApplicable, isExternallyAssessedGoal } from '../shared/progressReportCells.js';
 import { toast } from 'vue3-toastify';
 
 const THIN_BORDER = {
@@ -585,6 +585,15 @@ export function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
   return { ws, statusCells };
 }
 
+export function reportTemplateGoals(goals) {
+  const next = {};
+  return (goals || []).filter(goal => !isExternallyAssessedGoal(goal)).map(goal => {
+    const doc = String(goal.documentNumber || '');
+    next[doc] = (next[doc] || 0) + 1;
+    return { ...goal, sequenceNumber: next[doc] };
+  });
+}
+
 /**
  * Main export function: creates 1 file with 2 sheets
  */
@@ -602,7 +611,9 @@ export async function exportUnifiedProgressReport({ reportData, agencyName, repo
   const dateFileStr = now.toISOString().slice(0, 10);
 
   // 1. Build Sheet 1: Mục tiêu
-  const goalsWs = buildGoalsWorksheet(reportData.goals || [], agencyName || reportData.agencyName || 'Cơ quan', dateStr, XLSX);
+  // Bỏ mục tiêu do Liên Hợp Quốc đánh giá (EGDI) và đánh lại STT cho liền mạch trong từng quyết định.
+  const templateGoals = reportTemplateGoals(reportData.goals || []);
+  const goalsWs = buildGoalsWorksheet(templateGoals, agencyName || reportData.agencyName || 'Cơ quan', dateStr, XLSX);
   XLSX.utils.book_append_sheet(wb, goalsWs, 'Mục tiêu');
 
   // 2. Build Sheet 2: Nhiệm vụ
@@ -674,16 +685,25 @@ export async function parseUnifiedProgressReportFile(file, { existingGoals = [],
 
       const startDataRow = headerRowIdx + (rows[headerRowIdx + 2] && rows[headerRowIdx + 2].some(c => String(c || '').includes('2027')) ? 3 : 2);
 
+      // Mã mục tiêu (MT-BCA-01...) được đánh riêng cho từng quyết định nên trùng nhau giữa QĐ 2629 và QĐ 1266:
+      // phải đối chiếu trong đúng phần quyết định mà dòng đang nằm.
+      let sectionDocumentNumber = null;
       for (let r = startDataRow; r < rows.length; r++) {
         const row = rows[r];
         if (!row || !row[colMap.code]) continue;
         const rawCode = String(row[colMap.code]).trim();
-        if (/^(?:QUYẾT ĐỊNH|QUYET DINH)\b/iu.test(rawCode)) continue;
+        if (/^(?:QUYẾT ĐỊNH|QUYET DINH|QĐ)/iu.test(rawCode)) {
+          if (/1266|2629/.test(rawCode)) sectionDocumentNumber = /2629/.test(rawCode) ? '2629' : '1266';
+          continue;
+        }
         if (!rawCode || rawCode.startsWith('I') || rawCode.startsWith('QĐ') || rawCode.toLowerCase().startsWith('mã')) continue;
 
         const rowCodes = rawCode.split(/[\r\n,\/]+/).map(c => c.trim()).filter(Boolean);
 
-        const matchedGoal = existingGoals.find(g => {
+        const sectionGoals = sectionDocumentNumber
+          ? existingGoals.filter(g => String(g.documentNumber).includes(sectionDocumentNumber))
+          : existingGoals;
+        const matchedGoal = sectionGoals.find(g => {
           if (formatReportCodes(g).toLowerCase() === formatReportCodes({code:rawCode}).toLowerCase()) return true;
           if (g.subCodes && g.subCodes.some(sc => rowCodes.some(rc => rc.toLowerCase() === sc.toLowerCase()))) return true;
           const gCodes = (g.code || '').split(/[\r\n,\/]+/).map(c => c.trim().toLowerCase()).filter(Boolean);
@@ -696,10 +716,16 @@ export async function parseUnifiedProgressReportFile(file, { existingGoals = [],
         }
 
         const notesRaw = row[colMap.notes] !== undefined && row[colMap.notes] !== null ? String(row[colMap.notes]).trim().replace(/^—$/, '') : '';
+        let hasResultValue = false;
         for (const [year, col] of [[2025, colMap.act2025], [2026, colMap.est2026]]) {
           if (!isProgressReportYearApplicable(matchedGoal, year)) continue;
           const numVal = parseVNNumber(row[col]);
-          if (numVal == null) continue;
+          if (numVal == null) {
+            const rawCell = row[col] == null ? '' : String(row[col]).trim();
+            if (rawCell && rawCell !== '—') warnings.push(`Mục tiêu ${rowCodes.join(' / ')}: giá trị "${rawCell}" ở cột ${year} không phải là số; ô này không được cập nhật.`);
+            continue;
+          }
+          hasResultValue = true;
           parsedGoals.push({
             code: matchedGoal.subCodes?.[0] || rowCodes[0] || rawCode,
             id: matchedGoal.subGoalIds?.[0] || matchedGoal.id,
@@ -711,11 +737,21 @@ export async function parseUnifiedProgressReportFile(file, { existingGoals = [],
           });
         }
 
+        // Ghi chú được lưu kèm báo cáo kết quả; chỉ có ghi chú mà chưa có số liệu thì không có báo cáo để gắn vào.
+        if (!hasResultValue && notesRaw && notesRaw !== String(matchedGoal.notes ?? '').trim()) {
+          warnings.push(`Mục tiêu ${rowCodes.join(' / ')}: có ghi chú nhưng chưa nhập kết quả 2025/2026 nên ghi chú chưa được lưu.`);
+        }
+
         // Check plans 2027-2030
         const checkPlan = (year, colIdx) => {
           if (matchedGoal.isCoordinatingAssignment) return;
+          if (!isProgressReportYearApplicable(matchedGoal, year)) return;
           const raw = row[colIdx];
           const num = parseVNNumber(raw);
+          if (num == null) {
+            const rawCell = raw == null ? '' : String(raw).trim();
+            if (rawCell && rawCell !== '—') warnings.push(`Mục tiêu ${rowCodes.join(' / ')}: giá trị "${rawCell}" ở cột ${year} không phải là số; ô này không được cập nhật.`);
+          }
           if (num != null) {
             let targetTaskId = matchedGoal.id;
             let targetCode = rawCode;

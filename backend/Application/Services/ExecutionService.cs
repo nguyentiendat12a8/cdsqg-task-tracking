@@ -923,7 +923,7 @@ namespace Cdsqg.Application.Services
                             {
                                 // Biểu báo cáo tiến độ chỉ có trạng thái chung của nhiệm vụ, không có từng sản phẩm:
                                 // suy trạng thái sản phẩm từ trạng thái chung, giữ sản phẩm đã hoàn thành khi đang thực hiện.
-                                var current = PlanningService.GetDeliverablesForAgency(task, reportingAgency?.Id);
+                                var current = PlanningService.GetDeliverablesForAgency(task, reportingAgency?.Id, submitDto.IsCoordinatingReport, submitDto.IsCoordinatingReport ? submitDto.PeriodYear : null);
                                 var overall = item.Status.Value.ToString();
                                 products = task.Deliverables.Select(d =>
                                 {
@@ -938,9 +938,9 @@ namespace Cdsqg.Application.Services
                                 || products.Any(d => !task.Deliverables.Any(required => required.Id == d.Id) || !allowed.Contains(d.CurrentStatus)))
                                 throw new InvalidOperationException("Báo cáo phải có đúng các sản phẩm và chọn một trong ba trạng thái cho từng sản phẩm.");
                             var pendingProducts = !isAdmin ? task.ProgressLogs.Where(p => p.AgencyId == reportingAgency?.Id
-                                && p.PeriodYear == submitDto.PeriodYear && p.ApprovalStatus == ApprovalStatusEnum.Pending)
+                                && p.PeriodYear == submitDto.PeriodYear && p.IsCoordinatingReport == submitDto.IsCoordinatingReport && p.ApprovalStatus == ApprovalStatusEnum.Pending)
                                 .OrderByDescending(p => p.LogDate).FirstOrDefault()?.Deliverables : null;
-                            var previous = pendingProducts is { Count: > 0 } ? pendingProducts : PlanningService.GetDeliverablesForAgency(task, reportingAgency?.Id);
+                            var previous = pendingProducts is { Count: > 0 } ? pendingProducts : PlanningService.GetDeliverablesForAgency(task, reportingAgency?.Id, submitDto.IsCoordinatingReport, submitDto.IsCoordinatingReport ? submitDto.PeriodYear : null);
                             submitDto.Deliverables = task.Deliverables.Select(d =>
                             {
                                 var old = previous.FirstOrDefault(p => p.Id == d.Id) ?? d;
