@@ -4,7 +4,7 @@
 # - The Neon connection string is asked for at run time and never written to disk.
 param(
     [string]$LocalDatabase = 'cdsqg_db',
-    [string]$LocalPort = '5433',
+    [string]$LocalPort = '5432',
     [string]$PgBin = 'C:\Program Files\PostgreSQL\18\bin',
     [string]$BackupDirectory = (Join-Path $env:USERPROFILE 'cdsqg-db-backups')
 )

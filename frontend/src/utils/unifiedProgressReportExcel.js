@@ -4,11 +4,13 @@ import { downloadProgressWorkbook } from './progressWorkbook.js';
 import { isProgressReportYearApplicable, isExternallyAssessedGoal } from '../shared/progressReportCells.js';
 import { toast } from 'vue3-toastify';
 
+// Mọi ô dùng chung một màu viền: hai ô cạnh nhau chia chung một cạnh, nếu khác màu viền
+// thì Excel chỉ vẽ màu của một ô nên trông như mất viền. Xám đậm vừa để vẫn rõ trên nền vàng.
 const THIN_BORDER = {
-  top: { style: 'thin', color: { rgb: 'CBD5E1' } },
-  bottom: { style: 'thin', color: { rgb: 'CBD5E1' } },
-  left: { style: 'thin', color: { rgb: 'CBD5E1' } },
-  right: { style: 'thin', color: { rgb: 'CBD5E1' } }
+  top: { style: 'thin', color: { rgb: '94A3B8' } },
+  bottom: { style: 'thin', color: { rgb: '94A3B8' } },
+  left: { style: 'thin', color: { rgb: '94A3B8' } },
+  right: { style: 'thin', color: { rgb: '94A3B8' } }
 };
 
 const HEADER_STYLE = {
@@ -18,9 +20,17 @@ const HEADER_STYLE = {
   border: THIN_BORDER
 };
 
+// Quy ước màu biểu mẫu (đồng bộ 2 sheet):
+//   - Ô NHẬP: nền vàng nhạt, để trống cho đơn vị điền; tiêu đề cột nhập màu cam đậm có dấu ✎.
+//   - Ô KHÔNG ÁP DỤNG: nền xám, để trống (người dùng chọn không ghi chữ cho đỡ rối), đã khóa;
+//     ý nghĩa màu xám được giải thích ở dòng hướng dẫn.
+//   - Ô THÔNG TIN CỐ ĐỊNH: nền trắng (STT, mã, tên, ĐVT, kết quả theo QĐ), đã khóa.
+// Tương phản chữ/nền đều >= 4.5:1.
+const NOT_APPLICABLE_TEXT = '';
+
 const SUBHEADER_INPUT_STYLE = {
   font: { name: 'Segoe UI', sz: 9.5, bold: true, color: { rgb: 'FFFFFF' } },
-  fill: { fgColor: { rgb: '1E3A8A' } },
+  fill: { fgColor: { rgb: 'B45309' } },
   alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
   border: THIN_BORDER
 };
@@ -33,9 +43,10 @@ const SECTION_STYLE = {
 };
 
 // Dòng tiêu đề nhóm theo phụ lục quyết định (nằm dưới dòng quyết định, trên các mục của nhóm).
+// Xanh nhạt để không lẫn với ô xám "Không áp dụng".
 const GROUP_STYLE = {
-  font: { name: 'Segoe UI', sz: 10, bold: true, color: { rgb: '1E293B' } },
-  fill: { fgColor: { rgb: 'E2E8F0' } },
+  font: { name: 'Segoe UI', sz: 10, bold: true, color: { rgb: '1E3A8A' } },
+  fill: { fgColor: { rgb: 'DBEAFE' } },
   alignment: { horizontal: 'left', vertical: 'center', wrapText: true },
   border: THIN_BORDER
 };
@@ -88,7 +99,7 @@ const CELL_TEXT_CENTER = {
 
 const CELL_REFERENCE = {
   ...CELL_TEXT_CENTER,
-  fill: { fgColor: { rgb: 'F8F9FB' } }
+  font: { name: 'Segoe UI', sz: 10, bold: true, color: { rgb: '334155' } }
 };
 
 const CELL_CODE = {
@@ -99,16 +110,22 @@ const CELL_CODE = {
 };
 
 const CELL_EDITABLE = {
-  font: { name: 'Segoe UI', sz: 10, bold: true, color: { rgb: '047857' } },
-  fill: { fgColor: { rgb: 'EAF1FC' } },
-  alignment: { horizontal: 'center', vertical: 'center' },
+  font: { name: 'Segoe UI', sz: 10, bold: true, color: { rgb: '0F172A' } },
+  fill: { fgColor: { rgb: 'FFF7D6' } },
+  alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
   border: THIN_BORDER
 };
 
+const CELL_EDITABLE_NOTES = {
+  ...CELL_EDITABLE,
+  font: { name: 'Segoe UI', sz: 9.5, color: { rgb: '0F172A' } },
+  alignment: { horizontal: 'left', vertical: 'center', wrapText: true }
+};
+
 const CELL_DISABLED = {
-  font: { name: 'Segoe UI', sz: 10, color: { rgb: '94A3B8' } },
-  fill: { fgColor: { rgb: 'F8F9FB' } },
-  alignment: { horizontal: 'center', vertical: 'center' },
+  font: { name: 'Segoe UI', sz: 8.5, italic: true, color: { rgb: '475569' } },
+  fill: { fgColor: { rgb: 'E2E8F0' } },
+  alignment: { horizontal: 'center', vertical: 'center', wrapText: true },
   border: THIN_BORDER
 };
 
@@ -222,7 +239,7 @@ export function buildGoalsWorksheet(goals, agencyName, dateStr, XLSX) {
 
   // Row 3: Căn cứ & Hướng dẫn (Row 2)
   rows.push([
-    'CĂN CỨ: Kế hoạch mục tiêu được xây dựng căn cứ theo Kế hoạch chuyển đổi số 5 năm của cơ quan, đơn vị đã được cấp có thẩm quyền ban hành. Trường hợp chưa ban hành kế hoạch thì khẩn trương rà soát, xây dựng và ban hành theo đúng quy định.\nHƯỚNG DẪN: Điền vào ô màu xanh nhạt có dấu — (kết quả 2025, ước tính 2026 và kế hoạch 2027-2030); các ô dữ liệu cố định và ô không áp dụng đã khóa.'
+    'CĂN CỨ: Kế hoạch mục tiêu được xây dựng căn cứ theo Kế hoạch chuyển đổi số 5 năm của cơ quan, đơn vị đã được cấp có thẩm quyền ban hành. Trường hợp chưa ban hành kế hoạch thì khẩn trương rà soát, xây dựng và ban hành theo đúng quy định.\nCÁCH ĐIỀN: ✎ Ô NỀN VÀNG là ô nhập (kết quả 2025, ước tính 2026, kế hoạch 2027-2030, ghi chú) — chỉ nhập số, không nhập ký hiệu %. Ô NỀN XÁM là ô không áp dụng (năm ngoài giai đoạn, ngoài vai trò của đơn vị, hoặc quyết định không đặt chỉ tiêu), không cần điền. Ô NỀN TRẮNG là thông tin cố định theo quyết định. Các ô không phải ô nhập đã được khóa.'
   ]);
   merges.push({ s: { r: 2, c: 0 }, e: { r: 2, c: 12 } });
 
@@ -240,7 +257,7 @@ export function buildGoalsWorksheet(goals, agencyName, dateStr, XLSX) {
     '',
     '',
     '',
-    'GHI CHÚ / KHÓ KHĂN & KIẾN NGHỊ'
+    '✎ GHI CHÚ / KHÓ KHĂN & KIẾN NGHỊ'
   ]);
 
   // Row 5: Level 2 Header (Row 4)
@@ -248,12 +265,12 @@ export function buildGoalsWorksheet(goals, agencyName, dateStr, XLSX) {
     '', '', '', '',
     'Giai đoạn 1',
     'Giai đoạn 2',
-    'Kết quả 2025',
-    'Ước tính 2026',
-    '2027',
-    '2028',
-    '2029',
-    '2030',
+    '✎ Kết quả 2025',
+    '✎ Ước tính 2026',
+    '✎ 2027',
+    '✎ 2028',
+    '✎ 2029',
+    '✎ 2030',
     ''
   ]);
 
@@ -342,6 +359,10 @@ export function buildGoalsWorksheet(goals, agencyName, dateStr, XLSX) {
         else disabledCellCoords.push({ r: rIdx, c: col });
       }
       editableCellCoords.push({ r: rIdx, c: 12 }); // Notes
+      // Quyết định không đặt chỉ tiêu cho giai đoạn này: tô xám như ô không áp dụng,
+      // tránh ô trắng trống bị hiểu nhầm là ô cần điền.
+      if (valTarget1 === '') disabledCellCoords.push({ r: rIdx, c: 4 });
+      if (valTarget2 === '') disabledCellCoords.push({ r: rIdx, c: 5 });
 
     });
   }
@@ -389,12 +410,13 @@ export function buildGoalsWorksheet(goals, agencyName, dateStr, XLSX) {
   // Headers styling (Row 3 and Row 4)
   applyStyleToRange(ws, 3, 0, 4, 3, HEADER_STYLE, XLSX); // STT, Mã, Tên, ĐVT
   applyStyleToRange(ws, 3, 4, 4, 5, HEADER_STYLE, XLSX); // Kết quả theo QĐ
-  applyStyleToRange(ws, 3, 6, 4, 6, HEADER_STYLE, XLSX); // Kết quả 2025
+  applyStyleToRange(ws, 3, 6, 3, 6, HEADER_STYLE, XLSX);
+  applyStyleToRange(ws, 4, 6, 4, 6, SUBHEADER_INPUT_STYLE, XLSX); // Kết quả 2025
   applyStyleToRange(ws, 3, 7, 3, 7, HEADER_STYLE, XLSX);
   applyStyleToRange(ws, 4, 7, 4, 7, SUBHEADER_INPUT_STYLE, XLSX); // Ước tính 2026
   applyStyleToRange(ws, 3, 8, 3, 11, HEADER_STYLE, XLSX);          // Mục tiêu từng năm
   applyStyleToRange(ws, 4, 8, 4, 11, SUBHEADER_INPUT_STYLE, XLSX); // 2027-2030
-  applyStyleToRange(ws, 3, 12, 4, 12, HEADER_STYLE, XLSX);         // Ghi chú
+  applyStyleToRange(ws, 3, 12, 4, 12, SUBHEADER_INPUT_STYLE, XLSX); // Ghi chú (cột nhập)
 
   // Section styling
   const secRowIndices = sectionRows.map(s => s.r);
@@ -424,14 +446,14 @@ export function buildGoalsWorksheet(goals, agencyName, dateStr, XLSX) {
   editableCellCoords.forEach(({ r, c }) => {
     const ref = XLSX.utils.encode_cell({ r, c });
     if (ws[ref]) {
-      ws[ref].s = { ...(c === 12 ? CELL_NOTES : CELL_EDITABLE), fill: { fgColor: { rgb: 'EAF1FC' } } };
-      if (ws[ref].v == null || ws[ref].v === '') { ws[ref].t = 's'; ws[ref].v = '—'; }
+      ws[ref].s = { ...(c === 12 ? CELL_EDITABLE_NOTES : CELL_EDITABLE) };
+      if (ws[ref].v == null || ws[ref].v === '—') { ws[ref].t = 's'; ws[ref].v = ''; }
     }
   });
 
   disabledCellCoords.forEach(({ r, c }) => {
     const ref = XLSX.utils.encode_cell({ r, c });
-    if (ws[ref]) { ws[ref].s = { ...CELL_DISABLED }; ws[ref].t = 's'; ws[ref].v = ''; }
+    if (ws[ref]) { ws[ref].s = { ...CELL_DISABLED }; ws[ref].t = 's'; ws[ref].v = NOT_APPLICABLE_TEXT; }
   });
 
   for (const sec of sectionRows) ws['!rows'][sec.r] = { hpt: 32 };
@@ -473,7 +495,7 @@ export function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
 
   // Guide (Row 2)
   rows.push([
-    'HƯỚNG DẪN: Chọn Trạng thái thực hiện tại cột F (màu xanh nhạt); Ghi chú khó khăn vướng mắc tại cột G.'
+    'CÁCH ĐIỀN: ✎ Ô NỀN VÀNG là ô nhập — chọn Trạng thái thực hiện ở cột F (bấm vào ô để mở danh sách), ghi khó khăn, vướng mắc ở cột G. Ô NỀN TRẮNG là thông tin cố định theo quyết định, đã được khóa.'
   ]);
   merges.push({ s: { r: 2, c: 0 }, e: { r: 2, c: 6 } });
 
@@ -484,8 +506,8 @@ export function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
     'Tên nhiệm vụ',
     'Hạn hoàn thành',
     'Sản phẩm bàn giao',
-    'TRẠNG THÁI THỰC HIỆN',
-    'GHI CHÚ / KHÓ KHĂN & KIẾN NGHỊ',
+    '✎ TRẠNG THÁI THỰC HIỆN',
+    '✎ GHI CHÚ / KHÓ KHĂN & KIẾN NGHỊ',
     'ID Nhiệm Vụ (Ẩn)',
     'ID Quyết Định (Ẩn)'
   ];
@@ -557,7 +579,8 @@ export function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
   applyStyleToRange(ws, 0, 0, 0, 6, TITLE_STYLE, XLSX);
   applyStyleToRange(ws, 1, 0, 1, 6, SUBTITLE_STYLE, XLSX);
   applyStyleToRange(ws, 2, 0, 2, 6, GUIDE_STYLE, XLSX);
-  applyStyleToRange(ws, 3, 0, 3, 6, HEADER_STYLE, XLSX);
+  applyStyleToRange(ws, 3, 0, 3, 4, HEADER_STYLE, XLSX);
+  applyStyleToRange(ws, 3, 5, 3, 6, SUBHEADER_INPUT_STYLE, XLSX); // Cột nhập
   for (const r of sectionRows) {
     applyStyleToRange(ws, r, 0, r, 6, SECTION_STYLE, XLSX);
     applyStyleToRange(ws, r, 0, r, 0, { ...SECTION_STYLE, alignment: { horizontal: 'center', vertical: 'center' } }, XLSX);
@@ -565,7 +588,7 @@ export function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
   groupRows.forEach(r => applyStyleToRange(ws, r, 0, r, 6, GROUP_STYLE, XLSX));
   for (let r = 4; r < rows.length; r++) {
     if (sectionRows.includes(r) || groupRows.includes(r)) continue;
-    for (const [c, style] of [[0,CELL_TEXT_CENTER],[1,CELL_CODE],[2,CELL_TEXT_LEFT],[3,CELL_TEXT_CENTER],[4,CELL_TEXT_LEFT],[5,CELL_EDITABLE],[6,CELL_NOTES]])
+    for (const [c, style] of [[0,CELL_TEXT_CENTER],[1,CELL_CODE],[2,CELL_TEXT_LEFT],[3,CELL_TEXT_CENTER],[4,CELL_TEXT_LEFT],[5,CELL_EDITABLE],[6,CELL_EDITABLE_NOTES]])
       applyStyleToRange(ws,r,c,r,c,style,XLSX);
   }
 
@@ -578,8 +601,8 @@ export function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
     for (const c of [5,6]) {
       const ref = XLSX.utils.encode_cell({r,c});
       ws['!reportEditableCells'].push(ref);
-      ws[ref].s = { ...ws[ref].s, fill: { fgColor: { rgb: 'EAF1FC' } } };
-      if (ws[ref].v == null || ws[ref].v === '') { ws[ref].t = 's'; ws[ref].v = '—'; }
+      ws[ref].s = { ...(c === 6 ? CELL_EDITABLE_NOTES : CELL_EDITABLE) };
+      if (ws[ref].v == null || ws[ref].v === '—') { ws[ref].t = 's'; ws[ref].v = ''; }
     }
   }
   return { ws, statusCells };
@@ -654,7 +677,8 @@ export async function parseUnifiedProgressReportFile(file, { existingGoals = [],
     let headerRowIdx = -1;
     for (let r = 0; r < Math.min(rows.length, 10); r++) {
       const row = rows[r] || [];
-      if (row.some(c => String(c || '').toLowerCase().includes('mã mt') || String(c || '').toLowerCase().includes('chỉ tiêu'))) {
+      // So khớp đầu ô (không tìm chuỗi con) để dòng hướng dẫn có chữ "chỉ tiêu" không bị nhận nhầm là dòng tiêu đề.
+      if (row.some(c => /^(mã mt|tên mục tiêu|chỉ tiêu)/u.test(String(c || '').trim().toLowerCase()))) {
         headerRowIdx = r;
         break;
       }
