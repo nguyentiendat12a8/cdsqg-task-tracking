@@ -324,7 +324,7 @@ export function buildGoalsWorksheet(goals, agencyName, dateStr, XLSX) {
       const row = [
         g.sequenceNumber || (idx + 1),
         formatReportCodes(g),
-        `${g.title || ''}${g.isCoordinatingAssignment ? '\n(Vai trò: Phối hợp)' : ''}`,
+        g.title || '',
         g.unitName || '%',
         valTarget1,
         valTarget2,
@@ -379,7 +379,7 @@ export function buildGoalsWorksheet(goals, agencyName, dateStr, XLSX) {
   // Column Widths
   ws['!cols'] = [
     { wch: 6 },  // STT (A)
-    { wch: 14 }, // Mã MT (B)
+    { wch: 14, hidden: true }, // Mã MT (B) - ẩn trên biểu mẫu, vẫn giữ để đối soát khi nhập
     { wch: 46 }, // Tên mục tiêu (C)
     { wch: 10 }, // ĐVT (D)
     { wch: 14 }, // Kết quả 1 (E)
@@ -536,7 +536,7 @@ export function buildTasksWorksheet(tasks, agencyName, dateStr, XLSX) {
       const row = [
         t.sequenceNumber || (idx + 1),
         t.code || '',
-        `${t.title || ''}${t.isCoordinatingAssignment ? '\n(Vai trò: Phối hợp)' : ''}`,
+        t.title || '',
         t.dueDate && t.dueDate !== '—' ? t.dueDate : '',
         t.deliverables || '',
         t.statusLabel || 'Chưa thực hiện',
