@@ -606,7 +606,7 @@ namespace Cdsqg.Application.Services
             return fallback ?? "";
         }
 
-        private const bool HideCoordinatingItemsInProgressReport = true;
+        private const bool HideCoordinatingTasksInProgressReport = true;
 
         public async Task<AgencyProgressReportDto> GetAgencyProgressReportAsync(
             Guid agencyId,
@@ -653,10 +653,10 @@ namespace Cdsqg.Application.Services
                 !item.AgencyExecutions.Any(e => e.AgencyId == agencyId && e.IsLeadAssignment)
                 && item.AgencyExecutions.Any(e => e.AgencyId == agencyId && e.IsCoordinatingAssignment);
 
-            // Tạm thời báo cáo tiến độ (màn hình, Excel xuất và đối soát khi nhập) chỉ gồm mục tiêu, nhiệm vụ
-            // cơ quan chủ trì; ẩn các mục cơ quan chỉ phối hợp. Đặt cờ về false để hiện lại.
-            if (HideCoordinatingItemsInProgressReport)
-                agencyItems = agencyItems.Where(i => !IsCoordinationOnly(i)).ToList();
+            // Tạm thời báo cáo tiến độ (màn hình, Excel xuất và đối soát khi nhập) ẩn các NHIỆM VỤ cơ quan chỉ phối hợp;
+            // mục tiêu phối hợp vẫn hiển thị và xuất Excel như cũ. Đặt cờ về false để hiện lại nhiệm vụ phối hợp.
+            if (HideCoordinatingTasksInProgressReport)
+                agencyItems = agencyItems.Where(i => i.ItemType != ItemTypeEnum.Task || !IsCoordinationOnly(i)).ToList();
 
             var agenciesMap = await _context.Agencies.AsNoTracking().ToDictionaryAsync(a => a.Id);
 
