@@ -617,8 +617,11 @@ export function reportTemplateGoals(goals) {
   });
 }
 
+// Tạm thời ẩn sheet Nhiệm vụ trong file xuất; đặt true để xuất lại.
+const INCLUDE_TASKS_SHEET = false;
+
 /**
- * Main export function: creates 1 file with 2 sheets
+ * Main export function: creates the progress report workbook
  */
 export async function exportUnifiedProgressReport({ reportData, agencyName, reportYear = 2026 }) {
   if (!reportData) {
@@ -639,17 +642,21 @@ export async function exportUnifiedProgressReport({ reportData, agencyName, repo
   const goalsWs = buildGoalsWorksheet(templateGoals, agencyName || reportData.agencyName || 'Cơ quan', dateStr, XLSX);
   XLSX.utils.book_append_sheet(wb, goalsWs, 'Mục tiêu');
 
-  // 2. Build Sheet 2: Nhiệm vụ
-  const { ws: tasksWs, statusCells } = buildTasksWorksheet(reportData.tasks || [], agencyName || reportData.agencyName || 'Cơ quan', dateStr, XLSX);
-  XLSX.utils.book_append_sheet(wb, tasksWs, 'Nhiệm vụ');
+  // 2. Sheet 2: Nhiệm vụ — tạm thời không xuất (INCLUDE_TASKS_SHEET = false). File nhập vẫn đọc được nếu có sheet này.
+  let statusCells = [];
+  if (INCLUDE_TASKS_SHEET) {
+    const built = buildTasksWorksheet(reportData.tasks || [], agencyName || reportData.agencyName || 'Cơ quan', dateStr, XLSX);
+    statusCells = built.statusCells;
+    XLSX.utils.book_append_sheet(wb, built.ws, 'Nhiệm vụ');
+  }
 
   const safeAgencyName = (agencyName || reportData.agencyName || reportData.agencyCode || 'Don_Vi')
     .normalize('NFC').replace(/[<>:"/\\|?*\x00-\x1F]/g, '_').trim().replace(/\s+/g, '_').replace(/[. ]+$/, '');
   const fileName = `Bao_Cao_Tien_Do_${safeAgencyName}_${dateFileStr}.xlsx`;
 
   // Download with dropdown validations on sheet 2
-  downloadProgressWorkbook(wb, [[], statusCells], fileName, XLSX);
-  toast.success(`Đã xuất báo cáo tiến độ 2 sheet cho ${agencyName}!`);
+  downloadProgressWorkbook(wb, INCLUDE_TASKS_SHEET ? [[], statusCells] : [[]], fileName, XLSX);
+  toast.success(`Đã xuất báo cáo tiến độ cho ${agencyName}!`);
 }
 
 /**

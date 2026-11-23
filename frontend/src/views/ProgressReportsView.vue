@@ -400,7 +400,7 @@
                 Nhập báo cáo tiến độ mục tiêu, nhiệm vụ
               </h3>
               <p class="text-xs text-slate-500 font-medium mt-0.5">
-                Nhập dữ liệu từ file Excel (Sheet 1: Mục tiêu, Sheet 2: Nhiệm vụ)
+                Nhập dữ liệu từ file Excel báo cáo tiến độ đã xuất (sheet Mục tiêu)
               </p>
             </div>
           </div>

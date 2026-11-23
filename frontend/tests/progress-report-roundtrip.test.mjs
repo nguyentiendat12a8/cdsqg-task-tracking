@@ -102,4 +102,17 @@ async function roundTrip(edit) {
   ];
   assert.deepEqual(reportTemplateGoals(list).map(g => [g.code, g.sequenceNumber]), [['MT-BKHCN-06', 1], ['MT-BKHCN-08', 2], ['MT-BKHCN-04', 1]]);
 }
+// 10. File chỉ có sheet Mục tiêu (sheet Nhiệm vụ tạm ẩn khi xuất) vẫn nhập được, không sinh thay đổi nhiệm vụ.
+{
+  const wb = XLSX.utils.book_new();
+  const g = buildGoalsWorksheet(goals, 'Bộ Công an', '14/11/2026', XLSX);
+  XLSX.utils.book_append_sheet(wb, g, 'Mục tiêu');
+  set(g, findRow(g, 1, 'MT-BCA-01', 1), 7, 80);
+  const bytes = encodeProgressWorkbook(wb, [[]], XLSX);
+  const file = { name: 'bao-cao.xlsx', arrayBuffer: async () => bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength) };
+  const parsed = await parseUnifiedProgressReportFile(file, { existingGoals: goals, existingTasks: tasks, reportYear: 2026 });
+  const res = reconcileProgressReportImport(parsed, goals, tasks);
+  assert.equal(res.tasks.length, 0);
+  assert.deepEqual(res.goals.map(x => [x.id, x.periodYear, x.value]), [['g12-1', 2026, 80]]);
+}
 console.log('progress-report round-trip: OK');
